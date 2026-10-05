@@ -3,11 +3,12 @@
 # OpenTelemetry Collector Builder and deployed by digest (COLLECTOR_DIGEST). It changes only when
 # its inputs do, and the Images workflow builds it when they change or on a manual run:
 #   docker build -f docker/collector/Dockerfile docker/collector
-FROM golang:1.25-bookworm@sha256:3b4a11519ad929d1e1d261a12cff056f0c85b735253d7d861346b9c6f8b36437 AS build
+FROM golang:1.26-bookworm@sha256:a688600ca24f8a4d3ca77f95b0dd40704a9fc787c826660eb7ba0b641b8b175d AS build
 WORKDIR /build
-RUN --mount=type=cache,target=/root/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build go install go.opentelemetry.io/collector/cmd/builder@v0.162.0
+ENV GOTOOLCHAIN=local
+RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build go install go.opentelemetry.io/collector/cmd/builder@v0.162.0
 COPY builder.yaml .
-RUN --mount=type=cache,target=/root/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build \
+RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 builder --config=builder.yaml
 
 # A static binary: no libc, no shell, an unprivileged user.

@@ -111,7 +111,7 @@ jobs:
         uses: reproducible-containers/buildkit-cache-dance@5422eac04292c961a382e0f584ea0f03ad9da723
         with:
           cache-map: |
-            {".buildkit-cache/registry":{"target":"/usr/local/cargo/registry","id":"cargo-registry"},".buildkit-cache/target":{"target":"/src/target","id":"target-${{ matrix.image }}"},".buildkit-cache/go-mod":"/root/go/pkg/mod",".buildkit-cache/go-build":"/root/.cache/go-build",".buildkit-cache/bun":{"target":"/root/.bun/install/cache","id":"bun-install"}}
+            {".buildkit-cache/registry":{"target":"/usr/local/cargo/registry","id":"cargo-registry"},".buildkit-cache/target":{"target":"/src/target","id":"target-${{ matrix.image }}"},".buildkit-cache/go-mod":"/go/pkg/mod",".buildkit-cache/go-build":"/root/.cache/go-build",".buildkit-cache/bun":{"target":"/root/.bun/install/cache","id":"bun-install"}}
 
       - name: Log in to GHCR
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
