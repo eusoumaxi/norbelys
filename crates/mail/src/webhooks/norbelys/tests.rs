@@ -40,7 +40,7 @@ fn headers(id: &str, timestamp: i64, body: &[u8], secret: &[u8]) -> HeaderMap {
 }
 
 /// The signing scheme matches the Standard Webhooks specification's published example (secret
-/// `whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw`, message `msg_p5jXN8AQM9LWM0D4loKWxJek` at
+/// from the public standard-webhooks JavaScript fixtures, message `msg_p5jXN8AQM9LWM0D4loKWxJek` at
 /// 1614265330), so the managed MTA and any compliant library interoperate; a list of signatures
 /// verifies when any `v1` entry does, which lets a secret rotate, and other versions are ignored.
 #[test]

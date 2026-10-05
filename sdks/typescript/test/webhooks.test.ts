@@ -4,10 +4,24 @@ import { verifyWebhook, WebhookVerificationError } from "../src/index";
 
 /**
  * The Standard Webhooks reference vector, which the server's signing test pins too: verifying it
- * proves the SDK accepts what Norbelys signs, byte for byte.
+ * proves the SDK accepts what Norbelys signs, byte for byte. This is public fixture data:
+ * https://github.com/standard-webhooks/standard-webhooks/blob/main/libraries/javascript/src/webhook.test.ts
  */
+/** Encodes deliberately public test bytes in the Standard Webhooks wire format. */
+const fixtureSecret = (bytes: Uint8Array): string =>
+  `whsec_${btoa(String.fromCodePoint(...bytes))}`;
+
+const rotationSecret = fixtureSecret(
+  new TextEncoder().encode("second secret of the endpoint")
+);
+
 const reference = {
-  secret: "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw",
+  secret: fixtureSecret(
+    new Uint8Array([
+      49, 242, 144, 246, 191, 6, 41, 138, 171, 79, 8, 212, 60, 63, 8, 44, 246,
+      72, 163, 98, 218, 45, 164, 176,
+    ])
+  ),
   id: "msg_p5jXN8AQM9LWM0D4loKWxJek",
   timestamp: "1614265330",
   payload: '{"test": 2432232314}',
@@ -99,10 +113,7 @@ describe("verifyWebhook", () => {
   });
 
   test("accepts any one of the signatures sent during a secret's rotation", async () => {
-    const other = await sign(
-      "whsec_c2Vjb25kIHNlY3JldCBvZiB0aGUgZW5kcG9pbnQ=",
-      reference.payload
-    );
+    const other = await sign(rotationSecret, reference.payload);
 
     const event = await verifyWebhook(
       reference.payload,
@@ -126,12 +137,7 @@ describe("verifyWebhook", () => {
 
   test("refuses another secret's signature", async () => {
     const message = await failure(() =>
-      verifyWebhook(
-        reference.payload,
-        headers(),
-        "whsec_c2Vjb25kIHNlY3JldCBvZiB0aGUgZW5kcG9pbnQ=",
-        { now: at }
-      )
+      verifyWebhook(reference.payload, headers(), rotationSecret, { now: at })
     );
 
     expect(message).toContain("No webhook-signature matches");
