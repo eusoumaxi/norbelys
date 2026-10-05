@@ -53,7 +53,8 @@ const payload = async (request: Request): Promise<unknown> => {
   if (!request.body) {
     return;
   }
-  const reader = request.body.getReader();
+  const reader: ReadableStreamDefaultReader<Uint8Array> =
+    request.body.getReader();
   const parts: Uint8Array[] = [];
   let length = 0;
   let expired = false;

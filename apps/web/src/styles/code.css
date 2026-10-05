@@ -1,0 +1,203 @@
+@font-face {
+  font-family: "Martian Mono";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 800;
+  font-stretch: 75% 112.5%;
+  src: url("@fontsource-variable/martian-mono/files/martian-mono-latin-standard-normal.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+/* ——— Copying: a button that turns into a check that draws itself. ——— */
+.copy-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.25rem;
+  padding: 0 0.8rem;
+  border-radius: var(--radius-pill);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition:
+    background-color var(--duration-ui) var(--ease-out),
+    color var(--duration-ui) var(--ease-out);
+}
+.copy-button:hover {
+  background: var(--mist);
+  color: var(--ink);
+}
+.copy-icons {
+  position: relative;
+  display: block;
+  width: 1rem;
+  height: 1rem;
+}
+.copy-icons .glyph {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition:
+    opacity 160ms var(--ease-out),
+    scale 260ms var(--ease-settle);
+}
+.copy-icons [data-glyph="check"],
+.copy-button[data-state="copied"] [data-glyph="copy"] {
+  opacity: 0;
+  scale: 0.6;
+}
+.copy-button[data-state="copied"] [data-glyph="check"] {
+  opacity: 1;
+  scale: 1;
+  color: var(--pink-deep);
+}
+.motion .copy-button[data-state="copied"] [data-glyph="check"] .glyph-line {
+  stroke-dasharray: 1;
+  animation: dev-draw 320ms var(--ease-out) both;
+}
+.copy-done,
+.copy-button[data-state="copied"] .copy-word {
+  display: none;
+}
+.copy-button[data-state="copied"] .copy-done {
+  display: inline;
+  color: var(--pink-deep);
+}
+.copy-button-icon {
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border-radius: 50%;
+}
+
+/* ——— Code: a white sheet with its tabs on top. ——— */
+.dev-code {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--radius-l);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+}
+.dev-code-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 3.25rem;
+  padding: 0 0.55rem 0 0.6rem;
+  border-bottom: 1.5px solid var(--line);
+}
+.dev-code-tabs {
+  display: flex;
+  gap: 0.1rem;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.dev-code-tabs button {
+  position: relative;
+  flex: none;
+  min-height: 3.25rem;
+  padding: 0 0.75rem;
+  color: var(--ink-3);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition: color var(--duration-ui) var(--ease-out);
+}
+.dev-code-tabs button:hover,
+.dev-code-tabs button[aria-selected="true"] {
+  color: var(--ink);
+}
+.dev-code-tabs button::after {
+  content: "";
+  position: absolute;
+  inset: auto 0.75rem -1.5px;
+  height: 2.5px;
+  border-radius: 2px;
+  background: var(--ink);
+  scale: 0 1;
+  transition: scale 380ms var(--ease-out);
+}
+.dev-code-tabs button[aria-selected="true"]::after {
+  scale: 1 1;
+}
+.dev-code-name {
+  padding-left: 0.65rem;
+  color: var(--ink-3);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+.dev-code-panel pre {
+  margin: 0;
+  overflow-x: auto;
+  padding: 1.35rem 1.5rem 1.6rem;
+  font-size: 0.875rem;
+  line-height: 1.75;
+  tab-size: 2;
+}
+.dev-code-panel pre:focus-visible {
+  outline-offset: -3px;
+}
+
+:is(.dev, .dev-code) .astro-code {
+  --astro-code-background: transparent;
+  --astro-code-foreground: var(--ink);
+  --astro-code-token-comment: var(--ink-3);
+  --astro-code-token-keyword: var(--pink-deep);
+  --astro-code-token-string: var(--pink-ink);
+  --astro-code-token-string-expression: var(--pink-ink);
+  --astro-code-token-constant: var(--pink-ink);
+  --astro-code-token-function: var(--ink);
+  --astro-code-token-parameter: var(--ink-2);
+  --astro-code-token-punctuation: var(--ink-3);
+  --astro-code-token-link: var(--pink-deep);
+}
+@media (max-width: 640px) {
+  .dev-code-bar .copy-word,
+  .dev-code-bar .copy-done {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .dev-code-bar .copy-button {
+    width: 2.5rem;
+    padding: 0;
+    justify-content: center;
+  }
+  .dev-code-tabs {
+    mask-image: linear-gradient(90deg, #000 calc(100% - 1.75rem), transparent);
+  }
+  .dev-code-tabs button {
+    padding: 0 0.6rem;
+    font-size: 0.875rem;
+  }
+  .dev-code-tabs button:last-child {
+    margin-right: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .dev-code-panel pre {
+    padding: 1.1rem 1.15rem 1.3rem;
+    font-size: 0.8125rem;
+  }
+}
+
+.dev-code {
+  --font-code:
+    "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --code-stretch: 87.5%;
+}
+.dev-code pre {
+  font-family: var(--font-code);
+  font-stretch: var(--code-stretch);
+}
