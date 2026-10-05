@@ -116,10 +116,12 @@
     },
     "norbelys-rust#db-reset": {
       "command": ["cargo", "xtask", "db", "reset"],
+      "passThroughEnv": ["DATABASE_URL"],
       "cache": false
     },
     "norbelys-rust#migrate": {
       "command": ["cargo", "xtask", "db", "migrate"],
+      "passThroughEnv": ["DATABASE_URL"],
       "cache": false
     },
     "norbelys-rust#sqlx-check": {
@@ -133,6 +135,7 @@
         "--all-targets",
         "--all-features"
       ],
+      "passThroughEnv": ["DATABASE_URL"],
       "cache": false
     },
     "norbelys-rust#test": {
