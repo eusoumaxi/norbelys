@@ -13,7 +13,8 @@ export const selectSuccessfulBase = (
     // from the product source that was built, so image runs name that source explicitly.
     const source =
       workflow === "images.yml"
-        ? /^Images ([0-9a-f]{40})$/u.exec(run.display_title ?? "")?.[1]
+        ? /^Images (?<source>[0-9a-f]{40})$/u.exec(run.display_title ?? "")
+            ?.groups?.source
         : run.head_sha;
     const expectedEvent =
       workflow === "images.yml"
