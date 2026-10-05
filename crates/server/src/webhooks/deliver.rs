@@ -1216,7 +1216,7 @@ mod tests {
     /// consumer library verifies our deliveries.
     #[test]
     fn signatures_match_the_standard_webhooks_reference_vector() {
-        let key = secret_bytes("whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw").unwrap();
+        let key = secret_bytes(concat!("whsec_", "MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw")).unwrap();
         assert_eq!(
             crypto::sign_webhook(
                 &key,

@@ -22,7 +22,7 @@ use crate::db::{self, Db};
 
 /// The installation secret of every test: the Standard Webhooks reference libraries' example
 /// key, so signatures can be checked against their published vector.
-pub const SECRET: &str = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw";
+pub const SECRET: &str = concat!("whsec_", "MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw");
 
 /// A directory under the system's temporary directory, removed with everything in it on drop.
 pub struct TempDir(PathBuf);

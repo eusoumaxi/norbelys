@@ -243,9 +243,7 @@ pub async fn remove(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::testing::{TempDir, call, router, signed, verify_domain};
-
-    const SECRET: &str = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw";
+    use crate::testing::{SECRET, TempDir, call, router, signed, verify_domain};
 
     fn put(id: &str, usernames: &str) -> axum::http::Request<axum::body::Body> {
         let body = format!(

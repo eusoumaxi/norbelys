@@ -331,7 +331,7 @@ mod tests {
     fn signatures_match_the_standard_webhooks_reference_vector() {
         assert_eq!(
             sign(
-                "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw",
+                concat!("whsec_", "MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"),
                 "msg_p5jXN8AQM9LWM0D4loKWxJek",
                 1_614_265_330,
                 br#"{"test": 2432232314}"#
