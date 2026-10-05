@@ -2,9 +2,9 @@
 # Rust runtime images. CI publishes sha-<commit> tags with SBOM and provenance attestations;
 # installations select immutable digests. To build an individual target locally:
 #
-#   docker build --target server .            ghcr.io/<owner>/server            (the default target)
-#   docker build --target server-analytics .  ghcr.io/<owner>/server-analytics  (DuckDB bundled)
-#   docker build --target smtp .              ghcr.io/<owner>/smtp              (the managed MTA's control plane)
+#   docker build --target server .            ghcr.io/<owner>/norbelys-server            (the default target)
+#   docker build --target server-analytics .  ghcr.io/<owner>/norbelys-server-analytics  (DuckDB bundled)
+#   docker build --target smtp .              ghcr.io/<owner>/norbelys-smtp              (the managed MTA's control plane)
 #
 # One binary, `norbelys-server`, holds every role; a container picks its role with its command
 # (`CMD ["/app/norbelys-server", "api"]` by default) and probes its own health with

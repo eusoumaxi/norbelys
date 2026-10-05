@@ -1,6 +1,6 @@
 // Which images a push to main rebuilds, from the files it changed (the Images workflow):
 //
-// - server (ghcr.io/<owner>/server): the server crate and the libraries it links, the committed
+// - server (ghcr.io/<owner>/norbelys-server): the server crate and the libraries it links, the committed
 //   query metadata, and every shared build input;
 // - server-analytics: the same server binary with the analytics feature, so every input that
 //   rebuilds server also rebuilds this image (including configuration and linked libraries);

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# The per-host collector image, ghcr.io/<owner>/collector, built from builder.yaml with the
+# The per-host collector image, ghcr.io/<owner>/norbelys-collector, built from builder.yaml with the
 # OpenTelemetry Collector Builder and deployed by digest (COLLECTOR_DIGEST). It changes only when
 # its inputs do, and the Images workflow builds it when they change or on a manual run:
 #   docker build -f docker/collector/Dockerfile docker/collector
