@@ -47,9 +47,9 @@ test("the MTA's crate rebuilds its image only", () => {
   expect(scope(["crates/smtp/src/tail.rs"])).toEqual(["smtp"]);
 });
 
-test("shared build inputs rebuild every image", () => {
+test("shared Cargo build inputs rebuild only the Rust images", () => {
   for (const path of ["Cargo.lock", "Dockerfile", "rust-toolchain.toml"]) {
-    expect(scope([path])).toEqual(IMAGES.filter((image) => image !== "app"));
+    expect(scope([path])).toEqual(["server", "server-analytics", "smtp"]);
   }
 });
 

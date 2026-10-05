@@ -4,78 +4,167 @@ import { appendFileSync, readFileSync } from "node:fs";
 
 import { successfulBase } from "./successful-base.mjs";
 
-const affectsBackend = (path) =>
-  ["crates/", "tools/xtask/", ".cargo/", ".sqlx/", "docker/"].some((prefix) =>
-    path.startsWith(prefix)
-  ) ||
-  [
-    "Cargo.toml",
-    "Cargo.lock",
-    "rust-toolchain.toml",
-    "deny.toml",
-    "rustfmt.toml",
-    "clippy.toml",
-    "dist-workspace.toml",
-    ".env.example",
-    "Dockerfile",
-    "scripts/rust-coverage.mjs",
-    "scripts/test-all.mjs",
-    "scripts/test-database.mjs",
-    "scripts/selfhost.ts",
-    "scripts/dev-init.sh",
-    "docker/coverage.yml",
-  ].includes(path);
-
 export const selectChecks = (paths) => {
   const result = {
     backend: false,
     typescript: false,
     python: false,
+    tooling: false,
+    javascript: false,
     frontends: [],
   };
   const apps = new Set();
-  let cliOnly = true;
-  const all = () => {
-    result.backend = true;
-    cliOnly = false;
+  const native = new Set();
+  const audits = new Set();
+  const javascript = () => {
+    result.javascript = true;
+    result.tooling = true;
     result.typescript = true;
-    result.python = true;
     for (const app of ["app", "web", "cli-downloads"]) {
       apps.add(app);
     }
   };
+  const all = () => {
+    native.add("workspace");
+    javascript();
+    result.python = true;
+  };
   if (paths === null) {
     all();
+    for (const ecosystem of ["javascript", "python", "rust"]) {
+      audits.add(ecosystem);
+    }
   }
   for (const path of paths ?? []) {
+    if (path === ".github/workflows/ci.yml") {
+      for (const ecosystem of ["javascript", "python", "rust"]) {
+        audits.add(ecosystem);
+      }
+    }
     if (
       [
         "package.json",
         "bun.lock",
         "turbo.json",
-        "pyproject.toml",
-        ".python-version",
         ".editorconfig",
-        "uv.lock",
-      ].includes(path) ||
-      path.startsWith(".github/") ||
-      path.startsWith("patches/") ||
-      path.startsWith("tools/codegen/")
+        ".github/workflows/ci.yml",
+        ".github/actions/setup/action.yml",
+      ].includes(path)
     ) {
       all();
     }
-    if (affectsBackend(path)) {
-      result.backend = true;
-      if (!path.startsWith("crates/cli/")) {
-        cliOnly = false;
+    if (
+      path.startsWith("crates/cli/") ||
+      [
+        "dist-workspace.toml",
+        ".github/scripts/install-rustup.sh",
+        ".github/workflows/norbelys-cli-release.yml",
+      ].includes(path)
+    ) {
+      native.add("cli");
+    } else if (
+      ["crates/", "tools/xtask/", ".cargo/", ".sqlx/"].some((prefix) =>
+        path.startsWith(prefix)
+      ) ||
+      [
+        "Cargo.toml",
+        "Cargo.lock",
+        "rust-toolchain.toml",
+        ".env.example",
+        "scripts/rust-coverage.mjs",
+        ".github/workflows/backend.yml",
+      ].includes(path)
+    ) {
+      native.add("workspace");
+    }
+    if (["rustfmt.toml", "clippy.toml"].includes(path)) {
+      native.add("gate");
+    }
+    if (
+      [
+        "docker/services.yml",
+        "docker/coverage.yml",
+        "scripts/test-database.mjs",
+      ].includes(path)
+    ) {
+      native.add("database");
+    }
+    if (
+      path === "Cargo.lock" ||
+      path.endsWith("Cargo.toml") ||
+      path === "deny.toml"
+    ) {
+      audits.add("rust");
+    }
+    if (
+      [
+        "uv.lock",
+        "pyproject.toml",
+        ".python-version",
+        ".github/workflows/python.yml",
+      ].includes(path) ||
+      path.startsWith("sdks/python/")
+    ) {
+      result.python = true;
+    }
+    if (path === "uv.lock" || path.endsWith("pyproject.toml")) {
+      audits.add("python");
+    }
+    if (path.startsWith("patches/")) {
+      javascript();
+      audits.add("javascript");
+    }
+    if (
+      path === "bun.lock" ||
+      path.endsWith("package.json") ||
+      path.startsWith(".github/scripts/audit-dependencies")
+    ) {
+      audits.add("javascript");
+    }
+    if (
+      path.startsWith(".github/") ||
+      path.startsWith("scripts/") ||
+      path.startsWith("tools/codegen/") ||
+      path.startsWith("apps/app/worker/") ||
+      path === "apps/app/src/lib/telemetry-policy.ts" ||
+      [
+        "tsconfig.tools.json",
+        "oxlint.config.ts",
+        "oxfmt.config.ts",
+        "docker/compose.yml",
+      ].includes(path)
+    ) {
+      result.tooling = true;
+      result.javascript = true;
+    }
+    if (
+      /\.(?:[cm]?[jt]sx?|astro|json|ya?ml)$/u.test(path) &&
+      !path.startsWith(".sqlx/") &&
+      !path.startsWith("crates/")
+    ) {
+      result.javascript = true;
+    }
+    if (path === ".github/workflows/frontend.yml") {
+      for (const app of ["app", "web", "cli-downloads"]) {
+        apps.add(app);
       }
     }
-    if (path.startsWith("sdks/typescript/")) {
+    if (
+      path.startsWith("sdks/typescript/") ||
+      [
+        ".github/workflows/sdk.yml",
+        ".github/scripts/check-coverage.mjs",
+      ].includes(path)
+    ) {
       result.typescript = true;
-      apps.add("app");
+      if (path.startsWith("sdks/typescript/")) {
+        apps.add("app");
+      }
     }
-    if (path.startsWith("sdks/python/")) {
+    if (path.startsWith("tools/codegen/")) {
+      result.typescript = true;
       result.python = true;
+      apps.add("app");
     }
     if (path === "crates/server/openapi.json") {
       result.typescript = true;
@@ -88,12 +177,15 @@ export const selectChecks = (paths) => {
       }
     }
     if (path.startsWith("brand/")) {
+      result.tooling = true;
       apps.add("app");
       apps.add("web");
     }
   }
   result.frontends = [...apps].toSorted();
-  result.backend_mode = result.backend && cliOnly ? "cli" : "workspace";
+  result.backend = native.size > 0;
+  result.backend_mode = native.size === 1 ? [...native][0] : "workspace";
+  result.audits = [...audits].toSorted();
   return result;
 };
 export const changedPaths = (base, head) => {
@@ -122,7 +214,13 @@ if (import.meta.main) {
     (process.env.GITHUB_EVENT_NAME === "push"
       ? successfulBase("ci.yml", head)
       : null);
-  const selected = selectChecks(changedPaths(base, head));
+  const selected =
+    process.env.GITHUB_EVENT_NAME === "schedule"
+      ? { ...selectChecks([]), audits: ["javascript", "python", "rust"] }
+      : selectChecks(changedPaths(base, head));
+  console.log(
+    `Comparison baseline: ${base ?? "none; run every applicable check"}`
+  );
   const output = Object.entries(selected)
     .map(([key, value]) => `${key}=${JSON.stringify(value)}\n`)
     .join("");

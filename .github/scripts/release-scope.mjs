@@ -7,9 +7,9 @@
 // - smtp: the managed MTA's crate and the mail library it links, and every shared build input;
 // - collector: its Dockerfile, component manifest and configuration.
 //
-// Shared build inputs (the workspace manifest and lockfile, the toolchain, the Dockerfile, this
-// script and its workflow) rebuild all images. A manual run, or a push whose previous commit is
-// unknown, rebuilds all images. All files under linked crates participate, including embedded text assets.
+// Cargo build inputs rebuild the three Rust images. Publication orchestration changes rebuild
+// every image. A manual run, or a missing successful publication baseline, also builds all images.
+// All files under linked crates participate, including embedded text assets.
 import { execFileSync } from "node:child_process";
 import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 
@@ -23,12 +23,14 @@ export const IMAGES = [
   "app",
 ];
 
-const SHARED = new Set([
+const RUST_SHARED = new Set([
   "Cargo.toml",
   "Cargo.lock",
   "rust-toolchain.toml",
   "Dockerfile",
   ".dockerignore",
+]);
+const PUBLICATION_SHARED = new Set([
   ".github/scripts/release-scope.mjs",
   ".github/scripts/successful-base.mjs",
   ".github/workflows/images.yml",
@@ -65,10 +67,10 @@ const OWNERS = {
 export const scope = (paths) => {
   const selected = new Set();
   for (const path of paths) {
-    if (SHARED.has(path)) {
-      const images = path.startsWith(".github/")
+    if (RUST_SHARED.has(path) || PUBLICATION_SHARED.has(path)) {
+      const images = PUBLICATION_SHARED.has(path)
         ? IMAGES
-        : IMAGES.filter((candidate) => candidate !== "app");
+        : ["server", "server-analytics", "smtp"];
       for (const image of images) {
         selected.add(image);
       }
