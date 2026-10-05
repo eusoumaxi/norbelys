@@ -53,8 +53,10 @@ jobs:
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
-          shared-key: workspace-checks-${{ inputs.mode || 'workspace' }}
-          cache-on-failure: true
+          # Cache entries are immutable. An early failure must not freeze an incomplete
+          # dependency cache that later successful runs would be unable to extend.
+          prefix-key: v1-rust
+          shared-key: gate-${{ inputs.mode || 'workspace' }}
 
       - name: Install cargo-deny
         if: inputs.mode != 'cli'
@@ -146,8 +148,8 @@ jobs:
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
-          shared-key: workspace-checks-workspace
-          cache-on-failure: true
+          prefix-key: v1-rust
+          shared-key: database-contracts
 
       - name: Install sqlx-cli
         run: cargo install --locked sqlx-cli@0.9.0 --no-default-features --features rustls,postgres
