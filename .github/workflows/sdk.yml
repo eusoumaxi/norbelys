@@ -2,6 +2,8 @@ name: TypeScript SDK
 
 on:
   workflow_call:
+  push:
+    tags: ["typescript-v*"]
   workflow_dispatch:
     inputs:
       publish:
@@ -16,8 +18,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: sdk-${{ github.event.pull_request.number || github.ref }}-${{ inputs.publish && 'publish' || 'check' }}
-  cancel-in-progress: ${{ !inputs.publish }}
+  group: sdk-${{ github.event.pull_request.number || github.ref }}-${{ (inputs.publish || startsWith(github.ref, 'refs/tags/')) && 'publish' || 'check' }}
+  cancel-in-progress: ${{ !inputs.publish && !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
   check:
@@ -60,7 +62,7 @@ jobs:
 
   publish:
     needs: check
-    if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == format('refs/tags/{0}', inputs.tag) && startsWith(inputs.tag, 'typescript-v')
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/typescript-v')) || (github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == format('refs/tags/{0}', inputs.tag) && startsWith(inputs.tag, 'typescript-v'))
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     environment: npm
@@ -76,7 +78,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ inputs.tag }}
+          ref: ${{ inputs.tag || github.ref_name }}
 
       - name: Install pinned Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
@@ -96,7 +98,7 @@ jobs:
 
       - name: Verify the release version
         env:
-          TAG: ${{ inputs.tag }}
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: test "typescript-v$(node -p 'require("./package.json").version')" = "$TAG"
 
       # npm publishes the source checked out from the immutable tag.

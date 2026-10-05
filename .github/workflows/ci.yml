@@ -63,10 +63,16 @@ jobs:
     with:
       mode: ${{ needs.scope.outputs.backend_mode }}
   typescript:
+    permissions:
+      contents: read
+      id-token: write
     needs: scope
     if: needs.scope.outputs.typescript == 'true'
     uses: ./.github/workflows/sdk.yml
   python:
+    permissions:
+      contents: read
+      id-token: write
     needs: scope
     if: needs.scope.outputs.python == 'true'
     uses: ./.github/workflows/python.yml
