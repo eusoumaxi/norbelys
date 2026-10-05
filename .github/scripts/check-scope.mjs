@@ -4,6 +4,120 @@ import { appendFileSync, readFileSync } from "node:fs";
 
 import { successfulBase } from "./successful-base.mjs";
 
+const nativeChecks = (path, native) => {
+  if (
+    path.startsWith("crates/cli/") ||
+    [
+      "dist-workspace.toml",
+      ".github/scripts/install-rustup.sh",
+      ".github/workflows/norbelys-cli-release.yml",
+    ].includes(path)
+  ) {
+    native.add("cli");
+  } else if (
+    ["crates/", "tools/xtask/", ".cargo/", ".sqlx/"].some((prefix) =>
+      path.startsWith(prefix)
+    ) ||
+    [
+      "Cargo.toml",
+      "Cargo.lock",
+      "rust-toolchain.toml",
+      ".env.example",
+      "scripts/rust-coverage.mjs",
+      ".github/workflows/backend.yml",
+    ].includes(path)
+  ) {
+    native.add("workspace");
+  }
+  if (["rustfmt.toml", "clippy.toml"].includes(path)) {
+    native.add("gate");
+  }
+  if (
+    [
+      "docker/services.yml",
+      "docker/coverage.yml",
+      "scripts/test-database.mjs",
+    ].includes(path)
+  ) {
+    native.add("database");
+  }
+};
+
+const dependencyAudits = (path, audits) => {
+  if (path === ".github/workflows/ci.yml") {
+    for (const ecosystem of ["javascript", "python", "rust"]) {
+      audits.add(ecosystem);
+    }
+  }
+  if (
+    path === "Cargo.lock" ||
+    path.endsWith("Cargo.toml") ||
+    path === "deny.toml"
+  ) {
+    audits.add("rust");
+  }
+  if (path === "uv.lock" || path.endsWith("pyproject.toml")) {
+    audits.add("python");
+  }
+  if (
+    path === "bun.lock" ||
+    path.endsWith("package.json") ||
+    path.startsWith(".github/scripts/audit-dependencies") ||
+    path.startsWith("patches/")
+  ) {
+    audits.add("javascript");
+  }
+};
+
+const sdkAndFrontendChecks = (path, result, apps) => {
+  if (
+    [
+      "uv.lock",
+      "pyproject.toml",
+      ".python-version",
+      ".github/workflows/python.yml",
+    ].includes(path) ||
+    path.startsWith("sdks/python/")
+  ) {
+    result.python = true;
+  }
+  if (path === ".github/workflows/frontend.yml") {
+    for (const app of ["app", "web", "cli-downloads"]) {
+      apps.add(app);
+    }
+  }
+  if (
+    path.startsWith("sdks/typescript/") ||
+    [
+      ".github/workflows/sdk.yml",
+      ".github/scripts/check-coverage.mjs",
+    ].includes(path)
+  ) {
+    result.typescript = true;
+    if (path.startsWith("sdks/typescript/")) {
+      apps.add("app");
+    }
+  }
+  if (
+    path.startsWith("tools/codegen/") ||
+    path === "crates/server/openapi.json"
+  ) {
+    result.typescript = true;
+    result.python = true;
+    apps.add("app");
+  }
+  for (const app of ["app", "web", "cli"]) {
+    if (path.startsWith(`apps/${app}/`)) {
+      apps.add(app === "cli" ? "cli-downloads" : app);
+    }
+  }
+  if (path.startsWith("brand/")) {
+    result.tooling = true;
+    apps.add("app");
+    apps.add("web");
+  }
+};
+
 export const selectChecks = (paths) => {
   const result = {
     backend: false,
@@ -36,11 +150,9 @@ export const selectChecks = (paths) => {
     }
   }
   for (const path of paths ?? []) {
-    if (path === ".github/workflows/ci.yml") {
-      for (const ecosystem of ["javascript", "python", "rust"]) {
-        audits.add(ecosystem);
-      }
-    }
+    nativeChecks(path, native);
+    dependencyAudits(path, audits);
+    sdkAndFrontendChecks(path, result, apps);
     if (
       [
         "package.json",
@@ -53,73 +165,8 @@ export const selectChecks = (paths) => {
     ) {
       all();
     }
-    if (
-      path.startsWith("crates/cli/") ||
-      [
-        "dist-workspace.toml",
-        ".github/scripts/install-rustup.sh",
-        ".github/workflows/norbelys-cli-release.yml",
-      ].includes(path)
-    ) {
-      native.add("cli");
-    } else if (
-      ["crates/", "tools/xtask/", ".cargo/", ".sqlx/"].some((prefix) =>
-        path.startsWith(prefix)
-      ) ||
-      [
-        "Cargo.toml",
-        "Cargo.lock",
-        "rust-toolchain.toml",
-        ".env.example",
-        "scripts/rust-coverage.mjs",
-        ".github/workflows/backend.yml",
-      ].includes(path)
-    ) {
-      native.add("workspace");
-    }
-    if (["rustfmt.toml", "clippy.toml"].includes(path)) {
-      native.add("gate");
-    }
-    if (
-      [
-        "docker/services.yml",
-        "docker/coverage.yml",
-        "scripts/test-database.mjs",
-      ].includes(path)
-    ) {
-      native.add("database");
-    }
-    if (
-      path === "Cargo.lock" ||
-      path.endsWith("Cargo.toml") ||
-      path === "deny.toml"
-    ) {
-      audits.add("rust");
-    }
-    if (
-      [
-        "uv.lock",
-        "pyproject.toml",
-        ".python-version",
-        ".github/workflows/python.yml",
-      ].includes(path) ||
-      path.startsWith("sdks/python/")
-    ) {
-      result.python = true;
-    }
-    if (path === "uv.lock" || path.endsWith("pyproject.toml")) {
-      audits.add("python");
-    }
     if (path.startsWith("patches/")) {
       javascript();
-      audits.add("javascript");
-    }
-    if (
-      path === "bun.lock" ||
-      path.endsWith("package.json") ||
-      path.startsWith(".github/scripts/audit-dependencies")
-    ) {
-      audits.add("javascript");
     }
     if (
       path.startsWith(".github/") ||
@@ -144,43 +191,6 @@ export const selectChecks = (paths) => {
     ) {
       result.javascript = true;
     }
-    if (path === ".github/workflows/frontend.yml") {
-      for (const app of ["app", "web", "cli-downloads"]) {
-        apps.add(app);
-      }
-    }
-    if (
-      path.startsWith("sdks/typescript/") ||
-      [
-        ".github/workflows/sdk.yml",
-        ".github/scripts/check-coverage.mjs",
-      ].includes(path)
-    ) {
-      result.typescript = true;
-      if (path.startsWith("sdks/typescript/")) {
-        apps.add("app");
-      }
-    }
-    if (path.startsWith("tools/codegen/")) {
-      result.typescript = true;
-      result.python = true;
-      apps.add("app");
-    }
-    if (path === "crates/server/openapi.json") {
-      result.typescript = true;
-      result.python = true;
-      apps.add("app");
-    }
-    for (const app of ["app", "web", "cli"]) {
-      if (path.startsWith(`apps/${app}/`)) {
-        apps.add(app === "cli" ? "cli-downloads" : app);
-      }
-    }
-    if (path.startsWith("brand/")) {
-      result.tooling = true;
-      apps.add("app");
-      apps.add("web");
-    }
   }
   result.frontends = [...apps].toSorted();
   result.backend = native.size > 0;
@@ -188,6 +198,16 @@ export const selectChecks = (paths) => {
   result.audits = [...audits].toSorted();
   return result;
 };
+
+/** Actions scalar inputs are literal strings; only matrices need JSON serialization. */
+export const formatSelection = (selected) =>
+  Object.entries(selected)
+    .map(
+      ([key, value]) =>
+        `${key}=${typeof value === "string" ? value : JSON.stringify(value)}\n`
+    )
+    .join("");
+
 export const changedPaths = (base, head) => {
   if (!base || /^0+$/u.test(base)) {
     return null;
@@ -221,9 +241,7 @@ if (import.meta.main) {
   console.log(
     `Comparison baseline: ${base ?? "none; run every applicable check"}`
   );
-  const output = Object.entries(selected)
-    .map(([key, value]) => `${key}=${JSON.stringify(value)}\n`)
-    .join("");
+  const output = formatSelection(selected);
   process.stdout.write(output);
   if (process.env.GITHUB_OUTPUT) {
     appendFileSync(process.env.GITHUB_OUTPUT, output);

@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { selectChecks } from "./check-scope.mjs";
+import { formatSelection, selectChecks } from "./check-scope.mjs";
 
 test("a deleted or added SDK operation checks its language and consumers", () => {
   expect(
@@ -21,6 +21,12 @@ test("CLI changes run native checks without starting unrelated database suites",
   expect(
     selectChecks(["crates/cli/src/main.rs", "Cargo.lock"]).backend_mode
   ).toBe("workspace");
+});
+test("native job modes reach Actions without JSON quotes", () => {
+  const output = formatSelection(selectChecks(["crates/cli/src/main.rs"]));
+  expect(output).toContain("backend_mode=cli\n");
+  expect(output).toContain("backend=true\n");
+  expect(output).toContain("frontends=[]\n");
 });
 test("a cross-component rename includes both paths", () => {
   const result = selectChecks(["apps/app/old.ts", "apps/web/new.ts"]);
