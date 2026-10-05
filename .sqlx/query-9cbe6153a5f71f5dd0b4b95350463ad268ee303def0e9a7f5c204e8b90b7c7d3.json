@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT payload -> 'data' ->> 'disabled_reason' AS \"reason!\" FROM outbox_events WHERE type = 'webhook_endpoint.disabled'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "reason!",
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "9cbe6153a5f71f5dd0b4b95350463ad268ee303def0e9a7f5c204e8b90b7c7d3"
+}

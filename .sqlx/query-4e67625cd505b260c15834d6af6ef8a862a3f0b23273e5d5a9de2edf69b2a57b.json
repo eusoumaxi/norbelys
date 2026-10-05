@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO sending_domains (workspace_id, hostname, status, ownership_token, ownership_expires_at, next_check_at)\n                 VALUES ($1, $2, $3, 't', now() + interval '30 days',\n                         CASE WHEN $4 THEN now() - interval '1 minute' ELSE now() + interval '1 hour' END)\n                 RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sending_domains",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "4e67625cd505b260c15834d6af6ef8a862a3f0b23273e5d5a9de2edf69b2a57b"
+}

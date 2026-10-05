@@ -1,0 +1,42 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT email, connection_id AS \"connection_id: Id<Connection>\" FROM sender_identities\n            WHERE workspace_id = $1 AND email_key = ANY($2) AND connection_id <> $3 AND archived_at IS NULL LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sender_identities",
+            "name": "email"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "connection_id: Id<Connection>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sender_identities",
+            "name": "connection_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "TextArray",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "41516a73fae448735c103638756e851c24c5d9314186acc1a47478474cc54e2a"
+}

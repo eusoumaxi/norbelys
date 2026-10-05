@@ -1,0 +1,42 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT name, archive_key AS \"archive_key!\" FROM partition_leaves\n            WHERE parent = $1 AND archive_key IS NOT NULL\n              AND ($2::timestamptz IS NULL OR upper > $2) AND ($3::timestamptz IS NULL OR lower < $3)\n            ORDER BY lower",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "partition_leaves",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "archive_key!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "partition_leaves",
+            "name": "archive_key"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "89a17a08a20ae397df096f021fed15fc0f793d2f4b3dfcb2463a432e53d86c87"
+}

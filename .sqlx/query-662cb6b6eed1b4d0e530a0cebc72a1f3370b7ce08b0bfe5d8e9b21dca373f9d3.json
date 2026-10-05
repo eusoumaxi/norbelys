@@ -1,0 +1,79 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT c.subject, c.html, c.text, c.cc, c.bcc\n           FROM variant_revisions c JOIN variants v ON v.workspace_id = c.workspace_id AND v.id = c.variant_id\n          WHERE c.workspace_id = $1 AND c.variant_id = $2 AND c.version = $3 AND v.step_id = $4",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "subject",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "subject"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "html",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "html"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "text",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "text"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "cc",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "cc"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "bcc",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "bcc"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int4",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "662cb6b6eed1b4d0e530a0cebc72a1f3370b7ce08b0bfe5d8e9b21dca373f9d3"
+}

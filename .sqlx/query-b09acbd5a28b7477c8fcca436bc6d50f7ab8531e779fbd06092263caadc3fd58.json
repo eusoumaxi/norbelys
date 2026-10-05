@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE inbound_messages\n                SET classification = coalesce($3, classification),\n                    sentiment = CASE WHEN $4 THEN $5 ELSE sentiment END,\n                    classification_source = 'manual', revision = revision + 1\n              WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Bool",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b09acbd5a28b7477c8fcca436bc6d50f7ab8531e779fbd06092263caadc3fd58"
+}

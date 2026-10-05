@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE ai_usage SET warned_at = coalesce(warned_at, now()),\n                exceeded_at = CASE WHEN $3 THEN coalesce(exceeded_at, now()) ELSE exceeded_at END\n          WHERE workspace_id = $1 AND month = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Date",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8452d6184a3cb141ffe13ad4e95ba68f06fa671016f3c0938f58353a8807d232"
+}

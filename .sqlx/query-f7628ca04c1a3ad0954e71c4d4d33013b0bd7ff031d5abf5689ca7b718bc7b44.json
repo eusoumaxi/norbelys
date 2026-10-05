@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE delivery_queue q\n            SET state = 'queued', lease_owner = NULL, lease_expires_at = NULL, submission_started_at = NULL,\n                reserved_day = NULL, run_at = coalesce(d.run_at, q.run_at)\n           FROM unnest($2::uuid[], $3::timestamptz[]) AS d(message_id, run_at)\n          WHERE q.workspace_id = $1 AND q.message_id = d.message_id",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "TimestamptzArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f7628ca04c1a3ad0954e71c4d4d33013b0bd7ff031d5abf5689ca7b718bc7b44"
+}

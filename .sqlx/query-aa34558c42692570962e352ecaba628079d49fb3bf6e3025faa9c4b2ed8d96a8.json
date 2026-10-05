@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT next_run_at > now() AS \"later!\" FROM job_schedules WHERE name = 'partitions.create'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "later!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "aa34558c42692570962e352ecaba628079d49fb3bf6e3025faa9c4b2ed8d96a8"
+}

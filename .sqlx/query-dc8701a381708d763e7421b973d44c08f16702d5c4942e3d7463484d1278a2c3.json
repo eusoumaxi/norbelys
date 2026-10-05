@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO delivery_queue (workspace_id, message_id, connection_id, run_at, paced, expires_at, deadline_at)\n         VALUES ($1, $2, $3, $4, $5, $6, $6)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Timestamptz",
+        "Bool",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "dc8701a381708d763e7421b973d44c08f16702d5c4942e3d7463484d1278a2c3"
+}

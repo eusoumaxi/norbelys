@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO steps (workspace_id, campaign_id, position, name) VALUES ($1, $2, $3, $4)\n                       RETURNING id AS \"id: Id<Step>\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<Step>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "steps",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int4",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d5f49e233005574b4ca42dfa5f8884e13f8f8c42eccae442201c2fb9bbf6b4e4"
+}

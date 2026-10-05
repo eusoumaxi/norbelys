@@ -1,0 +1,137 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT v.id, v.step_id, v.name, v.version, c.subject, c.preheader, c.html, c.text, c.cc, c.bcc\n           FROM variants v\n           JOIN steps s ON s.workspace_id = v.workspace_id AND s.id = v.step_id\n           JOIN variant_revisions c ON c.workspace_id = v.workspace_id AND c.variant_id = v.id AND c.version = v.version\n          WHERE s.workspace_id = $1 AND s.campaign_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "variants",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "step_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "variants",
+            "name": "step_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variants",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "version",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "variants",
+            "name": "version"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "subject",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "subject"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "preheader",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "preheader"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "html",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "html"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "text",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "text"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "cc",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "cc"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "bcc",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "bcc"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "0298f7d979e8689bc8609db8ae1e31df5dce6d0eaabe9655aa962fde39201223"
+}

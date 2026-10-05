@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT c.track_opens, c.track_clicks, d.hostname AS \"hostname?\"\n             FROM campaigns c\n             LEFT JOIN sending_domains d ON d.workspace_id = c.workspace_id AND d.id = c.tracking_domain_id\n                                        AND d.tracking_enabled AND d.status = 'active'\n            WHERE c.workspace_id = $1 AND c.id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "track_opens",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "campaigns",
+            "name": "track_opens"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "track_clicks",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "campaigns",
+            "name": "track_clicks"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "hostname?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sending_domains",
+            "name": "hostname"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "b9c862674671f47dd4a7e4d32223269cadba186408390e9e827e62b72ef961e2"
+}

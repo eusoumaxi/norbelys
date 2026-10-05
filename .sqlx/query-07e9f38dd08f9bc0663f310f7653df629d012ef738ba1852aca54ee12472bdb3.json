@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) AS \"count!\" FROM audit_log WHERE workspace_id = $1 AND action = 'suppression.deleted' AND target = $2\n             AND actor_kind = 'api_key' AND actor_id = (SELECT 'key_' || replace(id::text, '-', '') FROM api_keys WHERE workspace_id = $1 LIMIT 1)\n             AND details @> '{\"email\":\"Stop@Example.com\",\"reason\":\"manual\"}'::jsonb",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "07e9f38dd08f9bc0663f310f7653df629d012ef738ba1852aca54ee12472bdb3"
+}

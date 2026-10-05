@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT EXISTS (\n             SELECT 1 FROM sender_identities i JOIN campaigns c ON c.workspace_id = i.workspace_id AND c.id = $3\n              WHERE i.workspace_id = $1 AND i.id = $2 AND i.enabled AND i.archived_at IS NULL AND c.status = 'active'\n                AND (i.tags && c.sender_tags\n                     OR EXISTS (SELECT 1 FROM campaign_senders s\n                                 WHERE s.workspace_id = i.workspace_id AND s.campaign_id = c.id AND s.sender_identity_id = i.id))\n           ) AS \"in_pool!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "in_pool!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "c55897acc6fdd067927bcf8f45f3f162ff3c95e32f1e0cec4615fcec4ec234c7"
+}

@@ -1,0 +1,148 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT p.id AS \"id: Id<Person>\", p.email, p.given_name, p.family_name, p.company, p.custom_fields,\n                      p.last_sent_at AS \"last_sent_at: Timestamp\", p.replied_at AS \"replied_at: Timestamp\",\n                      p.created_at AS \"created_at: Timestamp\", p.updated_at AS \"updated_at: Timestamp\"\n                 FROM people p\n                WHERE p.workspace_id = $1\n                  AND ($13::timestamptz IS NULL OR (p.updated_at, p.id) > ($13::timestamptz, $2::uuid))\n                  AND ($3::text IS NULL OR p.email_key = ascii_lower($3))\n                  AND ($4::uuid IS NULL OR EXISTS (SELECT 1 FROM group_people g\n                        WHERE g.workspace_id = p.workspace_id AND g.group_id = $4 AND g.person_id = p.id))\n                  AND ($5::text IS NULL OR p.email_key LIKE $5 OR lower(p.given_name) LIKE $5\n                       OR lower(p.family_name) LIKE $5 OR lower(p.company) LIKE $5)\n                  AND ($6::timestamptz IS NULL OR p.created_at >= $6) AND ($7::timestamptz IS NULL OR p.created_at > $7)\n                  AND ($8::timestamptz IS NULL OR p.created_at <= $8) AND ($9::timestamptz IS NULL OR p.created_at < $9)\n                  AND ($10::text IS NULL OR coalesce(jsonb_path_match(\n                        jsonb_build_object('email', p.email_key, 'email_domain', split_part(p.email_key, '@', 2),\n                            'given_name', p.given_name, 'family_name', p.family_name, 'company', p.company,\n                            'created_at', date_part('epoch', p.created_at), 'fields', p.custom_fields),\n                        $10::text::jsonpath, $11::jsonb, true), false))\n                ORDER BY p.updated_at, p.id LIMIT $12",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<Person>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "email"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "given_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "given_name"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "family_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "family_name"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "company",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "company"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "custom_fields",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "custom_fields"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "last_sent_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "last_sent_at"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "replied_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "replied_at"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "created_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "updated_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Uuid",
+        "Text",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Text",
+        "Jsonb",
+        "Int8",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "7220e0dc0a1ce20901fd2896985e169cda0717df82b3595471065fd522ef9b01"
+}

@@ -1,0 +1,72 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT w.provider, w.connection_id, c.status, c.smtp,\n                connection_credential(c.workspace_id, c.id) AS credential\n           FROM provider_webhooks w\n           JOIN connections c ON c.workspace_id = w.workspace_id AND c.id = w.connection_id\n          WHERE w.workspace_id = $1 AND w.id = $2 AND w.status = 'active'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "provider",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "provider_webhooks",
+            "name": "provider"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "connection_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "provider_webhooks",
+            "name": "connection_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "smtp",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "smtp"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "credential",
+        "type_info": "Bytea",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      null
+    ]
+  },
+  "hash": "cd4064cdf1ecd746e06cb410ad955e0c888508047599c8a2b7a506231baf22de"
+}

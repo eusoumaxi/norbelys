@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO identity_links (issuer, subject, user_id, email) VALUES ($1, $2, $3, $4)\n           ON CONFLICT (issuer, subject) DO UPDATE SET last_used_at = now()\n           RETURNING user_id AS \"user_id: Id<User>\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id: Id<User>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "identity_links",
+            "name": "user_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "7a8a46b350fb779d8f441e0f70475864eb5a38ce442da26027195ffcc19724ab"
+}

@@ -1,0 +1,32 @@
+# Allowlist for apps/app/Dockerfile; the root .dockerignore belongs to the Rust image.
+*
+!package.json
+!bun.lock
+!patches/
+!apps/app/
+!apps/web/package.json
+!sdks/typescript/package.json
+!sdks/typescript/src/
+apps/app/.turbo
+apps/app/.wrangler
+apps/app/dist
+apps/app/node_modules
+
+!apps/cli/package.json
+!brand/
+
+!apps/docs/package.json
+!crates/server/openapi.json
+
+# Directory allowlists must not include a developer's local credentials.
+**/.env
+**/.env.*
+**/.dev.vars*
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.tfstate*
+**/*.tfvars*
+**/*.tfplan
+**/.terraform

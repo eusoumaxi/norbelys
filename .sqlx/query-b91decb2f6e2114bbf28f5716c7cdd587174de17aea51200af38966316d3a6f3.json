@@ -1,0 +1,27 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE jobs SET lease_expires_at = now() + make_interval(secs => $5)\n                WHERE workspace_id = $1 AND id = $2 AND lease_owner = $3 AND claims = $4\n               RETURNING cancel_requested_at IS NOT NULL AS \"cancel!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "cancel!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Int4",
+        "Float8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "b91decb2f6e2114bbf28f5716c7cdd587174de17aea51200af38966316d3a6f3"
+}

@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id AS \"id: Id<ProviderWebhook>\" FROM provider_webhooks WHERE workspace_id = $1 AND connection_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<ProviderWebhook>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "provider_webhooks",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "adee6a649d011a8b3854e789b4e838dd90e29f5ba50b9e9df427dd6a3c68c786"
+}

@@ -1,0 +1,43 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE receive_bindings b\n              SET lease_owner = $3, lease_generation = lease_generation + 1,\n                  lease_expires_at = now() + make_interval(secs => $4)\n            WHERE b.workspace_id = $1 AND b.id = $2 AND b.enabled AND b.lease_owner IS NULL AND b.next_poll_at <= now()\n              AND NOT EXISTS (SELECT 1 FROM receive_bindings o\n                               WHERE o.workspace_id = b.workspace_id AND o.connection_id = b.connection_id\n                                 AND o.lease_expires_at > now())\n        RETURNING b.connection_id AS \"connection_id: Id<Connection>\", b.lease_generation",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "connection_id: Id<Connection>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "receive_bindings",
+            "name": "connection_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "lease_generation",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "receive_bindings",
+            "name": "lease_generation"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Float8"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "ce4ac4a7efdceec7d1e49d133c9aafd41b075a337d6ce42fc0faf924a31248fd"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE workspace_deletions SET completed_at = now(), tombstone_object_key = $2 WHERE workspace_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "37862fc7d25c3fbace59e239fbdf9deece36fb22bb4d2dd1ac696500440d3a43"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE sessions SET active_workspace_id = $2 WHERE id = $1 AND active_workspace_id IS DISTINCT FROM $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7676b41deacaa1f968475aa49959846e95828f2fedcdccfe596475b07fe13f54"
+}

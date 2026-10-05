@@ -1,0 +1,113 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT provider, status, paused, consecutive_failures, paused_until AS \"paused_until: Timestamp\",\n                  breaker_opened_at AS \"opened_at: Timestamp\", probe_message_id, probe_generation\n             FROM connections WHERE workspace_id = $1 AND id = $2 FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "provider",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "provider"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "paused",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "paused"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "consecutive_failures",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "consecutive_failures"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "paused_until: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "paused_until"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "opened_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "breaker_opened_at"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "probe_message_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "probe_message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "probe_generation",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "probe_generation"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "4c89f6225b28f7a623675a59a92ee89e9ef23fb26a83d01a3e7f0ee19c5e3b3f"
+}

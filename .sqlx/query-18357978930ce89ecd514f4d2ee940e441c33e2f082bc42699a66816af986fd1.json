@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO webhook_receipts (workspace_id, provider_webhook_id, event_id, body_hash, raw, state, received_at)\n               SELECT $1, * FROM unnest($2::uuid[], $3::text[], $4::bytea[], $5::bytea[], $6::text[], $7::timestamptz[])\n               RETURNING CASE WHEN state = 'received' THEN id END AS \"id\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "TextArray",
+        "ByteaArray",
+        "ByteaArray",
+        "TextArray",
+        "TimestamptzArray"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "18357978930ce89ecd514f4d2ee940e441c33e2f082bc42699a66816af986fd1"
+}

@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE auth_ceremonies SET consumed_at = now()\n            WHERE id = $1 AND consumed_at IS NULL AND expires_at > now() AND browser_hash = $2\n           RETURNING kind, user_id AS \"user_id: Id<User>\", state",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "kind",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "auth_ceremonies",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id: Id<User>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "auth_ceremonies",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "state",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "auth_ceremonies",
+            "name": "state"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "dc8780a199c0c800e3f2a69c80691339ede437840c740a7650ebb9f3da0016b6"
+}

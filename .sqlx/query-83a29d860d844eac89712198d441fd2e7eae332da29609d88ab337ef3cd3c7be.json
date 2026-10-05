@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE oauth_device_codes\n            SET approved_grant_id = $2, denied_at = CASE WHEN $2::uuid IS NULL THEN now() END\n          WHERE device_code_hash = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Bytea",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "83a29d860d844eac89712198d441fd2e7eae332da29609d88ab337ef3cd3c7be"
+}

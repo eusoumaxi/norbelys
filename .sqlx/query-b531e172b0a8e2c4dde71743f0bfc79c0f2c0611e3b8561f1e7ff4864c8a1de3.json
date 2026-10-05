@@ -1,0 +1,173 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT daily_limit, send_interval_minutes, send_phase_seconds, warmup_stage,\n                  next_send_at AS \"next_send_at: Timestamp\", next_claim_at AS \"next_claim_at: Timestamp\",\n                  paused_until AS \"paused_until: Timestamp\", consecutive_failures, probe_message_id, probe_generation,\n                  quota_scope_id, timezone, send_window\n             FROM connections\n            WHERE workspace_id = $1 AND id = $2 AND status = 'active' AND NOT paused\n              FOR UPDATE SKIP LOCKED",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "daily_limit",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "daily_limit"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "send_interval_minutes",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "send_interval_minutes"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "send_phase_seconds",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "send_phase_seconds"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "warmup_stage",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "warmup_stage"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "next_send_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "next_send_at"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "next_claim_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "next_claim_at"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "paused_until: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "paused_until"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "consecutive_failures",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "consecutive_failures"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "probe_message_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "probe_message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "probe_generation",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "probe_generation"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "quota_scope_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "quota_scope_id"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "timezone",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "timezone"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "send_window",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "send_window"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "b531e172b0a8e2c4dde71743f0bfc79c0f2c0611e3b8561f1e7ff4864c8a1de3"
+}

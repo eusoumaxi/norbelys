@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM campaign_daily_stats WHERE day = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Date"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2a198287ed6d363aeb95b149e1dacca62ffa990a5bd8b444fb3bcb5e2f4641fa"
+}

@@ -1,0 +1,212 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT message_id AS \"message_id!\", place AS \"place!\", total AS \"total!\", id AS \"id!: Id<Attempt>\",\n                  attempt_number AS \"attempt_number!\", connection_id AS \"connection_id!: Id<Connection>\",\n                  outcome AS \"outcome?\", phase AS \"phase?\", smtp_code AS \"smtp_code?\", enhanced_status AS \"enhanced_status?\",\n                  category AS \"category?\", diagnostic AS \"diagnostic?\", provider_message_id AS \"provider_message_id?\",\n                  recipient_count AS \"recipient_count!\", claimed_at AS \"claimed_at!: Timestamp\",\n                  smtp_started_at AS \"smtp_started_at?: Timestamp\", finished_at AS \"finished_at?: Timestamp\"\n             FROM (SELECT a.*, row_number() OVER (PARTITION BY a.message_id ORDER BY a.attempt_number DESC) AS place,\n                          count(*) OVER (PARTITION BY a.message_id) AS total\n                     FROM attempts a WHERE a.workspace_id = $1 AND a.message_id = ANY ($2)) ranked\n            WHERE place <= $3\n            ORDER BY message_id, place",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "message_id!",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "place!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "total!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "id!: Id<Attempt>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "attempt_number!",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "attempt_number"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "connection_id!: Id<Connection>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "connection_id"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "outcome?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "outcome"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "phase?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "phase"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "smtp_code?",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "smtp_code"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "enhanced_status?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "enhanced_status"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "category?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "category"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "diagnostic?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "diagnostic"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "provider_message_id?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "provider_message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "recipient_count!",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "recipient_count"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "claimed_at!: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "claimed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "smtp_started_at?: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "smtp_started_at"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "finished_at?: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "finished_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      null,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "5224537a567797caa7a007d8369bdb7d5d2b4add5d256a5adf6261bd22c8c78e"
+}

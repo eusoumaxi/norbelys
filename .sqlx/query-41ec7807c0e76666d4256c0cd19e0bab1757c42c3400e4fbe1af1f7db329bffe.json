@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, event_types FROM webhook_endpoints WHERE workspace_id = $1 AND enabled",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "webhook_endpoints",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "event_types",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "webhook_endpoints",
+            "name": "event_types"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "41ec7807c0e76666d4256c0cd19e0bab1757c42c3400e4fbe1af1f7db329bffe"
+}

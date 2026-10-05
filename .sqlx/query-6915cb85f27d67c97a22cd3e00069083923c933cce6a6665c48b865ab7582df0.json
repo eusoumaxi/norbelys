@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT (SELECT count(*) FROM inbound_messages\n                    WHERE review_requested_at >= now() - interval '1 day') AS \"requested!\",\n                  (SELECT percentile_cont(0.5) WITHIN GROUP\n                              (ORDER BY extract(epoch FROM reviewed_at - review_requested_at)::float8)\n                     FROM inbound_messages\n                    WHERE reviewed_at >= now() - interval '7 days') AS \"median_seconds\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "requested!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "median_seconds",
+        "type_info": "Float8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "6915cb85f27d67c97a22cd3e00069083923c933cce6a6665c48b865ab7582df0"
+}

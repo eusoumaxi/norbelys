@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE oauth_device_codes SET consumed_at = now(), last_polled_at = now() WHERE device_code_hash = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "77b41d608ae73ceb743b94fa215e7ef921987b0b279050f699b2b5307dd57a6a"
+}

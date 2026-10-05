@@ -1,0 +1,66 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT c.subject, c.preheader, c.html, c.text\n           FROM variant_revisions c\n           JOIN UNNEST($2::uuid[], $3::int[]) AS o(id, version) ON c.variant_id = o.id AND c.version = o.version\n          WHERE c.workspace_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "subject",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "subject"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "preheader",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "preheader"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "html",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "html"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "text",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "text"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "Int4Array"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "74f4a31c4d259a4c2fd256b36fc0d2a6667c9be78644e0d0e4daae243cb59cc7"
+}

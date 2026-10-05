@@ -1,0 +1,71 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT variant_id, variant_version, sum(sent)::bigint AS \"sent!\", sum(opened)::bigint AS \"opened!\",\n                  sum(clicked)::bigint AS \"clicked!\", sum(replied)::bigint AS \"replied!\"\n             FROM campaign_daily_stats\n            WHERE workspace_id = $1 AND campaign_id = $2 AND step_id = $3 AND step_revision = $4\n            GROUP BY variant_id, variant_version",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "variant_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "campaign_daily_stats",
+            "name": "variant_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "variant_version",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "campaign_daily_stats",
+            "name": "variant_version"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "sent!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "opened!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "clicked!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "replied!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "d4d59d2ce2c8a715d33ebc76f724bdd47ab014a3f40711e420e222983df87e3b"
+}

@@ -1,0 +1,77 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT consecutive_failures, paused_until AS \"paused_until: Timestamp\",\n                      breaker_opened_at AS \"opened_at: Timestamp\", probe_message_id, probe_generation\n                 FROM quota_scopes WHERE workspace_id = $1 AND id = $2 FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "consecutive_failures",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "consecutive_failures"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "paused_until: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "paused_until"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "opened_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "breaker_opened_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "probe_message_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "probe_message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "probe_generation",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "probe_generation"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "9abf80e6e6731a2be6fdf12066c7307c7cf608ae9ffc5a23174a8b1f89603ce3"
+}

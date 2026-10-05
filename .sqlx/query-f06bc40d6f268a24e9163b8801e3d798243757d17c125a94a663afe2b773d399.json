@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE step_revisions SET winner_variant_id = NULL, winner_variant_version = NULL, winner_selected_at = NULL\n                  WHERE workspace_id = $1 AND step_id = $2 AND revision = $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f06bc40d6f268a24e9163b8801e3d798243757d17c125a94a663afe2b773d399"
+}

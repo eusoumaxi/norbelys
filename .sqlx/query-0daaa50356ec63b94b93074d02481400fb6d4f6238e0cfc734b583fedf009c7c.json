@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE idempotency_keys SET fingerprint = $2, locked_at = now(), response_status = NULL, response_headers = NULL,\n                    response_body = NULL, expires_at = now() + interval '24 hours'\n              WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Bytea"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0daaa50356ec63b94b93074d02481400fb6d4f6238e0cfc734b583fedf009c7c"
+}

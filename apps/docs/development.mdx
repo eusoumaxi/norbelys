@@ -1,0 +1,51 @@
+---
+title: Development checks
+description: Choose a focused check and reuse your local build and database fixtures.
+keywords: [development, tests, Rust, TypeScript, Python, coverage]
+---
+
+Install the Rust toolchain declared in `rust-toolchain.toml`, Bun at the version in the root `package.json`, and uv. Run `bun install --frozen-lockfile` and `uv sync --frozen --package norbelys` from the repository root. PostgreSQL and Docker are unnecessary for static checks.
+
+## Choose the smallest useful check
+
+| Command | Scope |
+| --- | --- |
+| `bun run check` | Serial static checks, format/lint, types, domain boundaries and repository script tests. No database, coverage, release build or analytics feature. |
+| `cargo check --locked -p norbelys-server` | Compile the selected Rust package against committed SQLx metadata without linking a release binary. |
+| `cargo test --locked -p norbelys-mail smtp::` | Run the selected package's matching tests. Cargo still compiles dependencies and its test target. |
+| `bun run --cwd apps/app typecheck` | Dashboard and Worker TypeScript. |
+| `bun run --cwd apps/app test` | Dashboard instrumentation contract tests. |
+| `uv run --frozen --package norbelys pytest sdks/python/tests/test_client.py` | Python client tests without coverage instrumentation. |
+| `bun run check:database` | Server tests and SQLx metadata verification using a deliberately prepared local database. No reset or container lifecycle. |
+| `bun run test:all` | All local Rust, SDK, dashboard, download Worker and script tests, followed by process crash gates, once per suite. Requires a disposable test cluster. |
+| `bun run check:all` | Comprehensive static, contract, docs and build checks followed by `test:all`. Does not add coverage. |
+
+Do not run the comprehensive command after every edit. Batch a coherent change, run its relevant checks, and reuse a passing result until its source, dependency, configuration, schema or fixture changes. Formatting-only changes do not need a database. SQL, RLS, locking and persistence changes need real PostgreSQL tests.
+
+Use `CARGO_BUILD_JOBS=2` on a resource-constrained laptop and keep the same Cargo profile flags between runs. The root command serializes Turbo tasks. Avoid running another Cargo build or coverage job alongside it. Do not use `cargo clean` as a routine validation step. Compilation and test durations depend on your existing artifacts; a cached result is useful only when its inputs still match.
+
+## Prepare an isolated test service deliberately
+
+Use a local PostgreSQL 18 cluster dedicated to these tests. The harness creates cluster roles, a reusable schema template and separate databases per test. A local address does not make your ordinary development database disposable.
+
+Set `TEST_DATABASE_URL` through your local environment and set `NORBELYS_TEST_DATABASE_DISPOSABLE=1` only for that dedicated cluster. Keep the service alive across related tests; the harness reuses an unchanged template and clones independent data for every test. Use a migration-capable development login. `check:database` first verifies SQLx history without applying pending files, then supplies that same prepared target as `DATABASE_URL` for SQLx metadata checking; it does not inherit a different development target.
+
+Use `DATABASE_URL` pointed at that disposable target with `cargo xtask db migrate` for explicit setup; see [database maintenance](/migrations).
+
+`bun run db:reset` **drops and recreates** the local database selected by `DATABASE_URL`, then applies the schema. Invoke it only when you deliberately want an empty development database. It is not a prerequisite of an ordinary test run.
+
+The crash gates require `curl`, free loopback ports 3961–3964 and 3966, and DNS for the SMTP preflight fixture. They send only to their local SMTP sink. Tests requiring external paid services stay explicitly ignored; no comprehensive local command asserts that those services have been verified.
+
+## Coverage and CI
+
+Coverage is explicit:
+
+```sh
+bun run coverage:rust
+bun run coverage:cli
+bunx turbo run coverage --filter=@norbelys/sdk --filter=norbelys --filter=@norbelys/cli-downloads --concurrency=1
+```
+
+Workspace Rust coverage uses `TEST_DATABASE_URL` when supplied and acknowledged as disposable. Without it, the explicit coverage command creates and removes its own isolated Docker fixture. Ordinary checks never take that path. SDK coverage retains its existing thresholds. CI runs native tests under coverage once, separately from offline compilation and SQL metadata checking; it does not first repeat the same native suite without coverage.
+
+Image publication follows a successful main-push CI run for the exact source commit. It consumes that run's finite image selection and builds the affected images without repeating backend or frontend test suites. Manual image builds also require approved CI for their source. Publication and deployment remain separate operations.

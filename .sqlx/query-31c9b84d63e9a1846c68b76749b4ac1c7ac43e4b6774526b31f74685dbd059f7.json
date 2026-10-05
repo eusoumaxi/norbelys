@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE sender_identities\n                        SET email = $3, name = $4, reply_to = $5, signature_html = $6, signature_text = $7,\n                            tags = $8, enabled = $9,\n                            verified_at = CASE WHEN $10::boolean IS TRUE AND email_key = ascii_lower($3) THEN coalesce(verified_at, now())\n                                               WHEN $10::boolean IS TRUE THEN now()\n                                               WHEN $10::boolean IS NULL AND email_key = ascii_lower($3) THEN verified_at END\n                      WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "TextArray",
+        "Bool",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "31c9b84d63e9a1846c68b76749b4ac1c7ac43e4b6774526b31f74685dbd059f7"
+}

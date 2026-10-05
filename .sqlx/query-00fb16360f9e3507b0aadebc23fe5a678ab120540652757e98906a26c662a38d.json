@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM oauth_codes WHERE code_hash IN (\n                 SELECT code_hash FROM oauth_codes WHERE expires_at < now() - interval '1 day' LIMIT $1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "00fb16360f9e3507b0aadebc23fe5a678ab120540652757e98906a26c662a38d"
+}

@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT c.id,\n                  (s.id IS NOT NULL AND s.consecutive_failures > 0 AND s.paused_until <= now()) AS \"scope_half_open!\"\n             FROM connections c LEFT JOIN quota_scopes s ON (s.workspace_id, s.id) = (c.workspace_id, c.quota_scope_id)\n            WHERE c.workspace_id = $1 AND c.status = 'active' AND NOT c.paused AND c.created_at <= $2\n              AND (c.next_claim_at IS NULL OR c.next_claim_at <= now())\n              AND (c.paused_until IS NULL OR c.paused_until <= now())\n              AND (s.paused_until IS NULL OR s.paused_until <= now())\n              AND EXISTS (SELECT 1 FROM delivery_queue q WHERE (q.workspace_id, q.connection_id) = (c.workspace_id, c.id)\n                                                           AND q.state = 'queued' AND NOT q.paced AND q.run_at <= $2)\n              AND (c.send_interval_minutes IS NULL\n                   OR NOT EXISTS (SELECT 1 FROM delivery_queue p WHERE (p.workspace_id, p.connection_id) = (c.workspace_id, c.id)\n                                                                  AND p.state <> 'queued'))\n              AND c.id > $3\n            ORDER BY c.id\n            LIMIT $4",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "scope_half_open!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz",
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "a76c8bb0aecf9fef26e09a214fb9fb4375c37a4c7bd6a6081f6e893ed5e33341"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE webhook_deliveries SET attempt = 9",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "fd1c09e753fd2b637d8fa8ca5b5ca2bffd68b3dd797a29e2d7a553c7ac487a2b"
+}

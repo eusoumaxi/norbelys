@@ -1,0 +1,288 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT c.id AS \"id: Id<Connection>\", c.provider, c.transport, c.account_email, c.account_issuer,\n                  c.account_subject, c.status, c.status_detail, c.paused, c.paused_until AS \"paused_until: Timestamp\",\n                  c.checked_at AS \"checked_at: Timestamp\", c.smtp, c.imap, c.daily_limit, c.send_interval_minutes,\n                  c.send_window, c.timezone, c.warmup_stage, c.quota_scope_id AS \"quota_scope_id: Id<QuotaScope>\",\n                  c.created_by AS \"created_by: Id<User>\", c.created_at AS \"created_at: Timestamp\",\n                  c.updated_at AS \"updated_at: Timestamp\"\n             FROM connections c\n            WHERE c.workspace_id = $1\n              AND ($2::text IS NULL OR c.status = $2)\n              AND ($3::text IS NULL OR c.provider = $3)\n              AND ($4::text IS NULL OR EXISTS (SELECT 1 FROM sender_identities i\n                                                WHERE i.workspace_id = c.workspace_id AND i.connection_id = c.id\n                                                  AND $4 = ANY (i.tags)))\n              AND ($5::uuid IS NULL OR c.quota_scope_id = $5)\n              AND ($6::text IS NULL OR starts_with(c.account_email_key, ascii_lower($6)))\n              AND ($7::uuid IS NULL OR CASE WHEN $8 THEN c.id > $7 ELSE c.id < $7 END)\n            ORDER BY CASE WHEN $8 THEN c.id END ASC, c.id DESC\n            LIMIT $9",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<Connection>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "provider",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "provider"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "transport",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "transport"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "account_email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "account_email"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "account_issuer",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "account_issuer"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "account_subject",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "account_subject"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "status_detail",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "status_detail"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "paused",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "paused"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "paused_until: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "paused_until"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "checked_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "checked_at"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "smtp",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "smtp"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "imap",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "imap"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "daily_limit",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "daily_limit"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "send_interval_minutes",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "send_interval_minutes"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "send_window",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "send_window"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "timezone",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "timezone"
+          }
+        }
+      },
+      {
+        "ordinal": 17,
+        "name": "warmup_stage",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "warmup_stage"
+          }
+        }
+      },
+      {
+        "ordinal": 18,
+        "name": "quota_scope_id: Id<QuotaScope>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "quota_scope_id"
+          }
+        }
+      },
+      {
+        "ordinal": 19,
+        "name": "created_by: Id<User>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "created_by"
+          }
+        }
+      },
+      {
+        "ordinal": 20,
+        "name": "created_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 21,
+        "name": "updated_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Uuid",
+        "Text",
+        "Uuid",
+        "Bool",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "6e54dc0882dd8f3aecb9ee5555c0867824694a3a778256f58c304e791cb53eb2"
+}

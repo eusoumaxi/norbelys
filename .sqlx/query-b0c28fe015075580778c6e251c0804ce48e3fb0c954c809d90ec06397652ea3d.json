@@ -1,0 +1,89 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT c.status, c.credential_version, c.paused, c.account_email,\n                      w.id AS \"webhook?: Id<ProviderWebhook>\", w.signing_secret\n                 FROM connections c\n                 LEFT JOIN provider_webhooks w ON w.workspace_id = c.workspace_id AND w.connection_id = c.id\n                WHERE c.workspace_id = $1 AND c.id = $2 AND c.provider = 'norbelys'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "credential_version",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "credential_version"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "paused",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "paused"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "account_email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "account_email"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "webhook?: Id<ProviderWebhook>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "provider_webhooks",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "signing_secret",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "provider_webhooks",
+            "name": "signing_secret"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "b0c28fe015075580778c6e251c0804ce48e3fb0c954c809d90ec06397652ea3d"
+}

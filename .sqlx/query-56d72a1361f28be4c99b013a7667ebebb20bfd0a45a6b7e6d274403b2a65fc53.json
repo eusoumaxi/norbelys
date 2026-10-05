@@ -1,0 +1,65 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE messages SET state = 'claimed', attempt_number = attempt_number + 1\n          WHERE workspace_id = $1 AND id = ANY($2)\n        RETURNING id, attempt_number, recipient_count AS \"recipient_count!\", trace_parent",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "attempt_number",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "attempt_number"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "recipient_count!",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "recipient_count"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "trace_parent",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "trace_parent"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "56d72a1361f28be4c99b013a7667ebebb20bfd0a45a6b7e6d274403b2a65fc53"
+}

@@ -1,0 +1,192 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT s.campaign_id, s.id AS \"id: Id<Step>\", s.position, s.name, r.revision, r.delay_seconds,\n                  r.same_thread, r.allocation, r.ranking_objective, r.observation_window_seconds, r.minimum_sample,\n                  r.personalisation_prompt, r.winner_variant_id AS \"winner_variant_id: Id<Variant>\",\n                  r.winner_selected_at AS \"winner_selected_at: Timestamp\",\n                  (SELECT w.selected_by FROM step_winner_selections w\n                    WHERE w.workspace_id = r.workspace_id AND w.step_id = r.step_id AND w.step_revision = r.revision\n                      AND w.variant_id = r.winner_variant_id\n                    ORDER BY w.created_at DESC LIMIT 1) AS winner_selected_by\n             FROM steps s\n             JOIN step_revisions r ON r.workspace_id = s.workspace_id AND r.step_id = s.id AND r.revision = s.current_revision\n            WHERE s.workspace_id = $1 AND s.campaign_id = ANY($2)\n            ORDER BY s.campaign_id, s.position",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "campaign_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "steps",
+            "name": "campaign_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "id: Id<Step>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "steps",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "position",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "steps",
+            "name": "position"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "steps",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "revision",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "revision"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "delay_seconds",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "delay_seconds"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "same_thread",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "same_thread"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "allocation",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "allocation"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "ranking_objective",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "ranking_objective"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "observation_window_seconds",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "observation_window_seconds"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "minimum_sample",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "minimum_sample"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "personalisation_prompt",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "personalisation_prompt"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "winner_variant_id: Id<Variant>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "winner_variant_id"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "winner_selected_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "winner_selected_at"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "winner_selected_by",
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      null
+    ]
+  },
+  "hash": "3572c4fa64ec52644b6935ff5a59a437b5ed73b55997045c1e6b469f5daab514"
+}

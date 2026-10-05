@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE quota_scopes s\n                    SET paused_until = greatest(coalesce(s.paused_until, now()), now() + interval '1 day'),\n                        paused_detail = $3, updated_at = now()\n                   FROM connections c\n                  WHERE c.workspace_id = $1 AND c.id = $2\n                    AND s.workspace_id = c.workspace_id AND s.id = c.quota_scope_id",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2875586ac72bb534128475906630f078ae7ea8cb5788eef8ad5a9bf83e66b575"
+}

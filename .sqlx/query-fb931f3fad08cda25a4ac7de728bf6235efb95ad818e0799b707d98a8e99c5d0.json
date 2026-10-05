@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT body_object_key AS \"key!\" FROM inbound_messages WHERE workspace_id = $1 AND body_object_key IS NOT NULL",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "key!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "body_object_key"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "fb931f3fad08cda25a4ac7de728bf6235efb95ad818e0799b707d98a8e99c5d0"
+}

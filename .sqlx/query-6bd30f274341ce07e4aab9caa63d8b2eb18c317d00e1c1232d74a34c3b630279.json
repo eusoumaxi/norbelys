@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO recipient_holds (workspace_id, message_id, email, reason, observed_at, review_after)\n         SELECT $1, h.message_id, h.email, h.reason, h.observed_at, h.review_after\n           FROM unnest($2::uuid[], $3::text[], $4::text[], $5::timestamptz[], $6::timestamptz[])\n                AS h(message_id, email, reason, observed_at, review_after)\n         ON CONFLICT (workspace_id, message_id, email_key) DO UPDATE\n            SET reason = EXCLUDED.reason, observed_at = EXCLUDED.observed_at,\n                review_after = EXCLUDED.review_after, resolved_at = NULL, resolution = NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "TextArray",
+        "TextArray",
+        "TimestamptzArray",
+        "TimestamptzArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6bd30f274341ce07e4aab9caa63d8b2eb18c317d00e1c1232d74a34c3b630279"
+}

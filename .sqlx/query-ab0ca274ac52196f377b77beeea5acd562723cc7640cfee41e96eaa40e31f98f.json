@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE sso_connections SET metadata = $3, metadata_fetched_at = now(), status = 'active'\n                  WHERE workspace_id = $1 AND id = $2 AND issuer = $4",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Jsonb",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ab0ca274ac52196f377b77beeea5acd562723cc7640cfee41e96eaa40e31f98f"
+}

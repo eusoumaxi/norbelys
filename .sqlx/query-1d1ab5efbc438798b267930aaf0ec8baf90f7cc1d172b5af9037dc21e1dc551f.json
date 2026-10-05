@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT EXISTS (SELECT 1 FROM memberships m JOIN users u ON u.id = m.user_id\n                           WHERE m.workspace_id = $1 AND u.email_key = ascii_lower($2) AND m.status = 'active') AS \"member!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "member!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "1d1ab5efbc438798b267930aaf0ec8baf90f7cc1d172b5af9037dc21e1dc551f"
+}

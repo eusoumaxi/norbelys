@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) AS \"count!\" FROM (\n               SELECT 1 FROM connections c\n                WHERE c.workspace_id = $1\n                  AND ($2::text IS NULL OR c.status = $2)\n                  AND ($3::text IS NULL OR c.provider = $3)\n                  AND ($4::text IS NULL OR EXISTS (SELECT 1 FROM sender_identities i\n                                                    WHERE i.workspace_id = c.workspace_id AND i.connection_id = c.id\n                                                      AND $4 = ANY (i.tags)))\n                  AND ($5::uuid IS NULL OR c.quota_scope_id = $5)\n                  AND ($6::text IS NULL OR starts_with(c.account_email_key, ascii_lower($6)))\n                LIMIT $7) counted",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Uuid",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "9dd8796b4f817352b6f85925375825223f2732f0c338e7bd5a2f9d285d3673d8"
+}

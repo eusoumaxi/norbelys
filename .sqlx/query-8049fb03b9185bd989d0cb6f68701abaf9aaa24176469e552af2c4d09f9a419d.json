@@ -1,0 +1,139 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT device_code_hash, user_code, client_id, resource, scopes, interval_seconds,\n                  expires_at AS \"expires_at: Timestamp\", last_polled_at AS \"last_polled_at: Timestamp\",\n                  approved_grant_id AS \"approved_grant_id: Id<Grant>\",\n                  denied_at IS NOT NULL AS \"denied!\", consumed_at IS NOT NULL AS \"consumed!\"\n             FROM oauth_device_codes\n            WHERE device_code_hash = $1 OR user_code = $2\n            FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "device_code_hash",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "oauth_device_codes",
+            "name": "device_code_hash"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "user_code",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "oauth_device_codes",
+            "name": "user_code"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "client_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "oauth_device_codes",
+            "name": "client_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "resource",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "oauth_device_codes",
+            "name": "resource"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "scopes",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "oauth_device_codes",
+            "name": "scopes"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "interval_seconds",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "oauth_device_codes",
+            "name": "interval_seconds"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "expires_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "oauth_device_codes",
+            "name": "expires_at"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "last_polled_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "oauth_device_codes",
+            "name": "last_polled_at"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "approved_grant_id: Id<Grant>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "oauth_device_codes",
+            "name": "approved_grant_id"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "denied!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 10,
+        "name": "consumed!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      null,
+      null
+    ]
+  },
+  "hash": "8049fb03b9185bd989d0cb6f68701abaf9aaa24176469e552af2c4d09f9a419d"
+}

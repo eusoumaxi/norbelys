@@ -1,0 +1,29 @@
+name: Package releases
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+jobs:
+  versions:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+      # Tags created with GITHUB_TOKEN do not trigger push workflows. Dispatch explicitly.
+      - name: Publish tagged packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TS_TAG: ${{ steps.release.outputs['sdks/typescript--tag_name'] }}
+          PY_TAG: ${{ steps.release.outputs['sdks/python--tag_name'] }}
+          CLI_TAG: ${{ steps.release.outputs['crates/cli--tag_name'] }}
+        run: |
+          if [ -n "$TS_TAG" ]; then gh workflow run sdk.yml --repo "$GITHUB_REPOSITORY" --ref "$TS_TAG" -f publish=true -f tag="$TS_TAG"; fi
+          if [ -n "$PY_TAG" ]; then gh workflow run python.yml --repo "$GITHUB_REPOSITORY" --ref "$PY_TAG" -f publish=true -f tag="$PY_TAG"; fi
+          if [ -n "$CLI_TAG" ]; then gh workflow run norbelys-cli-release.yml --repo "$GITHUB_REPOSITORY" --ref "$CLI_TAG" -f tag="$CLI_TAG"; fi

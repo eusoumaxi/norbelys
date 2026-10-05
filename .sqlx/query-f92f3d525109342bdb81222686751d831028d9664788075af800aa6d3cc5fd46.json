@@ -1,0 +1,104 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO person_field_definitions (workspace_id, key, label, field_type, options)\n           VALUES ($1, $2, $3, $4, $5)\n           RETURNING id AS \"id: Id<Field>\", key, label, field_type, options,\n                     created_at AS \"created_at: Timestamp\", updated_at AS \"updated_at: Timestamp\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<Field>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "person_field_definitions",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "person_field_definitions",
+            "name": "key"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "label",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "person_field_definitions",
+            "name": "label"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "field_type",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "person_field_definitions",
+            "name": "field_type"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "options",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "person_field_definitions",
+            "name": "options"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "created_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "person_field_definitions",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "updated_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "person_field_definitions",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "f92f3d525109342bdb81222686751d831028d9664788075af800aa6d3cc5fd46"
+}

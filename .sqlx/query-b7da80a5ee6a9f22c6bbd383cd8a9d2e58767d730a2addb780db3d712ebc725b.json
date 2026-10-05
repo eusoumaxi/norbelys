@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) AS \"count!\" FROM (\n             SELECT 1 FROM enrollments e\n               LEFT JOIN campaign_sender_affinity a\n                 ON a.workspace_id = e.workspace_id AND a.campaign_id = e.campaign_id AND a.person_id = e.person_id\n              WHERE e.workspace_id = $1 AND ($2::uuid IS NULL OR e.campaign_id = $2)\n                AND ($3::uuid IS NULL OR e.person_id = $3) AND ($4::uuid IS NULL OR a.sender_identity_id = $4)\n                AND ($5::text IS NULL OR e.status = $5)\n              LIMIT $6) counted",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "b7da80a5ee6a9f22c6bbd383cd8a9d2e58767d730a2addb780db3d712ebc725b"
+}

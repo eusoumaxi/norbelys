@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE recipient_holds h SET resolved_at = now(), resolution = 'delivered'\n           FROM unnest($2::uuid[], $3::text[]) AS a(message_id, email_key)\n          WHERE h.workspace_id = $1 AND h.message_id = a.message_id AND h.resolved_at IS NULL\n            AND (a.email_key IS NULL OR h.email_key = a.email_key)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "TextArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c504b5d6d48f88ee9112f6b667d95f82004f5baf86f4c7c9b2cbd1c3fad0444e"
+}

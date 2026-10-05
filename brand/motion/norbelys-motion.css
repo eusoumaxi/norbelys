@@ -1,0 +1,147 @@
+/*
+ * Norbelys motion: the tokens and the signature animations, in plain CSS.
+ *
+ * The rule is "draw, don't pop": the brand's things appear the way the mark was made, as a line
+ * being drawn. Interface motion is short and quiet; brand moments are slower and happen rarely.
+ * Every animation stops under prefers-reduced-motion and leaves its final state visible.
+ *
+ * Lines that draw carry pathLength="1", so these rules need no script to measure them.
+ */
+
+:root {
+  --nb-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --nb-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --nb-ease-draw: cubic-bezier(0.65, 0, 0.35, 1);
+  --nb-duration-micro: 120ms;
+  --nb-duration-ui: 200ms;
+  --nb-duration-overlay: 240ms;
+  --nb-duration-check: 320ms;
+  --nb-duration-brand: 1400ms;
+  --nb-duration-loader: 2200ms;
+}
+
+/* The mark or an illustration draws itself once: add .nb-draw to its container. */
+.nb-draw .ln,
+.nb-draw .nb-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: nb-draw var(--nb-duration-brand) var(--nb-ease-draw) forwards;
+}
+.nb-draw .dots,
+.nb-draw .dot {
+  opacity: 0;
+  animation: nb-fade var(--nb-duration-overlay) var(--nb-ease-out)
+    calc(var(--nb-duration-brand) * 0.85) forwards;
+}
+.nb-draw .ping {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nb-ping 1800ms var(--nb-ease-out) var(--nb-duration-brand) infinite;
+}
+.ping {
+  opacity: 0.4;
+}
+
+/* The loader: the @ is drawn and undrawn, without end. */
+.nb-loader .nb-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: nb-loop var(--nb-duration-loader) var(--nb-ease-draw) infinite;
+}
+
+/* Success: a check traced in 320ms. */
+.nb-check .nb-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: nb-draw var(--nb-duration-check) var(--nb-ease-out) forwards;
+}
+
+/* Something new (a reply, a live state): the pink point breathes. */
+.nb-live {
+  animation: nb-ping 1800ms var(--nb-ease-out) infinite;
+}
+
+@keyframes nb-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes nb-loop {
+  0% {
+    stroke-dashoffset: 1;
+  }
+  50% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -1;
+  }
+}
+@keyframes nb-fade {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes nb-ping {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+/* Interface transitions, named after what moves. */
+@keyframes nb-overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes nb-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+}
+@keyframes nb-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes nb-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes nb-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nb-draw .ln,
+  .nb-draw .nb-line,
+  .nb-loader .nb-line,
+  .nb-check .nb-line {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .nb-draw .dots,
+  .nb-draw .dot {
+    animation: none;
+    opacity: 1;
+  }
+  .nb-draw .ping,
+  .nb-live {
+    animation: none;
+  }
+}

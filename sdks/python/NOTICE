@@ -1,0 +1,21 @@
+Norbelys
+Copyright 2026 The Norbelys authors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+The names "Norbelys" and its logos are not licensed under the Apache License; the Apache License does not grant permission to use them as trademarks.
+
+Third-party software
+--------------------
+
+Norbelys binaries and images include third-party components under their own licenses:
+
+- Rust crates listed in Cargo.lock. Their licenses are reviewed with cargo-deny (deny.toml):
+  permissive licenses, plus MPL-2.0 for cssparser, cssparser-macros, selectors and dtoa-short
+  (used unmodified through lol_html; source: https://crates.io).
+- SQLite (public domain), bundled through rusqlite for the tracking spool.
+- DuckDB (MIT), bundled into the separate `analytics` image only.
+- JavaScript packages listed in bun.lock, for the dashboard and marketing site.
+
+Published container images carry a software bill of materials (SBOM) and provenance
+attestations generated at build time (.github/workflows/images.yml).

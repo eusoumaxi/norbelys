@@ -1,0 +1,62 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT status AS \"status!\", current_position AS \"position!\", count(*) AS \"count!\",\n                  min(next_run_at) FILTER (WHERE status = 'active') AS \"waiting?: Timestamp\",\n                  count(*) FILTER (WHERE status = 'active' AND message_id IS NOT NULL) AS \"on_its_way!\"\n             FROM enrollments\n            WHERE workspace_id = $1 AND campaign_id = $2\n            GROUP BY status, current_position",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "status!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "position!",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "current_position"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "waiting?: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "on_its_way!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "05bff11d87a6f25fe65eedd188d9da3fc862c53d48724dc41c87e7ac3825826e"
+}

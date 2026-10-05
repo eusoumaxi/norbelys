@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE threads SET status = coalesce($3, status),\n                snoozed_until = CASE WHEN $3::text IS NULL THEN snoozed_until ELSE $4 END,\n                unread = coalesce($5, unread)\n          WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Timestamptz",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7713cca2d8767a6d3df733456d15238062bd19c92cae5590d02b2a389743dd44"
+}

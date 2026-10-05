@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE recipient_holds SET resolved_at = now(), resolution = 'manual'\n          WHERE workspace_id = $1 AND message_id = $2 AND resolved_at IS NULL\n      RETURNING email",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "recipient_holds",
+            "name": "email"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "210c907c88f5f972fb957964c156967fdc182c0a4d9d52ad04828f47159d8ee9"
+}

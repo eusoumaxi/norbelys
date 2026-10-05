@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT person_id FROM group_people\n              WHERE workspace_id = $1 AND group_id = $2 AND ($3::uuid IS NULL OR person_id > $3)\n              ORDER BY person_id LIMIT $4",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "person_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "group_people",
+            "name": "person_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "30773e756b83637f66984aa87cb3e17a57580c268efbf4ed687c66e7724f0649"
+}

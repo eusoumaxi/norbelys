@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM recipient_validations WHERE (workspace_id, email_key) IN (\n                 SELECT workspace_id, email_key FROM recipient_validations WHERE expires_at < now() LIMIT $1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "10b6a3f17b8621877833ef55408fdd21dac553c9561dbccc0a22ddededfb1730"
+}

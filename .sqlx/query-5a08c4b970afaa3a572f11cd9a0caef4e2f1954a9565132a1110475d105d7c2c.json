@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE ai_calls SET review_requested = $3\n          WHERE workspace_id = $1 AND id = $2 AND state = 'settled' AND outcome = 'completed'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5a08c4b970afaa3a572f11cd9a0caef4e2f1954a9565132a1110475d105d7c2c"
+}

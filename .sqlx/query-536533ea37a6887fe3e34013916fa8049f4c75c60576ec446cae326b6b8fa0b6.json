@@ -1,0 +1,63 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT n.nspname::text AS \"schema!\", coalesce(r.relname, c.relname)::text AS \"table!\",\n                  coalesce(s.n_dead_tup, 0) AS \"dead!\", coalesce(s.n_live_tup, 0) AS \"live!\",\n                  age(c.relfrozenxid)::bigint AS \"xid_age!\", mxid_age(c.relminmxid)::bigint AS \"multixact_age!\",\n                  EXISTS (SELECT 1 FROM pg_stat_progress_vacuum v WHERE v.relid = c.oid) AS \"vacuuming!\"\n             FROM pg_class c\n             JOIN pg_namespace n ON n.oid = c.relnamespace\n             LEFT JOIN pg_stat_all_tables s ON s.relid = c.oid\n             LEFT JOIN pg_class r ON r.oid = pg_partition_root(c.oid)\n            WHERE c.relkind IN ('r', 'm', 't')",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "schema!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "table!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "dead!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "live!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "xid_age!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "multixact_age!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 6,
+        "name": "vacuuming!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "536533ea37a6887fe3e34013916fa8049f4c75c60576ec446cae326b6b8fa0b6"
+}

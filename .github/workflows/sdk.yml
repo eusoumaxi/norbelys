@@ -1,0 +1,106 @@
+name: TypeScript SDK
+
+on:
+  workflow_call:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish a verified SDK tag to npm
+        type: boolean
+        default: false
+      tag:
+        description: Immutable typescript-vX.Y.Z release tag
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sdk-${{ github.event.pull_request.number || github.ref }}-${{ inputs.publish && 'publish' || 'check' }}
+  cancel-in-progress: ${{ !inputs.publish }}
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+        working-directory: sdks/typescript
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+        with:
+          cache-scope: typescript-sdk
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 20
+
+      - name: Check and build with cached task results
+        working-directory: .
+        run: bunx turbo run drift typecheck type-coverage coverage build --filter=@norbelys/sdk
+
+      - name: Load the bundle in the oldest supported Node
+        run: |
+          node --input-type=module -e '
+            import Norbelys, { APIError } from "./dist/index.js";
+            new Norbelys({ apiKey: "ak_ci" });
+            if (typeof APIError !== "function") process.exit(1);
+          '
+
+      - name: Check the package as npm publishes it
+        run: |
+          bunx publint@0.3.24 --strict
+          bunx @arethetypeswrong/cli@0.18.5 --pack . --profile esm-only
+
+  publish:
+    needs: check
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == format('refs/tags/{0}', inputs.tag) && startsWith(inputs.tag, 'typescript-v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write # npm trusted publishing and provenance
+    defaults:
+      run:
+        shell: bash
+        working-directory: sdks/typescript
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.tag }}
+
+      - name: Install pinned Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.4.2
+
+      # Trusted publishing needs npm 11.5.1+ on Node 22.14+; Node 24 ships both.
+      - name: Install Node with npm
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        working-directory: .
+        run: bun install --frozen-lockfile
+
+      - name: Verify the release version
+        env:
+          TAG: ${{ inputs.tag }}
+        run: test "typescript-v$(node -p 'require("./package.json").version')" = "$TAG"
+
+      # npm publishes the source checked out from the immutable tag.
+      - name: Publish with provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public

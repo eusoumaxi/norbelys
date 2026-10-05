@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE delivery_queue\n            SET state = 'queued', lease_owner = NULL, lease_expires_at = NULL, submission_started_at = NULL,\n                reserved_day = NULL, run_at = coalesce($3, run_at)\n          WHERE workspace_id = $1 AND message_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0203c5d368d8290de7ad9f1b4032f0ef67960a49ef1842fe6657417ff7685e9b"
+}

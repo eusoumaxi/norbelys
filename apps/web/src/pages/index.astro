@@ -1,0 +1,60 @@
+---
+import Base from "../layouts/base.astro";
+import Brand from "../components/brand.astro";
+import Illustration from "../components/illustration.astro";
+import Icon from "../components/icon.astro";
+import CampaignDemo from "../components/campaign-demo.astro";
+import CampaignOverview from "../components/campaign-overview.astro";
+import { APP, DOCS, SOURCE } from "../links";
+
+const questions = [
+  ["Can I use the mailboxes I already have?", "Yes. Connect Google, Microsoft, or a mailbox with SMTP and IMAP. You choose the addresses your campaigns send from, with a daily budget and sending pace for each connection."],
+  ["What happens when someone replies?", "Replies appear alongside the messages that started the thread. You can set a campaign to stop a person’s follow-ups when a human reply is detected, so you can take it from there."],
+  ["How does warm-up work?", "Norbelys gradually increases a connection’s daily sending budget through a configurable ramp. It does not generate artificial opens or replies, and it does not guarantee inbox placement."],
+  ["Where does AI fit in?", "You choose the audience, write the campaign, and decide when to start it. Optional AI can generate personalisation snippets from your chosen prompt and help classify inbound messages. You stay in charge of the campaign."],
+  ["Can I connect it to my own tools?", "Yes. A public API, webhooks, a TypeScript SDK, a CLI, and MCP give you ways to work with Norbelys beyond the dashboard. The source code is available under Apache 2.0."],
+];
+---
+
+<Base title="Norbelys — Cold email. Considered, end to end.">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header container">
+    <a href="/" class="brand-link" aria-label="Norbelys home"><Brand /></a>
+    <nav class="desktop-nav" aria-label="Main navigation"><a href="#how-it-works">Product</a><a href="#the-details">Why Norbelys</a><a href={DOCS}>Resources <Icon name="external" /></a></nav>
+    <div class="header-actions"><a class="sign-in" href={APP}>Sign in</a><a class="button button-small" href={APP}>Get started <Icon name="external" /></a></div>
+    <details class="mobile-menu"><summary><span class="sr-only">Menu</span><Icon name="menu" /></summary><nav aria-label="Mobile navigation"><a href="#how-it-works">Product</a><a href="#the-details">Why Norbelys</a><a href={DOCS}>Resources</a><a href={APP}>Sign in</a></nav></details>
+  </header>
+
+  <main id="main">
+    <section class="hero container" aria-labelledby="hero-title">
+      <div class="hero-copy"><h1 id="hero-title">Cold email.<br />Considered,<br /><span>end to end.</span></h1><p>Run personalised campaigns from your own mailboxes. Set the sending rules, follow up with purpose, and keep every reply in view.</p><div class="hero-actions"><a href={APP} class="button">Start a campaign <Icon name="external" /></a><a href="#how-it-works" class="button button-secondary">See the workflow <Icon name="down" /></a></div></div>
+      <CampaignOverview />
+    </section>
+
+    <div class="provider-strip container"><p>Works with the mailboxes<br />you already use.</p><ul aria-label="Supported mailbox connections"><li>Google Workspace</li><li>Microsoft 365</li><li>SMTP + IMAP</li></ul></div>
+
+    <section id="how-it-works" class="product-section container" aria-label="Explore an example campaign">
+      <div class="section-heading"><h2>From first hello<br />to a real conversation.</h2><p>A message is only the beginning. See how the details stay connected as a campaign moves forward.</p></div>
+      <CampaignDemo />
+    </section>
+
+    <section id="the-details" class="care-section container section-space" aria-labelledby="care-title">
+      <div class="section-intro"><h2 id="care-title">The right context.<br />A considered message.</h2><p>Turn the details you know into messages with a reason to exist. Then give every follow-up a place in the process.</p><a class="text-link" href={DOCS}>Explore campaigns <Icon name="external" /></a></div>
+      <figure class="people-example"><figcaption><span>The context behind the conversation</span><span class="example-label">Example people</span></figcaption><div class="people-table"><div class="people-table-head"><span>Person</span><span>Context</span></div><div><strong>Alex Morgan</strong><span><mark>Partner network · Europe</mark></span></div><div><strong>Sam Rivera</strong><span>Channel partnerships</span></div><div><strong>Robin Chen</strong><span>New market launch</span></div></div><div class="variant-example"><div><Illustration name="people" decorative /><span>Context becomes a sentence</span></div><div><blockquote><span class="variant-label">Introduction · Variant A</span><p>“I noticed you're <mark>expanding your partner network in Europe</mark>. We work with regional partners who could be a good fit for your next chapter.”</p></blockquote><blockquote><span class="variant-label">Introduction · Variant B</span><p>“As you build your <mark>European partner network</mark>, would an introduction to regional partners be useful?”</p></blockquote></div></div></figure>
+    </section>
+
+    <section class="honesty-section container section-space" aria-labelledby="honesty-title">
+      <div class="report-example"><div class="report-header"><span>Partnerships · EMEA</span><span>Illustrative evidence</span></div><div class="evidence-title"><h3>A conversation,<br />with a record.</h3><span>12 May · Europe/London</span></div><ol class="evidence-list"><li><time>09:15</time><div><strong>Submission accepted</strong><span>Source: provider response</span><p>The provider accepted the message. Delivery remains unconfirmed.</p></div></li><li><time>10:42</time><div><strong>Human reply detected</strong><span>Source: inbox</span><p>Conversation available. The configured rule stops follow-ups.</p></div></li><li class="evidence-pending"><span>—</span><div><strong>Delivery evidence pending</strong><span>Source: no report received</span><p>Pending stays visible until evidence arrives.</p></div></li></ol><div class="report-foot"><Illustration name="reports" decorative /><span>The facts, as they arrive.</span></div></div>
+      <div class="detail-copy"><h2 id="honesty-title">A clear view.<br />An honest record.</h2><p>Keep replies with the messages that started them. See the delivery evidence available for your campaigns. If a report hasn’t arrived, you’ll see “Pending”.</p><a class="text-link" href={`${DOCS}/inbox-feedback`}>Get to know your reports <Icon name="external" /></a></div>
+    </section>
+
+    <section class="open-section" aria-labelledby="open-title"><div class="container open-layout"><div><h2 id="open-title">Part of your workflow.<br />On your terms.</h2><p>Start in the dashboard. Extend the same operations through the tools you use. An open-source foundation lets you see how it works.</p><a class="text-link" href={SOURCE}>Explore the source <Icon name="external" /></a></div><div class="connection-map"><div class="connection-center"><Brand /><span>Your campaigns and conversations</span></div><div class="contract-example"><span>TypeScript SDK · Pause a campaign</span><pre><code>await client.campaigns.pause(campaign.id);</code></pre><p>No new messages are created. Queued messages wait until the campaign starts again.</p></div><div class="webhook-example"><div><span>Webhooks · Business events</span><code>inbound_message.received</code><code>enrollment.stopped</code></div><Illustration name="webhook" decorative /></div><a class="text-link" href={DOCS}>Read the public API <Icon name="external" /></a></div></div></section>
+
+    <section class="faq-section container section-space" aria-labelledby="faq-title"><div><h2 id="faq-title">A closer look.</h2><p>The practical details, before you start.</p></div><div class="faq-list">{questions.map(([question, answer]) => <details><summary>{question}<Icon name="add" /></summary><p>{answer}</p></details>)}</div></section>
+
+    <section class="closing-section"><div class="container closing-layout"><div><h2>Put your next campaign<br />in motion.</h2><p>A considered approach, from the first introduction.</p><a href={APP} class="button">Start a campaign <Icon name="external" /></a></div><Illustration name="welcome" decorative /></div></section>
+  </main>
+
+  <footer class="site-footer container"><a class="brand-link" href="/" aria-label="Norbelys home"><Brand /></a><span class="copyright">© {new Date().getFullYear()} Norbelys</span><nav aria-label="Footer navigation"><a href={DOCS}>Documentation</a><a href={SOURCE}>GitHub <Icon name="external" /></a><a href={APP}>Sign in</a></nav></footer>
+  <script src="../homepage.ts"></script>
+</Base>

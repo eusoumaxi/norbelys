@@ -1,0 +1,10 @@
+# SQLx CLI output: keep it for offline builds, collapse generated diffs on GitHub.
+.sqlx/*.json linguist-generated=true
+
+# Public OpenAPI contract and generated SDK clients; collapse generated diffs.
+crates/server/openapi.json linguist-generated=true
+apps/docs/openapi.json linguist-generated=true
+sdks/typescript/src/generated/** linguist-generated=true
+sdks/python/src/norbelys/_generated/** linguist-generated=true
+apps/app/src/routeTree.gen.ts linguist-generated=true
+apps/app/worker/env.d.ts linguist-generated=true

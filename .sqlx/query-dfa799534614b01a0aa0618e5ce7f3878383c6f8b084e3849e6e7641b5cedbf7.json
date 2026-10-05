@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT processed_to FROM rollup_watermarks WHERE name = $1 FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "processed_to",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "rollup_watermarks",
+            "name": "processed_to"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "dfa799534614b01a0aa0618e5ce7f3878383c6f8b084e3849e6e7641b5cedbf7"
+}

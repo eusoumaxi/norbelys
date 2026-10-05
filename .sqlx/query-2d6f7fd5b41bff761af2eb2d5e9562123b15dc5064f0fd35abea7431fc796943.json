@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO job_schedules (name, kind, payload, cron, next_run_at) VALUES ($1, $1, $2, $3, now())\n             ON CONFLICT (name) DO UPDATE SET kind = EXCLUDED.kind, payload = EXCLUDED.payload, cron = EXCLUDED.cron,\n                    next_run_at = CASE WHEN job_schedules.cron = EXCLUDED.cron THEN job_schedules.next_run_at ELSE now() END",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Jsonb",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2d6f7fd5b41bff761af2eb2d5e9562123b15dc5064f0fd35abea7431fc796943"
+}

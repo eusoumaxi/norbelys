@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT k.workspace_id AS \"workspace_id!\", k.import_id AS \"import_id!\"\n             FROM unnest($1::uuid[], $2::uuid[]) AS k(workspace_id, import_id)\n            WHERE k.import_id < uuidv7_boundary(now() - make_interval(days => $3))\n              AND NOT EXISTS (SELECT 1 FROM imports i\n                               WHERE i.workspace_id = k.workspace_id AND i.id = k.import_id)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "workspace_id!",
+        "type_info": "Uuid",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "import_id!",
+        "type_info": "Uuid",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray",
+        "UuidArray",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "e3fc2fec0e974c14d21b74edd02fd9f2cd46c8b617d8e20eb3e3e66cd39f6956"
+}

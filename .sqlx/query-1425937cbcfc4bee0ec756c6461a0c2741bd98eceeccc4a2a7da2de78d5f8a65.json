@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE sessions\n              SET auth_method = $3, sso_connection_id = $4, sso_policy_version = $5, authenticated_at = now(),\n                  active_workspace_id = $6,\n                  expires_at = least(expires_at, now() + make_interval(secs => $7)),\n                  idle_expires_at = least(idle_expires_at, now() + make_interval(secs => $7))\n            WHERE id = (SELECT id FROM sessions\n                         WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now() AND idle_expires_at > now()\n                           AND ($2::uuid IS NULL OR id = $2)\n                         ORDER BY id DESC LIMIT 1 FOR UPDATE)\n           RETURNING id AS \"id: Id<Session>\", expires_at AS \"expires_at: Timestamp\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<Session>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "expires_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "expires_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Uuid",
+        "Int4",
+        "Uuid",
+        "Float8"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "1425937cbcfc4bee0ec756c6461a0c2741bd98eceeccc4a2a7da2de78d5f8a65"
+}

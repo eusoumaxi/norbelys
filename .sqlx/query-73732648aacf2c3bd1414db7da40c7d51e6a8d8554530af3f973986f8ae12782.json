@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE quota_scopes s\n                    SET paused_until = NULL, paused_detail = NULL, updated_at = now()\n                   FROM connections c\n                  WHERE c.workspace_id = $1 AND c.id = $2\n                    AND s.workspace_id = c.workspace_id AND s.id = c.quota_scope_id\n                    AND starts_with(s.paused_detail, $3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "73732648aacf2c3bd1414db7da40c7d51e6a8d8554530af3f973986f8ae12782"
+}

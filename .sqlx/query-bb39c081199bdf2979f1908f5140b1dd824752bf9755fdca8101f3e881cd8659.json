@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO rollup_watermarks (name, processed_to) VALUES ($1, uuidv7_boundary($2::date::timestamp AT TIME ZONE 'UTC'))\n         ON CONFLICT (name) DO UPDATE SET processed_to = greatest(rollup_watermarks.processed_to, excluded.processed_to), updated_at = now()",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Date"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "bb39c081199bdf2979f1908f5140b1dd824752bf9755fdca8101f3e881cd8659"
+}

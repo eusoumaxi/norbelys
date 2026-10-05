@@ -1,0 +1,18 @@
+# Disposable test fixture. No persistent volume or shared development database is used.
+name: norbelys-coverage
+services:
+  postgres:
+    image: postgres:18.6-trixie@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+    environment:
+      POSTGRES_USER: norbelys
+      POSTGRES_PASSWORD: coverage-only
+      POSTGRES_DB: norbelys
+      # Matches the isolated CI fixture; role logins exist only in this disposable cluster.
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports: ["127.0.0.1::5432"]
+    tmpfs: ["/var/lib/postgresql:size=2g"]
+    healthcheck:
+      test: [CMD, pg_isready, -U, norbelys, -d, norbelys]
+      interval: 2s
+      timeout: 2s
+      retries: 30

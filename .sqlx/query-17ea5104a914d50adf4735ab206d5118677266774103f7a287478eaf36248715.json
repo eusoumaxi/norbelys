@@ -1,0 +1,50 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO inbound_messages (workspace_id, receive_binding_id, connection_id, transport_identity, transport_key,\n                                         internet_message_id, in_reply_to, references_ids, thread_id, message_id, person_id,\n                                         from_email, from_name, subject, received_at, classification, classification_source,\n                                         review_requested_at, review_proposal, evidence, body_text, body_object_key, size_bytes,\n                                         truncated, content_hash)\n           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'rules',\n                   CASE WHEN $17::jsonb IS NULL THEN NULL ELSE now() END, $17, $18, $19, $20, $21, $22, $23)\n           ON CONFLICT (workspace_id, receive_binding_id, transport_key) DO NOTHING\n           RETURNING id AS \"id: Id<InboundMessage>\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<InboundMessage>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Jsonb",
+        "Text",
+        "Text",
+        "Text",
+        "TextArray",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Text",
+        "Jsonb",
+        "Text",
+        "Text",
+        "Text",
+        "Int4",
+        "Bool",
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "17ea5104a914d50adf4735ab206d5118677266774103f7a287478eaf36248715"
+}

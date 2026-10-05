@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE quota_scope_usage\n                SET messages_reserved = messages_reserved - $4 - $5, messages_used = messages_used + $5,\n                    recipients_reserved = recipients_reserved - $6 - $7, recipients_used = recipients_used + $7\n              WHERE workspace_id = $1 AND scope_id = $2 AND day = $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Date",
+        "Int4",
+        "Int4",
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ece84bbd5d8dad52fc94245518b787cfb884687371b6e42b3624f67373177f0a"
+}

@@ -1,0 +1,36 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE webhook_deliveries SET attempt = attempt + 1, state = $4,\n                next_attempt_at = CASE WHEN $4 = 'pending' THEN now() + make_interval(secs => $5) ELSE next_attempt_at END,\n                response_status = $6, response_excerpt = $7, last_attempt_at = $8, last_duration_ms = $9,\n                delivered_at = CASE WHEN $4 = 'delivered' THEN now() ELSE delivered_at END\n          WHERE workspace_id = $1 AND event_id = $2 AND id = $3 AND state = 'pending'\n         RETURNING attempt",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "attempt",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "webhook_deliveries",
+            "name": "attempt"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Float8",
+        "Int2",
+        "Text",
+        "Timestamptz",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b57d29825c1596c458235951e420a85aff65b180e6b906ca98b90d729862bccd"
+}

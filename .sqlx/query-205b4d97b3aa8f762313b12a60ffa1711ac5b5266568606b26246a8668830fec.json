@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT uuidv7_boundary(now() - (retention - period)) AS \"floor!\" FROM partition_policies WHERE table_name = 'outbox_events'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "floor!",
+        "type_info": "Uuid",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "205b4d97b3aa8f762313b12a60ffa1711ac5b5266568606b26246a8668830fec"
+}

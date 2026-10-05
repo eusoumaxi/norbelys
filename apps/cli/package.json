@@ -1,0 +1,22 @@
+{
+  "name": "@norbelys/cli-downloads",
+  "version": "0.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "bun build src/index.ts --target=browser --format=esm --outdir dist",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "check": "bun run typecheck",
+    "type-coverage": "type-coverage --project tsconfig.json --at-least 100 --detail --strict --report-semantic-error",
+    "coverage": "bun test --coverage"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260925.2",
+    "@types/bun": "~1.3.14",
+    "typescript": "~7.0.2",
+    "wrangler": "^4.142.0"
+  }
+}

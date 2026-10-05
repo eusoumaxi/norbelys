@@ -1,0 +1,44 @@
+name: Reproducible JavaScript setup
+description: Install pinned Bun and restore dependency and task result caches
+inputs:
+  cache-scope:
+    description: Job or matrix scope; prevents immutable cache entries racing across suites
+    default: ""
+outputs:
+  task-cache-key:
+    description: Cache key for retaining successful tasks if a later gate fails
+    value: ${{ steps.key.outputs.value }}
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        echo "ASTRO_TELEMETRY_DISABLED=1" >> "$GITHUB_ENV"
+        echo "WRANGLER_SEND_METRICS=false" >> "$GITHUB_ENV"
+        echo "TURBO_TELEMETRY_DISABLED=1" >> "$GITHUB_ENV"
+    - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+      with:
+        bun-version: 1.4.2
+    - id: key
+      shell: bash
+      env:
+        CACHE_SCOPE: ${{ inputs.cache-scope || github.job }}
+        CACHE_PREFIX: tasks-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('bun.lock', 'patches/**', 'Cargo.lock', 'uv.lock', 'rust-toolchain.toml', 'turbo.json') }}
+      run: |
+        [[ "$CACHE_SCOPE" =~ ^[A-Za-z0-9._-]+$ ]] || exit 1
+        echo "value=$CACHE_PREFIX-$CACHE_SCOPE-${{ github.sha }}" >> "$GITHUB_OUTPUT"
+        echo "prefix=$CACHE_PREFIX-$CACHE_SCOPE-" >> "$GITHUB_OUTPUT"
+    - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25
+      with:
+        path: ~/.bun/install/cache
+        key: bun-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('bun.lock', 'patches/**') }}
+        restore-keys: |
+          bun-${{ runner.os }}-${{ runner.arch }}-
+    - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25
+      with:
+        path: .turbo
+        key: ${{ steps.key.outputs.value }}
+        restore-keys: ${{ steps.key.outputs.prefix }}
+    - run: bun install --frozen-lockfile
+      shell: bash
+      working-directory: ${{ github.workspace }}

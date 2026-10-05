@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT NOT EXISTS (SELECT 1 FROM delivery_queue WHERE message_id >= $1 AND message_id < $2)\n                  AND NOT EXISTS (SELECT 1 FROM attempts WHERE message_id >= $1 AND message_id < $2 AND finished_at IS NULL)\n                  AS \"open!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "open!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "c2d3cfabd9674c5d0ad9ac9ffd945e231b917301126004ae8ea964f78b7fd780"
+}

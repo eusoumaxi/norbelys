@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE recovery_codes SET used_at = now()\n          WHERE id = (SELECT id FROM recovery_codes\n                       WHERE user_id = $1 AND code_hash = $2 AND used_at IS NULL AND created_at < $3\n                       ORDER BY id LIMIT 1 FOR UPDATE)\n         RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "recovery_codes",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Bytea",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "804a44890d1fdb02cfba0ce85e217600f60aad5411f347281c303f33c59e3f45"
+}

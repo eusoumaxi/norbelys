@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT EXISTS (SELECT 1 FROM partition_leaves\n                           WHERE parent = 'stats_increments' AND lower <= $1::date::timestamp AT TIME ZONE 'UTC'\n                             AND $1::date::timestamp AT TIME ZONE 'UTC' < upper AND dropped_at IS NOT NULL) AS \"gone!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "gone!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Date"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "e5286ede68d6bc31d4c898c3ed8331dae99ffc99da5d1c545f6f1486c1dfa9c8"
+}

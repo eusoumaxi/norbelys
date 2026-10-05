@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO sessions (id, user_id, token_hash, auth_method, sso_connection_id, sso_policy_version,\n                                 authenticated_at, expires_at, idle_expires_at, ip_hash, user_agent)\n           VALUES ($1, $2, $3, $4, $5, $6, coalesce($7, now()), now() + make_interval(secs => $8),\n                   now() + make_interval(secs => $9), $10, $11)\n           RETURNING expires_at AS \"expires_at: Timestamp\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "expires_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "expires_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Bytea",
+        "Text",
+        "Uuid",
+        "Int4",
+        "Timestamptz",
+        "Float8",
+        "Float8",
+        "Bytea",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "5a436b0e97177ee5820a99029cdfe1f27a01fe83f4061e7fe4774faa1856676b"
+}

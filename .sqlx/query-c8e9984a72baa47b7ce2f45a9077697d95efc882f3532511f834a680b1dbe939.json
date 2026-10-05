@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) AS \"count!\" FROM (\n               SELECT 1 FROM inbound_messages\n                WHERE workspace_id = $1 AND deleted_at IS NULL\n                  AND ($2::uuid IS NULL OR thread_id = $2) AND ($3::uuid IS NULL OR connection_id = $3)\n                  AND ($4::text IS NULL OR classification = $4)\n                  AND ($5::bool IS NULL OR $5 = (review_requested_at IS NOT NULL AND review_decision IS NULL))\n                  AND ($6::timestamptz IS NULL OR received_at >= $6)\n                LIMIT $7) counted",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Bool",
+        "Timestamptz",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "c8e9984a72baa47b7ce2f45a9077697d95efc882f3532511f834a680b1dbe939"
+}

@@ -1,0 +1,51 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT c.id, c.next_send_at AS \"next_send_at: Timestamp\",\n                  (s.id IS NOT NULL AND s.consecutive_failures > 0 AND s.paused_until <= now()) AS \"scope_half_open!\"\n             FROM connections c LEFT JOIN quota_scopes s ON (s.workspace_id, s.id) = (c.workspace_id, c.quota_scope_id)\n            WHERE c.workspace_id = $1 AND c.status = 'active' AND NOT c.paused\n              AND c.created_at <= $2 AND c.next_send_at <= $2 AND (c.next_claim_at IS NULL OR c.next_claim_at <= now())\n              AND (c.paused_until IS NULL OR c.paused_until <= now())\n              AND (s.paused_until IS NULL OR s.paused_until <= now())\n              AND CASE WHEN c.send_interval_minutes IS NULL\n                       THEN EXISTS (SELECT 1 FROM delivery_queue q WHERE (q.workspace_id, q.connection_id) = (c.workspace_id, c.id)\n                                                                    AND q.state = 'queued' AND q.run_at <= now())\n                       ELSE NOT EXISTS (SELECT 1 FROM delivery_queue p WHERE (p.workspace_id, p.connection_id) = (c.workspace_id, c.id)\n                                                                        AND p.state <> 'queued') END\n              AND (c.next_send_at, c.id) > ($3, $4)\n            ORDER BY c.next_send_at, c.id\n            LIMIT $5",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "next_send_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "next_send_at"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "scope_half_open!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz",
+        "Timestamptz",
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "2893fd59a6871d7304b95e051c4a345f4106c32656e02b5e4fe13d9d88ae6598"
+}

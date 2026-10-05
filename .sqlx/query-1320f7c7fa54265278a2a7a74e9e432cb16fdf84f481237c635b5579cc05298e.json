@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT a.attname::text AS \"name!\", t.typname::text AS \"type_name!\"\n             FROM pg_attribute a JOIN pg_type t ON t.oid = a.atttypid\n            WHERE a.attrelid = $1::text::regclass AND a.attnum > 0 AND NOT a.attisdropped\n            ORDER BY a.attnum",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "type_name!",
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "1320f7c7fa54265278a2a7a74e9e432cb16fdf84f481237c635b5579cc05298e"
+}

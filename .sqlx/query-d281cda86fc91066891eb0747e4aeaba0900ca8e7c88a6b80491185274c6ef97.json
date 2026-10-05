@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT conname::text AS \"name!\" FROM pg_constraint\n                WHERE conrelid = $1::text::regclass AND contype = 'f' AND conparentid = 0",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name!",
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "d281cda86fc91066891eb0747e4aeaba0900ca8e7c88a6b80491185274c6ef97"
+}

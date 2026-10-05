@@ -1,0 +1,55 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT day AS \"day: Date\", used, reserved FROM connection_usage\n            WHERE workspace_id = $1 AND connection_id = $2 AND day >= $3 AND day <= $4",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "day: Date",
+        "type_info": "Date",
+        "origin": {
+          "Table": {
+            "table": "connection_usage",
+            "name": "day"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "used",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "connection_usage",
+            "name": "used"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "reserved",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "connection_usage",
+            "name": "reserved"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Date",
+        "Date"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "ab4e26e2534cb7f6d71293b7a67b32ccf179cf8699387d3d5af8df24cbf4389d"
+}

@@ -1,0 +1,50 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT q.message_id, q.submission_started_at IS NOT NULL AS \"marked!\", m.attempt_number\n             FROM delivery_queue q JOIN messages m ON m.workspace_id = q.workspace_id AND m.id = q.message_id\n            WHERE q.workspace_id = $1 AND q.connection_id = $2 AND q.state <> 'queued' AND q.lease_expires_at < now()\n              AND (q.message_id, q.lease_generation) IN (SELECT * FROM unnest($3::uuid[], $4::bigint[]))\n            ORDER BY q.message_id\n              FOR UPDATE OF q, m",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "message_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "delivery_queue",
+            "name": "message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "marked!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "attempt_number",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "attempt_number"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "UuidArray",
+        "Int8Array"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      false
+    ]
+  },
+  "hash": "e2a0a64cbe9d80c8242b067ccb2fa4890362f1e7bf5a6da1661703961eea50c5"
+}

@@ -1,0 +1,50 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT slot_offset AS \"offset!\", paced AS \"paced!\", due AS \"due!\"\n             FROM slot_projection ORDER BY slot_offset",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "offset!",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "slot_projection",
+            "name": "slot_offset"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "paced!",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "slot_projection",
+            "name": "paced"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "due!",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "slot_projection",
+            "name": "due"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "84521315cb1d6a228bf85e18e153de06a3287624ba2789546c31461af6795ffb"
+}

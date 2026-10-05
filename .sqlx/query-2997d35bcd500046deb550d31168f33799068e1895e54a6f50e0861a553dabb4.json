@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO variant_revisions (workspace_id, variant_id, version, subject, preheader, html, text)\n             VALUES ($1, $2, 1, $3, 'For {{ person.given_name }}',\n                     '<p>Hi {{ person.given_name }} at {{ person.fields.company_size | default(\"your team\") }}</p>',\n                     'Hi {{ person.given_name }}')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2997d35bcd500046deb550d31168f33799068e1895e54a6f50e0861a553dabb4"
+}

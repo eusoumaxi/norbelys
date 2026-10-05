@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT d.workspace_id FROM dispatch_workspaces d\n          WHERE EXISTS (\n                SELECT 1 FROM connections c LEFT JOIN quota_scopes s ON (s.workspace_id, s.id) = (c.workspace_id, c.quota_scope_id)\n                 WHERE c.workspace_id = d.workspace_id AND c.status = 'active' AND NOT c.paused\n                   AND (c.next_claim_at IS NULL OR c.next_claim_at <= now())\n                   AND (c.paused_until IS NULL OR c.paused_until <= now())\n                   AND (s.paused_until IS NULL OR s.paused_until <= now())\n                   AND ((c.next_send_at <= now()\n                         AND CASE WHEN c.send_interval_minutes IS NULL\n                                  THEN EXISTS (SELECT 1 FROM delivery_queue q WHERE (q.workspace_id, q.connection_id) = (c.workspace_id, c.id)\n                                                                               AND q.state = 'queued' AND q.run_at <= now())\n                                  ELSE NOT EXISTS (SELECT 1 FROM delivery_queue p WHERE (p.workspace_id, p.connection_id) = (c.workspace_id, c.id)\n                                                                                   AND p.state <> 'queued') END)\n                        OR (EXISTS (SELECT 1 FROM delivery_queue q WHERE (q.workspace_id, q.connection_id) = (c.workspace_id, c.id)\n                                                                     AND q.state = 'queued' AND NOT q.paced AND q.run_at <= now())\n                            AND (c.send_interval_minutes IS NULL\n                                 OR NOT EXISTS (SELECT 1 FROM delivery_queue p WHERE (p.workspace_id, p.connection_id) = (c.workspace_id, c.id)\n                                                                                AND p.state <> 'queued')))))\n          ORDER BY d.sender_turn_at\n          LIMIT 1\n            FOR UPDATE OF d SKIP LOCKED",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "workspace_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "dispatch_workspaces",
+            "name": "workspace_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "61ad0998445c4392962832ee8c96f9abfec7eefd0026494c8263c39acc17423f"
+}

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM login_codes WHERE id IN (\n                 SELECT id FROM login_codes WHERE expires_at < now() - interval '1 day' LIMIT $1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0dbcd6290742b9a3b9970a13c39562c65c228997907f99024061c3d23155c702"
+}

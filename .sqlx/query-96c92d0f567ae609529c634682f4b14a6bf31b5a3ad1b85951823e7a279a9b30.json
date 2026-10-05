@@ -1,0 +1,44 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO enrollments (workspace_id, campaign_id, person_id, next_run_at)\n         SELECT p.workspace_id, $2, p.id,\n                greatest(now(), $4::timestamptz,\n                         (SELECT max(m.sent_at) FROM messages m\n                           WHERE m.workspace_id = p.workspace_id AND m.person_id = p.id AND m.kind = 'campaign')\n                         + make_interval(hours => $5))\n           FROM people p\n          WHERE p.workspace_id = $1 AND p.id = ANY($3)\n            AND NOT EXISTS (SELECT 1 FROM suppressions s WHERE s.workspace_id = p.workspace_id AND s.email_key = p.email_key)\n          ORDER BY p.id\n         ON CONFLICT (workspace_id, campaign_id, person_id) WHERE status IN ('active', 'paused') DO NOTHING\n         RETURNING id, person_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "person_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "person_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "UuidArray",
+        "Timestamptz",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "96c92d0f567ae609529c634682f4b14a6bf31b5a3ad1b85951823e7a279a9b30"
+}

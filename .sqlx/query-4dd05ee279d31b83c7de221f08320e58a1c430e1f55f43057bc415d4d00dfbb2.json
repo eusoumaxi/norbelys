@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT category FROM attempts\n              WHERE workspace_id = $1 AND connection_id = $2 AND finished_at IS NOT NULL\n                AND outcome IN ('accepted', 'transient', 'permanent', 'uncertain')\n                AND reserved_day >= $3\n              ORDER BY finished_at DESC LIMIT 2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "category",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "category"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Date"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "4dd05ee279d31b83c7de221f08320e58a1c430e1f55f43057bc415d4d00dfbb2"
+}

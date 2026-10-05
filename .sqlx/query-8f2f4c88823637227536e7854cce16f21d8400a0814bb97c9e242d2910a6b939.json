@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT key, field_type, options FROM person_field_definitions WHERE deleted_at IS NULL AND workspace_id = $1 ORDER BY key",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "person_field_definitions",
+            "name": "key"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "field_type",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "person_field_definitions",
+            "name": "field_type"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "options",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "person_field_definitions",
+            "name": "options"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "8f2f4c88823637227536e7854cce16f21d8400a0814bb97c9e242d2910a6b939"
+}

@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO oauth_clients (client_id, kind, name, redirect_uris, auth_method, metadata, fetched_at)\n         VALUES ($1, 'cimd', $2, $3, 'none', $4, now())\n         ON CONFLICT (client_id) DO UPDATE\n            SET name = excluded.name, redirect_uris = excluded.redirect_uris,\n                metadata = excluded.metadata, fetched_at = excluded.fetched_at\n          WHERE oauth_clients.kind = 'cimd'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "TextArray",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c0877c03a0e22e9a347614a82b641116af7b127b78ba5b831389f3114895fd97"
+}

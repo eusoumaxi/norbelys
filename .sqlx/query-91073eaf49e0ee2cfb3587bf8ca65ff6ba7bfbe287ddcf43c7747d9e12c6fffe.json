@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT campaign_id, step_id, variant_id FROM stats_increments\n          WHERE workspace_id = $1 AND metric = $2 AND day = (now() AT TIME ZONE 'UTC')::date",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "campaign_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "stats_increments",
+            "name": "campaign_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "step_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "stats_increments",
+            "name": "step_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "variant_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "stats_increments",
+            "name": "variant_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": [
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "91073eaf49e0ee2cfb3587bf8ca65ff6ba7bfbe287ddcf43c7747d9e12c6fffe"
+}

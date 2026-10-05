@@ -1,0 +1,74 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT m.role, m.status, w.mode, w.deleted_at IS NOT NULL AS \"deleted!\",\n                  coalesce(array_agg(c.id) FILTER (WHERE c.id IS NOT NULL), '{}') AS \"connections!\",\n                  coalesce(array_agg(c.policy_version) FILTER (WHERE c.id IS NOT NULL), '{}') AS \"versions!\"\n             FROM memberships m\n             JOIN workspaces w ON w.id = m.workspace_id\n             LEFT JOIN sso_connections c ON c.workspace_id = m.workspace_id AND c.enforced AND c.status = 'active'\n            WHERE m.workspace_id = $1 AND m.user_id = $2\n            GROUP BY m.role, m.status, w.mode, w.deleted_at",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "role",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "memberships",
+            "name": "role"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "memberships",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "mode",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "workspaces",
+            "name": "mode"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "deleted!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "connections!",
+        "type_info": "UuidArray",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "versions!",
+        "type_info": "Int4Array",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "df3c74918b98f58e5f5165a45c5b4641685f4150480b60fc0d88e342e7f27db8"
+}

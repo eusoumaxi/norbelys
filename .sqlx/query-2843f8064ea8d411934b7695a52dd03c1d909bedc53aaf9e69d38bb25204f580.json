@@ -1,0 +1,37 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE people SET email = coalesce($3, email),\n                  given_name = CASE WHEN $4 THEN $5 ELSE given_name END,\n                  family_name = CASE WHEN $6 THEN $7 ELSE family_name END,\n                  company = CASE WHEN $8 THEN $9 ELSE company END,\n                  custom_fields = CASE WHEN $10::jsonb IS NULL THEN custom_fields\n                                       ELSE jsonb_strip_nulls(custom_fields || $10) END\n            WHERE workspace_id = $1 AND id = $2\n           RETURNING id AS \"id: Id<Person>\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<Person>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Bool",
+        "Text",
+        "Bool",
+        "Text",
+        "Bool",
+        "Text",
+        "Jsonb"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "2843f8064ea8d411934b7695a52dd03c1d909bedc53aaf9e69d38bb25204f580"
+}

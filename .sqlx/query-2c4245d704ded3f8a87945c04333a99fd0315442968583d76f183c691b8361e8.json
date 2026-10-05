@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM sso_email_domains WHERE workspace_id = $1 AND sso_connection_id = $2 AND NOT (domain = ANY($3))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "TextArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2c4245d704ded3f8a87945c04333a99fd0315442968583d76f183c691b8361e8"
+}

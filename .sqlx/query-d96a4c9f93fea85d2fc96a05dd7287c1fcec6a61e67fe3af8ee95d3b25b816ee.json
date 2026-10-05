@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE jobs SET state = $5,\n                run_at = CASE WHEN $5 = 'available' THEN now() + make_interval(secs => $6) ELSE run_at END,\n                attempts = attempts + $7, lease_owner = NULL, lease_expires_at = NULL,\n                effect_started_at = CASE WHEN $5 = 'needs_review' THEN effect_started_at END,\n                last_error = CASE WHEN $5 = 'completed' THEN NULL ELSE coalesce($8, last_error) END,\n                finished_at = CASE WHEN $5 IN ('completed', 'failed', 'cancelled') THEN now() END\n          WHERE workspace_id = $1 AND id = $2 AND lease_owner = $3 AND claims = $4\n         RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "jobs",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Int4",
+        "Text",
+        "Float8",
+        "Int2",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d96a4c9f93fea85d2fc96a05dd7287c1fcec6a61e67fe3af8ee95d3b25b816ee"
+}

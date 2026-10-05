@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE delivery_queue\n                SET state = 'queued', lease_owner = NULL, lease_expires_at = NULL, submission_started_at = NULL,\n                    reserved_day = NULL\n              WHERE workspace_id = $1 AND message_id = ANY($2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ead14a433a3581f1cf6154e91b1d18fffd0cb1e62828db509fda503240f5a305"
+}

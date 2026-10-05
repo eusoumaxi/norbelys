@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) AS \"count!\" FROM pg_stats\n            WHERE schemaname = 'public' AND tablename = 'outbox_events' AND inherited",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "1a40344bec984fb5ee81925e2cf0a87064fa0f1fb8db075004ec6779ea62a5e9"
+}

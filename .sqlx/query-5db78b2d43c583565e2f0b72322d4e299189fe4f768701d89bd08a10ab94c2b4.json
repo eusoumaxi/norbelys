@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO variants (workspace_id, id, step_id, name) VALUES ($1, $2, $3, 'A')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5db78b2d43c583565e2f0b72322d4e299189fe4f768701d89bd08a10ab94c2b4"
+}

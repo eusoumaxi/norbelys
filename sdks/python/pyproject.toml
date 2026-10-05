@@ -1,0 +1,43 @@
+[project]
+name = "norbelys"
+version = "0.2.0"
+description = "Typed synchronous and asynchronous clients for the Norbelys public API"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+dependencies = ["httpx>=0.28.1,<0.29"]
+classifiers = ["Typing :: Typed", "Programming Language :: Python :: 3 :: Only"]
+
+[project.urls]
+Homepage = "https://norbelys.com"
+Repository = "https://github.com/eusoumaxi/norbelys"
+Issues = "https://github.com/eusoumaxi/norbelys/issues"
+
+[build-system]
+requires = ["uv_build>=0.12.23,<0.13"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+  "mypy>=1.17,<2",
+  "pytest>=8.4,<10",
+  "pytest-asyncio>=1,<2",
+  "pytest-cov>=6,<8",
+  "ruff>=0.12,<1",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+exclude = ["src/norbelys/_generated"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src/norbelys"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

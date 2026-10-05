@@ -1,0 +1,222 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT e.id AS \"id: Id<DeliveryEvent>\", e.message_id AS \"message_id: Id<Message>\",\n                      e.thread_id AS \"thread_id: Id<Thread>\", e.attempt_number, e.kind, e.source, e.confidence,\n                      e.recipient_email, e.recipient_ref, e.action, e.phase, e.enhanced_status, e.category, e.diagnostic,\n                      e.observed_at AS \"observed_at: Timestamp\",\n                      coalesce(uuid_extract_timestamp(e.receipt_id), e.created_at) AS \"received_at!: Timestamp\",\n                      e.created_at AS \"created_at: Timestamp\"\n                 FROM delivery_events e\n                WHERE e.workspace_id = $1 AND ($2::uuid IS NULL OR e.id > $2)\n                  AND ($3::uuid IS NULL OR e.message_id = $3) AND ($4::text IS NULL OR e.kind = $4)\n                  AND ($5::text IS NULL OR e.recipient_email_key = ascii_lower($5))\n                  AND (($6::uuid IS NULL AND $7::uuid IS NULL) OR EXISTS (\n                        SELECT 1 FROM messages m WHERE m.workspace_id = e.workspace_id AND m.id = e.message_id\n                           AND ($6::uuid IS NULL OR m.campaign_id = $6) AND ($7::uuid IS NULL OR m.person_id = $7)))\n                ORDER BY e.id LIMIT $8",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<DeliveryEvent>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "delivery_events",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "message_id: Id<Message>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "delivery_events",
+            "name": "message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "thread_id: Id<Thread>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "delivery_events",
+            "name": "thread_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "attempt_number",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "delivery_events",
+            "name": "attempt_number"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "kind",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "delivery_events",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "source",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "delivery_events",
+            "name": "source"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "confidence",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "delivery_events",
+            "name": "confidence"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "recipient_email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "delivery_events",
+            "name": "recipient_email"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "recipient_ref",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "delivery_events",
+            "name": "recipient_ref"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "action",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "delivery_events",
+            "name": "action"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "phase",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "delivery_events",
+            "name": "phase"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "enhanced_status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "delivery_events",
+            "name": "enhanced_status"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "category",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "delivery_events",
+            "name": "category"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "diagnostic",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "delivery_events",
+            "name": "diagnostic"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "observed_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "delivery_events",
+            "name": "observed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "received_at!: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 16,
+        "name": "created_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "delivery_events",
+            "name": "created_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Uuid",
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true,
+      false,
+      null,
+      false
+    ]
+  },
+  "hash": "9ff56b4eced9e6deb0f5bc3e94c640a1346336d643e78ec5be1181f391854549"
+}

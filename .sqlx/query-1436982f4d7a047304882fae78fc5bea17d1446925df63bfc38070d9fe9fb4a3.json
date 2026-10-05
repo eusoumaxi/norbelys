@@ -1,0 +1,75 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "WITH latest AS (\n               SELECT DISTINCT ON (subject_id) subject_id, payload -> 'data' AS data\n                 FROM outbox_events\n                WHERE workspace_id = $1 AND type = $3\n                  AND id >= uuidv7_boundary($2) AND id < uuidv7_boundary($2 + interval '16 minutes 30 seconds')\n                  AND created_at >= $2 AND created_at < $2 + interval '15 minutes'\n                ORDER BY subject_id, id DESC)\n           SELECT c.account_email, c.provider, c.created_by,\n                  coalesce(l.data ->> 'status', '') AS \"status!\",\n                  l.data ->> 'status_detail' AS detail,\n                  coalesce((l.data ->> 'paused')::boolean, false) AS \"paused!\"\n             FROM latest l\n             JOIN connections c ON c.workspace_id = $1 AND c.id = l.subject_id\n            ORDER BY c.account_email_key, c.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "account_email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "account_email"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "provider",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "provider"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "created_by",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "created_by"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "status!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "detail",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "paused!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "1436982f4d7a047304882fae78fc5bea17d1446925df63bfc38070d9fe9fb4a3"
+}

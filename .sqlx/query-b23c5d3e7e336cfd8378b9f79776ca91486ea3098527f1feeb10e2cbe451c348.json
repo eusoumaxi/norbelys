@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT credential AS \"credential!\", credential_version FROM connections WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "credential!",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "credential"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "credential_version",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "credential_version"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true,
+      false
+    ]
+  },
+  "hash": "b23c5d3e7e336cfd8378b9f79776ca91486ea3098527f1feeb10e2cbe451c348"
+}

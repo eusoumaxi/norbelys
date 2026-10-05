@@ -1,0 +1,182 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id AS \"id: Id<SsoConnection>\", name, issuer, client_id, client_secret IS NOT NULL AS \"secret_set!\",\n                  default_role, jit_provisioning, enforced, policy_version, status, status_detail,\n                  metadata_fetched_at AS \"metadata_fetched_at: Timestamp\", created_at AS \"created_at: Timestamp\",\n                  updated_at AS \"updated_at: Timestamp\"\n             FROM sso_connections\n            WHERE workspace_id = $1 AND ($2::uuid IS NULL OR CASE WHEN $3 THEN id > $2 ELSE id < $2 END)\n            ORDER BY CASE WHEN $3 THEN id END, id DESC LIMIT $4",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<SsoConnection>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "issuer",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "issuer"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "client_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "client_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "secret_set!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "default_role",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "default_role"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "jit_provisioning",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "jit_provisioning"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "enforced",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "enforced"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "policy_version",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "policy_version"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "status_detail",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "status_detail"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "metadata_fetched_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "metadata_fetched_at"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "created_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "updated_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Bool",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      null,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "2bab04797299ba1b8ed2020b3cee398f07f589bdf4922a7d355e678b7bd66e4f"
+}

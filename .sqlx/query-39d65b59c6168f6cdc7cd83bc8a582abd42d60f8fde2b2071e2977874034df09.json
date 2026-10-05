@@ -1,0 +1,73 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT o.step_id, o.variant_id, o.variant_version, o.weight, coalesce(a.assigned, 0) AS \"assigned!\"\n             FROM steps s\n             JOIN step_revision_variants o ON o.workspace_id = s.workspace_id AND o.step_id = s.id AND o.step_revision = s.current_revision\n             LEFT JOIN LATERAL (SELECT a.variant_id, count(*) AS assigned FROM step_assignments a\n                                 WHERE a.workspace_id = s.workspace_id AND a.step_id = s.id AND a.step_revision = s.current_revision\n                                 GROUP BY a.variant_id) a ON a.variant_id = o.variant_id\n            WHERE s.workspace_id = $1 AND s.campaign_id = $2 AND s.position = ANY($3)\n            ORDER BY o.step_id, o.variant_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "step_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "step_revision_variants",
+            "name": "step_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "variant_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "step_revision_variants",
+            "name": "variant_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "variant_version",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "step_revision_variants",
+            "name": "variant_version"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "weight",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "step_revision_variants",
+            "name": "weight"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "assigned!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int4Array"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "39d65b59c6168f6cdc7cd83bc8a582abd42d60f8fde2b2071e2977874034df09"
+}

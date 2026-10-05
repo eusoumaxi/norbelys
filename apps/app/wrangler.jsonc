@@ -1,0 +1,19 @@
+// Local development configuration. Production resources and uploads are managed in Terraform.
+{
+  "send_metrics": false,
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "norbelys-app",
+  "compatibility_date": "2026-09-25",
+  "main": "./worker/index.ts",
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api", "/api/*", "/__telemetry/*"],
+  },
+  "vars": {
+    "API_ORIGIN": "http://127.0.0.1:3001",
+    "DASHBOARD_ORIGIN": "",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "",
+    "NORBELYS_TRACE_SAMPLE_PERCENT": "100",
+    "PRODUCT_RELEASE": "development",
+  },
+}

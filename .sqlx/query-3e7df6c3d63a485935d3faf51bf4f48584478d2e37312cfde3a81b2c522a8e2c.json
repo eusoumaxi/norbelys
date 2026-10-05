@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE job_lanes SET running = running + $3, turn_at = now() WHERE workspace_id = $1 AND queue = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3e7df6c3d63a485935d3faf51bf4f48584478d2e37312cfde3a81b2c522a8e2c"
+}

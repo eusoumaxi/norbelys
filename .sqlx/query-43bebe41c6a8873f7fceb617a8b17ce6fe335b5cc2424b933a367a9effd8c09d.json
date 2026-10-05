@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO webhook_deliveries (workspace_id, id, endpoint_id, event_id)\n         SELECT $1, delivery.id, delivery.endpoint_id, delivery.event_id\n           FROM unnest($2::uuid[], $3::uuid[], $4::uuid[]) AS delivery(id, endpoint_id, event_id)\n         ON CONFLICT DO NOTHING\n         RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "webhook_deliveries",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "UuidArray",
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "43bebe41c6a8873f7fceb617a8b17ce6fe335b5cc2424b933a367a9effd8c09d"
+}

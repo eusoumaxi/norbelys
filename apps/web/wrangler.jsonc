@@ -1,0 +1,10 @@
+// Local development configuration. Production resources and uploads are managed in Terraform.
+{
+  "send_metrics": false,
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "norbelys-web",
+  "compatibility_date": "2026-09-25",
+  "assets": {
+    "directory": "./dist",
+  },
+}

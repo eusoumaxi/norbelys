@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO step_revisions (workspace_id, step_id, revision, delay_seconds, same_thread, ranking_objective,\n                                         observation_window_seconds, minimum_sample)\n             VALUES ($1, $2, 1, 0, $3, 'replies', 86400, 100)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "bd4008e5839297267bc003b9ed7d12d6c6dc5dbc792142cd0dc0f856f1fd7534"
+}

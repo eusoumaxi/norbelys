@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE messages SET state = 'cancelled', status_detail = 'Cancelled while it was queued.'\n          WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "072aff2f2d7695c4c91faa5ec85b1d3186110062ec51f41574375cf229fd5db6"
+}

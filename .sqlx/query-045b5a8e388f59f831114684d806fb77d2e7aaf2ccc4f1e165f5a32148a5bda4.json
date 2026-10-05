@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE job_schedules SET last_run_at = now(), next_run_at = coalesce($2::timestamptz, 'infinity'::timestamptz) WHERE name = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "045b5a8e388f59f831114684d806fb77d2e7aaf2ccc4f1e165f5a32148a5bda4"
+}

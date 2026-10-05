@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) AS \"count!\" FROM (\n               SELECT 1 FROM quota_scopes WHERE workspace_id = $1 AND ($2::text IS NULL OR provider = $2) LIMIT $3\n           ) counted",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "eb66e8f9e8045a44eed446b076776934a5feeaefdbeca4de60354f1619b0ee7b"
+}

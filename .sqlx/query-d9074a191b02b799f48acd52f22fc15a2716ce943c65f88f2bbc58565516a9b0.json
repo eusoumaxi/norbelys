@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE enrollments\n                        SET current_position = current_position + 1, message_id = NULL, attempts = 0, next_run_at = $3\n                      WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d9074a191b02b799f48acd52f22fc15a2716ce943c65f88f2bbc58565516a9b0"
+}

@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE jobs SET\n                state = CASE WHEN effect_started_at IS NOT NULL THEN 'needs_review'\n                             WHEN attempts + 1 >= max_attempts THEN 'failed' ELSE 'available' END,\n                run_at = now() + make_interval(secs => $4), attempts = attempts + 1,\n                lease_owner = NULL, lease_expires_at = NULL, updated_at = now(),\n                last_error = CASE WHEN effect_started_at IS NOT NULL\n                                  THEN 'needs_review: the lease expired after the external effect started; an operator resolves it'\n                                  ELSE 'lease_expired: the worker stopped renewing the lease' END\n          WHERE id = $1 AND workspace_id = $2 AND claims = $3 AND state = 'running' AND lease_expires_at < now()\n         RETURNING state",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "state",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "jobs",
+            "name": "state"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int4",
+        "Float8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "f88c23287667f5dc6376daa6b8e5ac9e78f69a14afa99b4a5115ba0c86e1279f"
+}

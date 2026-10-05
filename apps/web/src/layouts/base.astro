@@ -1,0 +1,42 @@
+---
+import "../../../../brand/motion/norbelys-motion.css";
+import "../styles/tokens.css";
+import "../styles/homepage.css";
+import favicon from "../../../../brand/icons/favicon.svg?url";
+import appleIcon from "../../../../brand/icons/apple-touch-icon.png?url";
+import social from "../../../../brand/social/og.png?url";
+
+/** The public document shell, with local assets and consistent search metadata. */
+interface Props {
+  title: string;
+  description?: string;
+}
+const { title, description = "Thoughtful cold email from your own mailboxes. Create campaigns, follow up at a human pace, and keep every reply in view with Norbelys." } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const socialUrl = new URL(social, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href={favicon} type="image/svg+xml" />
+    <link rel="apple-touch-icon" href={appleIcon} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Norbelys" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={socialUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Norbelys — thoughtful outbound email" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>{title}</title>
+  </head>
+  <body><slot /></body>
+</html>

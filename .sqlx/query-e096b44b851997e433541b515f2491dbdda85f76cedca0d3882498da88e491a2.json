@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT status, start_at AS \"start_at: Timestamp\", cooldown_hours\n             FROM campaigns WHERE workspace_id = $1 AND id = $2 FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "campaigns",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "start_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "campaigns",
+            "name": "start_at"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "cooldown_hours",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "campaigns",
+            "name": "cooldown_hours"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "e096b44b851997e433541b515f2491dbdda85f76cedca0d3882498da88e491a2"
+}

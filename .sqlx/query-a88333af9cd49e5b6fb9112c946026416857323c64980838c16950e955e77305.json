@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) AS \"count!\" FROM (\n               SELECT 1 FROM threads t JOIN sender_identities i ON i.workspace_id = t.workspace_id AND i.id = t.sender_identity_id\n                WHERE t.workspace_id = $1\n                  AND ($2::uuid IS NULL OR t.person_id = $2) AND ($3::uuid IS NULL OR i.connection_id = $3)\n                  AND ($4::text IS NULL OR ((t.status = $4 OR ($4 = 'open' AND t.status = 'snoozed'))\n                                                AND $4 = CASE WHEN t.status = 'snoozed' AND t.snoozed_until <= now() THEN 'open' ELSE t.status END))\n                  AND ($5::text IS NULL OR EXISTS (SELECT 1 FROM inbound_messages m\n                                                    WHERE m.workspace_id = t.workspace_id AND m.thread_id = t.id\n                                                      AND m.classification = $5 AND m.deleted_at IS NULL))\n                LIMIT $6) counted",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "a88333af9cd49e5b6fb9112c946026416857323c64980838c16950e955e77305"
+}

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE users\n            SET name = CASE WHEN $2::text IS NULL THEN name ELSE nullif($2, '') END,\n                locale = coalesce($3, locale)\n          WHERE id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ba0fa0a1317cc3f8c94ceb9f3a2bcdf622b9d8d7297da61dbd3c90a93a51675a"
+}

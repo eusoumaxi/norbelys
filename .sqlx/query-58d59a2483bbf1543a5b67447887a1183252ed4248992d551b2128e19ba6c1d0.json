@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT EXISTS (SELECT 1 FROM campaign_senders\n                                           WHERE workspace_id = $1 AND campaign_id = $2 AND sender_identity_id = $3) AS \"named!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "named!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "58d59a2483bbf1543a5b67447887a1183252ed4248992d551b2128e19ba6c1d0"
+}

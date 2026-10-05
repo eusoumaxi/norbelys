@@ -1,0 +1,94 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE ai_calls SET state = $3, outcome = $4, input_tokens = $5, output_tokens = $6,\n                  settled_micros = $7, finished_at = now()\n            WHERE workspace_id = $1 AND id = $2 AND state = 'reserved'\n           RETURNING month AS \"month: Date\", reserved_micros, use_case, provider, model, prompt_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "month: Date",
+        "type_info": "Date",
+        "origin": {
+          "Table": {
+            "table": "ai_calls",
+            "name": "month"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "reserved_micros",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "ai_calls",
+            "name": "reserved_micros"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "use_case",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "ai_calls",
+            "name": "use_case"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "provider",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "ai_calls",
+            "name": "provider"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "model",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "ai_calls",
+            "name": "model"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "prompt_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "ai_calls",
+            "name": "prompt_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Int4",
+        "Int4",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "20eda50bbb877c038003dec66715eb60e3ecf0a68d8c23333a705ad4b958b57e"
+}

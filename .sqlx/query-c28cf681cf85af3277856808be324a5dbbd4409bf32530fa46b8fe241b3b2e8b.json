@@ -1,0 +1,27 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) AS \"count!\" FROM (\n               SELECT 1 FROM suppressions\n                WHERE workspace_id = $1 AND ($2::text IS NULL OR email_key = ascii_lower($2))\n                  AND ($3::text IS NULL OR reason = $3) AND ($4::text IS NULL OR source = $4)\n                LIMIT $5) counted",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "c28cf681cf85af3277856808be324a5dbbd4409bf32530fa46b8fe241b3b2e8b"
+}

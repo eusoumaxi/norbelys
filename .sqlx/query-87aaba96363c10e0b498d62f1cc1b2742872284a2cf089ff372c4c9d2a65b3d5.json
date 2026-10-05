@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE partition_leaves SET archive_key = $2, archived_rows = $3, archive_sha256 = $4 WHERE name = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "87aaba96363c10e0b498d62f1cc1b2742872284a2cf089ff372c4c9d2a65b3d5"
+}

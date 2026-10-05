@@ -1,0 +1,69 @@
+---
+title: Architecture
+description: Find process startup, feature behavior, domain policy and maintenance tooling.
+keywords: [architecture, Rust, monorepo, delivery, PostgreSQL]
+---
+
+Norbelys is a Cargo, Bun and Python monorepo. The Rust server is a modular application with independently operated process roles. A feature keeps its operations, persistence queries, HTTP handlers and behavior tests together. Pure policy lives in `crates/server/src/domain/`; startup lives in `roles/`.
+
+## Repository map
+
+| Location | Responsibility |
+| --- | --- |
+| `crates/server` | Product API, identity, people, campaigns, delivery, inbox, jobs, tracking and analytics. |
+| `crates/mail` | SMTP, IMAP, Gmail, Graph, provider receipts, mail parsing and network policy. |
+| `crates/ai` | AI provider clients. The server owns product-specific AI workflows. |
+| `crates/cli` | Native Rust CLI consuming the public API. |
+| `crates/smtp` | Managed mail-server control and delivery events. |
+| `tools/xtask` | Repository checks, local fixture setup, external manual SQLx maintenance and crash gates. Never shipped in runtime images. |
+| `apps/app` | Dashboard and its same-origin API/optional telemetry relay. |
+| `apps/web` | Marketing site. |
+| `apps/cli` | CLI download Worker; verified release archives are served from an installation's R2 bucket. |
+| `apps/docs` | Mintlify guides and the generated public API reference. |
+| `sdks/typescript`, `sdks/python` | Typed clients generated from the public OpenAPI contract, with handwritten transport behavior. |
+
+Turborepo orchestrates the declared Cargo, Bun and Python tasks and caches reproducible outputs. Cargo, Bun and uv remain responsible for their own packages. Database state, fixture mutation and other environment-dependent checks are not treated as cacheable artifacts.
+
+Private installation Terraform, credentials, state, host identities and operational records belong outside this public repository. The public Docker configuration is a portable local example. Publishing source or an image does not itself provision a hosted installation.
+
+## Process roles
+
+| Process | Owns |
+| --- | --- |
+| `api` | Product HTTP API, dashboard identity and protocols. |
+| `api --mode ingress` | Provider callbacks, unsubscribe routes and public images, with a durable ingress spool. |
+| `sender` | Delivery claims, paced submission, outcome batches and recovery. |
+| `inbox` | Leased mailbox polls and inbound-message processing. |
+| `worker` | Durable jobs, scheduled work and the maintenance lane. |
+| `tracking` | Public tracking and its local durable spool/drain. |
+| `analytics` | Archive snapshots using the optional DuckDB feature. |
+
+`admin` and `healthcheck` are commands, not continuously running product services. `admin schema-check` verifies migration history; it cannot install pending SQL. The analytics feature stays optional because the other processes do not need DuckDB.
+
+`roles/sender.rs` constructs the sender's dependencies and supervises its health. `delivery/runner.rs` owns message preparation, preflight, transport acquisition, start fencing, submission and outcome batches. Its running task set is drained after supervision so the submission grace is preserved. `inbox/runner.rs` owns claim/recovery scheduling. `analytics/snapshots.rs` owns snapshot passes and archive queries.
+
+Process roles differ from **PostgreSQL roles**, which grant database privileges, and **workspace membership roles**, which grant product scopes. For example, a sender process uses the `norbelys_worker` database login, while an authenticated workspace administrator's permissions come from `domain::scope`. These are separate authorization boundaries.
+
+## Sending and receiving
+
+All message creation goes through `delivery::accept`. A sender claims a bounded wave, renders each message, performs preflight, acquires a transport and records a fenced Start before submission. `delivery::finish` records provider outcomes. An expired lease before Start can return work to the queue; an interrupted submission after its marker becomes uncertain and requires evidence, not an automatic resend.
+
+PostgreSQL holds durable work, idempotency, constraints and tenant isolation. Local spools preserve accepted callbacks and tracking events while PostgreSQL is unavailable. Provider quotas, bounded task counts, leases and shutdown grace remain part of behavior; reorganizing modules does not replace them with a generic transport framework.
+
+The inbox uses the same provider/network boundaries, persists its cursor only under its lease fence and retains reset/recovery semantics. Provider notifications and mailbox observations become product evidence rather than pretending every provider has the same wire response.
+
+## Domain and storage boundaries
+
+`domain::time` owns UTC timestamps and calendar days; `domain::scope` owns scopes and workspace membership vocabulary. Their values and decisions do not connect to PostgreSQL or read the environment. Application code reads the clock at the process boundary and passes time into policy.
+
+SQLx encodings for these local types remain in `db/types.rs`. Keeping the types and implementations in the same crate preserves Rust's trait coherence without duplicate database wrappers. Feature queries use committed `.sqlx` metadata for ordinary offline compilation.
+
+The purity command checks prohibited source dependencies as a review guard. It is not a separate-crate compiler boundary or a substitute for reviewing domain changes. Additional crates are appropriate when a real reuse, dependency or release boundary justifies them; a smaller file count is not such a boundary.
+
+## Contracts, maintenance and verification
+
+Rust HTTP definitions produce `crates/server/openapi.json`, the public contract. Documentation and SDK generation consume it. The docs copy is generated; edit the authoritative definitions and regenerate consumers instead of fixing one copy by hand. Product-internal endpoints have their own runtime authorization and are not automatically public SDK operations.
+
+SQLx migrations are versioned beside server code, but run manually through external maintenance tooling. See [database maintenance](/migrations) for provisioning, credentials, release order and refusal of earlier internal schemas.
+
+Use [development checks](/development) to choose a focused suite. Policy tests use plain values; persistence and isolation tests use real, isolated PostgreSQL databases; crash gates exercise running processes. [Observability](/observability) describes optional OpenTelemetry, trace links across asynchronous work and SigNoz alerts.

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE connections\n                SET warmup_stage = $3, warmup_evaluated_on = (now() AT TIME ZONE 'UTC')::date - 1\n              WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int2"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "131bc292913b59cb30cbe290b384a781ac0814a798a807140ef1cd6cbf76977e"
+}

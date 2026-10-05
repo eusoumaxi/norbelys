@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO step_revision_variants (workspace_id, step_id, step_revision, variant_id, variant_version)\n             VALUES ($1, $2, 1, $3, 1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6065ea9ff011a9eb5331623b5eeb354ad69f66ed95b0b3a6f5fd531d999b7c1b"
+}

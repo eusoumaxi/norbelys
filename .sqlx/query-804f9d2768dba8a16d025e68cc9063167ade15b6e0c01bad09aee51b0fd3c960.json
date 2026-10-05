@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE imports SET status = 'failed', last_error = jsonb_build_object('code', $3::text, 'detail', $4::text, 'at', now())\n          WHERE workspace_id = $1 AND id = $2 AND status IN ('queued', 'processing')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "804f9d2768dba8a16d025e68cc9063167ade15b6e0c01bad09aee51b0fd3c960"
+}

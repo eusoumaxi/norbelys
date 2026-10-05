@@ -1,0 +1,57 @@
+{
+  "name": "@norbelys/sdk",
+  "version": "0.2.0",
+  "description": "Official TypeScript SDK for the Norbelys API. Typed from the OpenAPI contract, zero runtime dependencies.",
+  "keywords": [
+    "api",
+    "cold-email",
+    "email",
+    "norbelys",
+    "sdk"
+  ],
+  "homepage": "https://norbelys.com",
+  "bugs": "https://github.com/eusoumaxi/norbelys/issues",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eusoumaxi/norbelys.git",
+    "directory": "sdks/typescript"
+  },
+  "files": [
+    "dist",
+    "NOTICE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "generate": "bun scripts/generate.ts",
+    "build": "bun --bun tsdown",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "bun test",
+    "prepublishOnly": "bun run typecheck && bun run type-coverage && bun run coverage && bun run build",
+    "generate:check": "bun scripts/generate.ts --check",
+    "type-coverage": "type-coverage --project tsconfig.json --at-least 100 --detail --report-semantic-error",
+    "coverage": "bun test --coverage && bun ../../.github/scripts/check-coverage.mjs coverage/lcov.info 99"
+  },
+  "devDependencies": {
+    "@types/bun": "~1.3.14",
+    "tsdown": "~0.23.0",
+    "typescript": "~7.0.2"
+  },
+  "tsdown": {
+    "platform": "neutral"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,199 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT e.id AS \"id: Id<Enrollment>\", e.campaign_id AS \"campaign_id: Id<Campaign>\",\n                  e.person_id AS \"person_id: Id<Person>\", p.email, p.given_name, p.family_name, e.status,\n                  e.status_detail, e.current_position, e.next_run_at AS \"next_run_at: Timestamp\",\n                  e.message_id AS \"message_id: Id<Message>\",\n                  a.sender_identity_id AS \"sender_identity_id?: Id<SenderIdentity>\",\n                  CASE WHEN e.status = 'active' AND i.enabled AND i.archived_at IS NULL\n                        AND NOT (c.status = 'active' AND NOT c.paused AND coalesce(c.paused_until <= now(), true)\n                                 AND coalesce(c.next_claim_at <= now(), true))\n                       THEN a.sender_identity_id END AS \"waiting_for?: Id<SenderIdentity>\",\n                  e.created_at AS \"created_at: Timestamp\", e.updated_at AS \"updated_at: Timestamp\"\n             FROM enrollments e\n             JOIN people p ON p.workspace_id = e.workspace_id AND p.id = e.person_id\n             LEFT JOIN campaign_sender_affinity a\n               ON a.workspace_id = e.workspace_id AND a.campaign_id = e.campaign_id AND a.person_id = e.person_id\n             LEFT JOIN sender_identities i ON i.workspace_id = a.workspace_id AND i.id = a.sender_identity_id\n             LEFT JOIN connections c ON c.workspace_id = i.workspace_id AND c.id = i.connection_id\n            WHERE e.workspace_id = $1\n              AND ($2::uuid[] IS NULL OR e.id = ANY($2))\n              AND ($3::uuid IS NULL OR e.campaign_id = $3)\n              AND ($4::uuid IS NULL OR e.person_id = $4)\n              AND ($5::uuid IS NULL OR a.sender_identity_id = $5)\n              AND ($6::text IS NULL OR e.status = $6)\n              AND ($7::uuid IS NULL OR CASE WHEN $8 THEN e.id > $7 ELSE e.id < $7 END)\n            ORDER BY CASE WHEN $8 THEN e.id END, e.id DESC\n            LIMIT $9",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<Enrollment>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "campaign_id: Id<Campaign>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "campaign_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "person_id: Id<Person>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "person_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "email"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "given_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "given_name"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "family_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "family_name"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "status_detail",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "status_detail"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "current_position",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "current_position"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "next_run_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "next_run_at"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "message_id: Id<Message>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "sender_identity_id?: Id<SenderIdentity>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "campaign_sender_affinity",
+            "name": "sender_identity_id"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "waiting_for?: Id<SenderIdentity>",
+        "type_info": "Uuid",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 13,
+        "name": "created_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "updated_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Uuid",
+        "Bool",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      null,
+      false,
+      false
+    ]
+  },
+  "hash": "5ed094ff62680ab0d2a00d614551a27b292fe9401ab51f0823208782f63d58d4"
+}

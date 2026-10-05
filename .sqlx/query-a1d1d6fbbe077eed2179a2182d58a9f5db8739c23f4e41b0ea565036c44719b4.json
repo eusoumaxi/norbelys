@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "WITH e AS (\n               SELECT uuidv7() AS id, t.*\n                 FROM unnest($2::uuid[], $3::uuid[], $4::int[], $5::text[], $6::text[], $7::text[], $8::text[],\n                             $9::uuid[], $10::text[], $11::text[], $12::text[], $13::text[], $14::text[], $15::text[],\n                             $16::text[], $17::uuid[], $18::timestamptz[])\n                      WITH ORDINALITY AS t(message_id, thread_id, attempt_number, recipient_email, recipient_ref, source,\n                                           source_event_id, received_via, kind, action, phase, enhanced_status, category,\n                                           diagnostic, confidence, receipt_id, observed_at, n)),\n           inserted AS (\n               INSERT INTO delivery_events (workspace_id, id, message_id, thread_id, attempt_number, recipient_email,\n                                            recipient_ref, source, source_event_id, received_via, kind, action, phase,\n                                            enhanced_status, category, diagnostic, confidence, receipt_id, observed_at)\n               SELECT $1, id, message_id, thread_id, attempt_number, recipient_email, recipient_ref, source,\n                      source_event_id, received_via, kind, action, phase, enhanced_status, category, diagnostic,\n                      confidence, receipt_id, observed_at\n                 FROM e\n               RETURNING 1)\n           SELECT id AS \"id!: Id<DeliveryEvent>\" FROM e ORDER BY n",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!: Id<DeliveryEvent>",
+        "type_info": "Uuid",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "UuidArray",
+        "Int4Array",
+        "TextArray",
+        "TextArray",
+        "TextArray",
+        "TextArray",
+        "UuidArray",
+        "TextArray",
+        "TextArray",
+        "TextArray",
+        "TextArray",
+        "TextArray",
+        "TextArray",
+        "TextArray",
+        "UuidArray",
+        "TimestamptzArray"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "a1d1d6fbbe077eed2179a2182d58a9f5db8739c23f4e41b0ea565036c44719b4"
+}

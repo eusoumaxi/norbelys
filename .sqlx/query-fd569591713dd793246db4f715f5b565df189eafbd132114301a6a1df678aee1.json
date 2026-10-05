@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM sessions WHERE id IN (\n                 SELECT id FROM sessions\n                  WHERE revoked_at < now() - interval '30 days'\n                     OR least(expires_at, idle_expires_at) < now() - interval '30 days'\n                  LIMIT $1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fd569591713dd793246db4f715f5b565df189eafbd132114301a6a1df678aee1"
+}

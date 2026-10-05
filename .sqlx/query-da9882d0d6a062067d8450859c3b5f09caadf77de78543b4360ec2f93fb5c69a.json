@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO ai_calls (workspace_id, id, job_id, use_case, provider, model, prompt_id, canary, month, reserved_micros,\n                               price_input_micros_per_mtok, price_output_micros_per_mtok)\n         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Bool",
+        "Date",
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "da9882d0d6a062067d8450859c3b5f09caadf77de78543b4360ec2f93fb5c69a"
+}

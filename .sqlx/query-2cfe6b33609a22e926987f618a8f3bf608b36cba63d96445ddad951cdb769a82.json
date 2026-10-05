@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT coalesce((SELECT extract(epoch FROM now() - min(q.run_at))\n                              FROM delivery_queue q WHERE q.state = 'queued' AND q.run_at <= now()), 0)::float8 AS \"scheduled!\",\n                  coalesce((SELECT extract(epoch FROM now() - min(CASE WHEN q.paced AND c.send_interval_minutes IS NOT NULL\n                                                                     THEN greatest(q.run_at, c.next_send_at)\n                                                                     ELSE q.run_at END))\n                              FROM delivery_queue q\n                              JOIN connections c ON (c.workspace_id, c.id) = (q.workspace_id, q.connection_id)\n                              LEFT JOIN quota_scopes s ON (s.workspace_id, s.id) = (c.workspace_id, c.quota_scope_id)\n                             WHERE q.state = 'queued' AND q.run_at <= now()\n                               AND c.status = 'active' AND NOT c.paused\n                               AND (c.next_claim_at IS NULL OR c.next_claim_at <= now())\n                               AND (c.paused_until IS NULL OR c.paused_until <= now())\n                               AND (s.paused_until IS NULL OR s.paused_until <= now())\n                               AND (NOT q.paced OR c.send_interval_minutes IS NULL OR c.next_send_at <= now())\n                               AND (c.send_interval_minutes IS NULL\n                                    OR NOT EXISTS (SELECT 1 FROM delivery_queue p\n                                                    WHERE (p.workspace_id, p.connection_id) = (c.workspace_id, c.id)\n                                                      AND p.state <> 'queued'))), 0)::float8 AS \"eligible!\",\n                  (SELECT count(*) FROM messages WHERE state = 'uncertain') AS \"uncertain!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "scheduled!",
+        "type_info": "Float8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "eligible!",
+        "type_info": "Float8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "uncertain!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "2cfe6b33609a22e926987f618a8f3bf608b36cba63d96445ddad951cdb769a82"
+}

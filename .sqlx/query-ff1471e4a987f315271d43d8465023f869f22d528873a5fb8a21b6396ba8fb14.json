@@ -1,0 +1,108 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT b.folder, b.cursor, b.polled_at AS \"polled_at: Timestamp\", c.provider, c.smtp, c.imap,\n                      c.credential_version, connection_credential(c.workspace_id, c.id) AS credential\n                 FROM receive_bindings b JOIN connections c ON c.workspace_id = b.workspace_id AND c.id = b.connection_id\n                WHERE b.workspace_id = $1 AND b.id = $2 AND b.enabled",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "folder",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "receive_bindings",
+            "name": "folder"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "cursor",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "receive_bindings",
+            "name": "cursor"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "polled_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "receive_bindings",
+            "name": "polled_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "provider",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "provider"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "smtp",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "smtp"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "imap",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "imap"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "credential_version",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "credential_version"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "credential",
+        "type_info": "Bytea",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      false,
+      null
+    ]
+  },
+  "hash": "ff1471e4a987f315271d43d8465023f869f22d528873a5fb8a21b6396ba8fb14"
+}

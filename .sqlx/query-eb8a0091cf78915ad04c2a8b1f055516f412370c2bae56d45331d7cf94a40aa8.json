@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT kind, actor_class FROM tracking_events WHERE workspace_id = $1 ORDER BY occurred_at, id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "kind",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tracking_events",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "actor_class",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "tracking_events",
+            "name": "actor_class"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "eb8a0091cf78915ad04c2a8b1f055516f412370c2bae56d45331d7cf94a40aa8"
+}

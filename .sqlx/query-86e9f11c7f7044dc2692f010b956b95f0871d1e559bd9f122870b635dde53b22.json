@@ -1,0 +1,78 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT opens, human_opens, clicks, human_clicks, first_open_at IS NOT NULL AS \"opened!\",\n                first_click_at IS NOT NULL AS \"clicked!\"\n           FROM message_engagement WHERE message_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "opens",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "message_engagement",
+            "name": "opens"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "human_opens",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "message_engagement",
+            "name": "human_opens"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "clicks",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "message_engagement",
+            "name": "clicks"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "human_clicks",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "message_engagement",
+            "name": "human_clicks"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "opened!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "clicked!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "86e9f11c7f7044dc2692f010b956b95f0871d1e559bd9f122870b635dde53b22"
+}

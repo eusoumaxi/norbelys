@@ -1,0 +1,37 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE quota_scopes\n            SET messages_per_day = CASE WHEN $3 THEN $4 ELSE messages_per_day END,\n                recipients_per_day = CASE WHEN $5 THEN $6 ELSE recipients_per_day END,\n                window_limit = CASE WHEN $7 THEN $8 ELSE window_limit END,\n                window_unit = CASE WHEN $7 THEN $9 ELSE window_unit END,\n                window_seconds = CASE WHEN $7 THEN $10 ELSE window_seconds END\n          WHERE workspace_id = $1 AND id = $2 RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Bool",
+        "Int4",
+        "Bool",
+        "Int4",
+        "Bool",
+        "Int4",
+        "Text",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "241759666dbb730d8e869726a8604a4f8c25bd089041a152f41812d4194d084b"
+}

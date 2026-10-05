@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE inbound_messages SET message_id = NULL WHERE message_id >= $1 AND message_id < $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "af481c6d821194e3971f8e014960c50f0a2f84a7338468d75fb80fad78cb9c5d"
+}

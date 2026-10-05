@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) AS \"count!\" FROM (\n               SELECT 1 FROM webhook_endpoints WHERE workspace_id = $1 AND ($2::boolean IS NULL OR enabled = $2) LIMIT $3) counted",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Bool",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "f6aa5e229ad7b1eeb670437bbb9c6997be182e6d1a145bc43d2a43b9a5c3b2c9"
+}

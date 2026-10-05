@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO receive_bindings (workspace_id, connection_id, folder)\n         SELECT $1, $2, folder FROM unnest($3::text[]) AS folder\n         ON CONFLICT (workspace_id, connection_id, folder) DO UPDATE SET enabled = true WHERE NOT receive_bindings.enabled",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "TextArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "033b5ae5c1b0ef53bec49e4d2fbeeabb310389447691e9378127c50859e8e622"
+}

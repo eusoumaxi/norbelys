@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT to_regclass($1) IS NOT NULL AS \"exists!\",\n                  (SELECT i.inhdetachpending FROM pg_inherits i WHERE i.inhrelid = to_regclass($1)) AS \"pending?\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "pending?",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "4b37482a4ef4938489ca7ec2d54e04db7d5f19f80f3601efae2ba3ef78a0f1f9"
+}

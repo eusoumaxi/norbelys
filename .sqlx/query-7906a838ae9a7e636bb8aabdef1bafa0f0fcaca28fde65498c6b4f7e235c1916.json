@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO signing_keys (kid, algorithm, private_key, public_jwk) VALUES ($1, 'EdDSA', $2, $3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Bytea",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7906a838ae9a7e636bb8aabdef1bafa0f0fcaca28fde65498c6b4f7e235c1916"
+}

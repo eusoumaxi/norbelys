@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO jobs (workspace_id, queue, kind, payload, unique_key, max_attempts, run_at, trace_parent)\n         SELECT $1, $2, $3, job.payload, job.unique_key, $4, coalesce($5, now()), $8::text\n           FROM unnest($6::jsonb[], $7::text[]) AS job(payload, unique_key)\n         ON CONFLICT (workspace_id, kind, unique_key) WHERE unique_key IS NOT NULL AND state IN ('available', 'running')\n         DO UPDATE SET run_at = least(jobs.run_at, EXCLUDED.run_at) WHERE jobs.state = 'available'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Int2",
+        "Timestamptz",
+        "JsonbArray",
+        "TextArray",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a61acf5393fa952f08c65bfd9320292b40230b1041f82e84086849c380d1e246"
+}

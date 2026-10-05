@@ -1,0 +1,55 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "maple",
+  "name": "Norbelys",
+  "description": "Documentation for Norbelys.",
+  "colors": {
+    "primary": "#DB2777",
+    "light": "#F472B6",
+    "dark": "#DB2777"
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg",
+    "href": "https://norbelys.com"
+  },
+  "favicon": "/favicon.svg",
+  "navbar": {
+    "primary": {
+      "type": "button",
+      "label": "Dashboard",
+      "href": "https://app.norbelys.com"
+    }
+  },
+  "api": {
+    "openapi": {
+      "source": "openapi.json",
+      "directory": "reference",
+      "overlays": ["openapi-overlay.yaml"]
+    },
+    "playground": {
+      "display": "interactive"
+    },
+    "examples": {
+      "languages": ["curl", "javascript", "python"],
+      "defaults": "required",
+      "prefill": true
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Docs",
+        "pages": ["index", "architecture", "development", "migrations", "observability"]
+      },
+      {
+        "tab": "API reference",
+        "openapi": {
+          "source": "openapi.json",
+          "directory": "reference",
+          "overlays": ["openapi-overlay.yaml"]
+        }
+      }
+    ]
+  }
+}

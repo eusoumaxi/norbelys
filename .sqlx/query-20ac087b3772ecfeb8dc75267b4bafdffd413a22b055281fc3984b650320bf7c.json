@@ -1,0 +1,55 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT s.position, s.current_revision, r.same_thread\n           FROM steps s JOIN step_revisions r ON r.workspace_id = s.workspace_id AND r.step_id = s.id AND r.revision = $4\n          WHERE s.workspace_id = $1 AND s.id = $2 AND s.campaign_id = $3",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "position",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "steps",
+            "name": "position"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "current_revision",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "steps",
+            "name": "current_revision"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "same_thread",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "same_thread"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "20ac087b3772ecfeb8dc75267b4bafdffd413a22b055281fc3984b650320bf7c"
+}

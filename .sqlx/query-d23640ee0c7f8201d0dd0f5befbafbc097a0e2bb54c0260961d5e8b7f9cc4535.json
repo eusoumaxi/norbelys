@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT name, processed_to FROM rollup_watermarks WHERE name IN ($1, $2)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "rollup_watermarks",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "processed_to",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "rollup_watermarks",
+            "name": "processed_to"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "d23640ee0c7f8201d0dd0f5befbafbc097a0e2bb54c0260961d5e8b7f9cc4535"
+}

@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE sso_connections\n            SET name = coalesce($3, name), issuer = coalesce($4, issuer), client_id = coalesce($5, client_id),\n                client_secret = coalesce($6, client_secret), default_role = coalesce($7, default_role),\n                jit_provisioning = coalesce($8, jit_provisioning), enforced = coalesce($9, enforced),\n                enforced_at = CASE WHEN coalesce($9, enforced) THEN coalesce(enforced_at, now()) END,\n                policy_version = policy_version + CASE WHEN $10 THEN 1 ELSE 0 END,\n                status = CASE WHEN $4::text IS NOT NULL AND $4 <> issuer THEN 'pending' ELSE status END\n          WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Bytea",
+        "Text",
+        "Bool",
+        "Bool",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6da486e8b3a31f9cf2baa4f6557054750288de232ab4e564b9c562285a3f2441"
+}

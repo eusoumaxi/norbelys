@@ -1,0 +1,94 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE attempts a SET outcome = d.outcome, finished_at = now(), quota_state = d.quota, category = d.category,\n                  diagnostic = 'The sender lost its lease on the message.'\n             FROM unnest($3::uuid[], $4::int[], $5::text[], $6::text[], $7::text[]) AS d(message_id, attempt_number, outcome, quota, category)\n            WHERE a.workspace_id = $1 AND a.connection_id = $2 AND a.message_id = d.message_id\n              AND a.attempt_number = d.attempt_number AND a.quota_state = 'reserved'\n        RETURNING a.id, a.message_id, a.reserved_day AS \"reserved_day: Date\", a.quota_scope_id, a.recipient_count, a.quota_state",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "message_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "reserved_day: Date",
+        "type_info": "Date",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "reserved_day"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "quota_scope_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "quota_scope_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "recipient_count",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "recipient_count"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "quota_state",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "quota_state"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "UuidArray",
+        "Int4Array",
+        "TextArray",
+        "TextArray",
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "8e6487d22c41e773b946bfad4dd168aedcc6e5b991fee9f56784e2b32121a0d8"
+}

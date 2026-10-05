@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE connections\n                SET daily_limit = coalesce($3, daily_limit),\n                    send_interval_minutes = coalesce($4, send_interval_minutes),\n                    send_window = CASE WHEN $5 THEN $6 ELSE send_window END,\n                    timezone = coalesce($7, timezone),\n                    warmup_stage = CASE WHEN $8 THEN $9 ELSE warmup_stage END,\n                    quota_scope_id = CASE WHEN $10 THEN $11 ELSE quota_scope_id END,\n                    next_claim_at = NULL\n              WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int4",
+        "Int4",
+        "Bool",
+        "Jsonb",
+        "Text",
+        "Bool",
+        "Int2",
+        "Bool",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "49bfd3d1405742c2211856a34948864476ba6bb8f686f68acee5da4395aac88c"
+}

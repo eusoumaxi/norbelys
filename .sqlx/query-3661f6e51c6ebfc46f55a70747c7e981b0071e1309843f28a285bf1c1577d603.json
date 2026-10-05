@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT (coalesce(sum(octet_length(to_json(s.name)::text)\n                                + octet_length(coalesce(to_json(r.personalisation_prompt)::text, 'null'))), 0)\n                   + coalesce((SELECT sum(octet_length(to_json(v.name)::text) + octet_length(to_json(c.subject)::text)\n                                          + octet_length(coalesce(to_json(c.preheader)::text, 'null'))\n                                          + octet_length(to_json(c.html)::text)\n                                          + octet_length(to_json(c.cc)::text) + octet_length(to_json(c.bcc)::text))\n                                 FROM steps t\n                                 JOIN step_revision_variants o\n                                   ON o.workspace_id = t.workspace_id AND o.step_id = t.id AND o.step_revision = t.current_revision\n                                 JOIN variants v ON v.workspace_id = o.workspace_id AND v.id = o.variant_id\n                                 JOIN variant_revisions c\n                                   ON c.workspace_id = o.workspace_id AND c.variant_id = o.variant_id AND c.version = o.variant_version\n                                WHERE t.workspace_id = $1 AND t.campaign_id = $2), 0))::bigint AS \"bytes!\"\n             FROM steps s\n             LEFT JOIN step_revisions r ON r.workspace_id = s.workspace_id AND r.step_id = s.id AND r.revision = s.current_revision\n            WHERE s.workspace_id = $1 AND s.campaign_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "bytes!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "3661f6e51c6ebfc46f55a70747c7e981b0071e1309843f28a285bf1c1577d603"
+}

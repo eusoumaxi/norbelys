@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, policy_version, enforced_at AS \"enforced_at: Timestamp\"\n             FROM sso_connections\n            WHERE workspace_id = $1 AND enforced AND status = 'active'\n            ORDER BY enforced_at NULLS FIRST, id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "policy_version",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "policy_version"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "enforced_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "enforced_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "c4616f9492010f90804fcf0f9f78549859a161f410031ee3f1f1374f3c5908c0"
+}

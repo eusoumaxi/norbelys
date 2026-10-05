@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE quota_scopes\n            SET consecutive_failures = $3, paused_until = $4, breaker_opened_at = $5,\n                probe_message_id = $6, probe_generation = $7,\n                paused_detail = CASE WHEN $4::timestamptz IS NULL THEN NULL ELSE coalesce($8, paused_detail) END\n          WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int4",
+        "Timestamptz",
+        "Timestamptz",
+        "Uuid",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7fa28b4b02f1bb832813300b497bb0d06f6b08405f878c5d7e46c6e6a591defd"
+}

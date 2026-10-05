@@ -1,0 +1,33 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE webhook_deliveries SET state = 'pending', next_attempt_at = now()\n            WHERE workspace_id = $1 AND event_id >= $2 AND event_id >= $3 AND event_id < $4\n              AND ($5::uuid IS NULL OR id = $5) AND ($6::uuid IS NULL OR endpoint_id = $6)\n           RETURNING id AS \"id: Id<WebhookDelivery>\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<WebhookDelivery>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "webhook_deliveries",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "99fee817e6630533ec5e4e9e2ba1070809a7ed3f849271d531232c121a0044f9"
+}

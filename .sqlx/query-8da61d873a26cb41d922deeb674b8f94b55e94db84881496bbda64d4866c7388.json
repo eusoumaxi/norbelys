@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO restore_drills (minutes) VALUES ($1)\n                   RETURNING completed_at AS \"completed_at: crate::domain::time::Timestamp\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "completed_at: crate::domain::time::Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "restore_drills",
+            "name": "completed_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "8da61d873a26cb41d922deeb674b8f94b55e94db84881496bbda64d4866c7388"
+}

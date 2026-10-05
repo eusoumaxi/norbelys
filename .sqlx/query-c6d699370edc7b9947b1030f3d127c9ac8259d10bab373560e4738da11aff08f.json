@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM provider_event_keys WHERE (tableoid, ctid) IN (\n                 SELECT tableoid, ctid FROM provider_event_keys WHERE received_at < now() - interval '3 days' LIMIT $1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c6d699370edc7b9947b1030f3d127c9ac8259d10bab373560e4738da11aff08f"
+}

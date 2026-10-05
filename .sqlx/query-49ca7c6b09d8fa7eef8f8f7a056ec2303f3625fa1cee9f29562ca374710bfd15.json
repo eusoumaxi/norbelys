@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT DISTINCT ON (email_key) email_key, reason, review_after AS \"review_after: Timestamp\"\n             FROM recipient_holds\n            WHERE workspace_id = $1 AND email_key = ANY($2) AND resolved_at IS NULL AND review_after > now()\n            ORDER BY email_key, observed_at DESC",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "email_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "recipient_holds",
+            "name": "email_key"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "reason",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "recipient_holds",
+            "name": "reason"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "review_after: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "recipient_holds",
+            "name": "review_after"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "49ca7c6b09d8fa7eef8f8f7a056ec2303f3625fa1cee9f29562ca374710bfd15"
+}

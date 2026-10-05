@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE campaigns\n            SET name = coalesce($3, name), timezone = coalesce($4, timezone),\n                send_window = CASE WHEN $5 THEN $6 ELSE send_window END,\n                start_at = CASE WHEN $7 THEN $8 ELSE start_at END,\n                tracking_domain_id = CASE WHEN $9 THEN $10 ELSE tracking_domain_id END,\n                track_opens = coalesce($11, track_opens), track_clicks = coalesce($12, track_clicks),\n                stop_on_reply = coalesce($13, stop_on_reply), sender_tags = coalesce($14, sender_tags),\n                on_sender_removed = coalesce($15, on_sender_removed),\n                stop_company_on_reply = coalesce($16, stop_company_on_reply),\n                cooldown_hours = coalesce($17, cooldown_hours)\n          WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Bool",
+        "Jsonb",
+        "Bool",
+        "Timestamptz",
+        "Bool",
+        "Uuid",
+        "Bool",
+        "Bool",
+        "Text",
+        "TextArray",
+        "Text",
+        "Bool",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f9d6d592e5d66e81c8e4e2ae7eabdfbc17c68b5c5bbd8e05fbaec667594cdc4d"
+}

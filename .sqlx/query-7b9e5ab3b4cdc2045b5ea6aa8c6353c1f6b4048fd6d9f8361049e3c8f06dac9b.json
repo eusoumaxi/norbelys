@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO campaign_senders (workspace_id, campaign_id, sender_identity_id)\n         SELECT $1, $2, unnest($3::uuid[]) ON CONFLICT DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7b9e5ab3b4cdc2045b5ea6aa8c6353c1f6b4048fd6d9f8361049e3c8f06dac9b"
+}

@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE jobs SET effect_started_at = now(), lease_expires_at = now() + make_interval(secs => $5)\n                WHERE workspace_id = $1 AND id = $2 AND lease_owner = $3 AND claims = $4\n               RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "jobs",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Int4",
+        "Float8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "dead37219547030c7424be6da167e24587de718ec0f64462c755f994e20689a0"
+}

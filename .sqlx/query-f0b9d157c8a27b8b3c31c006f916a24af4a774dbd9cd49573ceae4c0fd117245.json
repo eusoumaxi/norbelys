@@ -1,0 +1,76 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT parent, name, archive_key AS \"archive_key!\", lower AS \"lower: crate::domain::time::Timestamp\",\n                  upper AS \"upper: crate::domain::time::Timestamp\"\n             FROM partition_leaves WHERE archive_key IS NOT NULL AND parent = ANY($1) ORDER BY lower",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "parent",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "partition_leaves",
+            "name": "parent"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "partition_leaves",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "archive_key!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "partition_leaves",
+            "name": "archive_key"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "lower: crate::domain::time::Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "partition_leaves",
+            "name": "lower"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "upper: crate::domain::time::Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "partition_leaves",
+            "name": "upper"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "f0b9d157c8a27b8b3c31c006f916a24af4a774dbd9cd49573ceae4c0fd117245"
+}

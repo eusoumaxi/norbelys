@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO campaign_sender_rotation (workspace_id, campaign_id, sender_identity_id, last_assigned_at)\n             SELECT $1, $2, r.id, r.at FROM UNNEST($3::uuid[], $4::timestamptz[]) AS r(id, at)\n             ON CONFLICT (workspace_id, campaign_id, sender_identity_id)\n             DO UPDATE SET last_assigned_at = excluded.last_assigned_at",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "UuidArray",
+        "TimestamptzArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7b622290974885b3739bad54acee5237ea742e451c5961d24924a1c1616f525b"
+}

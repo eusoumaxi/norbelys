@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT transport_key FROM inbound_messages\n          WHERE workspace_id = $1 AND receive_binding_id = $2 AND transport_key = ANY($3)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "transport_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "transport_key"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d1b80ba9c5cda1d4e5c430aa898f977f4fcfc29f47a7e96d4742f9f3c4763112"
+}

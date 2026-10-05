@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT e.id FROM enrollments e JOIN people p ON p.workspace_id = e.workspace_id AND p.id = e.person_id\n          WHERE e.workspace_id = $1 AND e.status IN ('active', 'paused')\n            AND p.email_key = ANY(ARRAY(SELECT ascii_lower(email) FROM unnest($2::text[]) AS email))",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "cc01a568ff0173b4143759737541de128f95534ea76aa880bfdbdf600b8ed031"
+}

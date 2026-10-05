@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT c.id FROM receive_bindings b\n           JOIN connections c ON c.workspace_id = b.workspace_id AND c.id = b.connection_id\n          WHERE b.workspace_id = $1 AND b.id = $2\n            FOR UPDATE OF c SKIP LOCKED",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "15676445a22ed06750f3cc0060bb287605bfd73bbaa9d18f8744892345167f14"
+}

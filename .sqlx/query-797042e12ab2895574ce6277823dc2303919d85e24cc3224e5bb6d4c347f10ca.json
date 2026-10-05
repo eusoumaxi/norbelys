@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT max(review_after) AS \"until: Timestamp\" FROM recipient_holds\n            WHERE workspace_id = $1 AND email_key = ANY($2) AND message_id <> $3\n              AND resolved_at IS NULL AND review_after > now()",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "until: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "TextArray",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "797042e12ab2895574ce6277823dc2303919d85e24cc3224e5bb6d4c347f10ca"
+}

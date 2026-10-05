@@ -1,0 +1,324 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id AS \"id: Id<InboundMessage>\", connection_id AS \"connection_id: Id<Connection>\",\n                      thread_id AS \"thread_id: Id<Thread>\", message_id AS \"message_id: Id<Message>\",\n                      person_id AS \"person_id: Id<Person>\", from_email, from_name, subject, internet_message_id, in_reply_to,\n                      references_ids, body_text, size_bytes, truncated, classification, classification_source, evidence,\n                      sentiment, review_requested_at AS \"review_requested_at: Timestamp\", review_proposal, review_decision,\n                      reviewed_at AS \"reviewed_at: Timestamp\", received_at AS \"received_at: Timestamp\",\n                      created_at AS \"created_at: Timestamp\", updated_at AS \"updated_at: Timestamp\"\n                 FROM inbound_messages\n                WHERE workspace_id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR id = $2) AND ($3::uuid IS NULL OR id > $3)\n                  AND ($4::uuid IS NULL OR thread_id = $4) AND ($5::uuid IS NULL OR connection_id = $5)\n                  AND ($6::text IS NULL OR classification = $6)\n                  AND ($7::bool IS NULL OR $7 = (review_requested_at IS NOT NULL AND review_decision IS NULL))\n                  AND ($8::timestamptz IS NULL OR received_at >= $8)\n                ORDER BY id LIMIT $9",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<InboundMessage>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "connection_id: Id<Connection>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "connection_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "thread_id: Id<Thread>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "thread_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "message_id: Id<Message>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "person_id: Id<Person>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "person_id"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "from_email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "from_email"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "from_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "from_name"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "subject",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "subject"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "internet_message_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "internet_message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "in_reply_to",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "in_reply_to"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "references_ids",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "references_ids"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "body_text",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "body_text"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "size_bytes",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "size_bytes"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "truncated",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "truncated"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "classification",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "classification"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "classification_source",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "classification_source"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "evidence",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "evidence"
+          }
+        }
+      },
+      {
+        "ordinal": 17,
+        "name": "sentiment",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "sentiment"
+          }
+        }
+      },
+      {
+        "ordinal": 18,
+        "name": "review_requested_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "review_requested_at"
+          }
+        }
+      },
+      {
+        "ordinal": 19,
+        "name": "review_proposal",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "review_proposal"
+          }
+        }
+      },
+      {
+        "ordinal": 20,
+        "name": "review_decision",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "review_decision"
+          }
+        }
+      },
+      {
+        "ordinal": 21,
+        "name": "reviewed_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "reviewed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 22,
+        "name": "received_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "received_at"
+          }
+        }
+      },
+      {
+        "ordinal": 23,
+        "name": "created_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 24,
+        "name": "updated_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Bool",
+        "Timestamptz",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "ac38bb262b48eda4ce87dd0cac7e2cf98ff4e1c77815a4f06d6eaf27eae3c421"
+}

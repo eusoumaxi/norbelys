@@ -1,0 +1,161 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT status, paused, next_send_at AS \"next_send_at: Timestamp\", send_interval_minutes, send_phase_seconds,\n                  paused_until AS \"paused_until: Timestamp\", consecutive_failures, probe_message_id, probe_generation,\n                  quota_scope_id, timezone, send_window\n             FROM connections WHERE workspace_id = $1 AND id = $2 FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "paused",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "paused"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "next_send_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "next_send_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "send_interval_minutes",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "send_interval_minutes"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "send_phase_seconds",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "send_phase_seconds"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "paused_until: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "paused_until"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "consecutive_failures",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "consecutive_failures"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "probe_message_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "probe_message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "probe_generation",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "probe_generation"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "quota_scope_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "quota_scope_id"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "timezone",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "timezone"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "send_window",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "send_window"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "573f3ae4e9528cdaa5b93d662325589db53816e25bf0ad60dec8cc390b09fc19"
+}

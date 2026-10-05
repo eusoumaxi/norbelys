@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO users (email, email_verified_at) VALUES ($1, now())\n           ON CONFLICT (email_key) DO UPDATE SET updated_at = now()\n           RETURNING id AS \"id: Id<User>\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<User>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d2281c70e3883d47841c2d2b022238db2a3e385c4e3fa522af59092e4f8193e7"
+}

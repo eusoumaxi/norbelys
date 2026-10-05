@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE messages SET state = 'uncertain',\n                    status_detail = 'The sender stopped while the message was being submitted: it may have been sent, and it is never resent automatically.'\n              WHERE workspace_id = $1 AND id = ANY($2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "41d61b10c5b53d033aa37de63f4cdbd79237cbd57661de2f10f23818b4e463d4"
+}

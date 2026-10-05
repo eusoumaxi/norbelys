@@ -1,0 +1,60 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "WITH canary AS (\n               SELECT min(started_at) AS first, max(started_at) AS last, count(*) AS verdicts,\n                      count(*) FILTER (WHERE review_requested) AS reviews\n                 FROM ai_calls\n                WHERE use_case = $1 AND prompt_id = $2 AND canary AND review_requested IS NOT NULL\n           )\n           SELECT c.first AS \"first?: Timestamp\", c.verdicts AS \"canary_verdicts!\",\n                  c.reviews AS \"canary_reviews!\",\n                  (SELECT count(*) FROM ai_calls a\n                    WHERE a.use_case = $1 AND a.prompt_id = $3 AND a.review_requested IS NOT NULL\n                      AND a.started_at BETWEEN c.first AND c.last) AS \"current_verdicts!\",\n                  (SELECT count(*) FROM ai_calls a\n                    WHERE a.use_case = $1 AND a.prompt_id = $3 AND a.review_requested\n                      AND a.started_at BETWEEN c.first AND c.last) AS \"current_reviews!\",\n                  EXISTS (SELECT 1 FROM ai_calls a\n                           WHERE a.use_case = $1 AND a.prompt_id = $2 AND NOT a.canary\n                             AND a.review_requested IS NOT NULL) AS \"promoted!\"\n             FROM canary c",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "first?: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "canary_verdicts!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "canary_reviews!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "current_verdicts!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "current_reviews!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "promoted!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "df987fcbcdf67542833a4b17d95dd7e48485c1426ddc3c480f252f11c61cad5f"
+}

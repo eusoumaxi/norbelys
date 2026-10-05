@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT domain, ownership_token FROM sso_email_domains\n          WHERE workspace_id = $1 AND sso_connection_id = $2 ORDER BY domain",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "domain",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sso_email_domains",
+            "name": "domain"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "ownership_token",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sso_email_domains",
+            "name": "ownership_token"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "e249fb17fcb5e338cafb814f7de01e2ed93ae00024f9a8d2408874251b8b8870"
+}

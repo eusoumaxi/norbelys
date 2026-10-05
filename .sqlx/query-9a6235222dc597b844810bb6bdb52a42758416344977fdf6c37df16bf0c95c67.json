@@ -1,0 +1,92 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, fingerprint, response_status, response_headers, response_body,\n                  locked_at IS NOT NULL AND locked_at < now() - interval '60 seconds' AS \"stale!\",\n                  expires_at <= now() AS \"expired!\"\n             FROM idempotency_keys WHERE key = $3 AND (workspace_id = $1 OR user_id = $2) FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "idempotency_keys",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "fingerprint",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "idempotency_keys",
+            "name": "fingerprint"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "response_status",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "idempotency_keys",
+            "name": "response_status"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "response_headers",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "idempotency_keys",
+            "name": "response_headers"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "response_body",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "idempotency_keys",
+            "name": "response_body"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "stale!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 6,
+        "name": "expired!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      null,
+      null
+    ]
+  },
+  "hash": "9a6235222dc597b844810bb6bdb52a42758416344977fdf6c37df16bf0c95c67"
+}

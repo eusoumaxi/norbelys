@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE provider_webhooks w SET last_event_at = greatest(w.last_event_at, r.at)\n           FROM (SELECT provider_webhook_id, max(received_at) AS at FROM webhook_receipts\n                  WHERE workspace_id = $1 AND id = ANY($2) GROUP BY provider_webhook_id) r\n          WHERE w.workspace_id = $1 AND w.id = r.provider_webhook_id",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "069deebdf57f69544a9bff71bf99381e6220727a5058a17fc5cd95e6feda771a"
+}

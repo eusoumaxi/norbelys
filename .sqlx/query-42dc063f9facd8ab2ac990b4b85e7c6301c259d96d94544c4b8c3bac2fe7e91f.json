@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO idempotency_keys (workspace_id, key, fingerprint, locked_at, expires_at)\n                 VALUES ($1, $2, $3, now(), now() + interval '24 hours')\n                 ON CONFLICT (workspace_id, key) WHERE workspace_id IS NOT NULL DO NOTHING\n                 RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "idempotency_keys",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "42dc063f9facd8ab2ac990b4b85e7c6301c259d96d94544c4b8c3bac2fe7e91f"
+}

@@ -1,0 +1,48 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT e.message_id, e.thread_root_message_id,\n                  (SELECT count(*) FROM messages m WHERE m.workspace_id = e.workspace_id AND m.enrollment_id = e.id) AS \"messages!\"\n             FROM enrollments e WHERE e.workspace_id = $1 AND e.id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "message_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "thread_root_message_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "thread_root_message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "messages!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true,
+      true,
+      null
+    ]
+  },
+  "hash": "7973fbe845799b3dbed2ba1338be10d311a84c31a45590e72f7df0bbadaada4f"
+}

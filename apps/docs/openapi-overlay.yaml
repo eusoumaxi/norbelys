@@ -1,0 +1,13 @@
+overlay: 1.0.0
+info:
+  title: Public API server for the documentation explorer
+  version: "1.0.0"
+actions:
+  - target: $
+    update:
+      servers:
+        - url: https://api.norbelys.com
+  - target: $
+    update:
+      security:
+        - bearer: []

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO connections (workspace_id, id, provider, transport, account_email, smtp, status, daily_limit)\n           VALUES ($1, $2, 'sendgrid', 'smtp', 'Norbelys relay', '{\"host\": \"smtp.sendgrid.net\", \"port\": 587, \"security\": \"starttls\", \"username\": \"apikey\"}', 'active', 10000)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d8a93c7a5801c4d2fa038d644f3287b12dddabf3feb3eb4dd29553ebb44d1e19"
+}

@@ -1,0 +1,65 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT sso_connection_id, domain, ownership_token, verified_at AS \"verified_at: Timestamp\"\n             FROM sso_email_domains WHERE workspace_id = $1 AND sso_connection_id = ANY($2)\n            ORDER BY domain",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "sso_connection_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sso_email_domains",
+            "name": "sso_connection_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "domain",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sso_email_domains",
+            "name": "domain"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "ownership_token",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sso_email_domains",
+            "name": "ownership_token"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "verified_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "sso_email_domains",
+            "name": "verified_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "03d04eed355122c8a2e2ae5434a8c17230baf46a6730c4d976f18f7708def1ab"
+}

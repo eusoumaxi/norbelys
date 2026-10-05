@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM variant_revisions r USING variants v\n              WHERE r.workspace_id = $1 AND v.workspace_id = r.workspace_id AND v.id = r.variant_id AND v.step_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3b62d51d2a4d222810b86c0c0f523a8200ea3bc8fe4be847bb7ce188391aa4cc"
+}

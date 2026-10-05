@@ -1,0 +1,87 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "WITH due AS (\n             SELECT id FROM jobs WHERE workspace_id = $1 AND queue = $2 AND state = 'available' AND run_at <= now()\n              ORDER BY run_at, id LIMIT $3 FOR UPDATE SKIP LOCKED)\n         UPDATE jobs j SET state = 'running', lease_owner = $4, lease_expires_at = now() + make_interval(secs => $5),\n                claims = j.claims + 1, updated_at = now()\n           FROM due WHERE j.id = due.id\n         RETURNING j.id, j.workspace_id, j.kind, j.claims, j.attempts,\n                   extract(epoch FROM now() - j.run_at)::float8 AS \"waited!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "jobs",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "workspace_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "jobs",
+            "name": "workspace_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "kind",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "jobs",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "claims",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "jobs",
+            "name": "claims"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "attempts",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "jobs",
+            "name": "attempts"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "waited!",
+        "type_info": "Float8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Int8",
+        "Text",
+        "Float8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "6051cd17f4c1272debd74b065724c5de559db2b810dd540872c01e3ea02147d6"
+}

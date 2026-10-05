@@ -1,0 +1,42 @@
+# Validate frontend builds without deployment credentials.
+name: Frontend checks
+
+on:
+  workflow_call:
+    inputs:
+      apps:
+        type: string
+        default: '["app","web","cli-downloads"]'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(inputs.apps || '["app","web","cli-downloads"]') }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+        with:
+          cache-scope: frontend-${{ matrix.app }}
+
+      - name: Build
+        run: |
+          bunx turbo run check build coverage --filter=@norbelys/${{ matrix.app }}

@@ -1,0 +1,33 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT c.provider AS \"provider!\",\n                  (sum(coalesce(u.used, 0) + coalesce(u.reserved, 0))::float8 / sum(c.daily_limit)::float8) AS \"utilisation!\"\n             FROM connections c\n             LEFT JOIN connection_usage u\n                    ON (u.workspace_id, u.connection_id) = (c.workspace_id, c.id) AND u.day = (now() AT TIME ZONE 'UTC')::date\n            WHERE c.status = 'active' AND NOT c.paused\n            GROUP BY c.provider",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "provider!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "provider"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "utilisation!",
+        "type_info": "Float8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "5f36cc56c3e858f42e672cb98325ea5891e6d1de0f72271ac12e72aa5f96b2dd"
+}

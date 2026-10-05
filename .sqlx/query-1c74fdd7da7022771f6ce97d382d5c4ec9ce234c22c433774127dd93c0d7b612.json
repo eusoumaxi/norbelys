@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id AS \"id: crate::domain::ids::Id<crate::domain::ids::Step>\" FROM steps\n            WHERE workspace_id = $1 AND campaign_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: crate::domain::ids::Id<crate::domain::ids::Step>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "steps",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "1c74fdd7da7022771f6ce97d382d5c4ec9ce234c22c433774127dd93c0d7b612"
+}

@@ -1,0 +1,128 @@
+/* The light marketing surface shares Norbelys typography and canonical geometry. */
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("@fontsource-variable/inter/files/inter-latin-wght-normal.woff2")
+    format("woff2-variations");
+}
+@font-face {
+  font-family: Outfit;
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("@fontsource/outfit/files/outfit-latin-600-normal.woff2")
+    format("woff2");
+}
+:root {
+  color-scheme: light;
+  --surface: #fff;
+  --surface-soft: #f7f7f5;
+  --surface-pink: #fcf5f8;
+  --line: #dededd;
+  --line-strong: #b8bab7;
+  --line-pink: #e8dce2;
+  --fg: #1e2020;
+  --fg-2: #5c6060;
+  --fg-pink: #725461;
+  --accent: #be185d;
+  --accent-hover: #9d174d;
+  --accent-soft: #fce7f3;
+  --on-accent: #fff;
+  --font-body: "Inter Variable", Inter, system-ui, sans-serif;
+  --font-display: Outfit, "Inter Variable", system-ui, sans-serif;
+  --text-caption: 0.75rem;
+  --text-small: 0.8125rem;
+  --text-ui: 0.875rem;
+  --text-email: 0.9375rem;
+  --text-body: 1rem;
+  --text-lead: 1.125rem;
+  --text-h3: 1.5rem;
+  --text-h2: clamp(2.75rem, 4vw, 3.5rem);
+  --text-display: clamp(4.5rem, 6.4vw, 6rem);
+  --text-overview-title: 1.5rem;
+  --text-number: 3.5rem;
+  --text-next-step: 2.75rem;
+  --text-weekday: 0.5625rem;
+  --line-body: 1.65;
+  --line-heading: 1.14;
+  --line-display: 1.06;
+  --tracking-display: -0.035em;
+  --tracking-heading: -0.025em;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+  --space-10: 8rem;
+  --page-width: 80rem;
+  --hero-copy-width: 28rem;
+  --reading-width: 35rem;
+  --gutter: 3rem;
+  --rule: 1px;
+  --focus-width: 2px;
+  --radius-control: 4px;
+  --radius-panel: 6px;
+  --radius-round: 50%;
+  --control-height: 3rem;
+  --header-height: 5rem;
+  --brand-width: 8.25rem;
+  --mark-size: 2.5rem;
+  --icon-size: 1.25rem;
+  --drawing-width: 14rem;
+  --hero-drawing-width: 16rem;
+  --closing-drawing-width: 23rem;
+  --demo-guide-width: 18rem;
+  --demo-height: 11rem;
+  --story-step-height: 16rem;
+  --story-travel: 16rem;
+  --story-top: 4rem;
+  --scene-drawing-width: 10rem;
+  --signal-drawing-width: 8rem;
+  --scheduled-position: 3.125%;
+  --overview-drawing-width: 9rem;
+  --overview-max-width: 42rem;
+  --sending-drawing-width: 20rem;
+  --mobile-drawing-width: 7rem;
+  --mobile-scene-width: 8rem;
+  --mobile-sending-width: 15rem;
+  --connection-caption-width: 11rem;
+  --flow-point-size: 0.75rem;
+  --flow-midpoint: 0.375rem;
+  --scene-offset: 0.75rem;
+  --dot-size: 0.375rem;
+  --email-shadow: 0 10px 32px rgb(67 34 49 / 5%);
+  --product-shadow: 0 16px 48px rgb(30 32 32 / 8%);
+  --nb-illus-line: #646566;
+  --nb-illus-faint: #c8c3c5;
+  --nb-illus-ground: #dbd6d8;
+  --nb-illus-grid: #eae5e7;
+  --nb-illus-accent: var(--accent);
+  --nb-illus-on-accent: var(--surface);
+}
+@media (max-width: 1000px) {
+  :root {
+    --gutter: 2rem;
+    --demo-guide-width: 14rem;
+    --text-display: 3.75rem;
+    --text-h2: 2.75rem;
+  }
+}
+@media (max-width: 760px) {
+  :root {
+    --gutter: 1.25rem;
+    --text-display: clamp(2.75rem, 8vw, 4rem);
+    --text-h2: 2.125rem;
+    --text-h3: 1.25rem;
+    --text-lead: 1rem;
+    --header-height: 4.75rem;
+    --space-10: 5rem;
+    --space-9: 4rem;
+    --demo-height: 12rem;
+  }
+}

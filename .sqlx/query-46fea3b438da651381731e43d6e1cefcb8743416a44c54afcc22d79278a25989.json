@@ -1,0 +1,57 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE attempts SET outcome = $4, finished_at = now(), quota_state = 'released', category = $5, diagnostic = $6\n            WHERE workspace_id = $1 AND message_id = $2 AND attempt_number = $3 AND quota_state = 'reserved'\n        RETURNING reserved_day AS \"reserved_day: Date\", quota_scope_id, recipient_count",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "reserved_day: Date",
+        "type_info": "Date",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "reserved_day"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "quota_scope_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "quota_scope_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "recipient_count",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "attempts",
+            "name": "recipient_count"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int4",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "46fea3b438da651381731e43d6e1cefcb8743416a44c54afcc22d79278a25989"
+}

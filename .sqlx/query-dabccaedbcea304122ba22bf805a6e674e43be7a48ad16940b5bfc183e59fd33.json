@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT date_bin('15 minutes', now(), '1970-01-01T00:00:00Z') AS \"start!: Timestamp\",\n                  date_bin('15 minutes', now(), '1970-01-01T00:00:00Z')\n                    + interval '16 minutes 30 seconds' AS \"run_at!: Timestamp\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "start!: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "run_at!: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "dabccaedbcea304122ba22bf805a6e674e43be7a48ad16940b5bfc183e59fd33"
+}

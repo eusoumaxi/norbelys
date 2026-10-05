@@ -1,0 +1,60 @@
+# Local development services, on the loopback interface only. Nothing of the product runs in a
+# container here: the roles run with `turbo run dev:<role>` (or `cargo run -p norbelys-server --
+# <role>`), and images are built by CI, never on a laptop.
+#
+# PostgreSQL 18, the only service development needs (`bun run db`):
+#   docker compose -f docker/services.yml up -d postgres
+#   DATABASE_URL=postgres://norbelys:norbelys@127.0.0.1:5433/norbelys_dev
+# The cluster's data lives in the named volume `postgres`; `bun run db:reset` deliberately resets one
+# database in it. `cargo xtask db migrate` applies the schema without resetting data.
+#
+# Mailpit, optional (profile `mail`, `bun run db:mail`): an SMTP server that keeps every message,
+# with a web UI. SMTP on 127.0.0.1:1025 (no TLS: connect a mailbox to it with
+# MAIL_ALLOW_PRIVATE_HOSTS=true), UI on http://127.0.0.1:8025:
+#   docker compose -f docker/services.yml --profile mail up -d mailpit
+#
+# Keep the `postgres` service exactly as it is: Compose recreates a running container whose
+# definition changed, and its hash (`docker compose -f docker/services.yml config --hash
+# postgres`) is what tells. Images are pinned by tag and digest; bump both together.
+name: norbelys-local
+
+services:
+  postgres:
+    image: postgres:18.6-trixie@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+    environment:
+      POSTGRES_USER: norbelys
+      POSTGRES_PASSWORD: norbelys
+      POSTGRES_DB: norbelys
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres:/var/lib/postgresql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "--quiet",
+          "--username",
+          "norbelys",
+          "--dbname",
+          "norbelys",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mailpit:
+    profiles: [mail]
+    image: axllent/mailpit:v1.31.2@sha256:74d609a42ec279aa63c6b4622a6fa9b5408d1ad5b1d76a1c4be40a265ce0863d
+    # Connections log in before they send, as with any provider: accept any login, over plain
+    # SMTP, so a local relay (the system workspace's sign-in mail included) can be checked.
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+
+volumes:
+  postgres: {}

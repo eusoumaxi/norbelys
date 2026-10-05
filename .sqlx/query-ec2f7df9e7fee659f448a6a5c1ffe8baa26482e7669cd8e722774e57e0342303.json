@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT kind, user_id AS \"user_id: Id<User>\", state, browser_hash FROM auth_ceremonies\n            WHERE id = $1 AND consumed_at IS NULL AND expires_at > now()\n              FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "kind",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "auth_ceremonies",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id: Id<User>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "auth_ceremonies",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "state",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "auth_ceremonies",
+            "name": "state"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "browser_hash",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "auth_ceremonies",
+            "name": "browser_hash"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "ec2f7df9e7fee659f448a6a5c1ffe8baa26482e7669cd8e722774e57e0342303"
+}

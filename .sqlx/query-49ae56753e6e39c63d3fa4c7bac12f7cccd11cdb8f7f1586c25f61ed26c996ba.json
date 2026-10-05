@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT live.email, live.connection_id AS \"connection_id: Id<Connection>\"\n             FROM sender_identities archived\n             JOIN sender_identities live\n               ON live.workspace_id = archived.workspace_id AND live.email_key = archived.email_key\n            WHERE archived.workspace_id = $1 AND archived.connection_id = $2 AND archived.archived_at IS NOT NULL\n              AND live.archived_at IS NULL AND live.connection_id <> $2\n            LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sender_identities",
+            "name": "email"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "connection_id: Id<Connection>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sender_identities",
+            "name": "connection_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "49ae56753e6e39c63d3fa4c7bac12f7cccd11cdb8f7f1586c25f61ed26c996ba"
+}

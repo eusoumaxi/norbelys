@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE receive_bindings SET enabled = false, lease_generation = lease_generation + 1\n          WHERE workspace_id = $1 AND connection_id = $2 AND enabled AND NOT (folder = ANY($3))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "TextArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3229d5394a54ecedbd76ac5c6b7ac5b107280b61aa6da1af0134a475dc7b4a21"
+}

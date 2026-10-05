@@ -1,0 +1,33 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO people (workspace_id, email, given_name, family_name, company, custom_fields)\n         SELECT $1, r.email, r.given_name, r.family_name, r.company, r.custom_fields\n           FROM unnest($2::text[], $3::text[], $4::text[], $5::text[], $6::jsonb[])\n                AS r(email, given_name, family_name, company, custom_fields)\n         ON CONFLICT (workspace_id, email_key) DO UPDATE\n            SET given_name = coalesce(EXCLUDED.given_name, people.given_name),\n                family_name = coalesce(EXCLUDED.family_name, people.family_name),\n                company = coalesce(EXCLUDED.company, people.company),\n                custom_fields = people.custom_fields || EXCLUDED.custom_fields\n         RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "TextArray",
+        "TextArray",
+        "TextArray",
+        "TextArray",
+        "JsonbArray"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "47d7750cc2fb5875bf78a1cff56dbb9154986042f3773ea7c9db2e7fb1ccd4b6"
+}

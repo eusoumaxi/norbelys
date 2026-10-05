@@ -1,0 +1,65 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT calls, cost_micros, reserved_cost_micros, budget_micros FROM ai_usage\n          WHERE workspace_id = $1 AND month = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "calls",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "ai_usage",
+            "name": "calls"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "cost_micros",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "ai_usage",
+            "name": "cost_micros"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "reserved_cost_micros",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "ai_usage",
+            "name": "reserved_cost_micros"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "budget_micros",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "ai_usage",
+            "name": "budget_micros"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Date"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "01e1b6bb5078fdf1fd31a020f190b9c39224c279b0adab8f65b8424cb3161c15"
+}

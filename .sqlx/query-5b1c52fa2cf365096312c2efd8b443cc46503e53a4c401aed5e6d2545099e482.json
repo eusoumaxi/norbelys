@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT credential AS \"credential!\" FROM connections WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "credential!",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "credential"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "5b1c52fa2cf365096312c2efd8b443cc46503e53a4c401aed5e6d2545099e482"
+}

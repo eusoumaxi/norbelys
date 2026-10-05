@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT (SELECT count(*) FROM enrollments e\n                     JOIN messages m ON m.workspace_id = e.workspace_id AND m.id = e.message_id\n                     JOIN delivery_queue q ON q.workspace_id = m.workspace_id AND q.message_id = m.id\n                     JOIN campaigns c ON c.workspace_id = e.workspace_id AND c.id = e.campaign_id\n                     JOIN sender_identities i ON i.workspace_id = m.workspace_id AND i.id = m.sender_identity_id\n                    WHERE e.workspace_id = $1 AND e.status = 'active' AND e.message_id IS NOT NULL\n                      AND q.state IN ('queued', 'claimed')\n                      AND ($2::uuid IS NULL OR e.campaign_id = $2)\n                      AND ($3::uuid[] IS NULL OR m.sender_identity_id = ANY($3))\n                      AND ($4::uuid IS NULL OR m.connection_id = $4)\n                      AND NOT (i.enabled AND i.archived_at IS NULL\n                               AND (i.tags && c.sender_tags\n                                    OR EXISTS (SELECT 1 FROM campaign_senders s\n                                                WHERE s.workspace_id = c.workspace_id AND s.campaign_id = c.id\n                                                  AND s.sender_identity_id = i.id))))\n                + (SELECT count(*) FROM delivery_queue q JOIN messages m ON m.workspace_id = q.workspace_id AND m.id = q.message_id\n                    WHERE q.workspace_id = $1 AND $4::uuid IS NOT NULL AND q.connection_id = $4\n                      AND q.state IN ('queued', 'claimed') AND m.kind <> 'campaign') AS \"left!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "left!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "UuidArray",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "ae2f052c0b581b2c20b8c71a1bc768ef25cf47b0ac59d4899e1ddb16a7b07de6"
+}

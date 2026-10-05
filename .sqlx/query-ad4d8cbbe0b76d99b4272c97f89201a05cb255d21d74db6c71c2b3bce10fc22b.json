@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE enrollments SET message_id = NULL WHERE workspace_id = $1 AND message_id = ANY($2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ad4d8cbbe0b76d99b4272c97f89201a05cb255d21d74db6c71c2b3bce10fc22b"
+}

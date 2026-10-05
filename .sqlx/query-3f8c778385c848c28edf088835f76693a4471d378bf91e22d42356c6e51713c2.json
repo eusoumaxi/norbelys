@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE enrollments SET message_id = $3, next_run_at = NULL,\n                thread_root_message_id = coalesce(thread_root_message_id, $3)\n          WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3f8c778385c848c28edf088835f76693a4471d378bf91e22d42356c6e51713c2"
+}

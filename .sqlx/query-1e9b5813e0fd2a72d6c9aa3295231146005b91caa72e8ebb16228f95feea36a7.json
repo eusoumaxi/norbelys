@@ -1,0 +1,89 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "WITH e AS (\n               SELECT m.thread_id AS thread_id, true AS outbound, m.id, m.from_email, m.to_addresses, m.subject,\n                      coalesce(m.sent_at, m.created_at) AS at, m.state, NULL::text AS classification,\n                      left(m.text_body, $4) AS text\n                 FROM messages m WHERE m.workspace_id = $1 AND m.thread_id = ANY($2)\n               UNION ALL\n               SELECT i.thread_id, false, i.id, i.from_email, '{}'::text[], i.subject, i.received_at, NULL, i.classification,\n                      i.body_text\n                 FROM inbound_messages i WHERE i.workspace_id = $1 AND i.thread_id = ANY($2) AND i.deleted_at IS NULL)\n           SELECT thread_id AS \"thread_id!\", outbound AS \"outbound!\", id AS \"id!\", from_email, to_addresses AS \"to_addresses!\",\n                  subject, at AS \"at!: Timestamp\", state, classification, text\n             FROM (SELECT e.*, row_number() OVER (PARTITION BY e.thread_id ORDER BY e.at DESC, e.id DESC) AS n FROM e) r\n            WHERE n <= coalesce($3::bigint, 1)\n            ORDER BY thread_id, at DESC, id DESC",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "thread_id!",
+        "type_info": "Uuid",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "outbound!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "id!",
+        "type_info": "Uuid",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "from_email",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "to_addresses!",
+        "type_info": "TextArray",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "subject",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 6,
+        "name": "at!: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 7,
+        "name": "state",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 8,
+        "name": "classification",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 9,
+        "name": "text",
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "Int8",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "1e9b5813e0fd2a72d6c9aa3295231146005b91caa72e8ebb16228f95feea36a7"
+}

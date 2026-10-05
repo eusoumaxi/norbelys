@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT uuidv7_boundary(now() - make_interval(secs => $1)) AS \"cutoff!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "cutoff!",
+        "type_info": "Uuid",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Float8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "c7e22ee856e7c4c60397c8c172c755bcafc3feb1f8997dd476098712510b2e06"
+}

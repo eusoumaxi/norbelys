@@ -1,0 +1,41 @@
+[package]
+name = "norbelys-cli"
+repository = "https://github.com/eusoumaxi/norbelys"
+description = "The `norbelys` command line: a client of the public HTTP API, never of the database"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "norbelys"
+path = "src/main.rs"
+
+# An HTTP client only: it never depends on `norbelys-server`. The one thing it shares with the
+# server is the committed public OpenAPI document (`crates/server/openapi.json`), embedded at
+# build time to derive its commands.
+[dependencies]
+aws-lc-rs.workspace = true
+base64.workspace = true
+# `string`: subcommand and flag names come from the OpenAPI document at run time, and clap
+# takes owned names only with this feature.
+clap = { workspace = true, features = ["string"] }
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+strum.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+url.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+# Fake servers on the loopback interface: the API, its OAuth endpoints and a webhook receiver.
+axum.workspace = true
+
+[package.metadata.dist]
+dist = true

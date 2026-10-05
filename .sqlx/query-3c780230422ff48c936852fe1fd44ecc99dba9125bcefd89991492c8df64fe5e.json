@@ -1,0 +1,113 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT from_email, from_name, subject, in_reply_to, body_text, classification, classification_source, revision\n               FROM inbound_messages WHERE workspace_id = $1 AND id = $2 AND deleted_at IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "from_email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "from_email"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "from_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "from_name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "subject",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "subject"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "in_reply_to",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "in_reply_to"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "body_text",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "body_text"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "classification",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "classification"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "classification_source",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "classification_source"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "revision",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "inbound_messages",
+            "name": "revision"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3c780230422ff48c936852fe1fd44ecc99dba9125bcefd89991492c8df64fe5e"
+}

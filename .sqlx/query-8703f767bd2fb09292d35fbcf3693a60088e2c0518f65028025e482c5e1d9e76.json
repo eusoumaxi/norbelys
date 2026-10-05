@@ -1,0 +1,37 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT (SELECT count(*) FROM suppressions WHERE workspace_id = $1) AS \"suppressions!\",\n                  (SELECT count(*) FROM delivery_events WHERE workspace_id = $1 AND source = 'unsubscribe') AS \"events!\",\n                  (SELECT count(*) FROM stats_increments WHERE workspace_id = $1 AND metric = 'unsubscribed') AS \"increments!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "suppressions!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "events!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "increments!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "8703f767bd2fb09292d35fbcf3693a60088e2c0518f65028025e482c5e1d9e76"
+}

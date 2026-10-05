@@ -1,0 +1,28 @@
+# The images need the Cargo workspace and nothing else: its manifests and lockfile, the crates
+# (migrations and openapi.json included), the query metadata the sqlx macros read offline
+# (.sqlx/), and tools/ because Cargo refuses a workspace with a missing member. No apps/, docs/,
+# deploy/, private .env files or target/. The public .env.example is embedded by the
+# server's environment validation and must be present at compile time.
+*
+!.env.example
+!Cargo.toml
+!Cargo.lock
+!crates/
+!tools/
+!.sqlx/
+
+# Local credentials and build output remain private even inside an allowed source directory.
+**/.env
+**/.env.*
+!.env.example
+**/.dev.vars*
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.tfstate*
+**/*.tfvars*
+**/*.tfplan
+**/.terraform
+**/node_modules
+**/target

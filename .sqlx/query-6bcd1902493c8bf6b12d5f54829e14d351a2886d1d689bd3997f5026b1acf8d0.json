@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE connection_usage SET reserved = reserved - $4 - $5, used = used + $5\n              WHERE workspace_id = $1 AND connection_id = $2 AND day = $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Date",
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6bcd1902493c8bf6b12d5f54829e14d351a2886d1d689bd3997f5026b1acf8d0"
+}

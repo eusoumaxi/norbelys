@@ -1,0 +1,170 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT t.id AS \"id: Id<Thread>\",\n                          CASE WHEN t.status = 'snoozed' AND t.snoozed_until <= now() THEN 'open' ELSE t.status END AS \"status!\",\n                          CASE WHEN t.status = 'snoozed' AND t.snoozed_until > now() THEN t.snoozed_until END AS \"snoozed_until: Timestamp\",\n                          t.subject, t.person_id AS \"person_id: Id<Person>\", t.campaign_id AS \"campaign_id: Id<Campaign>\",\n                          t.sender_identity_id AS \"sender_identity_id: Id<SenderIdentity>\",\n                          i.connection_id AS \"connection_id: Id<Connection>\", i.email AS identity_email, t.unread,\n                          t.last_activity_at AS \"last_activity_at: Timestamp\", t.created_at AS \"created_at: Timestamp\",\n                          t.updated_at AS \"updated_at: Timestamp\"\n                     FROM threads t JOIN sender_identities i ON i.workspace_id = t.workspace_id AND i.id = t.sender_identity_id\n                    WHERE t.workspace_id = $1 AND ($2::uuid IS NULL OR t.id = $2)\n                      AND ($9::timestamptz IS NULL OR (t.last_activity_at, t.id) < ($9::timestamptz, $3::uuid))\n                      AND ($4::uuid IS NULL OR t.person_id = $4) AND ($5::uuid IS NULL OR i.connection_id = $5)\n                      AND ($6::text IS NULL OR ((t.status = $6 OR ($6 = 'open' AND t.status = 'snoozed'))\n                                                AND $6 = CASE WHEN t.status = 'snoozed' AND t.snoozed_until <= now() THEN 'open' ELSE t.status END))\n                      AND ($7::text IS NULL OR EXISTS (SELECT 1 FROM inbound_messages m\n                                                        WHERE m.workspace_id = t.workspace_id AND m.thread_id = t.id\n                                                          AND m.classification = $7 AND m.deleted_at IS NULL))\n                    ORDER BY t.last_activity_at DESC, t.id DESC LIMIT $8",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<Thread>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "threads",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "status!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "snoozed_until: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "subject",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "threads",
+            "name": "subject"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "person_id: Id<Person>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "threads",
+            "name": "person_id"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "campaign_id: Id<Campaign>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "threads",
+            "name": "campaign_id"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "sender_identity_id: Id<SenderIdentity>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "threads",
+            "name": "sender_identity_id"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "connection_id: Id<Connection>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sender_identities",
+            "name": "connection_id"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "identity_email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sender_identities",
+            "name": "email"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "unread",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "threads",
+            "name": "unread"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "last_activity_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "threads",
+            "name": "last_activity_at"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "created_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "threads",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "updated_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "threads",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Int8",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      null,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "a41bc4d506d32462d1c519cc6d515ca94283c0d44d1967d94812e1ce9364dd8c"
+}

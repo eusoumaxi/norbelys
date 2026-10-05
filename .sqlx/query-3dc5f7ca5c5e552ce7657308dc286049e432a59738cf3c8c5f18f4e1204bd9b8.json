@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT k.provider_webhook_id, k.event_id, k.body_hash\n               FROM provider_event_keys k\n               JOIN unnest($1::uuid[], $2::text[]) AS r(provider_webhook_id, event_id)\n                 ON k.provider_webhook_id = r.provider_webhook_id AND k.event_id = r.event_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "provider_webhook_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "provider_event_keys",
+            "name": "provider_webhook_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "event_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "provider_event_keys",
+            "name": "event_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "body_hash",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "provider_event_keys",
+            "name": "body_hash"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "UuidArray",
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3dc5f7ca5c5e552ce7657308dc286049e432a59738cf3c8c5f18f4e1204bd9b8"
+}

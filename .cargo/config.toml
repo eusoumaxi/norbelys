@@ -1,0 +1,8 @@
+[alias]
+lint = "clippy --workspace --all-targets -- -D warnings"
+# `cargo xtask <command>`: the repository's own checks and chores (tools/xtask).
+xtask = "run --package xtask --"
+
+[env]
+# Normal builds use committed SQLx metadata. Explicit SQLx preparation overrides this value.
+SQLX_OFFLINE = "true"

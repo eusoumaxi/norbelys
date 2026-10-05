@@ -1,0 +1,56 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO ai_usage (workspace_id, month, budget_micros) VALUES ($1, $2, $3)\n           ON CONFLICT (workspace_id, month) DO UPDATE SET budget_micros = EXCLUDED.budget_micros,\n                  warned_at = CASE WHEN ai_usage.budget_micros = EXCLUDED.budget_micros THEN ai_usage.warned_at END,\n                  exceeded_at = CASE WHEN ai_usage.budget_micros = EXCLUDED.budget_micros THEN ai_usage.exceeded_at END\n           RETURNING cost_micros, reserved_cost_micros, warned_at IS NOT NULL AS \"warned!\",\n                     exceeded_at IS NOT NULL AS \"exceeded!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "cost_micros",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "ai_usage",
+            "name": "cost_micros"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "reserved_cost_micros",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "ai_usage",
+            "name": "reserved_cost_micros"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "warned!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "exceeded!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Date",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "7b9812d2dec16c4cbc061e5e33546c829686e6b9d506a04e5a1ba633819ad50e"
+}

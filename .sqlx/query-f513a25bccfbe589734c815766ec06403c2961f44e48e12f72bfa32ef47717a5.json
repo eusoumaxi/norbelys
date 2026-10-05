@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "WITH fresh AS (SELECT uuidv7() AS id, n.name, n.ord FROM UNNEST($3::text[]) WITH ORDINALITY AS n(name, ord)),\n                    inserted AS (INSERT INTO variants (workspace_id, id, step_id, name)\n                                 SELECT $1, fresh.id, $2, fresh.name FROM fresh ORDER BY fresh.ord RETURNING 1)\n               SELECT id AS \"id!\" FROM fresh ORDER BY ord",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!",
+        "type_info": "Uuid",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "f513a25bccfbe589734c815766ec06403c2961f44e48e12f72bfa32ef47717a5"
+}

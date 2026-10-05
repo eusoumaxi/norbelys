@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO attempts (workspace_id, message_id, attempt_number, connection_id, reserved_day, quota_scope_id,\n                               recipient_count, lease_owner)\n         SELECT $1, a.message_id, a.attempt_number, $2, $3, $4, a.recipients, $5\n           FROM unnest($6::uuid[], $7::int[], $8::int[]) AS a(message_id, attempt_number, recipients)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Date",
+        "Uuid",
+        "Text",
+        "UuidArray",
+        "Int4Array",
+        "Int4Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f9164fedd059c522ecbefe1d7916eb6a54fdf151aed1598afbcf54f47d5d1501"
+}

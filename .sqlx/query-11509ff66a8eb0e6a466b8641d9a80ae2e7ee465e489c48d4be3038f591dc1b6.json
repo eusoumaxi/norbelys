@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM step_assignments WHERE workspace_id = $1 AND step_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "11509ff66a8eb0e6a466b8641d9a80ae2e7ee465e489c48d4be3038f591dc1b6"
+}

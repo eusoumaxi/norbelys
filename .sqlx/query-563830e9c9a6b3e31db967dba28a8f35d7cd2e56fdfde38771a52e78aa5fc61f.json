@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE campaign_daily_stats SET verification = 'unverified', verified_at = NULL\n              WHERE day = $1 AND verification <> 'verified'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Date"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "563830e9c9a6b3e31db967dba28a8f35d7cd2e56fdfde38771a52e78aa5fc61f"
+}

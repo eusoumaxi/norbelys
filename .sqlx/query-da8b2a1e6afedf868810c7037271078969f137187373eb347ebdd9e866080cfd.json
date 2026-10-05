@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE webhook_endpoints SET failing_since = NULL, failure_notified_at = NULL\n              WHERE workspace_id = $1 AND id = $2 AND (failing_since IS NOT NULL OR failure_notified_at IS NOT NULL)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "da8b2a1e6afedf868810c7037271078969f137187373eb347ebdd9e866080cfd"
+}

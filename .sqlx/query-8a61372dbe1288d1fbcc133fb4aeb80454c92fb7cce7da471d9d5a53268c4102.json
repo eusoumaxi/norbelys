@@ -1,0 +1,48 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT DISTINCT ON (c.quota_scope_id) c.quota_scope_id AS \"scope!\", w.id AS \"id: Id<ProviderWebhook>\",\n                  w.signing_secret IS NOT NULL AS \"key_set!\"\n             FROM connections c\n             JOIN provider_webhooks w ON w.workspace_id = c.workspace_id AND w.connection_id = c.id\n            WHERE c.workspace_id = $1 AND c.provider = 'ses' AND c.quota_scope_id = ANY($2)\n            ORDER BY c.quota_scope_id, c.created_at, c.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "scope!",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "quota_scope_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "id: Id<ProviderWebhook>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "provider_webhooks",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "key_set!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      true,
+      false,
+      null
+    ]
+  },
+  "hash": "8a61372dbe1288d1fbcc133fb4aeb80454c92fb7cce7da471d9d5a53268c4102"
+}

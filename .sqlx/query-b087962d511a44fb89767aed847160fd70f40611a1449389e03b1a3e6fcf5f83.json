@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT EXISTS (SELECT 1 FROM partition_leaves\n                           WHERE dropped_at IS NOT NULL\n                             AND ((parent = 'messages' AND upper > ($1::date - 7)::timestamp AT TIME ZONE 'UTC'\n                                   AND lower < ($1::date + 1)::timestamp AT TIME ZONE 'UTC')\n                               OR (parent IN ('delivery_events', 'tracking_events')\n                                   AND upper > $1::date::timestamp AT TIME ZONE 'UTC'\n                                   AND lower < ($1::date + 1)::timestamp AT TIME ZONE 'UTC'))) AS \"archived!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "archived!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Date"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "b087962d511a44fb89767aed847160fd70f40611a1449389e03b1a3e6fcf5f83"
+}

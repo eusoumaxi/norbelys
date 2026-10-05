@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT EXISTS (SELECT 1 FROM suppressions WHERE workspace_id = $1 AND email_key = ANY($2)) AS \"suppressed!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "suppressed!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "698dbd5ff4e33a0ebf786ca71767acc6c296edf2f37cb626a066a32ec86c0fd1"
+}

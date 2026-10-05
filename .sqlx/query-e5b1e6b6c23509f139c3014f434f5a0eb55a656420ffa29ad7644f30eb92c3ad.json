@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE rollup_watermarks SET processed_to = $2, updated_at = now() WHERE name = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e5b1e6b6c23509f139c3014f434f5a0eb55a656420ffa29ad7644f30eb92c3ad"
+}

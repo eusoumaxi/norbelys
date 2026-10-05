@@ -1,0 +1,56 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) FILTER (WHERE backend_type = 'client backend') AS \"connections!\",\n                  current_setting('max_connections')::bigint AS \"max_connections!\",\n                  coalesce(extract(epoch FROM max(now() - xact_start)\n                           FILTER (WHERE backend_type = 'client backend' AND pid <> pg_backend_pid())), 0)::float8 AS \"longest_transaction!\",\n                  coalesce(extract(epoch FROM max(now() - coalesce(xact_start, query_start))\n                           FILTER (WHERE backend_xmin IS NOT NULL AND pid <> pg_backend_pid())), 0)::float8 AS \"oldest_snapshot!\",\n                  (SELECT count(*) FROM pg_locks WHERE NOT granted) AS \"lock_waits!\",\n                  pg_notification_queue_usage() AS \"notification_queue!\"\n             FROM pg_stat_activity",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "connections!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "max_connections!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "longest_transaction!",
+        "type_info": "Float8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "oldest_snapshot!",
+        "type_info": "Float8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "lock_waits!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "notification_queue!",
+        "type_info": "Float8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "cd26ce2319585c950d60294fea962bf107c6d60c76d083c03829e821fb6b3d71"
+}

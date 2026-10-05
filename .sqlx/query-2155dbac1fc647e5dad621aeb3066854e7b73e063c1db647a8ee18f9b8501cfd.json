@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT n.nspname::text AS \"schema!\" FROM pg_extension e JOIN pg_namespace n ON n.oid = e.extnamespace\n            WHERE e.extname = 'pg_stat_statements'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "schema!",
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "2155dbac1fc647e5dad621aeb3066854e7b73e063c1db647a8ee18f9b8501cfd"
+}

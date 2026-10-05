@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE connections SET status = $3, status_detail = $4,\n                next_send_at = CASE WHEN $3 = 'active' AND send_interval_minutes IS NOT NULL\n                                    THEN greatest(next_send_at, next_phase_at(now(), send_phase_seconds::int))\n                                    ELSE next_send_at END\n          WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "748764a6f4e06f9f09aac48aea764ad5198cac205e579c48fea77e5ab2696844"
+}

@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "WITH queued AS (\n             SELECT q.message_id FROM delivery_queue q JOIN messages m ON m.workspace_id = q.workspace_id AND m.id = q.message_id\n              WHERE q.workspace_id = $1 AND q.connection_id = $2 AND q.state = 'queued' AND m.kind <> 'campaign'\n              ORDER BY q.message_id LIMIT $3\n                FOR UPDATE OF q, m SKIP LOCKED)\n         DELETE FROM delivery_queue q USING queued\n          WHERE q.workspace_id = $1 AND q.message_id = queued.message_id\n         RETURNING q.message_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "message_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "delivery_queue",
+            "name": "message_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "8ffbe37a6d91f15855482903a6eef90ac8af522acdc824007f2c48f5a36e7495"
+}

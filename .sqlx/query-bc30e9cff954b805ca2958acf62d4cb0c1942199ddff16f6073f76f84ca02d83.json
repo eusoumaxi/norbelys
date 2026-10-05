@@ -1,0 +1,33 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT c.provider AS \"provider!\",\n                  extract(epoch FROM now() - min(coalesce(b.polled_at, b.next_poll_at)))::float8 AS \"lag!\"\n             FROM receive_bindings b\n             JOIN connections c ON (c.workspace_id, c.id) = (b.workspace_id, b.connection_id)\n            WHERE b.enabled AND b.failures = 0 AND c.status = 'active'\n            GROUP BY c.provider",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "provider!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "provider"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "lag!",
+        "type_info": "Float8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "bc30e9cff954b805ca2958acf62d4cb0c1942199ddff16f6073f76f84ca02d83"
+}

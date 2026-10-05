@@ -1,0 +1,9 @@
+// Local development only. Terraform in norbelys-infra owns the hosted Worker and bindings.
+{
+  "send_metrics": false,
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "norbelys-cli",
+  "compatibility_date": "2026-10-04",
+  "main": "src/index.ts",
+  "r2_buckets": [{ "binding": "RELEASES", "bucket_name": "norbelys-cli" }],
+}

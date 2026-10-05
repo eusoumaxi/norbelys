@@ -1,0 +1,307 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT m.kind, m.campaign_id, m.person_id IS NOT NULL AS \"has_person!\", m.from_email, m.from_name, m.reply_to, m.to_addresses, m.cc, m.bcc, m.subject,\n                  m.html, m.text_body, m.render_context, m.internet_message_id, m.in_reply_to, m.tracking,\n                  m.variant_id, m.variant_version, c.provider, c.transport, c.smtp,\n                  i.signature_html, i.signature_text,\n                  t.root_internet_message_id AS \"thread_root?\",\n                  coalesce(q.deadline_at, q.expires_at) AS \"deadline?: Timestamp\"\n             FROM messages m\n             JOIN connections c ON c.workspace_id = m.workspace_id AND c.id = m.connection_id\n             JOIN sender_identities i ON i.workspace_id = m.workspace_id AND i.id = m.sender_identity_id\n             LEFT JOIN threads t ON t.workspace_id = m.workspace_id AND t.id = m.thread_id\n             LEFT JOIN delivery_queue q ON q.workspace_id = m.workspace_id AND q.message_id = m.id\n            WHERE m.workspace_id = $1 AND m.id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "kind",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "campaign_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "campaign_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "has_person!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "from_email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "from_email"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "from_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "from_name"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "reply_to",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "reply_to"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "to_addresses",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "to_addresses"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "cc",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "cc"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "bcc",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "bcc"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "subject",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "subject"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "html",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "html"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "text_body",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "text_body"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "render_context",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "render_context"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "internet_message_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "internet_message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "in_reply_to",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "in_reply_to"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "tracking",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "tracking"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "variant_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "variant_id"
+          }
+        }
+      },
+      {
+        "ordinal": 17,
+        "name": "variant_version",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "variant_version"
+          }
+        }
+      },
+      {
+        "ordinal": 18,
+        "name": "provider",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "provider"
+          }
+        }
+      },
+      {
+        "ordinal": 19,
+        "name": "transport",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "transport"
+          }
+        }
+      },
+      {
+        "ordinal": 20,
+        "name": "smtp",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "smtp"
+          }
+        }
+      },
+      {
+        "ordinal": 21,
+        "name": "signature_html",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sender_identities",
+            "name": "signature_html"
+          }
+        }
+      },
+      {
+        "ordinal": 22,
+        "name": "signature_text",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sender_identities",
+            "name": "signature_text"
+          }
+        }
+      },
+      {
+        "ordinal": 23,
+        "name": "thread_root?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "threads",
+            "name": "root_internet_message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 24,
+        "name": "deadline?: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      null,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      null
+    ]
+  },
+  "hash": "83cf477de2b4ac59b2343d557323a5c8c584315adecd7b0c78b5138a0a9cb325"
+}

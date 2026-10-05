@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT status, sender_tags, updated_at AS \"updated_at: Timestamp\"\n             FROM campaigns WHERE workspace_id = $1 AND id = $2 FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "campaigns",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "sender_tags",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "campaigns",
+            "name": "sender_tags"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "updated_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "campaigns",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "11b6c8474ddeb4b9b127f1e705eecbb6836047ef13c486179c1dd58947ae6f76"
+}

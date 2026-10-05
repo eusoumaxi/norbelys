@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE connections\n            SET consecutive_failures = $3, paused_until = $4, breaker_opened_at = $5,\n                probe_message_id = $6, probe_generation = $7,\n                next_claim_at = CASE WHEN $8 THEN NULL ELSE next_claim_at END\n          WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int4",
+        "Timestamptz",
+        "Timestamptz",
+        "Uuid",
+        "Int8",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "90826d4c6cf28736b0b9074c80a71b57ad4c722a8bbe1beece8604c8d0572e2e"
+}

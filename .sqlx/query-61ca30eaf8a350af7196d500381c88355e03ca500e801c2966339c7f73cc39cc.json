@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE webhook_receipts\n            SET state = CASE WHEN id = ANY($3) THEN 'quarantined' ELSE 'normalized' END,\n                raw = CASE WHEN id = ANY($3) THEN raw END,\n                processed_at = now()\n          WHERE workspace_id = $1 AND id = ANY($2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "61ca30eaf8a350af7196d500381c88355e03ca500e801c2966339c7f73cc39cc"
+}

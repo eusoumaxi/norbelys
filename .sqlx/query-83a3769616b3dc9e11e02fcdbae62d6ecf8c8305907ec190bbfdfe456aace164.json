@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO quota_scopes (workspace_id, provider, scope_key, messages_per_day, recipients_per_day,\n                                     window_limit, window_unit, window_seconds)\n           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n           RETURNING id AS \"id: Id<QuotaScope>\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<QuotaScope>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Int4",
+        "Int4",
+        "Int4",
+        "Text",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "83a3769616b3dc9e11e02fcdbae62d6ecf8c8305907ec190bbfdfe456aace164"
+}

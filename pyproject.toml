@@ -1,0 +1,13 @@
+[tool.turbo]
+name = "norbelys-python"
+
+[tool.uv.workspace]
+members = ["sdks/python"]
+
+# One coverage policy for package and workspace invocations. Generated operations are tested
+# against the public API contract separately from the hand-maintained SDK runtime.
+[tool.coverage.run]
+omit = ["*/norbelys/_generated/*"]
+
+[tool.coverage.report]
+exclude_also = ["if TYPE_CHECKING:"]

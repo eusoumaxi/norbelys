@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE enrollments SET message_id = NULL WHERE ctid IN (\n                 SELECT ctid FROM enrollments WHERE workspace_id = $1 AND message_id IS NOT NULL LIMIT $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f046c63f45e802ca9c9a40bc00a214026732142a71d26f34e788c1339d556e59"
+}

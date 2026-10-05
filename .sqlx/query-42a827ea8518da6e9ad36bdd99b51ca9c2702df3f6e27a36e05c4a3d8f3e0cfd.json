@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT i.id AS \"id: Id<SenderIdentity>\"\n             FROM campaigns m\n             JOIN sender_identities i ON i.workspace_id = m.workspace_id AND i.enabled AND i.archived_at IS NULL\n             JOIN connections c ON c.workspace_id = i.workspace_id AND c.id = i.connection_id\n             LEFT JOIN campaign_sender_rotation r\n               ON r.workspace_id = m.workspace_id AND r.campaign_id = m.id AND r.sender_identity_id = i.id\n            WHERE m.workspace_id = $1 AND m.id = $2\n              AND c.status = 'active' AND NOT c.paused AND coalesce(c.paused_until <= now(), true)\n              AND coalesce(c.next_claim_at <= now(), true)\n              AND (i.tags && m.sender_tags\n                   OR EXISTS (SELECT 1 FROM campaign_senders s\n                               WHERE s.workspace_id = m.workspace_id AND s.campaign_id = m.id AND s.sender_identity_id = i.id))\n            ORDER BY r.last_assigned_at NULLS FIRST, i.id\n            LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<SenderIdentity>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sender_identities",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "42a827ea8518da6e9ad36bdd99b51ca9c2702df3f6e27a36e05c4a3d8f3e0cfd"
+}

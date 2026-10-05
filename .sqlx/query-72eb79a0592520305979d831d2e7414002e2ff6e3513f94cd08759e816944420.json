@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO import_people (workspace_id, import_id, person_id)\n         SELECT $1, $2, p FROM unnest($3::uuid[]) AS p ON CONFLICT DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "72eb79a0592520305979d831d2e7414002e2ff6e3513f94cd08759e816944420"
+}

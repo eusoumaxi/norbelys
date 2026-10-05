@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT EXISTS (SELECT 1 FROM steps WHERE workspace_id = $1 AND campaign_id = $2)\n              AND NOT EXISTS (SELECT 1 FROM steps s\n                               WHERE s.workspace_id = $1 AND s.campaign_id = $2\n                                 AND NOT EXISTS (SELECT 1 FROM step_revision_variants o\n                                                  WHERE o.workspace_id = s.workspace_id AND o.step_id = s.id\n                                                    AND o.step_revision = s.current_revision)) AS \"sendable!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "sendable!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "d36cc301ac1c9873e2ba08bcf1896d2bf9d83d13a925649a46c26754d322f59c"
+}

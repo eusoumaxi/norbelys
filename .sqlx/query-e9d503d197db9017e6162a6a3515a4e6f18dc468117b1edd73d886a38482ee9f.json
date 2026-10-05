@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO campaigns (workspace_id, id, name, status, track_opens) VALUES ($1, $2, 'Launch', 'active', true)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e9d503d197db9017e6162a6a3515a4e6f18dc468117b1edd73d886a38482ee9f"
+}

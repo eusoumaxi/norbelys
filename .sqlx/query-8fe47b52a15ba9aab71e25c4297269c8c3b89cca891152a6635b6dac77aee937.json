@@ -1,0 +1,57 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT kid, private_key, public_jwk, retired_at IS NULL AS \"signs!\"\n                 FROM signing_keys\n                WHERE algorithm = 'EdDSA' AND (retired_at IS NULL OR retired_at > now())\n                ORDER BY created_at DESC, kid",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "kid",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "signing_keys",
+            "name": "kid"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "private_key",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "signing_keys",
+            "name": "private_key"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "public_jwk",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "signing_keys",
+            "name": "public_jwk"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "signs!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "8fe47b52a15ba9aab71e25c4297269c8c3b89cca891152a6635b6dac77aee937"
+}

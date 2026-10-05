@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) AS \"count!\" FROM (\n               SELECT 1 FROM groups WHERE workspace_id = $1 AND deleted_at IS NULL AND ($2::text IS NULL OR lower(name) LIKE $2) LIMIT $3) counted",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "a6f40bec3b83439e938d17e8bb74ce720111900d8ebd216c04abf9ae925f99fc"
+}

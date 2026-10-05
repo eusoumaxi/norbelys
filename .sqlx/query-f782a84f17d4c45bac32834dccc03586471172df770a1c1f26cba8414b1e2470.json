@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE connections\n                    SET provider = $3, transport = $4,\n                        account_email = CASE WHEN account_subject IS NULL THEN $5 ELSE account_email END,\n                        account_issuer = coalesce(account_issuer, $6), account_subject = coalesce(account_subject, $7),\n                        smtp = $8, imap = $9, credential = $10, credential_version = credential_version + 1,\n                        paused = false, daily_limit = $11,\n                        send_interval_minutes = $12, send_window = $13, timezone = $14, warmup_stage = $15,\n                        quota_scope_id = $16, next_claim_at = NULL, consecutive_failures = 0, paused_until = NULL,\n                        breaker_opened_at = NULL, probe_message_id = NULL, probe_generation = NULL\n                  WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Jsonb",
+        "Jsonb",
+        "Bytea",
+        "Int4",
+        "Int4",
+        "Jsonb",
+        "Text",
+        "Int2",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f782a84f17d4c45bac32834dccc03586471172df770a1c1f26cba8414b1e2470"
+}

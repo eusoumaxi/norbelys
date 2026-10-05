@@ -1,0 +1,56 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT c.status, c.paused,\n                      (SELECT count(*) FROM delivery_events e\n                         JOIN messages m ON m.workspace_id = e.workspace_id AND m.id = e.message_id\n                        WHERE e.workspace_id = c.workspace_id AND m.connection_id = c.id\n                          AND e.kind = 'complaint' AND e.id >= uuidv7_boundary($3)) AS \"complaints!\",\n                      (SELECT coalesce(sum(u.used), 0) FROM connection_usage u\n                        WHERE u.workspace_id = c.workspace_id AND u.connection_id = c.id\n                          AND u.day >= ($3 AT TIME ZONE 'UTC')::date) AS \"sent!\"\n                 FROM connections c\n                WHERE c.workspace_id = $1 AND c.id = $2\n                  FOR UPDATE OF c",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "paused",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "paused"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "complaints!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "sent!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "70750dbb4c78833ce3e8cc42dee578a1103de9a470205e76452805865466cf99"
+}

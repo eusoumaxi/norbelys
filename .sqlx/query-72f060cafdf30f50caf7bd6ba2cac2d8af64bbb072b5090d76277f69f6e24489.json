@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM connection_usage WHERE ctid IN (\n                 SELECT u.ctid FROM connection_usage u\n                  WHERE u.day < (now() AT TIME ZONE 'UTC')::date - 35\n                    AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.workspace_id = u.workspace_id\n                                       AND a.connection_id = u.connection_id AND a.reserved_day = u.day)\n                  LIMIT $1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "72f060cafdf30f50caf7bd6ba2cac2d8af64bbb072b5090d76277f69f6e24489"
+}

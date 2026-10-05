@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) AS \"count!\" FROM (\n               SELECT 1 FROM outbox_events\n                WHERE workspace_id = $1 AND ($2::text IS NULL OR type = $2) AND ($3::uuid IS NULL OR id > $3)\n                LIMIT $4) counted",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "504a5811b0b46b6f55186affb0c239adc3250b1f604e657b7315882901e8ff00"
+}

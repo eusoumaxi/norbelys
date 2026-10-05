@@ -1,0 +1,77 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT m.thread_id AS \"thread_id!\", m.in_reply_to, t.root_message_id, t.last_message_id,\n                      t.last_internet_message_id\n                 FROM messages m JOIN threads t ON t.workspace_id = m.workspace_id AND t.id = m.thread_id\n                WHERE m.workspace_id = $1 AND m.id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "thread_id!",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "thread_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "in_reply_to",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "in_reply_to"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "root_message_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "threads",
+            "name": "root_message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "last_message_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "threads",
+            "name": "last_message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "last_internet_message_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "threads",
+            "name": "last_internet_message_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "7e85ac674f5246e0804fe00a14e1b7821da982c980b8af786b430e775d75002f"
+}

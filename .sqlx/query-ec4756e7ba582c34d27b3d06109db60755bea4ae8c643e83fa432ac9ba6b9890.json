@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT d.workspace_id FROM dispatch_workspaces d\n          WHERE EXISTS (SELECT 1 FROM receive_bindings b\n                          JOIN connections c ON c.workspace_id = b.workspace_id AND c.id = b.connection_id\n                         WHERE b.workspace_id = d.workspace_id AND b.enabled AND b.lease_owner IS NULL\n                           AND b.next_poll_at <= now())\n          ORDER BY d.inbox_turn_at\n          LIMIT 1\n            FOR UPDATE OF d SKIP LOCKED",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "workspace_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "dispatch_workspaces",
+            "name": "workspace_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "ec4756e7ba582c34d27b3d06109db60755bea4ae8c643e83fa432ac9ba6b9890"
+}

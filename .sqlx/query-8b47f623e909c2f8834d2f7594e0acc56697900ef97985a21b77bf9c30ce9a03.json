@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM enrollments WHERE workspace_id = $1 AND campaign_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8b47f623e909c2f8834d2f7594e0acc56697900ef97985a21b77bf9c30ce9a03"
+}

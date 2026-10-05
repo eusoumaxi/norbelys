@@ -1,0 +1,51 @@
+node_modules
+dist
+.turbo
+target
+# .sqlx/ is versioned: SQLx query metadata permits builds without database access.
+.env
+.env.*
+!.env.example
+
+# Local assistant configuration is not a product dependency.
+.agents/
+.claude/
+.grok/
+agent/
+skills-lock.json
+.pnpm-store/
+.wrangler
+.dev.vars*
+# Machine-local files. Not part of the tree.
+.local/
+
+# Local infrastructure scratch files; production infrastructure lives in norbelys-infra.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+*.pem
+*.key
+*.p12
+*.pfx
+.envrc
+.DS_Store
+*.tsbuildinfo
+# Local role state (tracking spool, analytics work directory)
+/var/
+
+# Python environments, test reports and editable build metadata.
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage*
+coverage.xml
+*.egg-info/
+coverage/
+.buildkit-cache/

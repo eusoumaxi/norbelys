@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT ensure_partitions_ahead(interval '2 days') AS \"leaf!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "leaf!",
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "fc5920eac7d2bfbcb48d459cade013a122a99074cb84c66d182df11143713d3d"
+}

@@ -1,0 +1,223 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT i.id AS \"id!: Id<Import>\", i.source AS \"source!\", i.group_id AS \"group_id: Id<Group>\", i.job_id AS \"job_id: JobId\",\n                      i.status AS \"status!\", i.total AS \"total!\", i.imported AS \"imported!\", i.skipped AS \"skipped!\",\n                      i.invalid AS \"invalid!\", i.errors AS \"errors!\", i.last_error,\n                      i.created_at AS \"created_at!: Timestamp\", i.updated_at AS \"updated_at!: Timestamp\",\n                      i.completed_at AS \"completed_at: Timestamp\",\n                      j.state AS \"job_state?\", j.last_error AS \"job_error?\", j.updated_at AS \"job_updated_at?: Timestamp\"\n                 FROM imports i LEFT JOIN jobs j ON j.workspace_id = i.workspace_id AND j.id = i.job_id\n                WHERE i.workspace_id = $1 AND ($2::text IS NULL OR i.status = $2) AND ($3::uuid IS NULL OR i.id > $3)\n                ORDER BY i.id LIMIT $4",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!: Id<Import>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "source!",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "source"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "group_id: Id<Group>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "group_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "job_id: JobId",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "job_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "status!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "total!",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "total"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "imported!",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "imported"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "skipped!",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "skipped"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "invalid!",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "invalid"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "errors!",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "errors"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "last_error",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "last_error"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "created_at!: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "updated_at!: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "completed_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "completed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "job_state?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "jobs",
+            "name": "state"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "job_error?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "jobs",
+            "name": "last_error"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "job_updated_at?: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "jobs",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "4bfbbfa02edb168356c51fb3bd7ce4d5050ef536ce3c89b5895d42896e30921f"
+}

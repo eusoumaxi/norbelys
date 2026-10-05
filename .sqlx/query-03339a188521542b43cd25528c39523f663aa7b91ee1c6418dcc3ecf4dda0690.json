@@ -1,0 +1,65 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT paused_until AS \"paused_until: Timestamp\", consecutive_failures, probe_message_id, probe_generation\n                 FROM quota_scopes WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "paused_until: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "paused_until"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "consecutive_failures",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "consecutive_failures"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "probe_message_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "probe_message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "probe_generation",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "probe_generation"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "03339a188521542b43cd25528c39523f663aa7b91ee1c6418dcc3ecf4dda0690"
+}

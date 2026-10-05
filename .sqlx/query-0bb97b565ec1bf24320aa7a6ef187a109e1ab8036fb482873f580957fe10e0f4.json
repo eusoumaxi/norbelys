@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id AS \"id: Id<SenderIdentity>\" FROM sender_identities WHERE workspace_id = $1 AND connection_id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<SenderIdentity>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sender_identities",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "0bb97b565ec1bf24320aa7a6ef187a109e1ab8036fb482873f580957fe10e0f4"
+}

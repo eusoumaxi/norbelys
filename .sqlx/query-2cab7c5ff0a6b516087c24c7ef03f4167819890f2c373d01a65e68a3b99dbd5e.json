@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE partition_leaves SET dropped_at = coalesce(dropped_at, now()) WHERE name = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2cab7c5ff0a6b516087c24c7ef03f4167819890f2c373d01a65e68a3b99dbd5e"
+}

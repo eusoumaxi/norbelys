@@ -1,0 +1,161 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id AS \"id: Id<QuotaScope>\", provider, scope_key, messages_per_day, recipients_per_day, window_limit,\n                  window_unit, window_seconds, paused_until AS \"paused_until: Timestamp\", paused_detail,\n                  created_at AS \"created_at: Timestamp\", updated_at AS \"updated_at: Timestamp\"\n             FROM quota_scopes WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<QuotaScope>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "provider",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "provider"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "scope_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "scope_key"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "messages_per_day",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "messages_per_day"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "recipients_per_day",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "recipients_per_day"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "window_limit",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "window_limit"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "window_unit",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "window_unit"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "window_seconds",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "window_seconds"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "paused_until: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "paused_until"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "paused_detail",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "paused_detail"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "created_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "updated_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "0ef62d7ce249c57b0333a161e88e49a1f4e2bc0744a54a90f01e5396188d2b95"
+}

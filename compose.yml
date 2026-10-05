@@ -1,0 +1,134 @@
+# Local self-hosting. `bun run selfhost:setup` creates private settings and starts PostgreSQL.
+# External manual maintenance prepares its
+# schema before selfhost:start. Runtime roles use separate database logins.
+name: norbelys-selfhost
+x-runtime: &runtime
+  image: ${SERVER_IMAGE:?Run bun run selfhost:setup}
+  restart: unless-stopped
+  depends_on:
+    postgres: { condition: service_healthy }
+  environment: &environment
+    NORBELYS_ENVIRONMENT: selfhost
+    NORBELYS_DEPLOYMENT_KEY: ${NORBELYS_DEPLOYMENT_KEY:?Run bun run selfhost:setup}
+    HEALTH_ADDR: 0.0.0.0:8090
+    OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+    OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS:-}
+    NORBELYS_TRACE_SAMPLE_PERCENT: ${NORBELYS_TRACE_SAMPLE_PERCENT:-100}
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  healthcheck:
+    test:
+      [
+        CMD,
+        /app/norbelys-server,
+        healthcheck,
+        "http://127.0.0.1:8090/health/ready",
+      ]
+    interval: 10s
+    timeout: 5s
+    retries: 10
+  logging: { driver: local, options: { max-size: 10m, max-file: "3" } }
+services:
+  postgres:
+    image: postgres:18.6-trixie@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: norbelys
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run bun run selfhost:setup}
+      POSTGRES_DB: norbelys
+    ports: ["127.0.0.1:${DATABASE_PORT:-5432}:5432"]
+    volumes: [postgres:/var/lib/postgresql]
+    healthcheck:
+      test: [CMD, pg_isready, -U, norbelys, -d, norbelys]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  api:
+    <<: *runtime
+    volumes:
+      [
+        ingress-spool:/var/lib/norbelys/ingress-spool,
+        objects:/var/lib/norbelys/objects,
+      ]
+    command: [/app/norbelys-server, api]
+    ports: ["127.0.0.1:${API_PORT:-3001}:8080"]
+    environment:
+      <<: *environment
+      DATABASE_URL: postgres://norbelys_app:${APP_DATABASE_PASSWORD}@postgres:5432/norbelys
+      SYSTEM_DATABASE_URL: postgres://norbelys_system:${SYSTEM_DATABASE_PASSWORD}@postgres:5432/norbelys
+      INGRESS_SPOOL_DIR: /var/lib/norbelys/ingress-spool
+      OBJECT_STORE_URL: file:///var/lib/norbelys/objects
+      HTTP_ADDR: 0.0.0.0:8080
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:3001}
+      DASHBOARD_ORIGINS: ${DASHBOARD_ORIGINS:-http://localhost:5173}
+    healthcheck:
+      test:
+        [
+          CMD,
+          /app/norbelys-server,
+          healthcheck,
+          "http://127.0.0.1:8080/health/ready",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  worker:
+    <<: *runtime
+    volumes: [objects:/var/lib/norbelys/objects]
+    command: [/app/norbelys-server, worker]
+    environment:
+      <<: *environment
+      DATABASE_URL: postgres://norbelys_worker:${WORKER_DATABASE_PASSWORD}@postgres:5432/norbelys
+      SYSTEM_DATABASE_URL: postgres://norbelys_system:${SYSTEM_DATABASE_PASSWORD}@postgres:5432/norbelys
+      OBJECT_STORE_URL: file:///var/lib/norbelys/objects
+  sender:
+    <<: *runtime
+    command: [/app/norbelys-server, sender]
+    environment:
+      <<: *environment
+      DATABASE_URL: postgres://norbelys_worker:${WORKER_DATABASE_PASSWORD}@postgres:5432/norbelys
+  inbox:
+    <<: *runtime
+    volumes: [objects:/var/lib/norbelys/objects]
+    command: [/app/norbelys-server, inbox]
+    environment:
+      OBJECT_STORE_URL: file:///var/lib/norbelys/objects
+      <<: *environment
+      DATABASE_URL: postgres://norbelys_worker:${WORKER_DATABASE_PASSWORD}@postgres:5432/norbelys
+  tracking:
+    <<: *runtime
+    command: [/app/norbelys-server, tracking]
+    ports: ["127.0.0.1:${TRACKING_PORT:-3002}:8080"]
+    volumes: [tracking-spool:/var/lib/norbelys/tracking-spool]
+    healthcheck:
+      test:
+        [
+          CMD,
+          /app/norbelys-server,
+          healthcheck,
+          "http://127.0.0.1:8080/health/ready",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    environment:
+      <<: *environment
+      DATABASE_URL: postgres://norbelys_tracking:${TRACKING_DATABASE_PASSWORD}@postgres:5432/norbelys
+      HTTP_ADDR: 0.0.0.0:8080
+      TRACKING_SPOOL_DIR: /var/lib/norbelys/tracking-spool
+  app:
+    image: ${APP_IMAGE:?Run bun run selfhost:setup}
+    restart: unless-stopped
+    depends_on: { api: { condition: service_healthy } }
+    ports: ["127.0.0.1:${APP_PORT:-5173}:80"]
+    environment:
+      API_ORIGIN: "http://api:8080"
+      DASHBOARD_ORIGIN: ${DASHBOARD_ORIGIN:-}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      SIGNOZ_INGESTION_KEY: ${SIGNOZ_INGESTION_KEY:-}
+      NORBELYS_TRACE_SAMPLE_PERCENT: ${NORBELYS_TRACE_SAMPLE_PERCENT:-100}
+volumes:
+  postgres: {}
+  tracking-spool: {}
+  ingress-spool: {}
+  objects: {}

@@ -1,0 +1,48 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT p.id, p.email_key,\n                      EXISTS (SELECT 1 FROM suppressions s WHERE s.workspace_id = p.workspace_id AND s.email_key = p.email_key) AS \"suppressed!\"\n                 FROM people p WHERE p.workspace_id = $1 AND p.id = ANY($2)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "email_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "email_key"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "suppressed!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "243800e7c41d48cea1db68f9c93373b3d7b669fbd938fe6788466cc91d33cdd1"
+}

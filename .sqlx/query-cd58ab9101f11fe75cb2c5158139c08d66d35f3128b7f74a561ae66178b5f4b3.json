@@ -1,0 +1,47 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT p.table_name AS \"table!\",\n                  extract(epoch FROM p.retention)::int8 AS \"retention!\",\n                  extract(epoch FROM p.period)::int8 AS \"period!\",\n                  (SELECT count(*) FROM partition_leaves l\n                    WHERE l.parent = p.table_name AND l.dropped_at IS NULL) AS \"leaves!\"\n             FROM partition_policies p\n            ORDER BY p.table_name",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "table!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "partition_policies",
+            "name": "table_name"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "retention!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "period!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "leaves!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "cd58ab9101f11fe75cb2c5158139c08d66d35f3128b7f74a561ae66178b5f4b3"
+}

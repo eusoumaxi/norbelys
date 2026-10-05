@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO campaigns (workspace_id, name, timezone, send_window, start_at, tracking_domain_id, track_opens,\n                                  track_clicks, stop_on_reply, sender_tags, on_sender_removed, stop_company_on_reply,\n                                  cooldown_hours)\n           VALUES ($1, $2, coalesce($3, 'UTC'), $4, $5, $6, coalesce($7, false), coalesce($8, false),\n                   coalesce($9, 'all'), coalesce($10, '{}'::text[]), coalesce($11, 'reassign'), coalesce($12, false),\n                   coalesce($13, 72))\n           RETURNING id AS \"id: Id<Campaign>\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<Campaign>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "campaigns",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Jsonb",
+        "Timestamptz",
+        "Uuid",
+        "Bool",
+        "Bool",
+        "Text",
+        "TextArray",
+        "Text",
+        "Bool",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "322c24489a3f42da32f3274659a2c0767e70b33a3d05a25cc71cfa0261380cc4"
+}

@@ -1,0 +1,47 @@
+[package]
+name = "norbelys-mail"
+description = "Mail protocols for Norbelys: submission transports, receivers, provider webhook verifiers, DSN and ARF parsers"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+async-imap.workspace = true
+aws-lc-rs.workspace = true
+base64.workspace = true
+futures-util.workspace = true
+hickory-resolver.workspace = true
+http.workspace = true
+jiff.workspace = true
+lettre.workspace = true
+mail-parser.workspace = true
+reqwest.workspace = true
+rustls.workspace = true
+rustls-platform-verifier.workspace = true
+secrecy.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-rustls.workspace = true
+url.workspace = true
+uuid.workspace = true
+# The X.509 parser rustls itself links: it reads the public key of the certificate Amazon SNS
+# signs its messages with, which verifying SES events needs. No second parser is compiled, since
+# rustls already depends on this exact crate and version.
+rustls-webpki = { version = "=0.103.15", default-features = false, features = [
+  "std",
+] }
+
+[features]
+# Exposes `http::HttpClient::rebased`, which sends every provider call to a fake server on the
+# loopback interface: for the tests of the crates that call this one, never for a release build.
+test-support = []
+
+[dev-dependencies]
+strum.workspace = true

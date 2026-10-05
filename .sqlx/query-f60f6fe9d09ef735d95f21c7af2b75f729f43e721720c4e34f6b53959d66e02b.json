@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT uuidv7_boundary($1) AS \"low!\", uuidv7_boundary($2) AS \"high!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "low!",
+        "type_info": "Uuid",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "high!",
+        "type_info": "Uuid",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "f60f6fe9d09ef735d95f21c7af2b75f729f43e721720c4e34f6b53959d66e02b"
+}

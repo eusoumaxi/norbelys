@@ -1,0 +1,33 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO auth_ceremonies (id, user_id, kind, browser_hash, state, expires_at)\n           VALUES ($1, $2, $3, $4, $5, now() + make_interval(secs => $6))\n           RETURNING expires_at AS \"expires_at: Timestamp\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "expires_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "auth_ceremonies",
+            "name": "expires_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Bytea",
+        "Bytea",
+        "Float8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c4bbfd280f9a4e22ed190bfbdf0c0510c5ff9ef13fe5c07eb4cd86a020c37dd4"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE sessions SET last_seen_at = now(), idle_expires_at = greatest(idle_expires_at, $2)\n          WHERE id = $1 AND revoked_at IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "13975ef2cf60f3f5d7fe573b5d0b93d332a13c1b1f8c4b64cf718384ccedc588"
+}

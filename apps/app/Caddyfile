@@ -1,0 +1,84 @@
+# The dashboard, and /api/* forwarded to API_ORIGIN without the prefix (as worker/index.ts does).
+{
+	admin off
+	# Proxy errors must not expose OAuth codes, recipient links or credentials.
+	log {
+		format filter {
+			wrap json
+			fields {
+				request>uri delete
+				request>headers delete
+				resp_headers delete
+			}
+		}
+	}
+}
+
+:80 {
+	encode zstd gzip
+	header Content-Security-Policy "default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+	header X-Content-Type-Options nosniff
+	root * /srv
+	@telemetry_config {
+		path /__telemetry/config
+		expression `'{$OTEL_EXPORTER_OTLP_ENDPOINT}' != ''`
+	}
+	handle @telemetry_config {
+		header Content-Type application/json
+		header Cache-Control no-store
+		respond "{\"enabled\":true,\"endpoint\":\"/__telemetry\",\"samplePercent\":{$NORBELYS_TRACE_SAMPLE_PERCENT:100},\"release\":\"development\"}"
+	}
+	handle /__telemetry/config {
+		header Content-Type application/json
+		header Cache-Control no-store
+		respond "{\"enabled\":false}"
+	}
+
+	@otlp {
+		path /__telemetry/v1/traces /__telemetry/v1/logs /__telemetry/v1/metrics
+		method POST
+		header Content-Type application/json*
+		expression `'{$OTEL_EXPORTER_OTLP_ENDPOINT}' != '' && ({http.request.header.Origin} == {http.request.scheme} + '://' + {http.request.hostport} || ('{$DASHBOARD_ORIGIN}' != '' && {http.request.header.Origin} == '{$DASHBOARD_ORIGIN}'))`
+	}
+	handle @otlp {
+		request_body {
+			max_size 256KiB
+		}
+		uri strip_prefix /__telemetry
+		reverse_proxy {$OTEL_EXPORTER_OTLP_ENDPOINT:http://127.0.0.1:4318} {
+			header_up -Cookie
+			header_up -Authorization
+			header_up Host {upstream_hostport}
+			header_up signoz-ingestion-key "{$SIGNOZ_INGESTION_KEY}"
+			transport http {
+				dial_timeout 3s
+				response_header_timeout 3s
+				read_timeout 3s
+				write_timeout 3s
+			}
+		}
+	}
+	handle /__telemetry/* {
+		respond 204
+	}
+
+	handle_path /api/* {
+		reverse_proxy {$API_ORIGIN} {
+			header_up Host {upstream_hostport}
+		}
+	}
+
+	# Hashed file names never change. A missing one is a 404, never the app's HTML.
+	handle /assets/* {
+		@exists file
+		header @exists Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
+	# Every other path is the single-page app, revalidated so a deploy shows up at once.
+	handle {
+		header Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}

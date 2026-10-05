@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT d.workspace_id FROM workspace_deletions d JOIN workspaces w ON w.id = d.workspace_id\n          WHERE d.completed_at IS NULL AND d.job_id IS NULL AND w.deleted_at IS NOT NULL\n            AND d.requested_at <= now() - interval '30 days'\n          ORDER BY d.requested_at LIMIT 100",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "workspace_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "workspace_deletions",
+            "name": "workspace_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "9c73e3cbd32b8268c242d93af84328ac70f1af9d0c17846549832e551a38e07d"
+}

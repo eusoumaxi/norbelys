@@ -1,0 +1,84 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, on_sender_removed, timezone, send_window, sender_tags, last_error ->> 'code' AS last_error\n           FROM campaigns WHERE workspace_id = $1 AND id = ANY($2) AND status = 'active'\n          ORDER BY id FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "campaigns",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "on_sender_removed",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "campaigns",
+            "name": "on_sender_removed"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "timezone",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "campaigns",
+            "name": "timezone"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "send_window",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "campaigns",
+            "name": "send_window"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "sender_tags",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "campaigns",
+            "name": "sender_tags"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "last_error",
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      null
+    ]
+  },
+  "hash": "4b84f291dd7d18ee47253ec6f13488eac30d62a53769bf4e95e79526a39da3ec"
+}

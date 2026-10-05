@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM step_winner_selections WHERE workspace_id = $1 AND step_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2bbd4903a58ca6c4fe702f9c994f32690e46b87901014f350a627c0b09dc9820"
+}

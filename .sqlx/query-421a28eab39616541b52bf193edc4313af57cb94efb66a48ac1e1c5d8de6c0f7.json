@@ -1,0 +1,86 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT l.parent, l.name, l.lower AS \"lower: Timestamp\", l.upper AS \"upper: Timestamp\", p.archive, l.archive_key\n                 FROM partition_leaves l JOIN partition_policies p ON p.table_name = l.parent\n                WHERE l.dropped_at IS NULL AND l.upper <= now() - p.retention\n                ORDER BY l.upper, l.parent",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "parent",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "partition_leaves",
+            "name": "parent"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "partition_leaves",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "lower: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "partition_leaves",
+            "name": "lower"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "upper: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "partition_leaves",
+            "name": "upper"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "archive",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "partition_policies",
+            "name": "archive"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "archive_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "partition_leaves",
+            "name": "archive_key"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "421a28eab39616541b52bf193edc4313af57cb94efb66a48ac1e1c5d8de6c0f7"
+}

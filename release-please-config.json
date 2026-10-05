@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "separate-pull-requests": true,
+  "include-component-in-tag": true,
+  "tag-separator": "-",
+  "plugins": ["cargo-workspace"],
+  "packages": {
+    "sdks/typescript": { "release-type": "node", "component": "typescript" },
+    "sdks/python": {
+      "release-type": "python",
+      "component": "python",
+      "extra-files": ["src/norbelys/__init__.py"]
+    },
+    "crates/cli": { "release-type": "rust", "component": "norbelys-cli" }
+  }
+}

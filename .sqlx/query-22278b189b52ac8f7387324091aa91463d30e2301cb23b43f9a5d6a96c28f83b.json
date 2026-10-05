@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE messages m SET state = d.state, status_detail = d.detail,\n                sent_at = CASE WHEN d.state = 'sent' THEN now() ELSE m.sent_at END\n           FROM unnest($2::uuid[], $3::text[], $4::text[]) AS d(id, state, detail)\n          WHERE m.workspace_id = $1 AND m.id = d.id",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "TextArray",
+        "TextArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "22278b189b52ac8f7387324091aa91463d30e2301cb23b43f9a5d6a96c28f83b"
+}

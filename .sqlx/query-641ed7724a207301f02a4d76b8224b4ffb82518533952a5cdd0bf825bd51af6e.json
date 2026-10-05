@@ -1,0 +1,56 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT (SELECT wal_bytes FROM pg_stat_wal)::bigint AS \"wal_bytes!\",\n                  (SELECT coalesce(max(CASE WHEN pg_is_in_recovery() THEN NULL ELSE pg_current_wal_lsn() - restart_lsn END), 0)\n                     FROM pg_replication_slots)::bigint AS \"wal_retained!\",\n                  coalesce((SELECT CASE WHEN last_failed_time IS NOT NULL\n                                             AND (last_archived_time IS NULL OR last_failed_time > last_archived_time)\n                                        THEN extract(epoch FROM now() - coalesce(last_archived_time, stats_reset))\n                                        ELSE 0 END\n                              FROM pg_stat_archiver), 0)::float8 AS \"archive_lag!\",\n                  coalesce((SELECT (write_time + sync_time) / 1000.0 FROM pg_stat_checkpointer), 0)::float8 AS \"checkpoint_seconds!\",\n                  coalesce((SELECT sum(temp_files) FROM pg_stat_database), 0)::bigint AS \"temp_files!\",\n                  coalesce((SELECT extract(epoch FROM max(replay_lag)) FROM pg_stat_replication), 0)::float8 AS \"replication_lag!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "wal_bytes!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "wal_retained!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "archive_lag!",
+        "type_info": "Float8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "checkpoint_seconds!",
+        "type_info": "Float8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "temp_files!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "replication_lag!",
+        "type_info": "Float8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "641ed7724a207301f02a4d76b8224b4ffb82518533952a5cdd0bf825bd51af6e"
+}

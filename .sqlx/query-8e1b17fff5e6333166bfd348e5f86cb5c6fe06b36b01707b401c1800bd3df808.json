@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT EXISTS (SELECT 1 FROM webhook_endpoints\n                           WHERE workspace_id = $1 AND enabled AND $2 = ANY (event_types)) AS \"subscribed!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "subscribed!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "8e1b17fff5e6333166bfd348e5f86cb5c6fe06b36b01707b401c1800bd3df808"
+}

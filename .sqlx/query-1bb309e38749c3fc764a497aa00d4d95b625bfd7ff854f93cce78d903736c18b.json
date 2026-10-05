@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO quota_scope_usage (workspace_id, scope_id, day) VALUES ($1, $2, $3), ($1, $2, $4) ON CONFLICT DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Date",
+        "Date"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1bb309e38749c3fc764a497aa00d4d95b625bfd7ff854f93cce78d903736c18b"
+}

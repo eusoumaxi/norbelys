@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT (SELECT extract(epoch FROM max(completed_at)) FROM restore_drills)::float8 AS restore_drill,\n                  (SELECT extract(epoch FROM max(created_at)) FROM signing_keys)::float8 AS key_rotation",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "restore_drill",
+        "type_info": "Float8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "key_rotation",
+        "type_info": "Float8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "2ae62b6c72f1df2e07b6093ca5e881708f977ffd2e6b0b7e543e5fe3e63f3fac"
+}

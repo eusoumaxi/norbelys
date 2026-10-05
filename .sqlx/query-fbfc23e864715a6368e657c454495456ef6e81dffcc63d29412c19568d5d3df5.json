@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE step_revisions SET winner_variant_id = NULL, winner_variant_version = NULL, winner_selected_at = NULL\n              WHERE ctid IN (SELECT ctid FROM step_revisions WHERE workspace_id = $1 AND winner_variant_id IS NOT NULL LIMIT $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fbfc23e864715a6368e657c454495456ef6e81dffcc63d29412c19568d5d3df5"
+}

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE delivery_queue q SET run_at = d.run_at\n               FROM unnest($2::uuid[], $3::timestamptz[]) AS d(message_id, run_at)\n              WHERE q.workspace_id = $1 AND q.message_id = d.message_id",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "TimestamptzArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e6d778aa17c31d4449ec688a83c8aaeb0a041ebdbeae74bd112a3b5b0e6d12e0"
+}

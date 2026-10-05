@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO job_lanes (workspace_id, queue, max_running) VALUES ($1, $2, $3)\n         ON CONFLICT (workspace_id, queue) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8ae022c749b879091eb6b930c47e64431cdbd99e5b6c860b6182b73e6a7abe1c"
+}

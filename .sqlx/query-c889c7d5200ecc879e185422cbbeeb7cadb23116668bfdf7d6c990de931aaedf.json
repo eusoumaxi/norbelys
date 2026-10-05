@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) AS \"count!\" FROM (\n               SELECT 1 FROM messages m\n                WHERE m.workspace_id = $1\n                  AND ($2::uuid IS NULL OR m.campaign_id = $2) AND ($3::uuid IS NULL OR m.enrollment_id = $3)\n                  AND ($4::uuid IS NULL OR m.person_id = $4) AND ($5::uuid IS NULL OR m.connection_id = $5)\n                  AND ($6::uuid IS NULL OR m.thread_id = $6) AND ($7::text IS NULL OR m.state = $7)\n                  AND ($8::timestamptz IS NULL OR m.created_at >= $8) AND ($9::timestamptz IS NULL OR m.created_at > $9)\n                  AND ($10::timestamptz IS NULL OR m.created_at <= $10) AND ($11::timestamptz IS NULL OR m.created_at < $11)\n                LIMIT $12) counted",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "c889c7d5200ecc879e185422cbbeeb7cadb23116668bfdf7d6c990de931aaedf"
+}

@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE receive_bindings\n                SET failures = failures + 1, status_detail = $3, next_poll_at = $4,\n                    lease_owner = NULL, lease_expires_at = NULL\n              WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9dceeea84d0dee981328b4c7c0e0fca6856490655c3ad1185fa3163c1ac3e90d"
+}

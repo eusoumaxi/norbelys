@@ -1,0 +1,103 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT hostname, status, ownership_token, tracking_enabled, dns_checks, mta_unready_checks,\n                      verified_at IS NOT NULL AS \"ever_verified!\", next_check_at <= now() AS \"due!\"\n                 FROM sending_domains WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "hostname",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sending_domains",
+            "name": "hostname"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sending_domains",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "ownership_token",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sending_domains",
+            "name": "ownership_token"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "tracking_enabled",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "sending_domains",
+            "name": "tracking_enabled"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "dns_checks",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "sending_domains",
+            "name": "dns_checks"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "mta_unready_checks",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "sending_domains",
+            "name": "mta_unready_checks"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "ever_verified!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 7,
+        "name": "due!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "a36625b3cdab6c32df7086b84b8a2388bf3989897f16368299bf964a35c49f86"
+}

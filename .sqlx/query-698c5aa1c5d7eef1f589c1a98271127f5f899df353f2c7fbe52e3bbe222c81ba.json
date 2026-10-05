@@ -1,0 +1,364 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT m.id AS \"id: Id<Message>\", m.kind, m.state, m.status_detail, m.from_email, m.from_name, m.reply_to,\n                      m.to_addresses, m.cc, m.bcc, m.subject, m.connection_id AS \"connection_id: Id<Connection>\",\n                      m.sender_identity_id AS \"sender_identity_id: Id<SenderIdentity>\", m.person_id AS \"person_id: Id<Person>\",\n                      m.thread_id AS \"thread_id: Id<Thread>\", m.campaign_id AS \"campaign_id: Id<Campaign>\",\n                      m.step_id AS \"step_id: Id<Step>\", m.variant_id AS \"variant_id: Id<Variant>\",\n                      m.enrollment_id AS \"enrollment_id: Id<Enrollment>\", m.snippets_fallback, m.internet_message_id, m.in_reply_to, m.tracking,\n                      m.send_at AS \"send_at: Timestamp\", q.expires_at AS \"expires_at?: Timestamp\",\n                      m.sent_at AS \"sent_at: Timestamp\", m.created_at AS \"created_at: Timestamp\",\n                      m.updated_at AS \"updated_at: Timestamp\"\n                 FROM messages m LEFT JOIN delivery_queue q ON q.workspace_id = m.workspace_id AND q.message_id = m.id\n                WHERE m.workspace_id = $1 AND ($2::uuid IS NULL OR m.id > $2)\n                  AND ($3::uuid IS NULL OR m.campaign_id = $3) AND ($4::uuid IS NULL OR m.enrollment_id = $4)\n                  AND ($5::uuid IS NULL OR m.person_id = $5) AND ($6::uuid IS NULL OR m.connection_id = $6)\n                  AND ($7::uuid IS NULL OR m.thread_id = $7) AND ($8::text IS NULL OR m.state = $8)\n                  AND ($9::timestamptz IS NULL OR m.created_at >= $9) AND ($10::timestamptz IS NULL OR m.created_at > $10)\n                  AND ($11::timestamptz IS NULL OR m.created_at <= $11) AND ($12::timestamptz IS NULL OR m.created_at < $12)\n                ORDER BY m.id LIMIT $13",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<Message>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "kind",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "kind"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "state",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "state"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "status_detail",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "status_detail"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "from_email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "from_email"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "from_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "from_name"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "reply_to",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "reply_to"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "to_addresses",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "to_addresses"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "cc",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "cc"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "bcc",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "bcc"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "subject",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "subject"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "connection_id: Id<Connection>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "connection_id"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "sender_identity_id: Id<SenderIdentity>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "sender_identity_id"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "person_id: Id<Person>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "person_id"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "thread_id: Id<Thread>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "thread_id"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "campaign_id: Id<Campaign>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "campaign_id"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "step_id: Id<Step>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "step_id"
+          }
+        }
+      },
+      {
+        "ordinal": 17,
+        "name": "variant_id: Id<Variant>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "variant_id"
+          }
+        }
+      },
+      {
+        "ordinal": 18,
+        "name": "enrollment_id: Id<Enrollment>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "enrollment_id"
+          }
+        }
+      },
+      {
+        "ordinal": 19,
+        "name": "snippets_fallback",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "snippets_fallback"
+          }
+        }
+      },
+      {
+        "ordinal": 20,
+        "name": "internet_message_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "internet_message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 21,
+        "name": "in_reply_to",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "in_reply_to"
+          }
+        }
+      },
+      {
+        "ordinal": 22,
+        "name": "tracking",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "tracking"
+          }
+        }
+      },
+      {
+        "ordinal": 23,
+        "name": "send_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "send_at"
+          }
+        }
+      },
+      {
+        "ordinal": 24,
+        "name": "expires_at?: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "delivery_queue",
+            "name": "expires_at"
+          }
+        }
+      },
+      {
+        "ordinal": 25,
+        "name": "sent_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "sent_at"
+          }
+        }
+      },
+      {
+        "ordinal": 26,
+        "name": "created_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 27,
+        "name": "updated_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "698c5aa1c5d7eef1f589c1a98271127f5f899df353f2c7fbe52e3bbe222c81ba"
+}

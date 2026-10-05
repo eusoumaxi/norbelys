@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT u.id AS \"user: Id<User>\", u.email, m.role\n             FROM memberships m\n             JOIN users u ON u.id = m.user_id\n            WHERE m.workspace_id = $1 AND m.status = 'active' AND u.status = 'active'\n              AND (m.role IN ('owner', 'admin') OR m.user_id = ANY($2))\n            ORDER BY u.email, u.id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user: Id<User>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "email"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "role",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "memberships",
+            "name": "role"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "9e3329b788c90d1327ab86c447e97c76029f55c5c259d78a7843da24907e21ce"
+}

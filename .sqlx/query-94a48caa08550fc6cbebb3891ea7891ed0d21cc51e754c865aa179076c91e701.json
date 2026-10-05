@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO rollup_watermarks (name, processed_to) VALUES ($1, '00000000-0000-0000-0000-000000000000')\n         ON CONFLICT (name) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "94a48caa08550fc6cbebb3891ea7891ed0d21cc51e754c865aa179076c91e701"
+}

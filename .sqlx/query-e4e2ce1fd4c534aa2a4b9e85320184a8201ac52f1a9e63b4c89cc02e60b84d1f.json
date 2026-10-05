@@ -1,0 +1,101 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT message_id, email, reason, observed_at AS \"observed_at: Timestamp\",\n                  review_after AS \"review_after: Timestamp\", resolved_at AS \"resolved_at: Timestamp\", resolution\n             FROM recipient_holds WHERE workspace_id = $1 AND message_id = ANY ($2)\n            ORDER BY message_id, email_key",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "message_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "recipient_holds",
+            "name": "message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "recipient_holds",
+            "name": "email"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "reason",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "recipient_holds",
+            "name": "reason"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "observed_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "recipient_holds",
+            "name": "observed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "review_after: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "recipient_holds",
+            "name": "review_after"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "resolved_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "recipient_holds",
+            "name": "resolved_at"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "resolution",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "recipient_holds",
+            "name": "resolution"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "e4e2ce1fd4c534aa2a4b9e85320184a8201ac52f1a9e63b4c89cc02e60b84d1f"
+}

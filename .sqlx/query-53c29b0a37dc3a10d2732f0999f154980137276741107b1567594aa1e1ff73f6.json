@@ -1,0 +1,100 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT state, outcome, input_tokens, output_tokens, settled_micros, reserved_micros,\n                  month AS \"month: Date\"\n             FROM ai_calls WHERE workspace_id = $1 ORDER BY id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "state",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "ai_calls",
+            "name": "state"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "outcome",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "ai_calls",
+            "name": "outcome"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "input_tokens",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "ai_calls",
+            "name": "input_tokens"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "output_tokens",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "ai_calls",
+            "name": "output_tokens"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "settled_micros",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "ai_calls",
+            "name": "settled_micros"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "reserved_micros",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "ai_calls",
+            "name": "reserved_micros"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "month: Date",
+        "type_info": "Date",
+        "origin": {
+          "Table": {
+            "table": "ai_calls",
+            "name": "month"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "53c29b0a37dc3a10d2732f0999f154980137276741107b1567594aa1e1ff73f6"
+}

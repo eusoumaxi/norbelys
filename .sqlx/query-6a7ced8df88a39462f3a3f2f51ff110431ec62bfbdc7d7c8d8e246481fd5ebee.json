@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO variant_revisions (workspace_id, variant_id, version, subject, preheader, html, text, cc, bcc)\n         SELECT $1, r.id, r.version, r.subject, r.preheader, r.html, r.text,\n                ARRAY(SELECT c.address FROM UNNEST($8::text[], $9::bigint[]) WITH ORDINALITY AS c(address, owner, at)\n                       WHERE c.owner = r.ord ORDER BY c.at),\n                ARRAY(SELECT b.address FROM UNNEST($10::text[], $11::bigint[]) WITH ORDINALITY AS b(address, owner, at)\n                       WHERE b.owner = r.ord ORDER BY b.at)\n           FROM UNNEST($2::uuid[], $3::int[], $4::text[], $5::text[], $6::text[], $7::text[])\n                WITH ORDINALITY AS r(id, version, subject, preheader, html, text, ord)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "Int4Array",
+        "TextArray",
+        "TextArray",
+        "TextArray",
+        "TextArray",
+        "TextArray",
+        "Int8Array",
+        "TextArray",
+        "Int8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6a7ced8df88a39462f3a3f2f51ff110431ec62bfbdc7d7c8d8e246481fd5ebee"
+}

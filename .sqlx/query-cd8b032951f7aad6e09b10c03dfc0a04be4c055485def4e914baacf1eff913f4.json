@@ -1,0 +1,33 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT wait_event_type AS \"wait_event_type!\", count(*) AS \"sessions!\"\n             FROM pg_stat_activity\n            WHERE backend_type = 'client backend' AND state = 'active' AND wait_event_type IS NOT NULL\n              AND pid <> pg_backend_pid()\n            GROUP BY wait_event_type",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "wait_event_type!",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "pg_stat_activity",
+            "name": "wait_event_type"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "sessions!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      true,
+      null
+    ]
+  },
+  "hash": "cd8b032951f7aad6e09b10c03dfc0a04be4c055485def4e914baacf1eff913f4"
+}

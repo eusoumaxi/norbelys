@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO login_codes (email_key, purpose, code_hash, link_token_hash, ceremony_id, ip_hash, expires_at)\n         VALUES (ascii_lower($1), 'sign_in', $2, $3, $4, $5, $6)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Bytea",
+        "Bytea",
+        "Uuid",
+        "Bytea",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0c7317d19726ea8f3bd429bd20143fd2397110eab14e2430b336cf729e409b7c"
+}

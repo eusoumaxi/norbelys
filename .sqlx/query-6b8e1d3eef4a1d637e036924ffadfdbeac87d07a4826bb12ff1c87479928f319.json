@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE exports SET status = 'ready', object_key = $3, rows = $4, expires_at = $5, last_error = NULL\n          WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Int8",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6b8e1d3eef4a1d637e036924ffadfdbeac87d07a4826bb12ff1c87479928f319"
+}

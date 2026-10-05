@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO step_revision_variants (workspace_id, step_id, step_revision, variant_id, variant_version, weight)\n         SELECT $1, $2, $3, o.id, o.version, o.weight FROM UNNEST($4::uuid[], $5::int[], $6::int[]) AS o(id, version, weight)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int4",
+        "UuidArray",
+        "Int4Array",
+        "Int4Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e7cd7064cd98d3cf7da347c1795d482880637061f664d591807d98d7c1b509e5"
+}

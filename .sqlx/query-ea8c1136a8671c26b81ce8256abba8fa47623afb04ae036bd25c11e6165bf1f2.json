@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT p.email_key FROM import_people i JOIN people p ON p.workspace_id = i.workspace_id AND p.id = i.person_id\n          WHERE i.workspace_id = $1 AND i.import_id = $2 AND p.email_key = ANY($3)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "email_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "email_key"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "ea8c1136a8671c26b81ce8256abba8fa47623afb04ae036bd25c11e6165bf1f2"
+}

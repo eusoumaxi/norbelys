@@ -1,0 +1,661 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "agentGuidance": false,
+  "futureFlags": {
+    "experimentalCargoWorkspaces": true,
+    "experimentalTaskCommand": true,
+    "experimentalPythonWorkspaces": true
+  },
+  "globalDependencies": [
+    "patches/**",
+    "rust-toolchain.toml",
+    ".cargo/config.toml",
+    "Cargo.lock",
+    "uv.lock",
+    ".python-version",
+    "rustfmt.toml",
+    "clippy.toml",
+    "deny.toml",
+    "pyproject.toml"
+  ],
+  "globalPassThroughEnv": [
+    "CARGO_*",
+    "RUSTUP_*",
+    "SQLX_OFFLINE",
+    "TEST_DATABASE_URL",
+    "ASTRO_TELEMETRY_DISABLED",
+    "WRANGLER_SEND_METRICS",
+    "TURBO_TELEMETRY_DISABLED"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "norbelys-server#build": {
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "-p",
+        "norbelys-server",
+        "--bin",
+        "norbelys-server"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/.sqlx/**",
+        "$TURBO_ROOT$/.env.example"
+      ],
+      "outputs": ["$TURBO_ROOT$/target/release/norbelys-server"]
+    },
+    "norbelys-cli#build": {
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "-p",
+        "norbelys-cli"
+      ],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/crates/server/openapi.json"],
+      "outputs": ["$TURBO_ROOT$/target/release/norbelys"]
+    },
+    "norbelys-smtp#build": {
+      "command": [
+        "cargo",
+        "build",
+        "--release",
+        "--locked",
+        "-p",
+        "norbelys-smtp"
+      ],
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": ["$TURBO_ROOT$/target/release/norbelys-smtp"]
+    },
+    "norbelys-rust#fmt": {
+      "command": ["cargo", "fmt", "--all", "--check"]
+    },
+    "norbelys-rust#lint": {
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--workspace",
+        "--all-targets",
+        "--all-features",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    },
+    "norbelys-rust#deny": {
+      "command": ["cargo", "deny", "check"],
+      "cache": false
+    },
+    "norbelys-rust#doc": {
+      "command": [
+        "cargo",
+        "doc",
+        "--workspace",
+        "--all-features",
+        "--no-deps",
+        "--locked"
+      ],
+      "env": ["RUSTDOCFLAGS"],
+      "outputs": ["$TURBO_ROOT$/target/doc/**"]
+    },
+    "norbelys-rust#purity": {
+      "command": ["cargo", "xtask", "purity"],
+      "cache": false
+    },
+    "norbelys-rust#db-reset": {
+      "command": ["cargo", "xtask", "db", "reset"],
+      "cache": false
+    },
+    "norbelys-rust#migrate": {
+      "command": ["cargo", "xtask", "db", "migrate"],
+      "cache": false
+    },
+    "norbelys-rust#sqlx-check": {
+      "command": [
+        "cargo",
+        "sqlx",
+        "prepare",
+        "--check",
+        "--workspace",
+        "--",
+        "--all-targets",
+        "--all-features"
+      ],
+      "cache": false
+    },
+    "norbelys-rust#test": {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--workspace",
+        "--all-features",
+        "--exclude",
+        "norbelys-server",
+        "--exclude",
+        "xtask"
+      ],
+      "cache": true,
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/.env.example",
+        "$TURBO_ROOT$/.sqlx/**"
+      ],
+      "env": [
+        "DATABASE_URL",
+        "TEST_DATABASE_URL",
+        "CARGO_PROFILE_TEST_DEBUG",
+        "CARGO_INCREMENTAL",
+        "CARGO_BUILD_JOBS"
+      ]
+    },
+    "norbelys-rust#clones": {
+      "command": [
+        "bunx",
+        "jscpd@5.4.0",
+        "crates",
+        "--format",
+        "rust",
+        "--min-lines",
+        "15",
+        "--min-tokens",
+        "80",
+        "--mode",
+        "mild",
+        "--baseline-from-ref",
+        "origin/main",
+        "--fail-on-new-clones",
+        "--reporters",
+        "console"
+      ],
+      "cache": false
+    },
+    "norbelys-rust#openapi": {
+      "command": [
+        "cargo",
+        "run",
+        "--locked",
+        "-q",
+        "-p",
+        "norbelys-server",
+        "--",
+        "admin",
+        "openapi",
+        "--public",
+        "--out",
+        "crates/server/openapi.json"
+      ],
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": ["$TURBO_ROOT$/crates/server/openapi.json"]
+    },
+    "norbelys-rust#openapi-check": {
+      "command": ["cargo", "xtask", "openapi", "check"],
+      "cache": false
+    },
+    "@norbelys/docs#validate": {
+      "inputs": ["$TURBO_DEFAULT$"],
+      "cache": false
+    },
+    "@norbelys/sdk#generate": {
+      "command": ["bun", "scripts/generate.ts"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/tools/codegen/**",
+        "$TURBO_ROOT$/crates/server/openapi.json"
+      ],
+      "outputs": ["src/generated/**"]
+    },
+    "@norbelys/sdk#drift": {
+      "command": ["bun", "scripts/generate.ts", "--check"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/tools/codegen/**",
+        "$TURBO_ROOT$/crates/server/openapi.json"
+      ]
+    },
+    "@norbelys/sdk#typecheck": {
+      "dependsOn": ["drift", "^build"]
+    },
+    "@norbelys/sdk#test": {
+      "dependsOn": ["drift", "^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/.github/scripts/check-coverage.mjs"
+      ]
+    },
+    "@norbelys/app#check": {
+      "dependsOn": ["build", "type-coverage", "test"]
+    },
+    "@norbelys/web#build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/brand/**"],
+      "outputs": ["dist/**"]
+    },
+    "norbelys-server#dev:api": {
+      "command": [
+        "cargo",
+        "run",
+        "--locked",
+        "-p",
+        "norbelys-server",
+        "--",
+        "api"
+      ],
+      "cache": false,
+      "persistent": true,
+      "passThroughEnv": ["*"]
+    },
+    "norbelys-server#dev:sender": {
+      "command": [
+        "cargo",
+        "run",
+        "--locked",
+        "-p",
+        "norbelys-server",
+        "--",
+        "sender"
+      ],
+      "cache": false,
+      "persistent": true,
+      "passThroughEnv": ["*"]
+    },
+    "norbelys-server#dev:worker": {
+      "command": [
+        "cargo",
+        "run",
+        "--locked",
+        "-p",
+        "norbelys-server",
+        "--",
+        "worker"
+      ],
+      "cache": false,
+      "persistent": true,
+      "passThroughEnv": ["*"]
+    },
+    "norbelys-server#dev:inbox": {
+      "command": [
+        "cargo",
+        "run",
+        "--locked",
+        "-p",
+        "norbelys-server",
+        "--",
+        "inbox"
+      ],
+      "cache": false,
+      "persistent": true,
+      "passThroughEnv": ["*"]
+    },
+    "norbelys-server#dev:tracking": {
+      "command": [
+        "cargo",
+        "run",
+        "--locked",
+        "-p",
+        "norbelys-server",
+        "--",
+        "tracking"
+      ],
+      "cache": false,
+      "persistent": true,
+      "passThroughEnv": ["*"]
+    },
+    "norbelys-rust#test-database": {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "norbelys-server",
+        "--all-features",
+        "-p",
+        "xtask"
+      ],
+      "cache": false,
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/.env.example",
+        "$TURBO_ROOT$/.sqlx/**"
+      ],
+      "env": [
+        "DATABASE_URL",
+        "TEST_DATABASE_URL",
+        "CARGO_PROFILE_TEST_DEBUG",
+        "CARGO_INCREMENTAL",
+        "CARGO_BUILD_JOBS",
+        "POSTGRES_VERSION",
+        "NORBELYS_TEST_DATABASE_DISPOSABLE"
+      ]
+    },
+    "@norbelys/sdk#build": {
+      "dependsOn": ["drift", "^build"],
+      "outputs": ["dist/**"]
+    },
+    "@norbelys/app#build": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/crates/server/openapi.json",
+        "$TURBO_ROOT$/brand/**"
+      ],
+      "outputs": ["dist/**"]
+    },
+    "norbelys#generate": {
+      "command": ["bun", "scripts/generate.ts"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/tools/codegen/**",
+        "$TURBO_ROOT$/crates/server/openapi.json"
+      ],
+      "outputs": ["src/norbelys/_generated/**"]
+    },
+    "norbelys#drift": {
+      "command": ["bun", "scripts/generate.ts", "--check"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/tools/codegen/**",
+        "$TURBO_ROOT$/crates/server/openapi.json"
+      ]
+    },
+    "norbelys#lint": {
+      "command": [
+        "uv",
+        "run",
+        "--frozen",
+        "--package",
+        "norbelys",
+        "ruff",
+        "check",
+        "src",
+        "tests"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/tools/codegen/**",
+        "$TURBO_ROOT$/crates/server/openapi.json"
+      ],
+      "dependsOn": ["fmt"],
+      "env": ["UV_PYTHON"]
+    },
+    "norbelys#typecheck": {
+      "command": [
+        "uv",
+        "run",
+        "--frozen",
+        "--package",
+        "norbelys",
+        "mypy",
+        "src/norbelys"
+      ],
+      "dependsOn": ["drift"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/tools/codegen/**",
+        "$TURBO_ROOT$/crates/server/openapi.json"
+      ],
+      "env": ["UV_PYTHON"]
+    },
+    "norbelys#test": {
+      "command": ["uv", "run", "--frozen", "--package", "norbelys", "pytest"],
+      "dependsOn": ["drift"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/tools/codegen/**",
+        "$TURBO_ROOT$/crates/server/openapi.json"
+      ],
+      "env": ["UV_PYTHON"]
+    },
+    "norbelys#build": {
+      "command": ["uv", "build", "--package", "norbelys", "--out-dir", "dist"],
+      "dependsOn": ["drift"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/tools/codegen/**",
+        "$TURBO_ROOT$/crates/server/openapi.json"
+      ],
+      "outputs": ["dist/**"],
+      "env": ["UV_PYTHON"]
+    },
+    "@norbelys/cli-downloads#check": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["build", "type-coverage"]
+    },
+    "//#validate": {
+      "dependsOn": [
+        "norbelys-rust#fmt",
+        "norbelys-rust#lint",
+        "norbelys-rust#deny",
+        "norbelys-rust#doc",
+        "norbelys-rust#purity",
+        "norbelys-rust#clones",
+        "norbelys-rust#openapi-check",
+        "@norbelys/docs#validate",
+        "@norbelys/sdk#drift",
+        "@norbelys/sdk#typecheck",
+        "norbelys#drift",
+        "norbelys#lint",
+        "norbelys#typecheck",
+        "@norbelys/sdk#type-coverage",
+        "@norbelys/app#type-coverage",
+        "@norbelys/web#type-coverage",
+        "@norbelys/cli-downloads#type-coverage",
+        "//#typecheck:tools",
+        "//#type-coverage:tools",
+        "@norbelys/app#build",
+        "@norbelys/web#check",
+        "@norbelys/web#build",
+        "@norbelys/cli-downloads#build",
+        "@norbelys/cli-downloads#typecheck"
+      ],
+      "cache": false,
+      "command": ["bun", "run", "lint:javascript"]
+    },
+    "norbelys-cli#test": {
+      "command": ["cargo", "test", "--locked", "-p", "norbelys-cli"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/crates/server/openapi.json"]
+    },
+    "norbelys-cli#lint": {
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "norbelys-cli",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/crates/server/openapi.json"]
+    },
+    "norbelys#fmt": {
+      "command": [
+        "uv",
+        "run",
+        "--frozen",
+        "--package",
+        "norbelys",
+        "ruff",
+        "format",
+        "--check",
+        "."
+      ],
+      "env": ["UV_PYTHON"]
+    },
+    "@norbelys/sdk#type-coverage": {
+      "dependsOn": ["drift"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/tools/codegen/**",
+        "$TURBO_ROOT$/crates/server/openapi.json",
+        "$TURBO_ROOT$/package.json"
+      ]
+    },
+    "@norbelys/app#type-coverage": {
+      "dependsOn": [],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/crates/server/openapi.json"]
+    },
+    "@norbelys/web#type-coverage": {
+      "dependsOn": [],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/tools/codegen/**",
+        "$TURBO_ROOT$/crates/server/openapi.json"
+      ]
+    },
+    "@norbelys/cli-downloads#type-coverage": {
+      "dependsOn": [],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/tools/codegen/**",
+        "$TURBO_ROOT$/crates/server/openapi.json"
+      ]
+    },
+    "norbelys-rust#coverage": {
+      "command": ["bun", "scripts/rust-coverage.mjs", "workspace"],
+      "env": [
+        "TEST_DATABASE_URL",
+        "POSTGRES_VERSION",
+        "CARGO_PROFILE_TEST_DEBUG",
+        "CARGO_INCREMENTAL",
+        "CARGO_BUILD_JOBS",
+        "RUSTFLAGS",
+        "NORBELYS_TEST_DATABASE_DISPOSABLE"
+      ],
+      "outputs": ["$TURBO_ROOT$/coverage/rust.json"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/scripts/rust-coverage.mjs",
+        "$TURBO_ROOT$/docker/coverage.yml",
+        "$TURBO_ROOT$/scripts/test-database.mjs"
+      ],
+      "cache": false
+    },
+    "norbelys-cli#coverage": {
+      "command": ["bun", "../../scripts/rust-coverage.mjs", "cli"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/crates/server/openapi.json",
+        "$TURBO_ROOT$/scripts/rust-coverage.mjs",
+        "$TURBO_ROOT$/scripts/test-database.mjs"
+      ],
+      "outputs": ["$TURBO_ROOT$/coverage/cli-rust.json"],
+      "env": [
+        "CARGO_PROFILE_TEST_DEBUG",
+        "CARGO_INCREMENTAL",
+        "CARGO_BUILD_JOBS",
+        "RUSTFLAGS"
+      ]
+    },
+    "//#typecheck:tools": {
+      "inputs": [
+        "package.json",
+        "bun.lock",
+        "tsconfig.tools.json",
+        "*.config.ts",
+        "brand/**/*.ts",
+        "scripts/**/*.ts",
+        "tools/**/*.ts"
+      ]
+    },
+    "//#type-coverage:tools": {
+      "dependsOn": ["//#typecheck:tools"],
+      "inputs": [
+        "package.json",
+        "bun.lock",
+        "tsconfig.tools.json",
+        "*.config.ts",
+        "brand/**/*.ts",
+        "scripts/**/*.ts",
+        "tools/**/*.ts"
+      ]
+    },
+    "norbelys-rust#check": {
+      "command": ["cargo", "check", "--locked", "--workspace"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/.sqlx/**"],
+      "cache": false
+    },
+    "//#test:scripts": {
+      "inputs": [
+        ".github/scripts/**",
+        "scripts/**",
+        "apps/app/worker/**",
+        "apps/app/src/lib/telemetry-policy.ts",
+        "package.json",
+        "turbo.json",
+        "bun.lock"
+      ],
+      "outputs": []
+    },
+    "//#check:fast": {
+      "dependsOn": [
+        "norbelys-rust#fmt",
+        "norbelys-rust#check",
+        "norbelys-rust#purity",
+        "@norbelys/sdk#typecheck",
+        "@norbelys/app#typecheck",
+        "@norbelys/web#check",
+        "@norbelys/cli-downloads#typecheck",
+        "norbelys#lint",
+        "norbelys#typecheck",
+        "//#typecheck:tools",
+        "//#test:scripts"
+      ],
+      "cache": false,
+      "command": ["bun", "run", "lint:javascript"]
+    },
+    "@norbelys/app#typecheck": {
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/sdks/typescript/src/**"]
+    },
+    "@norbelys/sdk#coverage": {
+      "dependsOn": ["drift", "^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/.github/scripts/check-coverage.mjs"
+      ],
+      "outputs": ["coverage/**"]
+    },
+    "norbelys#coverage": {
+      "command": [
+        "uv",
+        "run",
+        "--frozen",
+        "--package",
+        "norbelys",
+        "pytest",
+        "--cov=norbelys",
+        "--cov-branch",
+        "--cov-report=term-missing",
+        "--cov-report=xml:coverage.xml",
+        "--cov-fail-under=99"
+      ],
+      "dependsOn": ["drift"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/tools/codegen/**",
+        "$TURBO_ROOT$/crates/server/openapi.json"
+      ],
+      "env": ["UV_PYTHON"],
+      "outputs": ["coverage.xml"]
+    },
+    "@norbelys/cli-downloads#coverage": {
+      "outputs": ["coverage/**"]
+    },
+    "@norbelys/cli-downloads#typecheck": {},
+    "@norbelys/web#check": {},
+    "@norbelys/app#test": {}
+  }
+}

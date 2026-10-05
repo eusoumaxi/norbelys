@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE identity_links SET last_used_at = now(), email = coalesce($3, email)\n                  WHERE issuer = $1 AND subject = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3d5e62dd6e09053643fe4109202cb56551beb756f4effca2f8bcbb72f7d5d6f0"
+}

@@ -1,0 +1,54 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT s.campaign_id AS \"campaign: Id<Campaign>\", v.step_id AS \"step: Id<Step>\", v.version\n                 FROM variants v JOIN steps s ON s.workspace_id = v.workspace_id AND s.id = v.step_id\n                WHERE v.workspace_id = $1 AND v.id = $2 AND ($3::uuid IS NULL OR v.step_id = $3)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "campaign: Id<Campaign>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "steps",
+            "name": "campaign_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "step: Id<Step>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "variants",
+            "name": "step_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "version",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "variants",
+            "name": "version"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "8fb713fcb8bc7d61401cfc08f26ab60a6d7a1d800583338ca2c988c7a69a0c8c"
+}

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE dispatch_workspaces SET sender_turn_at = now() WHERE workspace_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f1162ffbb1043525e02a0eb40666b63c8bb1c18e795edc5709f296c62c9fb366"
+}

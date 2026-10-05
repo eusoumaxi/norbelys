@@ -1,0 +1,105 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT s.email_key, s.reason, s.source, s.evidence AS \"evidence!\", s.source_event AS \"source_event!\",\n                  (SELECT count(*) FROM suppressions WHERE workspace_id = $1) AS \"suppressions!\",\n                  (SELECT count(*) FROM delivery_events e WHERE e.workspace_id = $1 AND e.id = s.source_event\n                      AND e.source = 'unsubscribe' AND e.kind = 'unsubscribed' AND e.message_id = $2) AS \"events!\",\n                  (SELECT count(*) FROM stats_increments WHERE workspace_id = $1 AND metric = 'unsubscribed') AS \"increments!\",\n                  (SELECT count(*) FROM outbox_events WHERE workspace_id = $1 AND type = 'suppression.created') AS \"told!\"\n             FROM suppressions s WHERE s.workspace_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "email_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "suppressions",
+            "name": "email_key"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "reason",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "suppressions",
+            "name": "reason"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "source",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "suppressions",
+            "name": "source"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "evidence!",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "suppressions",
+            "name": "evidence"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "source_event!",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "suppressions",
+            "name": "source_event"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "suppressions!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 6,
+        "name": "events!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 7,
+        "name": "increments!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 8,
+        "name": "told!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "ce3a71815916812d49488157a1ecb0fbef7d543148059563026e54f12664fcfe"
+}

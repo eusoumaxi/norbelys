@@ -1,0 +1,84 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT state, lease_owner, lease_generation, lease_expires_at > clock_timestamp() AS \"live!\", paced,\n                  deadline_at AS \"deadline_at: Timestamp\"\n             FROM delivery_queue WHERE workspace_id = $1 AND message_id = $2 FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "state",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "delivery_queue",
+            "name": "state"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "lease_owner",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "delivery_queue",
+            "name": "lease_owner"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "lease_generation",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "delivery_queue",
+            "name": "lease_generation"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "live!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "paced",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "delivery_queue",
+            "name": "paced"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "deadline_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "delivery_queue",
+            "name": "deadline_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      null,
+      false,
+      true
+    ]
+  },
+  "hash": "4a0a0fb523d5278f000f480d299da322642c7b187576eaeda7e9125c0e6f6d07"
+}

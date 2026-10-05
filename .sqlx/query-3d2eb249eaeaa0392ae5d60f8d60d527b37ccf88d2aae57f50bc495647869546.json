@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE memberships SET status = 'active', role = $3, source = $4, status_changed_at = now()\n                  WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3d2eb249eaeaa0392ae5d60f8d60d527b37ccf88d2aae57f50bc495647869546"
+}

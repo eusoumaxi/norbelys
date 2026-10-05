@@ -1,0 +1,88 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  scope:
+    runs-on: ubuntu-24.04
+    outputs:
+      backend: ${{ steps.scope.outputs.backend }}
+      backend_mode: ${{ steps.scope.outputs.backend_mode }}
+      typescript: ${{ steps.scope.outputs.typescript }}
+      python: ${{ steps.scope.outputs.python }}
+      frontends: ${{ steps.scope.outputs.frontends }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: bunx turbo run typecheck:tools type-coverage:tools
+      - run: bun run lint:javascript
+      - run: bun test ./.github/scripts
+      - id: scope
+        run: bun .github/scripts/check-scope.mjs
+      - name: Record affected images for publication after CI succeeds
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          RELEASE_SCOPE_PATH: ${{ runner.temp }}/release-scope.json
+        run: bun .github/scripts/release-scope.mjs
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          name: release-scope
+          path: ${{ runner.temp }}/release-scope.json
+          retention-days: 7
+          if-no-files-found: error
+  dependency-security:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78
+        with:
+          version: 0.12.23
+          python-version: "3.11"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: bun run audit:javascript
+      - run: bun run audit:python
+  backend:
+    needs: scope
+    if: needs.scope.outputs.backend == 'true'
+    uses: ./.github/workflows/backend.yml
+    with:
+      mode: ${{ needs.scope.outputs.backend_mode }}
+  typescript:
+    needs: scope
+    if: needs.scope.outputs.typescript == 'true'
+    uses: ./.github/workflows/sdk.yml
+  python:
+    needs: scope
+    if: needs.scope.outputs.python == 'true'
+    uses: ./.github/workflows/python.yml
+  frontend:
+    needs: scope
+    if: needs.scope.outputs.frontends != '[]'
+    uses: ./.github/workflows/frontend.yml
+    with:
+      apps: ${{ needs.scope.outputs.frontends }}
+  required:
+    name: Required checks
+    if: always()
+    needs: [scope, dependency-security, backend, typescript, python, frontend]
+    runs-on: ubuntu-24.04
+    env:
+      RESULTS: ${{ toJSON(needs) }}
+    steps:
+      - run: |
+          printf '%s' "$RESULTS" | jq -e 'to_entries | all(.value.result == "success" or .value.result == "skipped")'

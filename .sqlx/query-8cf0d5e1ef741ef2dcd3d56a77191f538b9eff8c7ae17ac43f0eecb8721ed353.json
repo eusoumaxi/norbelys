@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE ai_usage SET cost_micros = cost_micros + $3, reserved_cost_micros = reserved_cost_micros - $4,\n                  calls = calls + $5\n            WHERE workspace_id = $1 AND month = $2\n           RETURNING cost_micros, budget_micros, warned_at IS NOT NULL AS \"warned!\",\n                     exceeded_at IS NOT NULL AS \"exceeded!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "cost_micros",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "ai_usage",
+            "name": "cost_micros"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "budget_micros",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "ai_usage",
+            "name": "budget_micros"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "warned!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "exceeded!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Date",
+        "Int8",
+        "Int8",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "8cf0d5e1ef741ef2dcd3d56a77191f538b9eff8c7ae17ac43f0eecb8721ed353"
+}

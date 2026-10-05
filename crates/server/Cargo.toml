@@ -1,0 +1,96 @@
+[package]
+name = "norbelys-server"
+description = "The Norbelys backend: independent process roles and operator commands in one executable"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+default = []
+# DuckDB is large to compile and only the analytics role reads Parquet with it, so it is
+# compiled only when the analytics image is built.
+analytics = ["dep:duckdb"]
+
+[[bin]]
+name = "norbelys-server"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+aws-lc-rs.workspace = true
+axum.workspace = true
+axum-extra.workspace = true
+base64.workspace = true
+bytes.workspace = true
+clap.workspace = true
+csv.workspace = true
+dotenvy.workspace = true
+duckdb = { workspace = true, optional = true }
+futures-util.workspace = true
+garde.workspace = true
+governor.workspace = true
+hickory-resolver.workspace = true
+http.workspace = true
+jiff.workspace = true
+jsonwebtoken.workspace = true
+lol_html.workspace = true
+# Templates: the builtins are the filters authors need (`default`, `upper`, `trim`); the
+# workspace entry turns default features off, so they are asked for here.
+minijinja = { workspace = true, features = ["builtins"] }
+moka.workspace = true
+norbelys-ai.workspace = true
+norbelys-mail.workspace = true
+object_store.workspace = true
+openidconnect.workspace = true
+opentelemetry.workspace = true
+opentelemetry-appender-tracing.workspace = true
+opentelemetry-otlp.workspace = true
+opentelemetry_sdk.workspace = true
+# `/metrics` on each role's health port: the Prometheus reader and the registry it fills.
+opentelemetry-prometheus.workspace = true
+prometheus.workspace = true
+# The archive: old partitions are exported to Parquet, and exports of archived ranges read it back.
+parquet.workspace = true
+regex.workspace = true
+reqwest.workspace = true
+# The MCP server: streamable HTTP at `/mcp`, its tools derived from the OpenAPI document.
+rmcp.workspace = true
+# Local spools (SQLite, WAL): tracking events and provider callbacks stay on disk until a drain has stored them.
+rusqlite.workspace = true
+# The host's disk usage (`statvfs`), read by every role for its own host's metrics.
+rustix.workspace = true
+secrecy.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_path_to_error.workspace = true
+sqlx.workspace = true
+strum.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+tracing.workspace = true
+tracing-opentelemetry.workspace = true
+tracing-subscriber.workspace = true
+url.workspace = true
+utoipa.workspace = true
+utoipa-axum.workspace = true
+uuid.workspace = true
+# Passkeys: the ceremony states are stored sealed on the server (`danger-allow-state-serialisation`),
+# and the email-less sign-in uses discoverable credentials (`conditional-ui`).
+webauthn-rs = { workspace = true, features = [
+  "danger-allow-state-serialisation",
+  "conditional-ui",
+] }
+yaml_serde.workspace = true
+
+[dev-dependencies]
+# The mail client's test seam: provider calls rebased onto fake servers on the loopback interface.
+norbelys-mail = { workspace = true, features = ["test-support"] }
+# Reads composed messages back in the rendering tests, as a recipient's client would.
+mail-parser.workspace = true

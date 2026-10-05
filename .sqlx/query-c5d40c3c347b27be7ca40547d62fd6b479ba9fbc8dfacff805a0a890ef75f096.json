@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO people (workspace_id, id, email, given_name) VALUES ($1, $2, 'ada@example.com', 'Ada')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c5d40c3c347b27be7ca40547d62fd6b479ba9fbc8dfacff805a0a890ef75f096"
+}

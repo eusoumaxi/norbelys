@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE signing_keys SET retired_at = now() + make_interval(secs => $1)\n          WHERE retired_at IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Float8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "253379860dbabfd869914c48b56b8e1b1a72ddbb9e3006adf6ed119d67f2b0e6"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE connections SET status = CASE WHEN account_email LIKE 'lost%' THEN 'authorization_required' ELSE 'active' END,\n                paused = account_email LIKE 'paused%',\n                checked_at = CASE WHEN account_email LIKE 'fresh%' THEN now() - interval '1 hour'\n                                  WHEN account_email LIKE 'due%' THEN now() - interval '25 hours' END",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "4ca3a977381c6a67670fd5f0a018bb0ec2d0480c1aca6f73ec71531738c182d4"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM delivery_queue WHERE workspace_id = $1 AND message_id = ANY($2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e7a430ae26680a68f7446b2b6a2b7a10381e7d58666a65abb32163494076befe"
+}

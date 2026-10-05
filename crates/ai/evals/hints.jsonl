@@ -1,0 +1,50 @@
+{"id":"h01","fields":{"email":"ada.lovelace@northwind-traders.example","given_name":"Ada","family_name":"Lovelace","company":"Northwind Traders","title":"Head of Operations"},"expected":{"risk":"low"}}
+{"id":"h02","fields":{"email":"info@contoso-logistics.example","company":"Contoso Logistics"},"expected":{"risk":"medium"}}
+{"id":"h03","fields":{"email":"kx92jq@mailinator.com","given_name":"Kim"},"expected":{"risk":"high"}}
+{"id":"h04","fields":{"email":"b.keller@contoso-logistics.example","given_name":"Bruno","family_name":"Keller","company":"Contoso Logistics","title":"Fleet Manager"},"expected":{"risk":"low"}}
+{"id":"h05","fields":{"email":"sales@fabrikam.example","company":"Fabrikam"},"expected":{"risk":"medium"}}
+{"id":"h06","fields":{"email":"postmaster@tailspin.example","company":"Tailspin Toys"},"expected":{"risk":"high"}}
+{"id":"h07","fields":{"email":"chloe.martin@fabrikam.example","given_name":"Chloe","family_name":"Martin","company":"Fabrikam","title":"Procurement Lead"},"expected":{"risk":"low"}}
+{"id":"h08","fields":{"email":"jane.doe1987@gmail.com","given_name":"Jane","family_name":"Doe","company":"Adatum Corporation","title":"Chief Financial Officer"},"expected":{"risk":"medium"}}
+{"id":"h09","fields":{"email":"test@test.com","given_name":"Test","family_name":"User"},"expected":{"risk":"high"}}
+{"id":"h10","fields":{"email":"dev.patel@tailspin.example","given_name":"Dev","family_name":"Patel","company":"Tailspin Toys","title":"Head of Customer Success"},"expected":{"risk":"low"}}
+{"id":"h11","fields":{"email":"contact@litware.example","company":"Litware"},"expected":{"risk":"medium"}}
+{"id":"h12","fields":{"email":"noreply@wingtip.example","company":"Wingtip Toys"},"expected":{"risk":"high"}}
+{"id":"h13","fields":{"email":"elena.rossi@adatum.example","given_name":"Elena","family_name":"Rossi","company":"Adatum","title":"Operations Director"},"expected":{"risk":"low"}}
+{"id":"h14","fields":{"email":"m.bianchi@tailspin.example","given_name":"Marco","family_name":"Bianchi","company":"Fabrikam"},"expected":{"risk":"medium"}}
+{"id":"h15","fields":{"email":"user123@10minutemail.com"},"expected":{"risk":"high"}}
+{"id":"h16","fields":{"email":"frank.osei@litware.example","given_name":"Frank","family_name":"Osei","company":"Litware","title":"Logistics Analyst"},"expected":{"risk":"low"}}
+{"id":"h17","fields":{"email":"office@proseware.example","company":"Proseware"},"expected":{"risk":"medium"}}
+{"id":"h18","fields":{"email":"abuse@woodgrove.example","company":"Woodgrove Bank"},"expected":{"risk":"high"}}
+{"id":"h19","fields":{"email":"greta.lindqvist@wingtip.example","given_name":"Greta","family_name":"Lindqvist","company":"Wingtip Toys","title":"Supply Chain Manager"},"expected":{"risk":"low"}}
+{"id":"h20","fields":{"email":"carlos.mendes@outlook.com","given_name":"Carlos","family_name":"Mendes","company":"Alpine Ski House","title":"Owner"},"expected":{"risk":"medium"}}
+{"id":"h21","fields":{"email":"qwpoeiruty@guerrillamail.com","given_name":"Q"},"expected":{"risk":"high"}}
+{"id":"h22","fields":{"email":"hugo.laurent@woodgrove.example","given_name":"Hugo","family_name":"Laurent","company":"Woodgrove Bank","title":"Treasury Manager"},"expected":{"risk":"low"}}
+{"id":"h23","fields":{"email":"hello@fourthcoffee.example","company":"Fourth Coffee"},"expected":{"risk":"medium"}}
+{"id":"h24","fields":{"email":"mailer-daemon@graphicdesign.example"},"expected":{"risk":"high"}}
+{"id":"h25","fields":{"email":"isabel.navarro@alpineski.example","given_name":"Isabel","family_name":"Navarro","company":"Alpine Ski House","title":"Marketing Director"},"expected":{"risk":"low"}}
+{"id":"h26","fields":{"email":"j.berg@northwind-traders.example","company":"Northwind Traders"},"expected":{"risk":"medium"}}
+{"id":"h27","fields":{"email":"none@none.com","given_name":"N/A"},"expected":{"risk":"high"}}
+{"id":"h28","fields":{"email":"kira.tanaka@fourthcoffee.example","given_name":"Kira","family_name":"Tanaka","company":"Fourth Coffee","title":"Category Manager"},"expected":{"risk":"low"}}
+{"id":"h29","fields":{"email":"support@graphicdesign.example","company":"Graphic Design Institute"},"expected":{"risk":"medium"}}
+{"id":"h30","fields":{"email":"temp.user@yopmail.com","given_name":"Temp"},"expected":{"risk":"high"}}
+{"id":"h31","fields":{"email":"lars.nyberg@graphicdesign.example","given_name":"Lars","family_name":"Nyberg","company":"Graphic Design Institute","title":"Studio Lead"},"expected":{"risk":"low"}}
+{"id":"h32","fields":{"email":"nadia.haddad@yahoo.com","given_name":"Nadia","family_name":"Haddad","company":"Tailspin Toys","title":"VP Sales"},"expected":{"risk":"medium"}}
+{"id":"h33","fields":{"email":"asdf@asdf.asdf"},"expected":{"risk":"high"}}
+{"id":"h34","fields":{"email":"mia.schulz@fabrikam.example","given_name":"Mia","family_name":"Schulz","company":"Fabrikam","title":"Product Owner"},"expected":{"risk":"low"}}
+{"id":"h35","fields":{"email":"team@adatum.example","company":"Adatum"},"expected":{"risk":"medium"}}
+{"id":"h36","fields":{"email":"donotreply@litware.example","company":"Litware"},"expected":{"risk":"high"}}
+{"id":"h37","fields":{"email":"oscar.lindgren@adatum.example","given_name":"Oscar","family_name":"Lindgren","company":"Adatum","title":"VP of Procurement"},"expected":{"risk":"low"}}
+{"id":"h38","fields":{"email":"p.raman@contoso-logistics.example","given_name":"Priya","family_name":"Raman","company":"Litware"},"expected":{"risk":"medium"}}
+{"id":"h39","fields":{"email":"anything@trashmail.com"},"expected":{"risk":"high"}}
+{"id":"h40","fields":{"email":"rosa.jimenez@woodgrove.example","given_name":"Rosa","family_name":"Jiménez","company":"Woodgrove Bank","title":"Head of Payments"},"expected":{"risk":"low"}}
+{"id":"h41","fields":{"email":"admin@proseware.example","company":"Proseware"},"expected":{"risk":"medium"}}
+{"id":"h42","fields":{"email":"john.smith@gmial.com","given_name":"John","family_name":"Smith","company":"Northwind Traders"},"expected":{"risk":"high"}}
+{"id":"h43","fields":{"email":"sam.whitfield@alpineski.example","given_name":"Sam","family_name":"Whitfield","company":"Alpine Ski House","title":"General Manager"},"expected":{"risk":"low"}}
+{"id":"h44","fields":{"email":"tomas.ferreira@hotmail.com","given_name":"Tomás","family_name":"Ferreira","company":"Fourth Coffee","title":"Regional Director"},"expected":{"risk":"medium"}}
+{"id":"h45","fields":{"email":"x7f3k9@temp-mail.org"},"expected":{"risk":"high"}}
+{"id":"h46","fields":{"email":"ulla.jensen@graphicdesign.example","given_name":"Ulla","family_name":"Jensen","company":"Graphic Design Institute","title":"Head of Partnerships"},"expected":{"risk":"low"}}
+{"id":"h47","fields":{"email":"careers@contoso-logistics.example","company":"Contoso Logistics"},"expected":{"risk":"medium"}}
+{"id":"h48","fields":{"email":"spam-trap-77@throwawaymail.com"},"expected":{"risk":"high"}}
+{"id":"h49","fields":{"email":"wendy.clarke@contoso-logistics.example","given_name":"Wendy","family_name":"Clarke","company":"Contoso Logistics","title":"Head of Analytics"},"expected":{"risk":"low"}}
+{"id":"h50","fields":{"email":"zoe@litware.example","company":"Litware"},"expected":{"risk":"medium"}}

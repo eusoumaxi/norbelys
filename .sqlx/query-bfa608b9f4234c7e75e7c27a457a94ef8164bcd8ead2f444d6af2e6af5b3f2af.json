@@ -1,0 +1,44 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO messages (workspace_id, id, kind, campaign_id, step_id, step_revision, variant_id, variant_version,\n                               enrollment_id, sender_identity_id, connection_id, from_email, from_name, person_id,\n                               to_addresses, cc, bcc, reply_to, subject, html, text_body, render_context, render_version,\n                               rendered_at, internet_message_id, in_reply_to, thread_id, tracking, send_at, idempotency_key,\n                               snippets_fallback, trace_parent)\n         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23,\n                 now(), $24, $25, $26, $27, $28, $29, $30, $31)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Uuid",
+        "Uuid",
+        "Int4",
+        "Uuid",
+        "Int4",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Uuid",
+        "TextArray",
+        "TextArray",
+        "TextArray",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Jsonb",
+        "Text",
+        "Text",
+        "Text",
+        "Uuid",
+        "Jsonb",
+        "Timestamptz",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "bfa608b9f4234c7e75e7c27a457a94ef8164bcd8ead2f444d6af2e6af5b3f2af"
+}

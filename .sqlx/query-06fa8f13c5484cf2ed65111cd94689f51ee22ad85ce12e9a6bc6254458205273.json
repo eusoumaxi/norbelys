@@ -1,0 +1,33 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT l.queue, min(j.run_at) AS \"oldest!: Timestamp\" FROM job_lanes l\n           CROSS JOIN LATERAL (SELECT run_at FROM jobs\n                                WHERE workspace_id = l.workspace_id AND queue = l.queue AND state = 'available' AND run_at <= now()\n                                ORDER BY run_at LIMIT 1) j\n           GROUP BY l.queue",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "queue",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "job_lanes",
+            "name": "queue"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "oldest!: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "06fa8f13c5484cf2ed65111cd94689f51ee22ad85ce12e9a6bc6254458205273"
+}

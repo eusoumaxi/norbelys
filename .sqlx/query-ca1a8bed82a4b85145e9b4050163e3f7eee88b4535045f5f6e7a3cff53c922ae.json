@@ -1,0 +1,77 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT s.id, s.consecutive_failures, s.breaker_opened_at AS \"opened_at: Timestamp\",\n                  s.probe_message_id, s.probe_generation\n             FROM connections c JOIN quota_scopes s ON s.workspace_id = c.workspace_id AND s.id = c.quota_scope_id\n            WHERE c.workspace_id = $1 AND c.id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "consecutive_failures",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "consecutive_failures"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "opened_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "breaker_opened_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "probe_message_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "probe_message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "probe_generation",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "probe_generation"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "ca1a8bed82a4b85145e9b4050163e3f7eee88b4535045f5f6e7a3cff53c922ae"
+}

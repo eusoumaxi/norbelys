@@ -1,0 +1,173 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT s.id AS \"id: Id<Step>\", s.position, s.name, s.current_revision,\n                  r.delay_seconds AS \"delay_seconds?\", r.same_thread AS \"same_thread?\", r.allocation AS \"allocation?\",\n                  r.ranking_objective AS \"ranking_objective?\", r.observation_window_seconds AS \"window?\",\n                  r.minimum_sample AS \"sample?\", r.personalisation_prompt, r.winner_variant_id, r.winner_variant_version\n             FROM steps s\n             LEFT JOIN step_revisions r ON r.workspace_id = s.workspace_id AND r.step_id = s.id AND r.revision = s.current_revision\n            WHERE s.workspace_id = $1 AND s.campaign_id = $2\n            ORDER BY s.position",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<Step>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "steps",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "position",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "steps",
+            "name": "position"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "steps",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "current_revision",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "steps",
+            "name": "current_revision"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "delay_seconds?",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "delay_seconds"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "same_thread?",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "same_thread"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "allocation?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "allocation"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "ranking_objective?",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "ranking_objective"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "window?",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "observation_window_seconds"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "sample?",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "minimum_sample"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "personalisation_prompt",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "personalisation_prompt"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "winner_variant_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "winner_variant_id"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "winner_variant_version",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "step_revisions",
+            "name": "winner_variant_version"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "f5bf32a880603263033e2e2455706fdcef6bd9247015ac9611c89e353be69347"
+}

@@ -1,0 +1,27 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) AS \"count!\" FROM (\n               SELECT 1 FROM webhook_deliveries d\n                WHERE d.workspace_id = $1 AND ($2::uuid IS NULL OR d.endpoint_id = $2) AND ($3::uuid IS NULL OR d.event_id = $3)\n                  AND ($4::text IS NULL OR d.state = $4)\n                LIMIT $5) counted",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "c6843e2746368a35bf035adf31fd3a7ecc3478241bdad533971f5110af3fa0aa"
+}

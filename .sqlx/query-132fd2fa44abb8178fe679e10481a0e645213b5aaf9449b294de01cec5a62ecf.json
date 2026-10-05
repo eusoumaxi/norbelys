@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT DISTINCT a.relname::text AS \"referencing!\", b.relname::text AS \"referenced!\"\n             FROM pg_constraint con JOIN pg_class a ON a.oid = con.conrelid JOIN pg_class b ON b.oid = con.confrelid\n            WHERE con.contype = 'f' AND con.conparentid = 0 AND a.oid <> b.oid",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "referencing!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "referenced!",
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "132fd2fa44abb8178fe679e10481a0e645213b5aaf9449b294de01cec5a62ecf"
+}

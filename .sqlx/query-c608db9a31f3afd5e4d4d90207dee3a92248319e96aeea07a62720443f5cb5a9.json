@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO campaign_daily_stats AS s\n                (workspace_id, campaign_id, step_id, step_revision, variant_id, variant_version, day,\n                 sent, delivered, bounced, opened, clicked, replied, unsubscribed, complained)\n           SELECT i.workspace_id, i.campaign_id, i.step_id, i.step_revision, i.variant_id, i.variant_version, i.day,\n                  coalesce(sum(i.delta) FILTER (WHERE i.metric = 'sent'), 0),\n                  coalesce(sum(i.delta) FILTER (WHERE i.metric = 'delivered'), 0),\n                  coalesce(sum(i.delta) FILTER (WHERE i.metric = 'bounced'), 0),\n                  coalesce(sum(i.delta) FILTER (WHERE i.metric = 'opened'), 0),\n                  coalesce(sum(i.delta) FILTER (WHERE i.metric = 'clicked'), 0),\n                  coalesce(sum(i.delta) FILTER (WHERE i.metric = 'replied'), 0),\n                  coalesce(sum(i.delta) FILTER (WHERE i.metric = 'unsubscribed'), 0),\n                  coalesce(sum(i.delta) FILTER (WHERE i.metric = 'complained'), 0)\n             FROM stats_increments i\n             JOIN workspaces w ON w.id = i.workspace_id\n            WHERE i.id >= $1 AND i.id < $2\n              AND i.campaign_id IS NOT NULL AND i.step_id IS NOT NULL AND i.step_revision IS NOT NULL\n              AND i.variant_id IS NOT NULL AND i.variant_version IS NOT NULL\n            GROUP BY i.workspace_id, i.campaign_id, i.step_id, i.step_revision, i.variant_id, i.variant_version, i.day\n           ON CONFLICT (workspace_id, campaign_id, step_id, step_revision, variant_id, variant_version, day) DO UPDATE\n              SET sent = s.sent + excluded.sent, delivered = s.delivered + excluded.delivered,\n                  bounced = s.bounced + excluded.bounced, opened = s.opened + excluded.opened,\n                  clicked = s.clicked + excluded.clicked, replied = s.replied + excluded.replied,\n                  unsubscribed = s.unsubscribed + excluded.unsubscribed, complained = s.complained + excluded.complained",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c608db9a31f3afd5e4d4d90207dee3a92248319e96aeea07a62720443f5cb5a9"
+}

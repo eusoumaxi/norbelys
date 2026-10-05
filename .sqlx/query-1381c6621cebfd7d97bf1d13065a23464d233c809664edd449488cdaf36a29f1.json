@@ -1,0 +1,79 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT day AS \"day: Date\", messages_used, messages_reserved, recipients_used, recipients_reserved\n                 FROM quota_scope_usage WHERE workspace_id = $1 AND scope_id = $2 AND day >= $3 AND day <= $4",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "day: Date",
+        "type_info": "Date",
+        "origin": {
+          "Table": {
+            "table": "quota_scope_usage",
+            "name": "day"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "messages_used",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "quota_scope_usage",
+            "name": "messages_used"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "messages_reserved",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "quota_scope_usage",
+            "name": "messages_reserved"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "recipients_used",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "quota_scope_usage",
+            "name": "recipients_used"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "recipients_reserved",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "quota_scope_usage",
+            "name": "recipients_reserved"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Date",
+        "Date"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "1381c6621cebfd7d97bf1d13065a23464d233c809664edd449488cdaf36a29f1"
+}

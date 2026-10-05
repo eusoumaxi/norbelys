@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE receive_bindings SET lease_owner = NULL, lease_expires_at = NULL\n          WHERE workspace_id = $1 AND id = $2 AND lease_owner = $3 AND lease_generation = $4",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d15175324599918d274de5145d062dd2a9fa4c9aa70c45e5df4e6286b6b4c442"
+}

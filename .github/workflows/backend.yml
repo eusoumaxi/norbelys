@@ -1,0 +1,181 @@
+# Offline compilation, contracts and frontend checks run independently of PostgreSQL.
+# The database job explicitly creates its disposable schema and checks SQL metadata and server tests.
+# Product image publication waits for both jobs when this workflow is called.
+name: Backend
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        default: ""
+      mode:
+        type: string
+        default: workspace
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  gate:
+    name: Completion gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      # Builds use the committed SQLx query metadata.
+      SQLX_OFFLINE: "true"
+      RUSTDOCFLAGS: -D rustdoc::broken_intra_doc_links -D warnings
+      CARGO_TERM_COLOR: always
+      # Assertions and the whole test suite, without debugger symbols or incremental state: the
+      # bundled DuckDB and debug artifacts otherwise exhaust a small runner's disk.
+      CARGO_INCREMENTAL: "0"
+      CARGO_PROFILE_DEV_DEBUG: "0"
+      CARGO_PROFILE_TEST_DEBUG: "0"
+      CARGO_BUILD_JOBS: "2"
+    steps:
+      - name: Check out the history (the clone check compares with origin/main)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.ref || github.ref }}
+          persist-credentials: false
+
+      - name: Install the toolchain of rust-toolchain.toml
+        run: |
+          rustup toolchain install
+          rustup show active-toolchain
+
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          shared-key: workspace-checks-${{ inputs.mode || 'workspace' }}
+          cache-on-failure: true
+
+      - name: Install cargo-deny
+        if: inputs.mode != 'cli'
+        run: cargo install --locked cargo-deny@0.20.2
+
+      - uses: ./.github/actions/setup
+        id: setup
+
+      - name: Print the gate's resolved steps
+        if: inputs.mode != 'cli'
+        run: bunx turbo run fmt lint deny doc purity clones openapi-check --filter=norbelys-rust --dry=json | jq -r '.tasks[] | "\(.taskId)\t\(.command)"' | sort
+
+      - name: Run checks without a database
+        if: inputs.mode != 'cli'
+        run: |
+          git rev-parse --verify refs/remotes/origin/main
+          bunx turbo run fmt lint deny doc purity clones openapi-check --filter=norbelys-rust
+
+      - name: Install coverage tooling
+        if: inputs.mode == 'cli'
+        run: cargo install --locked cargo-llvm-cov@0.9.1
+
+      - name: Check native CLI changes
+        if: inputs.mode == 'cli'
+        run: |
+          bunx turbo run fmt --filter=norbelys-rust
+          bunx turbo run lint coverage --filter=norbelys-cli
+
+      - name: Report build resources
+        if: ${{ always() }}
+        run: |
+          df -h .
+          free -h
+          du -sh target 2>/dev/null || true
+
+      - name: Keep the CLI coverage report for review
+        if: always() && inputs.mode == 'cli'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: cli-rust-coverage
+          path: coverage/cli-rust.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Retain successful task results when a later check fails
+        if: failure() && steps.setup.outputs.task-cache-key != ''
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25
+        with:
+          key: ${{ steps.setup.outputs.task-cache-key }}
+          path: .turbo
+
+  database:
+    name: Database contracts
+    if: inputs.mode != 'cli'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    services:
+      postgres:
+        image: postgres:18.6-trixie@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+        env:
+          POSTGRES_USER: norbelys
+          POSTGRES_PASSWORD: norbelys
+          POSTGRES_DB: norbelys
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U norbelys -d norbelys" --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      DATABASE_URL: postgres://norbelys:norbelys@localhost:5432/norbelys_ci
+      TEST_DATABASE_URL: postgres://norbelys:norbelys@localhost:5432/norbelys_ci
+      NORBELYS_TEST_DATABASE_DISPOSABLE: "1"
+      POSTGRES_VERSION: "18.6"
+      SQLX_OFFLINE: "true"
+      CARGO_TERM_COLOR: always
+      CARGO_INCREMENTAL: "0"
+      CARGO_PROFILE_DEV_DEBUG: "0"
+      CARGO_PROFILE_TEST_DEBUG: "0"
+      CARGO_BUILD_JOBS: "2"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          persist-credentials: false
+
+      - name: Install the pinned toolchain
+        run: rustup toolchain install
+
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          shared-key: workspace-checks-workspace
+          cache-on-failure: true
+
+      - name: Install sqlx-cli
+        run: cargo install --locked sqlx-cli@0.9.0 --no-default-features --features rustls,postgres
+
+      - uses: ./.github/actions/setup
+        id: setup
+
+      - name: Install coverage tooling
+        run: cargo install --locked cargo-llvm-cov@0.9.1
+
+      - name: Check SQL metadata and server contracts against PostgreSQL
+        run: |
+          bun run db:reset
+          bunx turbo run sqlx-check --filter=norbelys-rust
+          bunx turbo run coverage --filter=norbelys-rust
+
+      - name: Keep the coverage report on failures as well
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: rust-coverage
+          path: coverage/rust.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Retain successful tests when the coverage threshold fails
+        if: failure() && steps.setup.outputs.task-cache-key != ''
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25
+        with:
+          key: ${{ steps.setup.outputs.task-cache-key }}
+          path: .turbo

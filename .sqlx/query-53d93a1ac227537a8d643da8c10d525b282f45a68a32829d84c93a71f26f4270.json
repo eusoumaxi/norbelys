@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) AS \"count!\" FROM (\n               SELECT 1 FROM delivery_events e\n                WHERE e.workspace_id = $1\n                  AND ($2::uuid IS NULL OR e.message_id = $2) AND ($3::text IS NULL OR e.kind = $3)\n                  AND ($4::text IS NULL OR e.recipient_email_key = ascii_lower($4))\n                  AND (($5::uuid IS NULL AND $6::uuid IS NULL) OR EXISTS (\n                        SELECT 1 FROM messages m WHERE m.workspace_id = e.workspace_id AND m.id = e.message_id\n                           AND ($5::uuid IS NULL OR m.campaign_id = $5) AND ($6::uuid IS NULL OR m.person_id = $6)))\n                LIMIT $7) counted",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Uuid",
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "53d93a1ac227537a8d643da8c10d525b282f45a68a32829d84c93a71f26f4270"
+}

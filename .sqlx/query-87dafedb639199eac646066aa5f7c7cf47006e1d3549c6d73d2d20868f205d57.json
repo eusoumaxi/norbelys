@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO outbox_events (workspace_id, type, subject_type, subject_id, payload, trace_parent)\n         SELECT $1, event.type, event.subject_type, event.subject_id, event.payload, $6\n           FROM unnest($2::text[], $3::text[], $4::uuid[], $5::jsonb[])\n                WITH ORDINALITY AS event(type, subject_type, subject_id, payload, position)\n          ORDER BY event.position",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "TextArray",
+        "TextArray",
+        "UuidArray",
+        "JsonbArray",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "87dafedb639199eac646066aa5f7c7cf47006e1d3549c6d73d2d20868f205d57"
+}

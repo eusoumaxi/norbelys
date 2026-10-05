@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO threads (workspace_id, id, person_id, campaign_id, sender_identity_id, root_message_id,\n                                      root_internet_message_id, last_message_id, last_internet_message_id, subject)\n                 VALUES ($1, $2, $3, $4, $5, $6, $7, $6, $7, $8)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7abdcdbf8796c2ae1e8121d2ec0b5ca8324223e4b7e419eb7afa0d73f52a1822"
+}

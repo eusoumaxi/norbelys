@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE webhook_endpoints SET enabled = true, disabled_reason = NULL, failing_since = NULL, failure_notified_at = NULL\n                  WHERE workspace_id = $1 AND id = $2 AND NOT enabled",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0b9d846ca8d4364cd54a66602c4ee962515d96556503ee552a3944a76764cab7"
+}

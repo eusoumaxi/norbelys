@@ -1,0 +1,80 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT e.id, e.campaign_id, e.person_id, e.message_id AS \"message_id!\", c.on_sender_removed\n             FROM enrollments e\n             JOIN messages m ON m.workspace_id = e.workspace_id AND m.id = e.message_id\n             JOIN delivery_queue q ON q.workspace_id = m.workspace_id AND q.message_id = m.id\n             JOIN campaigns c ON c.workspace_id = e.workspace_id AND c.id = e.campaign_id\n             JOIN sender_identities i ON i.workspace_id = m.workspace_id AND i.id = m.sender_identity_id\n            WHERE e.workspace_id = $1 AND e.status = 'active' AND e.message_id IS NOT NULL AND q.state = 'queued'\n              AND ($2::uuid IS NULL OR e.campaign_id = $2)\n              AND ($3::uuid[] IS NULL OR m.sender_identity_id = ANY($3))\n              AND ($4::uuid IS NULL OR m.connection_id = $4)\n              AND NOT (i.enabled AND i.archived_at IS NULL\n                       AND (i.tags && c.sender_tags\n                            OR EXISTS (SELECT 1 FROM campaign_senders s\n                                        WHERE s.workspace_id = c.workspace_id AND s.campaign_id = c.id\n                                          AND s.sender_identity_id = i.id)))\n            ORDER BY e.id LIMIT $5\n              FOR UPDATE OF e SKIP LOCKED",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "campaign_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "campaign_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "person_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "person_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "message_id!",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "on_sender_removed",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "campaigns",
+            "name": "on_sender_removed"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "UuidArray",
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "d4e20c242816f535de8714851ab61a739f6613d02237cd6fe4391c37037f3005"
+}

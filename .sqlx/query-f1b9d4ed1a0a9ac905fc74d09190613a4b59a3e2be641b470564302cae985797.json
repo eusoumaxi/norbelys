@@ -1,0 +1,77 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT messages_per_day, recipients_per_day, window_limit, window_unit, window_seconds\n               FROM quota_scopes WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "messages_per_day",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "messages_per_day"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "recipients_per_day",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "recipients_per_day"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "window_limit",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "window_limit"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "window_unit",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "window_unit"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "window_seconds",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "quota_scopes",
+            "name": "window_seconds"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "f1b9d4ed1a0a9ac905fc74d09190613a4b59a3e2be641b470564302cae985797"
+}

@@ -1,0 +1,143 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT s.id AS \"id: Id<Session>\", s.user_id AS \"user_id: Id<User>\", s.auth_method,\n                  s.sso_connection_id, s.sso_policy_version, s.authenticated_at AS \"authenticated_at: Timestamp\",\n                  s.revoked_at AS \"revoked_at: Timestamp\", s.expires_at AS \"expires_at: Timestamp\",\n                  s.idle_expires_at AS \"idle_expires_at: Timestamp\", s.last_seen_at AS \"last_seen_at: Timestamp\",\n                  u.status = 'active' AS \"user_active!\"\n             FROM sessions s JOIN users u ON u.id = s.user_id\n            WHERE s.id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<Session>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id: Id<User>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "auth_method",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "auth_method"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "sso_connection_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "sso_connection_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "sso_policy_version",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "sso_policy_version"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "authenticated_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "authenticated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "revoked_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "revoked_at"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "expires_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "expires_at"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "idle_expires_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "idle_expires_at"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "last_seen_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "last_seen_at"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "user_active!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "3857c88d78c7c3e7b449b5e3b69990dff89d1d9eb1c724b2568bf7c34d8ddb75"
+}

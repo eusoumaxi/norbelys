@@ -1,0 +1,120 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT e.id, e.status, e.attempts, e.message_id AS \"message_id!\", m.state, m.attempt_number,\n                  m.sent_at AS \"sent_at: Timestamp\", m.status_detail,\n                  (SELECT r.delay_seconds FROM steps s\n                     JOIN step_revisions r ON r.workspace_id = s.workspace_id AND r.step_id = s.id AND r.revision = s.current_revision\n                    WHERE s.workspace_id = e.workspace_id AND s.campaign_id = e.campaign_id\n                      AND s.position = e.current_position + 1) AS next_delay\n             FROM enrollments e\n             JOIN messages m ON m.workspace_id = e.workspace_id AND m.id = e.message_id\n            WHERE e.workspace_id = $1 AND e.message_id IS NOT NULL\n              AND CASE WHEN e.status IN ('active', 'paused')\n                       THEN m.state IN ('sent', 'failed', 'cancelled', 'suppressed')\n                       ELSE m.state NOT IN ('claimed', 'in_flight', 'uncertain') END\n            ORDER BY e.id LIMIT $2\n              FOR UPDATE OF e SKIP LOCKED",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "attempts",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "attempts"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "message_id!",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "enrollments",
+            "name": "message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "state",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "state"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "attempt_number",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "attempt_number"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "sent_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "sent_at"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "status_detail",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "status_detail"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "next_delay",
+        "type_info": "Int4",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      null
+    ]
+  },
+  "hash": "b5b6d3be1c26a36e8acf84df49f2159787e80caca8ef3e22e2839c49a3f89350"
+}

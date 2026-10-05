@@ -1,0 +1,77 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT email, given_name, family_name, company, custom_fields\n           FROM people WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "email"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "given_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "given_name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "family_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "family_name"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "company",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "company"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "custom_fields",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "people",
+            "name": "custom_fields"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "f35c137350cdf762ca54627a805455e15cf8067101a7bc72aa6c67899c8c9efe"
+}

@@ -1,0 +1,48 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT connection_id, id AS \"id: Id<ProviderWebhook>\", signing_secret IS NOT NULL AS \"key_set!\"\n             FROM provider_webhooks WHERE workspace_id = $1 AND connection_id = ANY($2)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "connection_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "provider_webhooks",
+            "name": "connection_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "id: Id<ProviderWebhook>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "provider_webhooks",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "key_set!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "fc1ef54e63c67bb92c99eed1d29e78266ac237d11cea4483d28a16a475562584"
+}

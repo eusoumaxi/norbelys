@@ -1,0 +1,94 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT q.message_id, q.lease_generation, q.deadline_at AS \"deadline_at: Timestamp\",\n                  m.thread_id, m.attempt_number,\n                  (SELECT count(*) FROM attempts a WHERE a.workspace_id = q.workspace_id AND a.message_id = q.message_id\n                      AND a.outcome = 'transient') AS \"prior_transients!\",\n                  m.to_addresses || m.cc || m.bcc AS \"recipients!\"\n             FROM delivery_queue q JOIN messages m ON m.workspace_id = q.workspace_id AND m.id = q.message_id\n            WHERE q.workspace_id = $1 AND q.connection_id = $2 AND q.lease_owner = $3\n              AND (q.message_id, q.lease_generation) IN (SELECT * FROM unnest($4::uuid[], $5::bigint[]))\n            ORDER BY q.message_id\n              FOR UPDATE OF q, m",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "message_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "delivery_queue",
+            "name": "message_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "lease_generation",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "delivery_queue",
+            "name": "lease_generation"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "deadline_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "delivery_queue",
+            "name": "deadline_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "thread_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "thread_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "attempt_number",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "messages",
+            "name": "attempt_number"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "prior_transients!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 6,
+        "name": "recipients!",
+        "type_info": "TextArray",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "UuidArray",
+        "Int8Array"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "d03bc15c40849c3a2955db5446669894d8d4ab4ece5bd7498995823ae20f0bcd"
+}

@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, email_key, ceremony_id AS \"ceremony_id!\" FROM login_codes\n            WHERE link_token_hash = $1 AND purpose = 'sign_in' AND consumed_at IS NULL\n              AND expires_at > now() AND attempts < $2 AND ceremony_id IS NOT NULL\n              FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "login_codes",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "email_key",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "login_codes",
+            "name": "email_key"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "ceremony_id!",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "login_codes",
+            "name": "ceremony_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea",
+        "Int2"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "25073b969884324fd2d24819b3a1dc682ad97360185a7446ad55e53e5bd8ec43"
+}

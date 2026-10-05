@@ -1,0 +1,21 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(DISTINCT day) AS \"days!\" FROM campaign_daily_stats WHERE verification = 'unverified'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "days!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "e2e9505bb4688f8aaeea58c9b31a4cf9b4ed73e47ed541bce8afb0149676b634"
+}

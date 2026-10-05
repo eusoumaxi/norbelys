@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO audit_log (workspace_id, actor_kind, actor_id, action, target) VALUES ($1, 'system', 'test', $2, $3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "56c0093ea9e9e0f5ce4139331710565850c8aacc4b2436212959dc7c5763f78e"
+}

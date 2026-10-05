@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE memberships\n            SET role = $3, status = $4,\n                status_changed_at = CASE WHEN status <> $4 THEN now() ELSE status_changed_at END\n          WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "be81eb20c66cca01f9f9758917794a53027b108163d5128e9625359b80b1b157"
+}

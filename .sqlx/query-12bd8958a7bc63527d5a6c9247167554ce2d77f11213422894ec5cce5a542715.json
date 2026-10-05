@@ -1,0 +1,175 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT d.id AS \"id: Id<WebhookDelivery>\", d.event_id AS \"event_id: Id<OutboxEvent>\", ev.type AS event_type,\n                  d.endpoint_id AS \"endpoint_id: Id<WebhookEndpoint>\", d.state, d.attempt,\n                  d.last_attempt_at AS \"last_attempt_at: Timestamp\", d.last_duration_ms, d.response_status, d.response_excerpt,\n                  d.next_attempt_at AS \"next_attempt_at: Timestamp\", d.delivered_at AS \"delivered_at: Timestamp\",\n                  d.created_at AS \"created_at: Timestamp\"\n             FROM webhook_deliveries d\n             JOIN outbox_events ev ON ev.workspace_id = d.workspace_id AND ev.id = d.event_id\n            WHERE d.workspace_id = $1 AND d.id = $2 AND d.event_id >= $3 AND d.event_id < $4",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<WebhookDelivery>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "webhook_deliveries",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "event_id: Id<OutboxEvent>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "webhook_deliveries",
+            "name": "event_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "event_type",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "outbox_events",
+            "name": "type"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "endpoint_id: Id<WebhookEndpoint>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "webhook_deliveries",
+            "name": "endpoint_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "state",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "webhook_deliveries",
+            "name": "state"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "attempt",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "webhook_deliveries",
+            "name": "attempt"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "last_attempt_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "webhook_deliveries",
+            "name": "last_attempt_at"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "last_duration_ms",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "webhook_deliveries",
+            "name": "last_duration_ms"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "response_status",
+        "type_info": "Int2",
+        "origin": {
+          "Table": {
+            "table": "webhook_deliveries",
+            "name": "response_status"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "response_excerpt",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "webhook_deliveries",
+            "name": "response_excerpt"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "next_attempt_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "webhook_deliveries",
+            "name": "next_attempt_at"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "delivered_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "webhook_deliveries",
+            "name": "delivered_at"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "created_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "webhook_deliveries",
+            "name": "created_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "12bd8958a7bc63527d5a6c9247167554ce2d77f11213422894ec5cce5a542715"
+}

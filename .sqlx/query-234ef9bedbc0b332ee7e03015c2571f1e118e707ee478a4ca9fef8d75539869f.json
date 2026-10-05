@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE webhook_deliveries SET state = 'disabled' WHERE workspace_id = $1 AND endpoint_id = $2 AND state = 'pending'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "234ef9bedbc0b332ee7e03015c2571f1e118e707ee478a4ca9fef8d75539869f"
+}

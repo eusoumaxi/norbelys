@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE delivery_queue\n              SET state = 'in_flight', lease_expires_at = clock_timestamp() + make_interval(secs => $5),\n                  submission_started_at = $6, first_submitted_at = coalesce(first_submitted_at, $6),\n                  deadline_at = least(expires_at, coalesce(first_submitted_at, $6) + make_interval(secs => $7))\n            WHERE workspace_id = $1 AND message_id = $2 AND lease_owner = $3 AND lease_generation = $4\n              AND state = 'claimed' AND lease_expires_at > clock_timestamp()\n        RETURNING 1 AS \"renewed!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "renewed!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Int8",
+        "Float8",
+        "Timestamptz",
+        "Float8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "04e7a633e75e62529696fda013fd6b84f597321868c07b3cb01940cd7b4f4dea"
+}

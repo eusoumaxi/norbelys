@@ -1,0 +1,339 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/inter";
+@import "@fontsource/commit-mono/400.css";
+@import "@fontsource/commit-mono/500.css";
+@import "@fontsource/outfit/600.css";
+/* The brand's motion: tokens and the draw, loader, check and live animations. */
+@import "../../../brand/motion/norbelys-motion.css";
+
+/* next-themes puts the theme's name on <html>; dark is the default, as in the console it follows. */
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant light (&:where(.light, .light *));
+
+/*
+ * Which token for what:
+ *   the content panel, cards, menus, dialogs   bg-surface
+ *   the chrome around it (top bar, sidebar), table heads, badges   bg-chrome
+ *   a form control                              bg-field (border-field-line)
+ *   hovered / selected row or item              bg-hover / bg-selected
+ *   hairline                                    border-line (border-line-strong on buttons)
+ *   text                                        text-fg (text-fg-2 secondary, text-fg-3 tertiary, text-fg-4 disabled)
+ *   icons                                       text-icon
+ *   the brand accent, pink (active nav icon, checks) text-accent; buttons' hover pink: go, go-line, go-bg
+ *   success stays green: it is a state, not the brand
+ *   status                                      info, success, warning, error (+ -bg, -line)
+ */
+@theme {
+  --text-*: initial;
+  --text-tag: 10px;
+  --text-tag--line-height: 10px;
+  --text-axis: 11px;
+  --text-axis--line-height: 14px;
+  --text-xs: 12px;
+  --text-xs--line-height: 18px;
+  --text-sm: 13px;
+  --text-sm--line-height: 20px;
+  --text-base: 14px;
+  --text-base--line-height: 20px;
+  --text-lg: 16px;
+  --text-lg--line-height: 24px;
+  --text-xl: 18px;
+  --text-xl--line-height: 28px;
+  --text-2xl: 20px;
+  --text-2xl--line-height: 28px;
+  --text-3xl: 24px;
+  --text-3xl--line-height: 32px;
+  --text-4xl: 28px;
+  --text-4xl--line-height: 36px;
+
+  --radius-*: initial;
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --radius-full: 9999px;
+
+  --shadow-*: initial;
+  --shadow-menu: 0 4px 8px 0 rgb(0 0 0 / 0.4);
+  --shadow-dialog: 0 1px 4px 0 rgb(26 26 26 / 0.08);
+  --shadow-button: 0 1px 2px 0 rgb(0 0 0 / 0.45);
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+}
+
+@theme static {
+  --color-*: initial;
+  --color-black: #000;
+  --color-white: #fff;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+}
+
+@theme inline {
+  --font-sans: "Inter Variable", "Inter", system-ui, sans-serif;
+  --font-mono: "Commit Mono", ui-monospace, monospace;
+  /* The brand's voice: big headlines on pages a person meets before the app. */
+  --font-display: "Outfit", "Inter Variable", system-ui, sans-serif;
+
+  --color-surface: var(--nb-surface);
+  --color-chrome: var(--nb-chrome);
+  --color-field: var(--nb-field);
+  --color-hover: var(--nb-hover);
+  --color-selected: var(--nb-selected);
+  --color-line: var(--nb-line);
+  --color-line-strong: var(--nb-line-strong);
+  --color-field-line: var(--nb-field-line);
+  --color-fg: var(--nb-fg);
+  --color-fg-2: var(--nb-fg-2);
+  --color-fg-3: var(--nb-fg-3);
+  --color-fg-4: var(--nb-fg-4);
+  --color-icon: var(--nb-icon);
+  --color-accent: var(--nb-accent);
+  --color-go: var(--nb-go);
+  --color-go-line: var(--nb-go-line);
+  --color-go-bg: var(--nb-go-bg);
+  --color-go-bg-strong: var(--nb-go-bg-strong);
+  --color-link: var(--nb-link);
+  --color-link-hover: var(--nb-link-hover);
+  --color-focus: var(--nb-focus);
+  --color-button: var(--nb-button);
+  --color-button-fg: var(--nb-button-fg);
+  --color-button-hover: var(--nb-button-hover);
+  --color-button-active: var(--nb-button-active);
+  --color-button-off: var(--nb-button-off);
+  --color-secondary-fg: var(--nb-secondary-fg);
+  --color-info: var(--nb-info);
+  --color-info-bg: var(--nb-info-bg);
+  --color-info-line: var(--nb-info-line);
+  --color-success: var(--nb-success);
+  --color-success-fg: var(--nb-success-fg);
+  --color-success-bg: var(--nb-success-bg);
+  --color-success-line: var(--nb-success-line);
+  --color-warning: var(--nb-warning);
+  --color-warning-bg: var(--nb-warning-bg);
+  --color-warning-line: var(--nb-warning-line);
+  --color-error: var(--nb-error);
+  --color-error-fg: var(--nb-error-fg);
+  --color-error-bg: var(--nb-error-bg);
+  --color-error-line: var(--nb-error-line);
+  --color-danger: var(--nb-danger);
+  --color-danger-hover: var(--nb-danger-hover);
+  --color-beta-bg: var(--nb-beta-bg);
+  --color-beta-line: var(--nb-beta-line);
+  --color-overlay: var(--nb-overlay);
+  --color-avatar: var(--nb-avatar);
+  --color-chart: var(--nb-chart);
+}
+
+/* Dark: the default. Values are the console's own (Glow design tokens), with the brand's pink where it uses its green. */
+:root,
+.dark {
+  color-scheme: dark;
+  --nb-surface: #000;
+  --nb-chrome: #131313;
+  --nb-field: #1a1b1b;
+  --nb-hover: #252626;
+  --nb-selected: #313233;
+  --nb-line: #313233;
+  --nb-line-strong: #4d4e4f;
+  --nb-field-line: #313233;
+  --nb-fg: #f2f2f2;
+  --nb-fg-2: #b0b1b2;
+  --nb-fg-3: #909192;
+  --nb-fg-4: #6d6e6f;
+  --nb-icon: #cccdce;
+  --nb-accent: #f472b6;
+  --nb-go: #f472b6;
+  --nb-go-line: #ec4899;
+  --nb-go-bg: #ec48991f;
+  --nb-go-bg-strong: #ec489947;
+  --nb-link: #4299e0;
+  --nb-link-hover: #8acaff;
+  --nb-focus: #bfbfbf;
+  --nb-button: #f2f2f2;
+  --nb-button-fg: #000;
+  --nb-button-hover: #f472b6;
+  --nb-button-active: #ec4899;
+  --nb-button-off: #313233;
+  --nb-secondary-fg: #e9e9ea;
+  --nb-info: #8acaff;
+  --nb-info-bg: #04355d;
+  --nb-info-line: #2272b4;
+  --nb-success: #00a06f;
+  --nb-success-fg: #e4f1eb;
+  --nb-success-bg: #005a3b;
+  --nb-success-line: #00a06f;
+  --nb-warning: #fff1d6;
+  --nb-warning-bg: #7d5319;
+  --nb-warning-line: #df910c;
+  --nb-error: #ff9e94;
+  --nb-error-fg: #ff9e94;
+  --nb-error-bg: #801c17;
+  --nb-error-line: #ff5f46;
+  --nb-danger: #e62719;
+  --nb-danger-hover: #ff3621;
+  --nb-beta-bg: #32223d;
+  --nb-beta-line: #9344cd;
+  --nb-overlay: rgb(18 18 18 / 0.6);
+  --nb-avatar: #b45091;
+  --nb-chart: #e0479a;
+  --nb-illus-line: #8a8a8a;
+  --nb-illus-faint: #3a3a3a;
+  --nb-illus-ground: #262626;
+  --nb-illus-grid: #161616;
+  --nb-illus-accent: #f472b6;
+  --nb-illus-on-accent: #000;
+  --nb-page-glow:
+    radial-gradient(
+      90% 440px at 22% -10%,
+      rgb(244 114 182 / 0.08),
+      transparent 60%
+    ),
+    radial-gradient(
+      85% 420px at 88% -12%,
+      rgb(219 39 119 / 0.04),
+      transparent 60%
+    );
+  --nb-skeleton: linear-gradient(
+      90deg,
+      rgb(150 150 150 / 0.1) 25%,
+      rgb(180 180 180 / 0.18) 37%,
+      rgb(150 150 150 / 0.1) 63%
+    )
+    0% 0% / 400% 100%;
+}
+
+.light {
+  color-scheme: light;
+  --nb-surface: #fff;
+  --nb-chrome: #f2f2f2;
+  --nb-field: #fff;
+  --nb-hover: #e9e9ea;
+  --nb-selected: #dcdddd;
+  --nb-line: #dcdddd;
+  --nb-line-strong: #b0b1b2;
+  --nb-field-line: #b0b1b2;
+  --nb-fg: #131313;
+  --nb-fg-2: #4d4e4f;
+  --nb-fg-3: #6d6e6f;
+  --nb-fg-4: #909192;
+  --nb-icon: #6d6e6f;
+  --nb-accent: #db2777;
+  --nb-go: #be185d;
+  --nb-go-line: #db2777;
+  --nb-go-bg: #db27772e;
+  --nb-go-bg-strong: #db277757;
+  --nb-link: #2272b4;
+  --nb-link-hover: #1763a1;
+  --nb-focus: #3b3b3b;
+  --nb-button: #131313;
+  --nb-button-fg: #fff;
+  --nb-button-hover: #db2777;
+  --nb-button-active: #be185d;
+  --nb-button-off: #909192;
+  --nb-secondary-fg: #313233;
+  --nb-info: #1763a1;
+  --nb-info-bg: #f0f9ff;
+  --nb-info-line: #4299e0;
+  --nb-success: #008558;
+  --nb-success-fg: #006e48;
+  --nb-success-bg: #e4f1eb;
+  --nb-success-line: #4cedb8;
+  --nb-warning: #99661f;
+  --nb-warning-bg: #fff8eb;
+  --nb-warning-line: #ffcc66;
+  --nb-error: #e62719;
+  --nb-error-fg: #bd2b26;
+  --nb-error-bg: #fff8f7;
+  --nb-error-line: #ff9e94;
+  --nb-danger: #bd2b26;
+  --nb-danger-hover: #e62719;
+  --nb-beta-bg: #f3eaff;
+  --nb-beta-line: #d7a5fc;
+  --nb-overlay: rgb(18 18 18 / 0.4);
+  --nb-chart: #db2777;
+  --nb-illus-line: #909192;
+  --nb-illus-faint: #dcdddd;
+  --nb-illus-ground: #e9e9ea;
+  --nb-illus-grid: #f2f2f2;
+  --nb-illus-accent: #db2777;
+  --nb-illus-on-accent: #fff;
+  --nb-page-glow: none;
+  --nb-skeleton: linear-gradient(
+      90deg,
+      rgb(56 56 56 / 0.1) 25%,
+      rgb(110 110 110 / 0.24) 37%,
+      rgb(56 56 56 / 0.1) 63%
+    )
+    0% 0% / 400% 100%;
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--nb-line);
+  }
+  html,
+  body {
+    background: var(--nb-chrome);
+  }
+  body {
+    @apply text-fg font-sans text-sm antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+  ::placeholder {
+    color: var(--nb-fg-4);
+  }
+  ::selection {
+    background: var(--nb-go-bg-strong);
+  }
+  :focus-visible {
+    outline: 1px solid var(--nb-focus);
+    outline-offset: 1px;
+  }
+}
+
+@utility page-glow {
+  background-image: var(--nb-page-glow);
+  background-repeat: no-repeat;
+}
+
+@utility skeleton {
+  background: var(--nb-skeleton);
+  animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--nb-line) transparent;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+/* Route changes cross-fade through the View Transitions API (defaultViewTransition). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 120ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none;
+  }
+  .skeleton {
+    animation: none;
+  }
+}

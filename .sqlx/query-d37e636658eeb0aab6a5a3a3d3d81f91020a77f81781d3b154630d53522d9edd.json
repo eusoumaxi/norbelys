@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE inbound_messages\n                SET classification = $3, sentiment = $4, classification_source = 'ai', revision = revision + 1\n              WHERE workspace_id = $1 AND id = $2 AND classification_source <> 'manual'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d37e636658eeb0aab6a5a3a3d3d81f91020a77f81781d3b154630d53522d9edd"
+}

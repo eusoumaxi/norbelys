@@ -1,0 +1,54 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT preheader, html, text FROM variant_revisions\n                  WHERE workspace_id = $1 AND variant_id = $2 AND version = $3",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "preheader",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "preheader"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "html",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "html"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "text",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "text"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "5eb2d25a11ee32eceb9eab8574c0ef77382840c269c4cf53cfcb1f304d5773dc"
+}

@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT stop_on_reply, stop_company_on_reply FROM campaigns WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "stop_on_reply",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "campaigns",
+            "name": "stop_on_reply"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "stop_company_on_reply",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "campaigns",
+            "name": "stop_company_on_reply"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "1a98857ed659c733d7818bfe9f2acedcce49202834a41c13d37025fe92a74b50"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE enrollments SET message_id = NULL WHERE message_id >= $1 AND message_id < $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5ab5de0e705d0b93c07042bd3422faba3e744772efe27271f0cf2c799dd04778"
+}

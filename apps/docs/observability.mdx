@@ -1,0 +1,38 @@
+---
+title: Optional observability
+description: Export traces, logs and metrics to SigNoz through standard OpenTelemetry.
+keywords: [SigNoz, OpenTelemetry, traces, sampling, alerts]
+---
+
+Norbelys uses OpenTelemetry SDKs and OTLP exporters. SigNoz stores and queries the signals and evaluates alerts. You do not need a separate telemetry service inside the product. Without a valid export endpoint, remote telemetry is disabled; local server logs and health/metrics endpoints remain available.
+
+## Dashboard
+
+The dashboard loads the OpenTelemetry web SDK only after its serving deployment returns enabled configuration. The SDK instruments fetch, XHR, document loading, clicks and form submission. Web Vitals supply browser performance metrics. Browser, promise, render and route errors produce finite OpenTelemetry error-log categories. The marketing website has no browser instrumentation.
+
+Set these optional runtime values on the dashboard Worker or Docker service:
+
+| Value | Purpose |
+| --- | --- |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP HTTP base endpoint, distinct from the SigNoz dashboard URL. The hosted Worker requires HTTPS. |
+| `SIGNOZ_INGESTION_KEY` | Private provider ingestion credential, when required. Never a public Vite variable. |
+| `NORBELYS_TRACE_SAMPLE_PERCENT` | Integer from 0 to 100; defaults to 100. |
+| `DASHBOARD_ORIGIN` | Public dashboard origin when a self-hosted reverse proxy terminates HTTPS. |
+
+The browser sends standard OTLP to its own `/__telemetry` relay. It never receives the provider credential. Initialization does not wait before rendering; requests made before instrumentation starts can lack a browser span. Export uses bounded queues, batching and timeouts. Provider failures do not block API actions, but telemetry still has some CPU/network cost and delivery is best effort.
+
+Exported browser spans keep trace ancestry, timings, method, contract route and status. They omit raw URL queries, object IDs in paths, DOM text, credentials, response bodies and exception text. This intentionally limits error detail. An HTTP response status and duration are available; its private contents are not.
+
+## Backend and mail processing
+
+Set `OTEL_EXPORTER_OTLP_ENDPOINT` for each role. For direct SigNoz ingestion, supply its private key through `OTEL_EXPORTER_OTLP_HEADERS` using the standard `signoz-ingestion-key=...` header. You can instead export to an OpenTelemetry Collector configured for your installation. No collector is required when export is disabled. Private installation resources and alert rules are Terraform-owned.
+
+HTTP trace headers correlate dashboard calls with backend operations. Persisted causal identifiers link accepted messages, delivery work, receipts and callbacks. Delayed work can start a new linked trace rather than keep a request span open. Database telemetry covers pool acquisition and PostgreSQL health and activity; statement timing metrics require `pg_stat_statements`. SQL text is excluded.
+
+Start with `NORBELYS_TRACE_SAMPLE_PERCENT=100` on all roles while establishing the product's baseline. Lower it to 90 or 60 only after measuring volume and investigation needs. A lower percentage can omit an error's trace. Linked asynchronous operations can be sampled independently; different language SDKs can also make different ratio decisions. Metrics and error logs remain independent of trace sampling.
+
+## Notifications
+
+Configure an email notification channel and alert rules in SigNoz using the private Terraform observability root. The application does not send alert emails itself. The prepared error rule evaluates every minute over a two-minute window; delivery also depends on ingestion, evaluation and mail transport. It is not an instant or per-error delivery guarantee. Self-hosted SigNoz needs SMTP configuration; SigNoz Cloud provides its mail transport.
+
+See [SigNoz frontend instrumentation](https://signoz.io/docs/frontend-monitoring/sending-traces-with-opentelemetry/) and [email notification channels](https://signoz.io/docs/alerts-management/notification-channel/email/).

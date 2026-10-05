@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT s.campaign_id AS \"campaign: Id<Campaign>\", o.variant_id AS \"variant: Id<Variant>\", o.variant_version\n             FROM steps s\n             JOIN step_revisions r ON r.workspace_id = s.workspace_id AND r.step_id = s.id AND r.revision = s.current_revision\n             JOIN step_revision_variants o ON o.workspace_id = r.workspace_id AND o.step_id = r.step_id AND o.step_revision = r.revision\n            WHERE s.workspace_id = $1 AND s.id = $2\n            ORDER BY o.variant_id = r.winner_variant_id DESC NULLS LAST, o.variant_id\n            LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "campaign: Id<Campaign>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "steps",
+            "name": "campaign_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "variant: Id<Variant>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "step_revision_variants",
+            "name": "variant_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "variant_version",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "step_revision_variants",
+            "name": "variant_version"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "d13064597d6d7d554ac07d1086a266e28c0d8d34b660c5b7a6940f2563e4281e"
+}

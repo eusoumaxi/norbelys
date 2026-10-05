@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO imports (workspace_id, id, source, group_id, job_id, status) VALUES ($1, $2, $3, $4, $5, 'queued')",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Jsonb",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "36cd73dc6b38c49c67745be429c6770bbd77c2041831f0ac6139c87305aadc19"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE receive_bindings\n            SET cursor = NULL, next_poll_at = now(), failures = 0, lease_generation = lease_generation + 1\n          WHERE workspace_id = $1 AND connection_id = $2 AND enabled",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0153f44e96a4bae7615e301520c81cfcfe5157ade920070cc0356a718ffc83ae"
+}

@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE webhook_endpoints SET failing_since = coalesce(failing_since, now())\n                WHERE workspace_id = $1 AND id = $2\n               RETURNING failing_since <= now() - make_interval(days => $3) AS \"failing!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "failing!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "8ed797afd5b94034aca72e22642e020fbd7e0ea43aec7d7b0365f787ca9b29b3"
+}

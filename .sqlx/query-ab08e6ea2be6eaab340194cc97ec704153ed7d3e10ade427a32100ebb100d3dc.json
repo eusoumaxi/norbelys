@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT (SELECT coalesce(sum(used), 0) FROM connection_usage\n                    WHERE workspace_id = $1 AND day >= $2 AND day < ($2::date + interval '1 month')::date)::bigint AS \"sends!\",\n                  (SELECT count(*) FROM people WHERE workspace_id = $1) AS \"people!\",\n                  (SELECT count(*) FROM connections WHERE workspace_id = $1 AND status <> 'archived') AS \"connections!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "sends!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "people!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "connections!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Date"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "ab08e6ea2be6eaab340194cc97ec704153ed7d3e10ade427a32100ebb100d3dc"
+}

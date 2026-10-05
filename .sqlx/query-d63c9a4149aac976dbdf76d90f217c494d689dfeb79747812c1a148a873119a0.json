@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT day AS \"day: Date\" FROM quota_scope_usage WHERE workspace_id = $1 AND scope_id = $2 AND day >= $3 ORDER BY day FOR UPDATE",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "day: Date",
+        "type_info": "Date",
+        "origin": {
+          "Table": {
+            "table": "quota_scope_usage",
+            "name": "day"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Date"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d63c9a4149aac976dbdf76d90f217c494d689dfeb79747812c1a148a873119a0"
+}

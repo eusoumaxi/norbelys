@@ -1,0 +1,11 @@
+[test]
+coverageSkipTestFiles = true
+# Generated routes are checked operation by operation; authored runtime coverage is separate.
+coveragePathIgnorePatterns = [
+  "src/generated/**",
+  "scripts/**",
+  "test/**",
+  "../../tools/codegen/**",
+]
+# package.json enforces 99% across all authored lines; Bun's threshold applies per file.
+coverageReporter = ["text", "lcov"]

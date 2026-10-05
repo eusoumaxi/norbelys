@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE variants v SET version = u.version, name = u.name, retired_at = NULL\n               FROM UNNEST($2::uuid[], $3::int[], $4::text[]) AS u(id, version, name)\n              WHERE v.workspace_id = $1 AND v.id = u.id\n                AND (v.version, v.name, v.retired_at IS NULL) IS DISTINCT FROM (u.version, u.name, true)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray",
+        "Int4Array",
+        "TextArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c67271eeb308b155d1abcad143a2a91a3526b0739cfe1e48e89896360e3b2b9f"
+}

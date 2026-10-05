@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) AS \"count!\" FROM identity_links\n            WHERE user_id = $1 AND NOT (issuer IS NOT DISTINCT FROM $2 AND subject IS NOT DISTINCT FROM $3)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "a50b28bdcbb50d6b2488c85a85b84b661f95a86d9125f83bde5c43bb25391cba"
+}

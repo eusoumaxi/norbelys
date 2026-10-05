@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE sender_identities\n                    SET verified_at = CASE WHEN id = ANY($3) THEN coalesce(verified_at, now()) END\n                  WHERE workspace_id = $1 AND connection_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9e610670dc041aade4e125492002f6b6628ef9cf1c30bfdb077339d08725607f"
+}

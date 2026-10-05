@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE jobs SET cancel_requested_at = coalesce(cancel_requested_at, now()),\n                state = CASE WHEN state = 'available' THEN 'cancelled' ELSE state END,\n                finished_at = CASE WHEN state = 'available' THEN now() ELSE finished_at END,\n                last_error = CASE WHEN state = 'available' THEN 'cancelled: cancellation was requested' ELSE last_error END\n          WHERE workspace_id = $1 AND id = $2 AND state IN ('available', 'running')\n         RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "jobs",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "40a7155a93d89ea97fdbe2fdaa62eed915b661dd63ce57a82c0bb088638f499a"
+}

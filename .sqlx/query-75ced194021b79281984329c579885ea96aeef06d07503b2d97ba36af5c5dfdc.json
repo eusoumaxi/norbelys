@@ -1,0 +1,65 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE imports SET status = 'completed', completed_at = now()\n          WHERE workspace_id = $1 AND id = $2 AND status IN ('queued', 'processing')\n         RETURNING total, imported, skipped, invalid",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "total",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "total"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "imported",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "imported"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "skipped",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "skipped"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "invalid",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "imports",
+            "name": "invalid"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "75ced194021b79281984329c579885ea96aeef06d07503b2d97ba36af5c5dfdc"
+}

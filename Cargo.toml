@@ -1,0 +1,233 @@
+# Norbelys: one Rust workspace. `server` builds the shared runtime binary,
+# `norbelys-server <role>`; `mail` (mail protocols) and `ai` (the AI client) are its
+# libraries; `cli` is the `norbelys` command-line client of the API; `smtp` is the managed
+# MTA's control service, a separate deployable on the mail host that never depends on
+# `server`. `tools/xtask` holds the repository's own checks and chores (`cargo xtask …`);
+# nothing depends on it and it is never shipped.
+[workspace]
+resolver = "3"
+members = ["crates/*", "tools/xtask"]
+
+# The workspace's name in Turborepo's package graph, where it runs the Cargo tasks.
+[workspace.metadata]
+name = "norbelys-rust"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.98"
+license = "Apache-2.0"
+publish = false
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+unused_qualifications = "warn"
+
+# Request paths must not panic, index blindly or print.
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+as_conversions = "warn"
+dbg_macro = "warn"
+expect_used = "warn"
+indexing_slicing = "warn"
+mod_module_files = "warn"
+panic = "warn"
+panic_in_result_fn = "warn"
+print_stderr = "warn"
+print_stdout = "warn"
+todo = "warn"
+unimplemented = "warn"
+unwrap_in_result = "warn"
+unwrap_used = "warn"
+wildcard_dependencies = "warn"
+
+# Less debug information keeps development builds small and fast to link: line tables are
+# enough for backtraces, and full variable information multiplies the size of `target/`.
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package.libduckdb-sys]
+debug = false
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+# Unwinding, the default, stated: a panicking handler becomes a 500 through tower-http's
+# `catch_panic`, which needs it.
+panic = "unwind"
+
+# Optimized without LTO, for quick local release builds.
+[profile.release-fast]
+inherits = "release"
+lto = false
+codegen-units = 16
+strip = "none"
+
+[workspace.dependencies]
+# HTTP
+axum = { version = "0.8.9", features = ["macros"] }
+axum-extra = { version = "0.12.6", features = ["typed-header", "cookie"] }
+tower = { version = "0.5.3", features = ["util"] }
+tower-http = { version = "0.7.1", features = [
+  "catch-panic",
+  "cors",
+  "limit",
+  "request-id",
+  "sensitive-headers",
+  "timeout",
+  "trace",
+  "util",
+] }
+http = "1.5.0"
+bytes = "1.12.1"
+rmcp = { version = "=3.5.0", default-features = false, features = [
+  "server",
+  "transport-streamable-http-server",
+] }
+
+# Runtime
+tokio = { version = "1.53.1", features = [
+  "fs",
+  "io-util",
+  "macros",
+  "net",
+  "rt-multi-thread",
+  "signal",
+  "sync",
+  "time",
+] }
+futures-util = { version = "0.3.34", default-features = false, features = [
+  "std",
+] }
+
+# Contract: JSON, validation, OpenAPI 3.1
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = { version = "1.0.151", features = ["raw_value"] }
+# Already used by utoipa; serialize the filtered public JSON without reconstructing typed schemas.
+yaml_serde = "0.10.7"
+serde_path_to_error = "0.1.20"
+garde = { version = "0.23.0", features = ["derive", "email", "url"] }
+utoipa = { version = "6.0.0", features = ["uuid", "yaml"] }
+utoipa-axum = "0.3.0"
+strum = { version = "0.28.0", features = ["derive"] }
+
+# Errors
+thiserror = "2.0.21"
+anyhow = "1.0.104"
+
+# Data
+jiff = { version = "0.2.37", features = ["serde"] }
+uuid = { version = "1.26.1", features = ["serde", "v7"] }
+sqlx = { version = "0.9.0", default-features = false, features = [
+  "derive",
+  "json",
+  "macros",
+  "migrate",
+  "postgres",
+  "runtime-tokio",
+  "tls-rustls-aws-lc-rs",
+  "uuid",
+] }
+object_store = { version = "0.14.2", default-features = false, features = [
+  "aws",
+  "fs",
+] }
+# 0.39, not 0.40: sqlx 0.9 locks libsqlite3-sys for its optional SQLite driver, and two
+# crates that link `sqlite3` cannot coexist in one dependency graph.
+rusqlite = { version = "0.39.0", features = ["bundled"] }
+duckdb = { version = "1.10506.0", default-features = false, features = [
+  "bundled",
+  "parquet",
+] }
+parquet = { version = "60.0.0", default-features = false, features = ["snap"] }
+csv = "1.4.0"
+regex = "1.13.1"
+rustix = { version = "1.1.5", features = ["fs"] }
+moka = { version = "0.12.16", features = ["future"] }
+
+# Mail
+lettre = { version = "0.11.23", default-features = false, features = [
+  "aws-lc-rs",
+  "builder",
+  "hostname",
+  "rustls-platform-verifier",
+  "smtp-transport",
+  "tokio1-rustls",
+] }
+async-imap = { version = "0.11.3", default-features = false, features = [
+  "runtime-tokio",
+] }
+mail-parser = { version = "0.11.9", features = ["full_encoding"] }
+hickory-resolver = "0.26.3"
+rustls = { version = "0.23.45", default-features = false, features = [
+  "aws_lc_rs",
+  "std",
+  "tls12",
+] }
+rustls-platform-verifier = "0.7.1"
+tokio-rustls = { version = "0.26.5", default-features = false, features = [
+  "aws_lc_rs",
+  "tls12",
+] }
+
+# Rendering
+minijinja = { version = "2.24.0", default-features = false, features = [
+  "fuel",
+  "serde",
+] }
+lol_html = "3.0.1"
+
+# Identity and cryptography
+aws-lc-rs = "1.18.1"
+base64 = "0.22.1"
+jsonwebtoken = { version = "11.1.0", features = ["aws_lc_rs"] }
+openidconnect = { version = "4.0.1", default-features = false }
+secrecy = { version = "0.10.3", features = ["serde"] }
+webauthn-rs = "0.5.5"
+
+# Outbound HTTP, rate limits
+reqwest = { version = "0.13.5", default-features = false, features = [
+  "json",
+  "rustls",
+  "form",
+] }
+governor = "0.10.4"
+url = "2.5.7"
+
+# Configuration and the command line
+clap = { version = "4.6.7", features = ["derive", "env"] }
+dotenvy = "0.15.7"
+
+# Telemetry: traces, logs and metrics over OTLP
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
+tracing-opentelemetry = { version = "0.34.0", default-features = false }
+opentelemetry = "0.33.0"
+# The SDK's batch processors export from their own threads, so the OTLP client is the blocking one.
+opentelemetry_sdk = { version = "0.33.0", default-features = false, features = [
+  "internal-logs",
+  "logs",
+  "metrics",
+  "trace",
+] }
+opentelemetry-otlp = { version = "0.33.0", default-features = false, features = [
+  "http-proto",
+  "logs",
+  "metrics",
+  "reqwest-blocking-client",
+  "trace",
+] }
+opentelemetry-appender-tracing = "0.33.0"
+# Prometheus exposition at `/metrics` on each role's health port, beside OTLP, for local scraping
+# and a self-hosted stack; `prometheus` is the registry it fills and the text encoder.
+opentelemetry-prometheus = "0.33.0"
+prometheus = { version = "0.14.0", default-features = false }
+
+# The workspace's own libraries
+norbelys-ai = { version = "=0.1.0", path = "crates/ai" }
+norbelys-mail = { version = "=0.1.0", path = "crates/mail" }
+
+# cargo-dist builds native CLI archives with this release-equivalent profile.
+[profile.dist]
+inherits = "release"

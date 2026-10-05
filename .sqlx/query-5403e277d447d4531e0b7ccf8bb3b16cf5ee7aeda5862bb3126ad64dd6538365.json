@@ -1,0 +1,92 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT v.subject, v.preheader, v.html, v.text, v.cc, v.bcc\n           FROM step_revision_variants o\n           JOIN variant_revisions v ON v.workspace_id = o.workspace_id AND v.variant_id = o.variant_id AND v.version = o.variant_version\n          WHERE o.workspace_id = $1 AND o.step_id = $2 AND o.step_revision = $3 AND o.variant_id = $4 AND o.variant_version = $5",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "subject",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "subject"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "preheader",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "preheader"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "html",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "html"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "text",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "text"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "cc",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "cc"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "bcc",
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "variant_revisions",
+            "name": "bcc"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int4",
+        "Uuid",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "5403e277d447d4531e0b7ccf8bb3b16cf5ee7aeda5862bb3126ad64dd6538365"
+}

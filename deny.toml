@@ -1,0 +1,50 @@
+# cargo-deny over every crate the workspace links, every feature on and the development tool
+# included: `cargo deny check`, a step of the completion gate. Whether a crate may be added at all
+# is the repository's dependency policy (breadth, age, maintenance, fit); this file enforces what
+# a machine can: no license the product cannot be distributed under, no known vulnerability
+# without a written reason, nothing yanked, nothing from an unknown registry or repository.
+
+[graph]
+all-features = true
+
+[licenses]
+# Permissive licenses compatible with distributing Norbelys under Apache-2.0.
+allow = [
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "0BSD",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "BSL-1.0",
+  "CC0-1.0",
+  "CDLA-Permissive-2.0",
+  "ISC",
+  "MIT",
+  "MIT-0",
+  # File-level copyleft, used unmodified (cssparser, selectors and dtoa-short through lol_html,
+  # among others); their source stays available on crates.io, as NOTICE says.
+  "MPL-2.0",
+  "Unicode-3.0",
+  "Unlicense",
+  "Zlib",
+]
+confidence-threshold = 0.9
+
+[advisories]
+yanked = "deny"
+ignore = [
+  # Marvin: the `rsa` crate's private-key operations (decryption, signing) leak timing. It comes
+  # in through `openidconnect`, which uses it to verify identity providers' RS256 signatures:
+  # public-key operations only, with no private key to leak, and nothing here decrypts or signs
+  # with `rsa`. `openidconnect` is kept under the dependency policy's exception for protocol
+  # verification, which re-evaluates it at every advisory; no fixed `rsa` exists yet.
+  { id = "RUSTSEC-2023-0071", reason = "rsa via openidconnect only verifies public-key signatures; the leak concerns private-key operations, never performed here" },
+]
+
+[bans]
+multiple-versions = "allow"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

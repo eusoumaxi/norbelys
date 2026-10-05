@@ -1,0 +1,31 @@
+[package]
+name = "xtask"
+description = "The repository's own checks and chores, run as `cargo xtask <command>`; never shipped"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+dotenvy.workspace = true
+# Line numbers in the purity report: spans outside a procedural macro carry locations only with
+# this feature.
+proc-macro2 = { version = "1.0.107", default-features = false, features = [
+  "span-locations",
+] }
+regex.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+syn = { version = "2.0.119", default-features = false, features = [
+  "full",
+  "parsing",
+  "visit",
+] }
+tokio.workspace = true
+url.workspace = true

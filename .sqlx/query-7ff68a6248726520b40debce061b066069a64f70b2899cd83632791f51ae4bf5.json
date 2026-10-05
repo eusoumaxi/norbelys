@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE sending_domains\n                SET status = $3, dns_checks = $4, last_error = $5, checked_at = now(),\n                    mta_unready_checks = CASE WHEN $7 THEN mta_unready_checks + 1 ELSE 0 END,\n                    next_check_at = now() + make_interval(secs => $9),\n                    verified_at = CASE WHEN $6 THEN coalesce(verified_at, now()) ELSE verified_at END\n              WHERE workspace_id = $1 AND id = $2 AND status = $8",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Jsonb",
+        "Jsonb",
+        "Bool",
+        "Bool",
+        "Text",
+        "Float8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7ff68a6248726520b40debce061b066069a64f70b2899cd83632791f51ae4bf5"
+}

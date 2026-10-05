@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO provider_webhooks (workspace_id, connection_id, provider, name) VALUES ($1, $2, $3, $4)\n           ON CONFLICT (workspace_id, connection_id) DO NOTHING\n           RETURNING id AS \"id: Id<ProviderWebhook>\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<ProviderWebhook>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "provider_webhooks",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b340e6d71e0c0a5ac02bfb37dd7f447109e02d4c0c718f813941fc5dff37cae2"
+}

@@ -1,0 +1,80 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "WITH recounted AS (\n                   SELECT i.workspace_id, i.campaign_id, i.step_id, i.step_revision, i.variant_id, i.variant_version, i.day,\n                          coalesce(sum(i.delta) FILTER (WHERE i.metric = 'sent'), 0)::int AS sent,\n                          coalesce(sum(i.delta) FILTER (WHERE i.metric = 'delivered'), 0)::int AS delivered,\n                          coalesce(sum(i.delta) FILTER (WHERE i.metric = 'bounced'), 0)::int AS bounced,\n                          coalesce(sum(i.delta) FILTER (WHERE i.metric = 'opened'), 0)::int AS opened,\n                          coalesce(sum(i.delta) FILTER (WHERE i.metric = 'clicked'), 0)::int AS clicked,\n                          coalesce(sum(i.delta) FILTER (WHERE i.metric = 'replied'), 0)::int AS replied,\n                          coalesce(sum(i.delta) FILTER (WHERE i.metric = 'unsubscribed'), 0)::int AS unsubscribed,\n                          coalesce(sum(i.delta) FILTER (WHERE i.metric = 'complained'), 0)::int AS complained\n                     FROM stats_increments i\n                     JOIN workspaces w ON w.id = i.workspace_id\n                    WHERE i.day = $1 AND i.id < $2\n                      AND i.campaign_id IS NOT NULL AND i.step_id IS NOT NULL AND i.step_revision IS NOT NULL\n                      AND i.variant_id IS NOT NULL AND i.variant_version IS NOT NULL\n                    GROUP BY i.workspace_id, i.campaign_id, i.step_id, i.step_revision, i.variant_id, i.variant_version, i.day),\n               stored AS (SELECT * FROM campaign_daily_stats WHERE day = $1),\n               compared AS (\n                   SELECT coalesce(r.workspace_id, s.workspace_id) AS workspace_id, coalesce(r.campaign_id, s.campaign_id) AS campaign_id,\n                          coalesce(r.step_id, s.step_id) AS step_id, coalesce(r.step_revision, s.step_revision) AS step_revision,\n                          coalesce(r.variant_id, s.variant_id) AS variant_id, coalesce(r.variant_version, s.variant_version) AS variant_version,\n                          coalesce(r.sent, 0) AS sent, coalesce(r.delivered, 0) AS delivered, coalesce(r.bounced, 0) AS bounced,\n                          coalesce(r.opened, 0) AS opened, coalesce(r.clicked, 0) AS clicked, coalesce(r.replied, 0) AS replied,\n                          coalesce(r.unsubscribed, 0) AS unsubscribed, coalesce(r.complained, 0) AS complained,\n                          abs(coalesce(r.sent, 0) - coalesce(s.sent, 0)) AS d_sent,\n                          abs(coalesce(r.delivered, 0) - coalesce(s.delivered, 0)) AS d_delivered,\n                          abs(coalesce(r.bounced, 0) - coalesce(s.bounced, 0)) AS d_bounced,\n                          abs(coalesce(r.opened, 0) - coalesce(s.opened, 0)) AS d_opened,\n                          abs(coalesce(r.clicked, 0) - coalesce(s.clicked, 0)) AS d_clicked,\n                          abs(coalesce(r.replied, 0) - coalesce(s.replied, 0)) AS d_replied,\n                          abs(coalesce(r.unsubscribed, 0) - coalesce(s.unsubscribed, 0)) AS d_unsubscribed,\n                          abs(coalesce(r.complained, 0) - coalesce(s.complained, 0)) AS d_complained\n                     FROM recounted r\n                     FULL JOIN stored s USING (workspace_id, campaign_id, step_id, step_revision, variant_id, variant_version)),\n               written AS (\n                   INSERT INTO campaign_daily_stats AS s\n                          (workspace_id, campaign_id, step_id, step_revision, variant_id, variant_version, day,\n                           sent, delivered, bounced, opened, clicked, replied, unsubscribed, complained, verification, verified_at)\n                   SELECT workspace_id, campaign_id, step_id, step_revision, variant_id, variant_version, $1,\n                          sent, delivered, bounced, opened, clicked, replied, unsubscribed, complained, 'verified', now()\n                     FROM compared\n                   ON CONFLICT (workspace_id, campaign_id, step_id, step_revision, variant_id, variant_version, day) DO UPDATE\n                      SET sent = excluded.sent, delivered = excluded.delivered, bounced = excluded.bounced,\n                          opened = excluded.opened, clicked = excluded.clicked, replied = excluded.replied,\n                          unsubscribed = excluded.unsubscribed, complained = excluded.complained,\n                          verification = 'verified', verified_at = now()\n                   RETURNING 1)\n               SELECT (SELECT count(*) FROM written) AS \"written!\",\n                      coalesce(sum(d_sent), 0)::bigint AS \"sent!\", coalesce(sum(d_delivered), 0)::bigint AS \"delivered!\",\n                      coalesce(sum(d_bounced), 0)::bigint AS \"bounced!\", coalesce(sum(d_opened), 0)::bigint AS \"opened!\",\n                      coalesce(sum(d_clicked), 0)::bigint AS \"clicked!\", coalesce(sum(d_replied), 0)::bigint AS \"replied!\",\n                      coalesce(sum(d_unsubscribed), 0)::bigint AS \"unsubscribed!\", coalesce(sum(d_complained), 0)::bigint AS \"complained!\"\n                 FROM compared",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "written!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "sent!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "delivered!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "bounced!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "opened!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "clicked!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 6,
+        "name": "replied!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 7,
+        "name": "unsubscribed!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 8,
+        "name": "complained!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Date",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "6e2c7c4bdc3da8c868e56c53d95535cfd3452f55610088e899dd1557f758072c"
+}

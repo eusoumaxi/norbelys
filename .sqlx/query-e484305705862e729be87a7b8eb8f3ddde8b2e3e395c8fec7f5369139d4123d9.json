@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO sso_email_domains (workspace_id, sso_connection_id, domain, ownership_token)\n             VALUES ($1, $2, $3, $4)\n             ON CONFLICT (workspace_id, domain) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e484305705862e729be87a7b8eb8f3ddde8b2e3e395c8fec7f5369139d4123d9"
+}

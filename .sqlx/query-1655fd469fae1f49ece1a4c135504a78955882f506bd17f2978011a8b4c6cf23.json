@@ -1,0 +1,101 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT issuer, client_id, client_secret, policy_version, default_role, jit_provisioning, status\n           FROM sso_connections WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "issuer",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "issuer"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "client_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "client_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "client_secret",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "client_secret"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "policy_version",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "policy_version"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "default_role",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "default_role"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "jit_provisioning",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "jit_provisioning"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "status",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "sso_connections",
+            "name": "status"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "1655fd469fae1f49ece1a4c135504a78955882f506bd17f2978011a8b4c6cf23"
+}

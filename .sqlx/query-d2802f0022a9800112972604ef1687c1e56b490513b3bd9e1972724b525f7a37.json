@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE sender_identities SET archived_at = now()\n          WHERE workspace_id = $1 AND connection_id = $2 AND archived_at IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d2802f0022a9800112972604ef1687c1e56b490513b3bd9e1972724b525f7a37"
+}

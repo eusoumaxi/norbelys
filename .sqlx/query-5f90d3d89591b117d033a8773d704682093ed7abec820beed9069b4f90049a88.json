@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM group_people WHERE workspace_id = $1 AND person_id = $2 AND group_id <> ALL($3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5f90d3d89591b117d033a8773d704682093ed7abec820beed9069b4f90049a88"
+}

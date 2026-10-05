@@ -1,0 +1,49 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT i.id, (c.status = 'active' AND NOT c.paused AND coalesce(c.paused_until <= now(), true)\n                             AND coalesce(c.next_claim_at <= now(), true)) AS \"usable!\",\n                      r.last_assigned_at AS \"last_assigned_at: Timestamp\"\n                 FROM sender_identities i\n                 JOIN connections c ON c.workspace_id = i.workspace_id AND c.id = i.connection_id\n                 LEFT JOIN campaign_sender_rotation r\n                   ON r.workspace_id = i.workspace_id AND r.campaign_id = $2 AND r.sender_identity_id = i.id\n                WHERE i.workspace_id = $1 AND i.enabled AND i.archived_at IS NULL AND c.status <> 'archived'\n                  AND (i.tags && $3::text[]\n                       OR EXISTS (SELECT 1 FROM campaign_senders s\n                                   WHERE s.workspace_id = i.workspace_id AND s.campaign_id = $2 AND s.sender_identity_id = i.id))",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "sender_identities",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "usable!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "last_assigned_at: Timestamp",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "campaign_sender_rotation",
+            "name": "last_assigned_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      true
+    ]
+  },
+  "hash": "f8ac5e08854b21ab5cf04b0ccfe731b0d88aeb928191b1a4d5c1091268c1228c"
+}

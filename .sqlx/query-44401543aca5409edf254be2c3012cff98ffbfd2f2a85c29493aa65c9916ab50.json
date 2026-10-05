@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO group_people (workspace_id, group_id, person_id)\n             SELECT $1, $2, p FROM unnest($3::uuid[]) AS p\n              WHERE (SELECT count(*) FROM group_people m WHERE m.workspace_id = $1 AND m.person_id = p) < $4\n                AND EXISTS (SELECT 1 FROM groups WHERE workspace_id = $1 AND id = $2 AND deleted_at IS NULL)\n             ON CONFLICT DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "UuidArray",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "44401543aca5409edf254be2c3012cff98ffbfd2f2a85c29493aa65c9916ab50"
+}

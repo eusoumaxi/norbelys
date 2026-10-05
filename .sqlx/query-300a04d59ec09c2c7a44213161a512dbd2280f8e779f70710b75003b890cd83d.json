@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE receive_bindings SET lease_owner = NULL, lease_expires_at = NULL WHERE lease_expires_at <= now()",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "300a04d59ec09c2c7a44213161a512dbd2280f8e779f70710b75003b890cd83d"
+}

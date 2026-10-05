@@ -1,0 +1,19 @@
+name: Bug
+description: A defect in the application or its local run recipe.
+title: ""
+labels: []
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you saw. Leave out tokens, mailbox passwords, email bodies and tracking URLs.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Commit or version
+      placeholder: git SHA or release tag
+    validations:
+      required: true

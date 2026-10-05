@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE sso_email_domains SET verified_at = NULL\n                      WHERE workspace_id = $1 AND sso_connection_id = $2 AND domain = $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fc9067a8c85b919e9b4a98b6379a522eaf777f295ee51535de1dbf0efcaf5c4b"
+}

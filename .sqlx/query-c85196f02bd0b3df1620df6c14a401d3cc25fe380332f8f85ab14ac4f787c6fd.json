@@ -1,0 +1,65 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT o.step_id, o.variant_id, o.variant_version, o.weight\n           FROM steps s\n           JOIN step_revision_variants o ON o.workspace_id = s.workspace_id AND o.step_id = s.id AND o.step_revision = s.current_revision\n          WHERE s.workspace_id = $1 AND s.campaign_id = $2\n          ORDER BY o.step_id, o.variant_id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "step_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "step_revision_variants",
+            "name": "step_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "variant_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "step_revision_variants",
+            "name": "variant_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "variant_version",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "step_revision_variants",
+            "name": "variant_version"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "weight",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "step_revision_variants",
+            "name": "weight"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "c85196f02bd0b3df1620df6c14a401d3cc25fe380332f8f85ab14ac4f787c6fd"
+}

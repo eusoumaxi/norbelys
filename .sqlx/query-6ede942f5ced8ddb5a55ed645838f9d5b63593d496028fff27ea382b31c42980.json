@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT b.id AS \"id: Id<ReceiveBinding>\" FROM receive_bindings b\n             JOIN connections c ON c.workspace_id = b.workspace_id AND c.id = b.connection_id\n            WHERE b.workspace_id = $1 AND b.enabled AND b.lease_owner IS NULL AND b.next_poll_at <= now()\n            ORDER BY b.next_poll_at\n            LIMIT $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Id<ReceiveBinding>",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "receive_bindings",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "6ede942f5ced8ddb5a55ed645838f9d5b63593d496028fff27ea382b31c42980"
+}

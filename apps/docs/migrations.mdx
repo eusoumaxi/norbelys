@@ -1,0 +1,57 @@
+---
+title: Database maintenance
+description: Prepare PostgreSQL externally and verify its schema before starting a release.
+keywords: [PostgreSQL, SQLx, migrations, maintenance, self-hosting]
+---
+
+`crates/server/migrations/` is the authoritative SQLx sequence. `0001_initial.sql` defines a fresh installation, including row security, functions, triggers, ownership and grants. There is no independently editable schema snapshot or importer for earlier internal schemas. An occupied database without recognized migration history is refused; it is never adopted or reset automatically.
+
+## External manual operation
+
+Run maintenance from an operator-controlled environment **outside the deployed application server**, using the reviewed source revision for the intended release. That environment needs the pinned Rust toolchain, database connectivity and private maintenance credentials. The runtime image does not expose a migration command. A release or server startup never applies pending migrations.
+
+The installation owner chooses the execution environment, database access route, trusted CA and maintenance identity. The public repository does not assume a production workstation, tunnel or managed database hostname. Supply `MIGRATION_DATABASE_URL` through that environment's secret handling; do not put it in application role environments, browser builds or shell command arguments.
+
+```sh
+# Explicit initial cluster provisioning, using a cluster administrator.
+cargo run --locked -p xtask -- provision
+
+# Explicit schema changes, using the designated maintenance identity.
+cargo run --locked -p xtask -- migrate
+
+# Read-only verification against this source revision.
+cargo run --locked -p xtask -- migrate --check
+```
+
+All three commands require `MIGRATION_DATABASE_URL`; they do not fall back to `DATABASE_URL` or load a `.env` file. Remote connections require TLS with certificate and hostname verification. Supply the database provider's CA when needed. Provisioning uses the same server's `postgres` maintenance database and executes `crates/server/provision.sql` in a transaction protected by an advisory lock.
+
+Provisioning creates the product's cluster roles without default passwords. Optional `APP_DATABASE_PASSWORD`, `WORKER_DATABASE_PASSWORD`, `TRACKING_DATABASE_PASSWORD`, `SYSTEM_DATABASE_PASSWORD` and `METRICS_DATABASE_PASSWORD` set the corresponding runtime login passwords during that explicit operation. Omitted values preserve existing passwords. Keep them in private secret inputs. This command does not create the application database; the installation's database provisioning must already own that resource.
+
+The maintenance identity needs the privileges required by the migration SQL and ownership or write access to its SQLx history. Initial provisioning additionally needs cluster role administration. Runtime logins have read-only access to migration history. The privileged system login can assume the object owner for partition maintenance, so it still has DDL authority; it is not a migration identity and has no migration command. Do not reuse application logins as maintenance credentials.
+
+## Release order and failure handling
+
+1. Review the intended SQL and its compatibility with every running role. Prepare a recovery procedure appropriate to the installation before changing a non-disposable database.
+2. Run the external migration command deliberately. SQLx serializes invocations with its PostgreSQL advisory lock, checks applied versions and checksums, and executes each file transactionally.
+3. Run `migrate --check`. A pending, changed, failed or unexpected migration fails the check without writing schema or history.
+4. Roll out the matching images. The application probe `norbelys-server admin schema-check` performs the same read-only history comparison with the runtime database login. Deployment must stop before replacing containers when the check fails.
+
+A failed file rolls back its transactional changes. Earlier successful files in that invocation remain applied. Fix the new, unapplied migration after investigating the failure; never edit an applied checksum or migration-history row to force success. The tool closes its connection on failure, releasing SQLx's session lock.
+
+After this initial baseline is adopted, add new numbered `.sql` files; do not rewrite applied files. Keep UTF-8 SQL with consistent LF line endings. SQLx sends scripts intact, including nested block comments, escaped strings and dollar-quoted functions. Deferred constraints needed before ownership changes are flushed explicitly in SQL. Build scripts track the migration directory so adding a file invalidates embedded release metadata.
+
+An image rollback is not a database rollback. Only use an image whose expected migration history matches the prepared database; no automatic downgrade or conversion is provided.
+
+## Local development and tests
+
+`cargo xtask db migrate` retains its local-only guard, explicitly provisions development roles, assigns development passwords and applies the same SQLx files. It does not reset existing data. `bun run db:reset` deliberately drops and recreates the selected local development database first. Neither command is a production maintenance entry point.
+
+Database tests require `TEST_DATABASE_URL` and `NORBELYS_TEST_DATABASE_DISPOSABLE=1` for a dedicated local cluster. Their fingerprinted template covers both SQLx migration checksums and role provisioning. Each test clones that template into its own database. See [development checks](/development) for fixture reuse and command selection.
+
+## Local Compose installation
+
+`bun run selfhost:setup` generates private settings in `.env.selfhost`, pins a compatible server/dashboard image pair and starts PostgreSQL with a loopback-only maintenance port. It does not apply migrations or restart existing runtime services.
+
+From a clean source checkout matching the recorded `SELFHOST_REVISION`, run `bun run selfhost:migrate` explicitly. This runs the maintenance tooling outside the containers, using the private local settings for provisioning and migration. Then run `bun run selfhost:start`; it verifies history with the API login before starting services. To select an upgrade, supply both image references and invoke `selfhost:setup --upgrade`, then repeat explicit maintenance and startup in that order.
+
+These commands are portable local examples. Hosted infrastructure and rollout belong to the installation's Terraform configuration; no private host or production credential is included here.

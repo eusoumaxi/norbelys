@@ -1,0 +1,15 @@
+{
+  "name": "@norbelys/docs",
+  "version": "0.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "sync:openapi": "bun scripts/sync-openapi.ts",
+    "dev": "bun run sync:openapi && mint dev",
+    "validate": "bun run sync:openapi && mint validate"
+  },
+  "devDependencies": {
+    "mint": "^4.2.291"
+  }
+}

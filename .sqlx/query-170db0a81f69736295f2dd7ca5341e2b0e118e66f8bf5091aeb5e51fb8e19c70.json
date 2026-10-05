@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM quota_scope_usage WHERE ctid IN (\n                 SELECT u.ctid FROM quota_scope_usage u\n                  WHERE u.day < (now() AT TIME ZONE 'UTC')::date - 35\n                    AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.workspace_id = u.workspace_id\n                                       AND a.quota_scope_id = u.scope_id AND a.reserved_day = u.day)\n                  LIMIT $1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "170db0a81f69736295f2dd7ca5341e2b0e118e66f8bf5091aeb5e51fb8e19c70"
+}

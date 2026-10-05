@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE threads SET last_message_id = $3, last_internet_message_id = $4, last_activity_at = now()\n                  WHERE workspace_id = $1 AND id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b28b986fcb555a1d57fffe019123cc756fe7bcaf06f651c3b4b5498167171f23"
+}

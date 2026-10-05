@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) AS \"increments!\" FROM stats_increments WHERE id >= $1 AND id < $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "increments!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "a66d3b5a47a8ad25f21d9222f5511e9e6edb4216b1f0ca1a9d35fa08ff387ee1"
+}
