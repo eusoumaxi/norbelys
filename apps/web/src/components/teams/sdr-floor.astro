@@ -1,0 +1,119 @@
+---
+/**
+ * The team behind the SDRs, seen from the ceiling: the sales floor drawn as a plan, every desk a
+ * person in the workspace, the bell on the far wall. Pointing at a role (or focusing it) lights
+ * the desks that hold it. Beside it, what each role can do, as the product grants it, and what
+ * keeps two reps from writing to the same person. Names are illustrative.
+ */
+interface Desk {
+  readonly name: string;
+  readonly detail: string;
+  readonly role: "owner" | "admin" | "member" | "viewer";
+  /** Where the chair is pulled up: behind the desk's top edge, its bottom edge, or its left. */
+  readonly chair: "above" | "below" | "left";
+  readonly x: number;
+  readonly y: number;
+}
+// Six reps in two facing rows; by the window, the head of sales, the manager and the VP's table.
+const desks: readonly Desk[] = [
+  { chair: "above", detail: "3 inboxes", name: "Sam", role: "member", x: 110, y: 150 },
+  { chair: "above", detail: "2 inboxes", name: "Priya", role: "member", x: 280, y: 150 },
+  { chair: "above", detail: "3 inboxes", name: "Leo", role: "member", x: 450, y: 150 },
+  { chair: "below", detail: "2 inboxes", name: "Ana", role: "member", x: 110, y: 290 },
+  { chair: "below", detail: "3 inboxes", name: "Kofi", role: "member", x: 280, y: 290 },
+  { chair: "below", detail: "2 inboxes", name: "Mia", role: "member", x: 450, y: 290 },
+  { chair: "left", detail: "Head of sales", name: "Kim", role: "owner", x: 712, y: 92 },
+  { chair: "left", detail: "Sales manager", name: "Jordan", role: "admin", x: 712, y: 226 },
+  { chair: "left", detail: "VP of sales", name: "Rae", role: "viewer", x: 712, y: 370 },
+];
+const chairAt = { above: { x: 45, y: -50 }, below: { x: 45, y: 96 }, left: { x: -50, y: 23 } } as const;
+/** A desk's top: the reps' are 130 wide; by the window there's room for 150 and a screen. */
+const widthOf = (desk: Desk): number => (desk.chair === "left" ? 150 : 130);
+/** Where a desk's name sits: in the middle of its top, clear of the screen. */
+const labelOf = (desk: Desk): string => {
+  const x = desk.x + (desk.chair === "left" ? 64 : 65);
+  const offsets = { above: 36, below: 50, left: 43 } as const;
+  const y = desk.y + offsets[desk.chair];
+  return `--x: ${(x / 9.6).toFixed(2)}%; --y: ${(y / 5.6).toFixed(2)}%`;
+};
+const roles = [
+  { can: "Everything, including handing the workspace over or deleting it.", name: "Owner", role: "owner" },
+  { can: "Everything else: members, keys, settings, every campaign and every reply.", name: "Admin", role: "admin" },
+  { can: "Runs campaigns, works the inbox and connects their own inboxes.", name: "Member", role: "member" },
+  { can: "Reads everything, changes nothing. Good for the VP who wants a look.", name: "Viewer", role: "viewer" },
+] as const;
+---
+
+<section class="page-section container floor" aria-labelledby="floor-title">
+  <div class="split-head">
+    <h2 id="floor-title">Built for the whole floor.</h2>
+    <p class="lead">
+      One workspace for the team. Every rep brings their own inboxes and runs their own
+      campaigns, managers hold the keys, and nobody writes to someone a teammate already reached.
+    </p>
+  </div>
+  <div class="floor-layout">
+    <figure class="floor-plan" data-inview>
+      <svg class="floor-art" viewBox="0 0 960 560" fill="none" role="img" aria-labelledby="floor-caption">
+        <path class="floor-wall" d="M60 400V90A40 40 0 0 1 100 50H860A40 40 0 0 1 900 90V470A40 40 0 0 1 860 510H170" pathLength="1"></path>
+        <path class="floor-door" d="M60 400A110 110 0 0 0 170 510"></path>
+        <path class="floor-window" d="M922 110V240M922 320V450"></path>
+        <g class="floor-bell" transform="translate(345 50)">
+          <path d="M-12 18C-8 15 -7 11 -7 6V2A7 7 0 0 1 7 2V6C7 11 8 15 12 18Z"></path>
+          <circle class="floor-bell-ball" cx="0" cy="24" r="4.5"></circle>
+          <path class="floor-bell-wave" d="M-24 0A30 30 0 0 0 -24 26M24 0A30 30 0 0 1 24 26"></path>
+        </g>
+        {
+          desks.map((desk, index) => (
+            <g class={`floor-desk floor-${desk.role}`} transform={`translate(${desk.x} ${desk.y})`} style={`--d: ${index}`}>
+              <rect class="floor-chair" x={chairAt[desk.chair].x} y={chairAt[desk.chair].y} width="40" height="40" rx="20" />
+              {desk.role === "viewer" ? (
+                <circle class="floor-top" cx="65" cy="43" r="60" />
+              ) : (
+                <rect class="floor-top" x="0" y="0" width={widthOf(desk)} height="86" rx="18" />
+              )}
+              {desk.role !== "viewer" && (
+                <path class="floor-screen" d={desk.chair === "above" ? "M40 70H90" : desk.chair === "left" ? "M134 24V62" : "M40 16H90"} />
+              )}
+            </g>
+          ))
+        }
+      </svg>
+      <ul class="floor-labels" aria-hidden="true">
+        {
+          desks.map((desk) => (
+            <li class={`floor-label floor-${desk.role}`} style={labelOf(desk)}>
+              <strong>{desk.name}</strong>
+              <span>{desk.detail}</span>
+            </li>
+          ))
+        }
+      </ul>
+      <figcaption id="floor-caption" class="sr-only">
+        A sales floor from above: six reps at desks in two facing rows, each with their own
+        inboxes; by the window the head of sales who owns the workspace, the sales manager who
+        runs it, and a VP at a round table who can look but not change anything; the team bell on
+        the far wall.
+      </figcaption>
+    </figure>
+    <div class="floor-side">
+      <ul class="floor-roles">
+        {
+          roles.map((role) => (
+            <li class={`floor-role floor-role-${role.role}`} tabindex="0">
+              <span class="floor-role-name">{role.name}</span>
+              <span class="floor-role-can">{role.can}</span>
+            </li>
+          ))
+        }
+      </ul>
+      <div class="floor-rule">
+        <p class="floor-rule-title">Two reps, one prospect?</p>
+        <p>
+          A reply stops that person in every campaign. And once a sequence ends, other campaigns
+          wait 72 hours before writing to them, so nobody gets a pile-on.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

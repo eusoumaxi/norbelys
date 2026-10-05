@@ -1,0 +1,252 @@
+/*
+ * The 404 page: a giant 4@4 drawn in the mark's one line, standing on the ground, with envelopes
+ * bouncing off it on a canvas laid over the stage. Below, the bounce notice and the ways back.
+ */
+
+/* ——— The stage: the drawing on its ground line, and the canvas the envelopes fly on. ——— */
+.nf-stage {
+  --glyph: min(26vw, 46svh, 25rem);
+  position: relative;
+  padding-top: calc(var(--header-height) + clamp(3rem, 10svh, 7rem));
+  border-bottom: 2px solid var(--ink);
+  overflow: hidden;
+  user-select: none;
+}
+.nf-word {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: calc(var(--glyph) * 0.12);
+}
+.nf-glyph {
+  display: block;
+  width: var(--glyph);
+  height: var(--glyph);
+  overflow: visible;
+}
+.nf-glyph path {
+  fill: none;
+  stroke: var(--ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* The three draw themselves in turn, the way the mark was made; then a message circles the @. */
+.motion .nf-glyph path:not(.mark-comet) {
+  stroke-dasharray: 1;
+  animation: draw-in 1500ms var(--ease-draw) calc(120ms + var(--g) * 240ms) both;
+}
+/* The message only sets off once the @ is drawn; until then it isn't there at all. */
+.motion .nf-mark .mark-comet {
+  animation:
+    comet 7s linear 1.9s infinite,
+    nf-appear 400ms var(--ease-out) 1.9s backwards;
+}
+@keyframes nf-appear {
+  from {
+    opacity: 0;
+  }
+}
+.nf-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+}
+.nf-canvas[data-over="envelope"] {
+  cursor: grab;
+}
+.nf-canvas[data-holding] {
+  cursor: grabbing;
+}
+/* Up by the page's left edge, clear of the @, where thrown envelopes come to rest. */
+.nf-hint {
+  position: absolute;
+  top: calc(var(--header-height) + 1rem);
+  left: max(var(--gutter), (100% - var(--page)) / 2);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  transition:
+    opacity 400ms var(--ease-out),
+    translate 400ms var(--ease-out);
+}
+.nf-hint[data-gone] {
+  opacity: 0;
+  translate: 0 -0.5rem;
+}
+/* When it first appears, it fades in rather than popping. */
+@starting-style {
+  .nf-hint {
+    opacity: 0;
+  }
+}
+/* On a phone, centred above the drawing: there's no room beside it. */
+@media (hover: none) {
+  .nf-hint {
+    left: 50%;
+    translate: -50% 0;
+  }
+  .nf-hint[data-gone] {
+    translate: -50% -0.5rem;
+  }
+  .nf-hint-pointer {
+    display: none;
+  }
+}
+@media (hover: hover) {
+  .nf-hint-touch {
+    display: none;
+  }
+}
+
+/* ——— The words: the headline and the ways back, beside the notice a mail server sends. ——— */
+.nf-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  align-items: start;
+  gap: 3rem clamp(2rem, 7vw, 7rem);
+  padding-block: clamp(2.25rem, 4.5vw, 4rem) var(--section-space);
+}
+.nf-copy {
+  display: grid;
+  justify-items: start;
+  gap: 1.25rem;
+}
+.nf-eyebrow {
+  color: var(--pink-deep);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.nf-copy h1 {
+  font-size: clamp(2.75rem, 5.2vw, 4.75rem);
+  letter-spacing: var(--tracking-display);
+  line-height: 0.98;
+}
+.nf-copy .lead {
+  max-width: 34rem;
+}
+.nf-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  margin-top: 0.25rem;
+}
+.nf-links p {
+  color: var(--ink-3);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+.nf-links ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+}
+.nf-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+  transition: color var(--duration-ui) var(--ease-out);
+}
+.nf-links .glyph {
+  width: 0.95rem;
+  height: 0.95rem;
+  color: var(--pink-deep);
+  transition: translate var(--duration-ui) var(--ease-out);
+}
+.nf-links a:hover {
+  color: var(--pink-deep);
+}
+.nf-links a:hover .glyph {
+  translate: 0.2rem 0;
+}
+
+/* The notice: what a mail server sends back, with this page as the address. */
+.nf-notice {
+  display: grid;
+  gap: 1.1rem;
+  padding: clamp(1.25rem, 2.5vw, 1.75rem);
+  border-radius: var(--radius-l);
+  background: var(--white);
+  box-shadow:
+    inset 0 0 0 1px var(--line),
+    var(--shadow-card);
+}
+.nf-notice-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.nf-notice-badge {
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-pill);
+  background: var(--pink-soft);
+  color: var(--pink-ink);
+  font-size: 0.75rem;
+}
+.nf-fields {
+  display: grid;
+  font-family: var(--font-code);
+  font-size: 0.8125rem;
+}
+.nf-fields div {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--line-strong);
+}
+.nf-fields dt {
+  color: var(--ink-3);
+}
+.nf-fields dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.nf-fields [data-bounce-count] {
+  justify-self: start;
+  color: var(--pink-deep);
+  transform-origin: left center;
+}
+.nf-notice-foot {
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 1100px) {
+  .nf-body {
+    grid-template-columns: 1fr;
+  }
+  .nf-notice {
+    max-width: 38rem;
+  }
+}
+/* On a phone the drawing runs nearly edge to edge, its glyphs almost touching. */
+@media (max-width: 600px) {
+  .nf-stage {
+    --glyph: 30vw;
+  }
+  .nf-word {
+    gap: calc(var(--glyph) * 0.05);
+  }
+  .nf-fields div {
+    grid-template-columns: 1fr;
+    gap: 0.1rem;
+  }
+}

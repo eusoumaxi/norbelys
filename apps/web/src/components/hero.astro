@@ -1,0 +1,89 @@
+---
+import { MARK, markPath } from "../../../../brand/geometry";
+import ArrowButton from "./arrow-button.astro";
+import Marked from "./marked.astro";
+import { START } from "../links";
+
+/**
+ * The first screen: what a salesperson wants from cold email — replies — and a stack of them
+ * arriving. The people and messages are illustrative.
+ */
+const replies = [
+  { initials: "AM", name: "Alex Morgan", message: "Love this. Are you free Tuesday at 10?", tag: "Interested", tone: "hot" },
+  { initials: "PS", name: "Priya Shah", message: "Send over the deck. This looks relevant for Q3.", tag: "Interested", tone: "hot" },
+  { initials: "JW", name: "Jonas Weber", message: "Not this quarter. Try me again in January?", tag: "Not now", tone: "calm" },
+  { initials: "ML", name: "María López", message: "Looping in our Head of Sales. She owns this.", tag: "Referral", tone: "warm" },
+  { initials: "TB", name: "Tom Becker", message: "Yes! Let’s find 20 minutes this week.", tag: "Interested", tone: "hot" },
+  { initials: "CL", name: "Chen Li", message: "I’m out of office until the 14th.", tag: "Out of office", tone: "auto" },
+] as const;
+---
+
+<section class="hero" aria-labelledby="hero-title" data-scene="leave">
+  <svg class="hero-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+    <path d={markPath()} pathLength="1" stroke-width={MARK.stroke} stroke-linecap="round" stroke-linejoin="round"></path>
+    <path class="mark-comet" d={markPath()} pathLength="1" stroke-width={MARK.stroke} stroke-linecap="round" stroke-linejoin="round"></path>
+  </svg>
+  <div class="hero-grid container">
+    <div class="hero-copy">
+      <h1 id="hero-title" class="hero-title" data-inview>
+        <span class="line">Cold email</span>
+        <span class="line">that gets</span>
+        <span class="line"><Marked>replies</Marked><span class="pink">.</span></span>
+      </h1>
+      <p class="lead hero-lead">
+        Send personal emails from your own inboxes, follow up on autopilot and stop the second
+        someone replies. Then work every reply from one inbox.
+      </p>
+      <div class="hero-actions">
+        <ArrowButton href={START}>Start for $20/mo</ArrowButton>
+        <a class="button button-ghost" href="#how-it-works">See how it works</a>
+      </div>
+      <p class="hero-note">Every feature included, even AI. Works with Gmail, Outlook and any SMTP inbox.</p>
+    </div>
+
+    <div class="hero-stage" aria-hidden="true">
+      <div class="hero-sent">
+        <span class="hero-sent-label">Sent 9:15 AM</span>
+        <strong>Quick idea for Northwind</strong>
+        <span>To Alex Morgan · from sam@acme.co</span>
+      </div>
+      <div class="hero-stack" data-notes>
+        {
+          replies.map((reply, index) => (
+            <div class={`note note-${reply.tone}`} data-note data-slot={(replies.length - index) % replies.length}>
+              <div class="note-app">
+                <span class="note-app-icon">
+                  <svg viewBox="0 0 64 64" fill="none">
+                    <path d={markPath()} stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </span>
+                <span class="note-app-name">Norbelys</span>
+                <span class="note-time">now</span>
+              </div>
+              <div class="note-body">
+                <span class="note-avatar">{reply.initials}</span>
+                <span class="note-text">
+                  <span class="note-name">
+                    {reply.name} <span class="note-replied">replied</span>
+                  </span>
+                  <span class="note-message">{reply.message}</span>
+                </span>
+                <span class="note-tag">{reply.tag}</span>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+      <div class="hero-stopped">
+        <span class="hero-stopped-step">
+          Follow-up 2
+          <svg viewBox="0 0 100 12" preserveAspectRatio="none"><path d="M2 7C30 4.5 70 8.5 98 5" pathLength="1"></path></svg>
+        </span>
+        <span>Stopped: Alex replied first</span>
+      </div>
+    </div>
+  </div>
+  <a class="hero-scroll" href="#the-need" aria-label="Scroll to the next section">
+    <span class="hero-scroll-track"><span></span></span>
+  </a>
+</section>

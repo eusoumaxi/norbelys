@@ -1,0 +1,19 @@
+---
+import Glyph from "./glyph.astro";
+import type { Post } from "../posts";
+
+/**
+ * A post's cover: one of the site's own icons drawn poster-size and cropped by the frame, on one
+ * of four grounds. Nothing to download, nothing stock, and every post still looks like Norbelys.
+ */
+interface Props {
+  cover: Post["data"]["cover"];
+  size?: "card" | "feature" | "wide";
+  class?: string;
+}
+const { cover, size = "card", class: className } = Astro.props;
+---
+
+<div class:list={["post-cover", `post-cover-${size}`, className]} data-tone={cover.tone} aria-hidden="true">
+  <Glyph name={cover.glyph} class="post-cover-glyph" />
+</div>

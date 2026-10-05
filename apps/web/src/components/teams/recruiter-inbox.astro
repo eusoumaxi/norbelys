@@ -1,0 +1,142 @@
+---
+import RecruiterTag from "./recruiter-tag.astro";
+
+/**
+ * The considerate rules, seen from the candidate's side: Priya's phone, her name tag stuck on its
+ * corner, her inbox open. Your email sits on top as a note from a person (your name, your own
+ * address, her name, a line about her work, an unsubscribe link at the foot) above the week's
+ * "exciting opportunities", each struck through in pink as the phone comes into view. Around it,
+ * the four rules that keep it that way, with the product's own defaults. If the visitor wrote a
+ * name on the hero's tag, the phone becomes theirs. Priya, Alex and every email are illustrative.
+ */
+interface Rule {
+  readonly title: string;
+  readonly text: string;
+  readonly side: "left" | "right";
+}
+const rules: readonly Rule[] = [
+  {
+    side: "left",
+    text: "Yes, no or not now: a reply from a person stops their sequence in every campaign. Nobody gets a follow-up after they’ve answered.",
+    title: "They answer, it stops.",
+  },
+  {
+    side: "left",
+    text: "Every email carries a one-click unsubscribe that never expires, and it holds across every campaign you run.",
+    title: "One click, and they’re out.",
+  },
+  {
+    side: "right",
+    text: "By default each inbox sends at most 50 emails a day, 10 minutes apart. Writing like a person means pacing like one.",
+    title: "Fifty a day, ten minutes apart.",
+  },
+  {
+    side: "right",
+    text: "Pick the days and hours each campaign and inbox may send; the app suggests Monday to Friday, 9 to 5. Sunday night stays theirs.",
+    title: "Only in working hours.",
+  },
+];
+
+/** The rest of the week's mail: the blasts a candidate learns to skip. */
+const blasts = [
+  { from: "Talent Team", subject: "Exciting opportunity!!!", time: "8:02" },
+  { from: "noreply", subject: "Hi {FirstName}, open to new roles?", time: "Mon" },
+  { from: "Hiring", subject: "URGENT: 40+ roles that match you", time: "Mon" },
+  { from: "Recruiting", subject: "Following up on my last 5 emails", time: "Sun" },
+] as const;
+
+/** Fills that follow the name written on the hero's tag, and fall back to Priya. */
+const NAME = "Priya";
+---
+
+<section id="candidates" class="page-section container tag-side" aria-labelledby="candidates-title">
+  <div class="split-head">
+    <h2 id="candidates-title">Candidates aren’t leads.</h2>
+    <p class="lead">
+      Good people hear from a dozen recruiters a week, mostly in bulk. Yours should read like a
+      note from a person, because it is one. Here’s the view from their side.
+    </p>
+  </div>
+  <div class="tag-side-layout">
+    <ul class="tag-rules tag-rules-left">
+      {
+        rules
+          .filter((rule) => rule.side === "left")
+          .map((rule) => (
+            <li class="tag-rule">
+              <h3>{rule.title}</h3>
+              <p>{rule.text}</p>
+            </li>
+          ))
+      }
+    </ul>
+
+    <figure class="tag-phone-wrap" data-inview>
+      <div class="tag-phone">
+        <div class="tag-phone-bar" aria-hidden="true">
+          <span class="numeric">9:10</span>
+          <span class="tag-phone-notch"></span>
+          <span>Tue</span>
+        </div>
+        <p class="tag-phone-title"><span data-nametag-name data-nametag-fallback={NAME}>{NAME}</span>’s inbox</p>
+        <ul class="tag-mails">
+          <li class="tag-mail tag-mail-yours">
+            <span class="tag-mail-face" aria-hidden="true">AK</span>
+            <div class="tag-mail-text">
+              <p class="tag-mail-from">
+                <strong>Alex Kim</strong>
+                <span class="tag-mail-time numeric">9:10</span>
+              </p>
+              <p class="tag-mail-address">alex@northwind.co</p>
+              <p class="tag-mail-subject"><span data-nametag-name data-nametag-fallback={NAME}>{NAME}</span>, your async Rust talk</p>
+              <p class="tag-mail-body">
+                Hi <span data-nametag-name data-nametag-fallback={NAME}>{NAME}</span>, your talk on async Rust at a meetup last
+                spring was the clearest take on it I’ve heard. We’re building a backend team in Lisbon and I’d love to
+                tell you about it.
+              </p>
+              <p class="tag-mail-unsubscribe"><span>Unsubscribe</span> in one click</p>
+            </div>
+          </li>
+          {
+            blasts.map((blast, index) => (
+              <li class="tag-mail tag-mail-blast" style={`--k: ${index}`}>
+                <p class="tag-mail-from">
+                  <strong>{blast.from}</strong>
+                  <span class="tag-mail-time">{blast.time}</span>
+                </p>
+                <p class="tag-mail-subject">
+                  <span class="sr-only">A mass email: </span>
+                  <span class="tag-mail-skip">
+                    {blast.subject}
+                    <svg class="tag-mail-strike" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+                      <path d="M2 7C30 4.5 70 8.5 98 5" pathLength="1" />
+                    </svg>
+                  </span>
+                </p>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <RecruiterTag class="tag-phone-tag" foot="">
+        <p class="tag-name" data-nametag-name data-nametag-fallback={NAME}>{NAME}</p>
+      </RecruiterTag>
+      <figcaption class="fine-print tag-phone-caption">
+        An example inbox: your note, from your own address, above the week’s blasts.
+      </figcaption>
+    </figure>
+
+    <ul class="tag-rules tag-rules-right">
+      {
+        rules
+          .filter((rule) => rule.side === "right")
+          .map((rule) => (
+            <li class="tag-rule">
+              <h3>{rule.title}</h3>
+              <p>{rule.text}</p>
+            </li>
+          ))
+      }
+    </ul>
+  </div>
+</section>

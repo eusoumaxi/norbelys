@@ -1,0 +1,182 @@
+---
+import { render } from "astro:content";
+import Glyph from "../../components/glyph.astro";
+import Signature from "../../components/signature.astro";
+import Legal from "../../layouts/legal.astro";
+import { INBOXES, mailto } from "../../company";
+import { documentUrl, formatLongDate, getDocuments, latest, LEGAL, readingMinutes, splitHeading } from "../../legal";
+import type { LegalDocument } from "../../legal";
+
+/**
+ * One legal document: its title and plain summary, the facts a reader quotes (version, date,
+ * length), its clauses with their contents beside them, then the record of every version, the
+ * company's signature and the way to the next document in the binder.
+ */
+export const getStaticPaths = async () => {
+  const documents = await getDocuments();
+  return documents.map((document, index) => ({
+    params: { doc: document.id },
+    props: { document, next: documents[index + 1], previous: documents[index - 1] },
+  }));
+};
+
+interface Props {
+  document: LegalDocument;
+  previous: LegalDocument | undefined;
+  next: LegalDocument | undefined;
+}
+const { document, previous, next } = Astro.props;
+const { data } = document;
+const { Content, headings } = await render(document);
+const sections = headings
+  .filter((heading) => heading.depth === 2)
+  .map((heading) => ({ slug: heading.slug, ...splitHeading(heading.text) }));
+const revision = latest(document);
+// A version published ahead of its date says when it takes effect instead.
+const upcoming = revision.effective.valueOf() > Date.now();
+const inbox = INBOXES.find((candidate) => candidate.id === data.contact);
+const isoDate = (date: Date): string => date.toISOString().slice(0, 10);
+---
+
+<Legal title={`${data.title} — Norbelys`} description={data.description} current={document.id}>
+  <div class="read-progress" aria-hidden="true"></div>
+  <article class="legal-doc">
+    <header class="legal-head">
+      <div class="legal-head-text">
+        <h1 class="legal-title">{data.title}</h1>
+        <p class="lead legal-summary">{data.summary}</p>
+      </div>
+      <div class="legal-meta">
+        <dl class="legal-facts">
+          <div>
+            <dt>Version</dt>
+            <dd>{revision.version}</dd>
+          </div>
+          <div>
+            <dt>{upcoming ? "Takes effect" : "In effect since"}</dt>
+            <dd><time datetime={isoDate(revision.effective)}>{formatLongDate(revision.effective)}</time></dd>
+          </div>
+          <div>
+            <dt>Reading time</dt>
+            <dd>{readingMinutes(document)} minutes</dd>
+          </div>
+        </dl>
+        <div class="legal-actions">
+          <button class="legal-action" type="button" data-print hidden>
+            <Glyph name="print" /> Print or save as PDF
+          </button>
+          <button class="legal-action" type="button" data-copy-link data-copied="Link copied">
+            <Glyph name="link" /> Copy link
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="legal-body">
+      <nav class="legal-contents" aria-labelledby="contents-title" data-contents>
+        <p id="contents-title" class="legal-contents-title">Contents</p>
+        <ol>
+          {
+            sections.map((section) => (
+              <li>
+                <a href={`#${section.slug}`}>
+                  <span class="legal-contents-number">{section.number}</span>{" "}
+                  <span>{section.title}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </nav>
+      <details class="legal-contents-compact">
+        <summary>
+          Contents <span class="legal-contents-count">{sections.length} sections</span>
+          <Glyph name="down" />
+        </summary>
+        <ol>
+          {
+            sections.map((section) => (
+              <li>
+                <a href={`#${section.slug}`}>
+                  <span class="legal-contents-number">{section.number}</span>{" "}
+                  <span>{section.title}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </details>
+      <div class="legal-text">
+        <Content />
+      </div>
+    </div>
+
+    <footer class="legal-end">
+      <section class="legal-record" aria-labelledby="record-title">
+        <h2 id="record-title">Record of changes</h2>
+        <ol class="record-list">
+          {
+            data.revisions.map((entry, index) => (
+              <li class:list={["record-entry", { "is-current": index === 0 }]}>
+                <p class="record-version">
+                  Version {entry.version}
+                  {index === 0 && <span class="record-state">{upcoming ? "Upcoming" : "In effect"}</span>}
+                </p>
+                <p class="record-date">
+                  <time datetime={isoDate(entry.effective)}>{formatLongDate(entry.effective)}</time>
+                </p>
+                <p class="record-summary">{entry.summary}</p>
+                {entry.changes.length > 0 && (
+                  <ul class="record-changes">
+                    {entry.changes.map((change) => (
+                      <li>
+                        <span class="record-section">Section {change.section}</span>
+                        {change.removed && <del>{change.removed}</del>}
+                        {change.added && <ins>{change.added}</ins>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))
+          }
+        </ol>
+        <p class="fine-print">
+          Every change is posted here first. For a change that matters, workspace owners get an email
+          30 days before it takes effect.
+        </p>
+      </section>
+
+      <div class="legal-sign">
+        <Signature date={revision.effective} />
+        {
+          inbox && (
+            <p class="legal-ask">
+              Questions about this document? Write to{" "}
+              <a href={mailto(inbox.address, `About the ${data.title}`)}>{inbox.address}</a>. A person reads every
+              email.
+            </p>
+          )
+        }
+      </div>
+
+      <nav class="legal-pager" aria-label="More in the binder">
+        <a class="legal-pager-link" href={previous ? documentUrl(previous) : LEGAL} rel="prev">
+          <span class="legal-pager-label"><Glyph name="arrow" class="legal-pager-back" /> Previous</span>
+          <span class="legal-pager-title">{previous ? previous.data.title : "Legal overview"}</span>
+        </a>
+        {
+          next && (
+            <a class="legal-pager-link legal-pager-next" href={documentUrl(next)} rel="next">
+              <span class="legal-pager-label">
+                Next <Glyph name="arrow" />
+              </span>
+              <span class="legal-pager-title">{next.data.title}</span>
+            </a>
+          )
+        }
+      </nav>
+    </footer>
+  </article>
+  <p class="sr-only" aria-live="polite" data-binder-status></p>
+</Legal>

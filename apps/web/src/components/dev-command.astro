@@ -1,0 +1,31 @@
+---
+import Glyph from "./glyph.astro";
+
+/**
+ * One command to paste, with the button that copies it (scripts/copy.ts). Each word keeps
+ * together, so a long command wraps between words, never inside a flag; a URL too long for the
+ * line may also wrap after one of its slashes.
+ */
+interface Props {
+  command: string;
+  class?: string;
+}
+const { command, class: className } = Astro.props;
+const words = command.split(" ").map((word) => word.split(/(?<=\/)(?!\/)/u));
+---
+
+<div class:list={["dev-command", className]}>
+  <code
+    ><span class="dev-prompt" aria-hidden="true">$ </span>{
+      words.map((parts, index) => [
+        index > 0 && " ",
+        <span class:list={["dev-word", { "dev-path": parts.length > 1 }]}>
+          {parts.map((part, at) => [at > 0 && <wbr />, part])}
+        </span>,
+      ])
+    }</code
+  >
+  <button type="button" class="copy-button copy-button-icon" data-copy={command} aria-label={`Copy: ${command}`} hidden>
+    <span class="copy-icons" aria-hidden="true"><Glyph name="copy" /><Glyph name="check" /></span>
+  </button>
+</div>

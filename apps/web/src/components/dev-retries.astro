@@ -1,0 +1,66 @@
+---
+import { attempts } from "../developers";
+
+/**
+ * The webhook schedule as one line across the page: ten attempts, the wait before each and how
+ * long after the first it comes. In the example your server is down until the seventh, so the
+ * first six get a 503, the seventh a 200, and the last three are never sent. As the strip scrolls
+ * in, the point walks the line from the first attempt to the one that gets through.
+ */
+
+/** The attempt that gets through, counted from zero. */
+const THROUGH = 6;
+
+const answerOf = (index: number): "failed" | "delivered" | "unsent" => {
+  if (index < THROUGH) {
+    return "failed";
+  }
+  return index === THROUGH ? "delivered" : "unsent";
+};
+---
+
+<figure class="retries" data-scene="enter" style={`--through: ${THROUGH}`}>
+  <div class="retries-band">
+    <div class="container retries-frame">
+      <span class="retries-traveler" aria-hidden="true"></span>
+      <ol class="retries-strip" aria-label="Delivery attempts, in the example">
+        {
+          attempts.map((attempt, index) => {
+            const answer = answerOf(index);
+            return (
+              <li class={`retry is-${answer}`} style={`--i: ${index}`}>
+                <span class="retry-number">Attempt {index + 1}</span>
+                <span class="retry-wait">
+                  {attempt.wait === "now" ? "Now" : attempt.wait}
+                  {attempt.wait !== "now" && <span class="retry-later">later</span>}
+                </span>
+                <span class="retry-point" aria-hidden="true" />
+                <span class="retry-elapsed">+{attempt.elapsed}</span>
+                {answer === "failed" && (
+                  <span class="retry-answer">
+                    <span class="sr-only">Your server answers </span>
+                    <code>503</code>
+                  </span>
+                )}
+                {answer === "delivered" && (
+                  <span class="retry-answer">
+                    <span class="sr-only">Your server answers </span>
+                    <code>200</code> Delivered
+                  </span>
+                )}
+                {answer === "unsent" && <span class="retry-answer">Not sent</span>}
+              </li>
+            );
+          })
+        }
+      </ol>
+    </div>
+  </div>
+  <figcaption class="container">
+    <span class="retries-note">
+      An example: your server is down until the seventh attempt, 17 hours and 35 minutes in. Each
+      attempt waits 15 seconds for an answer, and without a <code>2xx</code> the tenth would come
+      about three days after the first.
+    </span>
+  </figcaption>
+</figure>

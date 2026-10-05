@@ -1,0 +1,53 @@
+---
+import ArrowButton from "./arrow-button.astro";
+import Glyph from "./glyph.astro";
+import Marked from "./marked.astro";
+import { START } from "../links";
+
+/** The price, said plainly: one plan, everything in it, AI included. */
+const included = [
+  "Campaigns & multi-step sequences",
+  "A/B testing on every step",
+  "Unified inbox for every mailbox",
+  "AI first lines & reply sorting",
+  "Warm-up, daily limits & business hours",
+  "Open & click tracking",
+  "Bounce & unsubscribe protection",
+  "Webhooks, API & MCP server",
+];
+---
+
+<section id="pricing" class="pricing section" aria-labelledby="pricing-title">
+  <div class="container pricing-layout">
+    <div class="pricing-head">
+      <h2 id="pricing-title" data-inview>
+        <span class="line">One plan.</span>
+        <span class="line">Everything <Marked>in it</Marked><span class="pink">.</span></span>
+      </h2>
+      <p class="lead">
+        Elsewhere, the entry plan is just the start. AI, the API and deliverability tools often
+        cost extra. Here it’s all in one plan, at a price you won’t have to run past finance.
+      </p>
+    </div>
+    <div class="price-sheet">
+      <div class="price-main">
+        <p class="price-label">Starts at</p>
+        <p class="price-amount">
+          <span class="price-currency">$</span><span class="numeric">20</span><span class="price-period">/month</span>
+        </p>
+        <p class="price-note">Launch pricing. Every feature included, AI too.</p>
+        <ArrowButton class="price-cta" href={START}>Start for $20</ArrowButton>
+      </div>
+      <ul class="price-list">
+        {
+          included.map((item) => (
+            <li>
+              <Glyph name="check" />
+              {item}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>

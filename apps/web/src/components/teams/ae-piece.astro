@@ -1,0 +1,105 @@
+---
+/**
+ * One chess piece, drawn in the brand's line: a thick ink outline filled white, standing on its
+ * base at (x, y) in its drawing's units, the way a stakeholder stands on the account executive's
+ * board. King, queen, rook, bishop, knight or pawn, each simplified to the shapes that make it
+ * recognisable; `black` fills it with ink, for the player's own side. The outline keeps the same
+ * weight whatever the scale (`--piece-stroke` in the drawing's units).
+ */
+type Kind = "king" | "queen" | "rook" | "bishop" | "knight" | "pawn";
+interface Props {
+  kind: Kind;
+  x?: number;
+  y?: number;
+  scale?: number;
+  black?: boolean;
+  class?: string;
+}
+interface Shape {
+  /** A filled outline, a line drawn on top, or a solid ink dot. */
+  readonly look: "body" | "line" | "dot";
+  readonly d?: string;
+  readonly circle?: readonly [number, number, number];
+}
+const { kind, x = 0, y = 0, scale = 1, black = false, class: className } = Astro.props;
+
+/** The base every piece stands on, 100 wide; the piece's own shapes rise from y = -22. */
+const BASE = "M-50 -3C-50 -14 -44 -22 -34 -22H34C44 -22 50 -14 50 -3V0H-50Z";
+/** A collar: a rounded bar `half` wide either side of the middle, its foot at `y`. */
+const collar = (top: number, half: number): string =>
+  `M${-half} ${top - 12}H${half}A6 6 0 0 1 ${half} ${top}H${-half}A6 6 0 0 1 ${-half} ${top - 12}Z`;
+
+// Each piece from the back of the drawing to the front: what overlaps comes later.
+const SHAPES: Record<Kind, readonly Shape[]> = {
+  bishop: [
+    { circle: [0, -186, 8], look: "dot" },
+    {
+      d: "M0 -176C-14 -162 -30 -142 -30 -126C-30 -112 -17 -104 0 -104C17 -104 30 -112 30 -126C30 -142 14 -162 0 -176Z",
+      look: "body",
+    },
+    { d: "M12 -152L-2 -136", look: "line" },
+    { d: "M-28 -18C-22 -42 -15 -70 -13 -92H13C15 -70 22 -42 28 -18Z", look: "body" },
+    { d: collar(-92, 26), look: "body" },
+    { d: BASE, look: "body" },
+  ],
+  king: [
+    { d: "M0 -192V-228M-15 -212H15", look: "line" },
+    {
+      d: "M-24 -142C-32 -152 -36 -164 -34 -176C-33 -182 -28 -186 -22 -186H22C28 -186 33 -182 34 -176C36 -164 32 -152 24 -142Z",
+      look: "body",
+    },
+    { d: "M-32 -18C-24 -58 -17 -104 -15 -130H15C17 -104 24 -58 32 -18Z", look: "body" },
+    { d: collar(-130, 28), look: "body" },
+    { d: BASE, look: "body" },
+  ],
+  knight: [
+    {
+      d: "M34 -54C44 -88 42 -134 16 -162L10 -190L-6 -172C-28 -166 -46 -150 -58 -128C-64 -116 -62 -102 -50 -100C-44 -99 -38 -102 -32 -106C-22 -112 -12 -108 -12 -96C-12 -84 -24 -70 -28 -54Z",
+      look: "body",
+    },
+    { d: "M26 -74C30 -100 26 -128 10 -150", look: "line" },
+    { circle: [-26, -142, 5.5], look: "dot" },
+    { d: "M-26 -18C-22 -30 -20 -40 -20 -48H20C20 -40 22 -30 26 -18Z", look: "body" },
+    { d: collar(-48, 30), look: "body" },
+    { d: BASE, look: "body" },
+  ],
+  pawn: [
+    { circle: [0, -100, 26], look: "body" },
+    { d: "M-28 -18C-22 -34 -16 -50 -15 -64H15C16 -50 22 -34 28 -18Z", look: "body" },
+    { d: collar(-64, 24), look: "body" },
+    { d: BASE, look: "body" },
+  ],
+  queen: [
+    { circle: [-36, -178, 8], look: "dot" },
+    { circle: [0, -188, 8], look: "dot" },
+    { circle: [36, -178, 8], look: "dot" },
+    { d: "M-24 -132L-36 -174L-16 -154L0 -182L16 -154L36 -174L24 -132Z", look: "body" },
+    { d: "M-30 -18C-23 -54 -16 -96 -14 -120H14C16 -96 23 -54 30 -18Z", look: "body" },
+    { d: collar(-120, 26), look: "body" },
+    { d: BASE, look: "body" },
+  ],
+  rook: [
+    { d: "M-34 -100V-140H-20V-128H-7V-140H7V-128H20V-140H34V-100Z", look: "body" },
+    { d: "M-30 -18L-25 -88H25L30 -18Z", look: "body" },
+    { d: collar(-88, 30), look: "body" },
+    { d: BASE, look: "body" },
+  ],
+};
+const shapes = SHAPES[kind];
+---
+
+<g
+  class:list={["piece", `piece-${kind}`, { "piece-black": black }, className]}
+  transform={`translate(${x} ${y}) scale(${scale})`}
+  style={`--scale: ${scale}`}
+>
+  {
+    shapes.map((shape) =>
+      shape.circle ? (
+        <circle class={`piece-${shape.look}`} cx={shape.circle[0]} cy={shape.circle[1]} r={shape.circle[2]} />
+      ) : (
+        <path class={`piece-${shape.look}`} d={shape.d} />
+      )
+    )
+  }
+</g>

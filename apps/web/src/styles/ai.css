@@ -1,0 +1,837 @@
+/*
+ * The AI page: the claim inside a speech bubble drawn with the brand's line, a demo you can
+ * poke at, and replies flying into the lanes they belong in as the page scrolls.
+ */
+
+/* ——— Hero: the bubble draws itself, then its three points start typing. ——— */
+.ai-stage {
+  position: relative;
+  container-type: inline-size;
+}
+.ai-bubble {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.ai-bubble-line {
+  stroke: var(--ink);
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ai-bubble-dot {
+  fill: var(--pink-hot);
+}
+.motion .ai-bubble-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: ai-draw 1600ms var(--ease-draw) 150ms forwards;
+}
+.motion .ai-bubble-dot {
+  animation: ai-type 1400ms var(--ease-out) calc(1.5s + var(--n) * 160ms) 5;
+}
+.ai-hero-copy {
+  position: absolute;
+  inset: 21% 9% 13%;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: clamp(1rem, 2.2cqi, 1.75rem);
+  text-align: center;
+}
+.ai-hero .page-title {
+  font-size: clamp(2.5rem, 7.2cqi, 6rem);
+}
+/* In ems, so the measure stays near 75 characters as the type scales with the bubble. */
+.ai-hero .page-lead {
+  max-width: 31em;
+  font-size: clamp(1rem, 1.6cqi, 1.375rem);
+}
+.ai-hero .page-actions {
+  justify-content: center;
+}
+.ai-hero-glyph {
+  display: none;
+}
+/* The marked word and its full stop wrap as one, so the stop never starts a line alone. */
+.ai-keep {
+  white-space: nowrap;
+}
+@keyframes ai-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes ai-type {
+  0%,
+  60%,
+  100% {
+    opacity: 0.55;
+    translate: 0 0;
+  }
+  30% {
+    opacity: 1;
+    translate: 0 -10px;
+  }
+}
+
+/* ——— The demo: what Norbelys found about a prospect on one side, the email they get on the other. ——— */
+.facts {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: start;
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+}
+.facts-lead {
+  min-width: 0;
+  margin: 0;
+  padding: clamp(1.25rem, 2.5vw, 1.75rem);
+  border: 0;
+  border-radius: var(--radius-l);
+  background: var(--pink-mist);
+}
+.facts-person {
+  float: left;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  margin-bottom: 1.5rem;
+  padding: 0;
+}
+.facts-person strong {
+  display: block;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+.facts-person span span {
+  color: var(--ink-2);
+  font-size: var(--text-micro);
+}
+.facts-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--pink-deep);
+  color: var(--white);
+  font-weight: 600;
+}
+.facts-hint {
+  clear: both;
+  color: var(--ink-2);
+  font-size: var(--text-micro);
+  font-weight: 500;
+}
+.facts-lead ul {
+  margin-top: 0.5rem;
+}
+.fact {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.95rem 0;
+  border-bottom: 1px solid rgb(219 39 119 / 14%);
+  font-weight: 500;
+  cursor: pointer;
+}
+.facts-lead li:last-child .fact {
+  border-bottom: 0;
+}
+/* Where Norbelys found the fact, under it. */
+.fact-source {
+  display: block;
+  margin-top: 0.1rem;
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+.fact input {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  margin: 0;
+  border-radius: 0.45rem;
+  box-shadow: inset 0 0 0 2px var(--line-strong);
+  background: var(--white);
+  appearance: none;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-ui) var(--ease-out),
+    box-shadow var(--duration-ui) var(--ease-out);
+}
+.fact input::after {
+  content: "";
+  width: 0.7rem;
+  height: 0.38rem;
+  border-bottom: 2.5px solid var(--white);
+  border-left: 2.5px solid var(--white);
+  rotate: -45deg;
+  translate: 0 -0.08rem;
+  scale: 0;
+  transition: scale 300ms var(--ease-settle);
+}
+.fact input:checked {
+  background: var(--pink-deep);
+  box-shadow: none;
+}
+.fact input:checked::after {
+  scale: 1;
+}
+.fact input:focus-visible {
+  outline: 2px solid var(--pink-deep);
+  outline-offset: 3px;
+}
+.facts-email {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1.5rem, 3vw, 2.25rem);
+  border-radius: var(--radius-l);
+  background: var(--white);
+  box-shadow: var(--shadow-float);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+.facts-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.6rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+.facts-meta > span:first-child {
+  color: var(--ink-3);
+}
+.facts-subject {
+  margin-left: auto;
+  color: var(--ink-2);
+}
+.facts-output {
+  display: block;
+  min-height: 5.75rem;
+}
+.facts-line {
+  display: grid;
+  justify-items: start;
+  gap: 0.45rem;
+}
+.facts-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--pink-deep);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.facts-tag .glyph {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+/* Inline in its own line of text, so a line that wraps gets a band on each line, not one block. */
+.facts-text {
+  display: block;
+}
+.facts-line mark {
+  padding-inline: 0.1em;
+  border-radius: 0.2em;
+  /* A highlighter stroke: a band of blush across the lower two thirds of each line. */
+  background: linear-gradient(var(--pink-blush), var(--pink-blush)) 0 75% / 100%
+    62% no-repeat;
+  box-decoration-break: clone;
+  color: inherit;
+}
+.facts-empty {
+  color: var(--ink-3);
+}
+.motion .facts-line.is-typing mark {
+  animation: facts-type 900ms var(--ease-out);
+}
+.facts-note {
+  margin-top: 1.25rem;
+}
+@keyframes facts-type {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+/* ——— Sorting: five lanes, and each reply flying from the pile into its own. ——— */
+.sort {
+  margin: 0;
+}
+.sort-lanes {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-auto-rows: auto;
+  column-gap: 1rem;
+  row-gap: 0.75rem;
+}
+.sort-lane {
+  grid-row: 1;
+  grid-column: var(--col);
+  padding-top: 0.9rem;
+  border-top: 2px solid var(--ink);
+}
+.sort-lane:first-of-type {
+  border-top-color: var(--pink-deep);
+}
+.sort-lane-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.sort-card {
+  --t: 1;
+  z-index: 1;
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 0.3rem;
+  grid-row: var(--row);
+  grid-column: var(--col);
+  padding: 0.85rem 0.95rem;
+  border-radius: var(--radius-m);
+  background: var(--white);
+  box-shadow: var(--shadow-card);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  translate: calc((var(--col) - 1) * -108% * (1 - var(--t)))
+    calc((var(--row) - 2) * -110% * (1 - var(--t)) - (1 - var(--t)) * 2rem);
+  rotate: calc((1 - var(--t)) * (var(--k) - 3) * 2deg);
+}
+.motion .sort-card {
+  --t: clamp(0, (var(--p) - 0.1 - var(--k) * 0.06) / 0.3, 1);
+}
+.sort-card strong {
+  font-weight: 600;
+}
+.sort-card span {
+  color: var(--ink-2);
+}
+.sort-mood {
+  margin-top: 0.2rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: 600;
+}
+.sort-mood-positive {
+  background: var(--pink-soft);
+  color: var(--pink-ink);
+}
+.sort-mood-neutral {
+  background: var(--mist);
+  color: var(--ink-2);
+}
+.sort-mood-negative {
+  background: var(--ink);
+  color: var(--white);
+}
+.sort figcaption {
+  margin-top: 1.5rem;
+}
+
+/* ——— Your data: when AI works, what it may use, what it never sees, what it costs. ——— */
+
+/* Off until you turn it on: the workspace's switch, and one for each step of a campaign. */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+.switch-row-main {
+  padding-top: 0.1rem;
+  font-weight: 600;
+}
+.switch-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.switch-name .glyph {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.switch-group {
+  padding: 0.85rem 1rem 0.2rem;
+  border-radius: var(--radius-m);
+  background: var(--cloud);
+}
+.switch-title {
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.switch-group li + li {
+  border-top: 1px solid var(--line);
+}
+/* A switch: grey with the knob left when off; pink with the knob right when on. */
+.switch {
+  --on: 0;
+  position: relative;
+  flex: none;
+  width: 2.5rem;
+  height: 1.45rem;
+  border-radius: var(--radius-pill);
+  background: var(--line-strong);
+}
+.switch::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--pink-deep);
+  opacity: var(--on);
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 0.2rem;
+  left: 0.2rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 18%);
+  translate: calc(var(--on) * 1.05rem) 0;
+}
+.switch.is-on {
+  --on: 1;
+}
+.motion .switch.is-on {
+  --on: clamp(0, var(--p) * 3 - 1.4, 1);
+}
+
+/*
+ * What's in Norbelys, an arrow, and what AI gets of it: side by side while the card is wide
+ * enough, stacked when it isn't.
+ */
+.scene-flow {
+  container-type: inline-size;
+}
+.flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+}
+.flow-arrow {
+  width: 1.6rem;
+  height: 1.6rem;
+  color: var(--pink-deep);
+}
+.flow-to {
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem 1.1rem;
+  border-radius: var(--radius-m);
+  background: var(--pink-mist);
+}
+.flow-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.flow-to .flow-title {
+  color: var(--pink-ink);
+}
+.flow-title .glyph {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+/* Only what you allow: a person's record with the details AI may use ticked, the rest kept. */
+.fields-person {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.9375rem;
+}
+.fields-person strong {
+  font-weight: 600;
+}
+.fields-list li {
+  --tick: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.875rem;
+}
+.fields-list li:last-child {
+  border-bottom: 0;
+}
+.motion .fields-list li {
+  --tick: clamp(0, var(--p) * 4 - 1.2 - var(--k) * 0.45, 1);
+}
+.fields-box {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 0.35rem;
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  color: var(--white);
+}
+.fields-box .glyph {
+  position: relative;
+  width: 0.8rem;
+  height: 0.8rem;
+}
+.is-allowed .fields-box::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--pink-deep);
+}
+.is-allowed .fields-box::before,
+.is-allowed .fields-box .glyph {
+  scale: var(--tick);
+}
+.fields-never .fields-box {
+  box-shadow: none;
+  color: var(--ink-3);
+}
+.fields-never .fields-box .glyph {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+.fields-label {
+  color: var(--ink-3);
+  font-weight: 500;
+}
+.fields-value {
+  font-weight: 600;
+}
+.fields-brief {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.fields-brief span {
+  color: var(--ink-2);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.fields-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.fields-chips li {
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.6rem;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--pink-blush);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.fields-chips span {
+  color: var(--ink-2);
+  font-weight: 500;
+}
+.motion .fields-chips li {
+  scale: calc(0.75 + 0.25 * clamp(0, var(--p) * 4 - 1.6 - var(--k) * 0.45, 1));
+}
+
+/* Private details stay private: the reply with what will be hidden marked, the cut, and what AI reads. */
+.mask-body {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+/* Each identifier stays on one line, so its highlight is one piece. */
+.mask-hit {
+  padding: 0.05em 0.15em;
+  border-radius: 0.3em;
+  background: var(--pink-soft);
+  white-space: nowrap;
+}
+.mask-token {
+  display: inline-block;
+  padding: 0 0.45em;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--pink-blush);
+  color: var(--pink-ink);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.6;
+}
+.motion .mask-token {
+  scale: calc(0.6 + 0.4 * clamp(0, var(--p) * 4 - 1.4 - var(--k) * 0.45, 1));
+}
+.mask-quote {
+  display: grid;
+  gap: 0.15rem;
+  margin-top: 0.75rem;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.mask-cut {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+  color: var(--pink-deep);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.mask-cut::after {
+  content: "";
+  flex: 1;
+  border-top: 2px dashed var(--pink);
+  transform-origin: left;
+}
+.motion .mask-cut::after {
+  scale: clamp(0, var(--p) * 3 - 0.9, 1) 1;
+}
+
+/* Included, with a limit: the month's meter, and what happens at the limit. */
+.budget-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.budget-head strong {
+  color: var(--ink);
+  font-size: 1.625rem;
+  letter-spacing: -0.03em;
+}
+.budget-meter {
+  display: block;
+  height: 0.75rem;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+}
+.budget-meter i {
+  display: block;
+  width: 80%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--pink-hot);
+  transform-origin: left;
+}
+.motion .budget-meter i {
+  scale: clamp(0, var(--p) * 1.8 - 0.35, 1) 1;
+}
+.budget-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.budget-note .glyph {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--pink-deep);
+}
+.budget-note span:last-child {
+  text-wrap: balance;
+}
+
+@container (max-width: 32rem) {
+  .flow {
+    grid-template-columns: 1fr;
+  }
+  .flow-arrow {
+    justify-self: center;
+    rotate: 90deg;
+  }
+}
+
+/* ——— The AI you know: the words on one side, a chat with an assistant on the other. ——— */
+.connect {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: 2.5rem clamp(2rem, 6vw, 6rem);
+}
+.connect-copy {
+  display: grid;
+  justify-items: start;
+  gap: 1.5rem;
+}
+.connect-copy .lead {
+  max-width: 30rem;
+}
+.connect-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.connect-steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.4rem 0.95rem 0.4rem 0.4rem;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.connect-steps span {
+  display: grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 50%;
+  background: var(--pink-deep);
+  color: var(--white);
+  font-size: 0.8125rem;
+}
+.connect-chat {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: clamp(1.1rem, 2.4vw, 1.75rem);
+  border-radius: var(--radius-xl);
+  background: var(--cloud);
+  box-shadow:
+    inset 0 0 0 1px var(--line),
+    var(--shadow-card);
+}
+.connect-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.connect-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--pink-hot);
+}
+.connect-thread {
+  display: grid;
+  gap: 0.75rem;
+}
+/* Each message pops up from its corner, one after another, as the chat scrolls in. */
+.connect-turn {
+  --in: 1;
+  display: grid;
+  gap: 0.4rem;
+  max-width: 85%;
+  scale: var(--in);
+}
+.motion .connect-turn {
+  --in: clamp(0, var(--p) * 3.2 - var(--k) * 0.4, 1);
+}
+.connect-you {
+  justify-self: end;
+  transform-origin: bottom right;
+}
+.connect-assistant {
+  justify-self: start;
+  transform-origin: bottom left;
+}
+.connect-turn p {
+  padding: 0.7rem 0.95rem;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+.connect-you p {
+  border-radius: 1.1rem 1.1rem 0.35rem;
+  background: var(--pink-deep);
+  color: var(--white);
+}
+.connect-assistant p {
+  border-radius: 1.1rem 1.1rem 1.1rem 0.35rem;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.connect-done {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-pill);
+  background: var(--pink-soft);
+  color: var(--pink-ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.connect-done .glyph {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+@media (max-width: 1100px) {
+  .ai-bubble {
+    display: none;
+  }
+  .ai-hero-copy {
+    position: static;
+    justify-items: start;
+    text-align: left;
+  }
+  .ai-hero-glyph {
+    display: block;
+    width: 4.5rem;
+    height: 4.5rem;
+  }
+  .ai-hero .page-title {
+    font-size: var(--text-hero);
+  }
+  .ai-hero .page-lead {
+    font-size: var(--text-lead);
+  }
+  .ai-hero .page-actions {
+    justify-content: start;
+  }
+}
+@media (max-width: 900px) {
+  .facts,
+  .connect {
+    grid-template-columns: 1fr;
+  }
+  .sort-lanes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .sort-lane {
+    order: var(--order);
+    margin-top: 1rem;
+  }
+  .sort-card {
+    order: var(--order);
+    translate: none;
+    rotate: none;
+  }
+}

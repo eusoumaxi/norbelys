@@ -1,0 +1,17 @@
+---
+import Glyph from "./glyph.astro";
+
+/** The site's call to action: a pill with an arrow that slides through it on hover. */
+interface Props {
+  href: string;
+  class?: string;
+}
+const { href, class: className } = Astro.props;
+---
+
+<a class:list={["button", className]} href={href}>
+  <slot />
+  <span class="button-arrow" aria-hidden="true">
+    <span class="button-arrow-track"><Glyph name="arrow" /><Glyph name="arrow" /></span>
+  </span>
+</a>

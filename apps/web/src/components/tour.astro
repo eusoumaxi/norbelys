@@ -1,0 +1,276 @@
+---
+import { markPath } from "../../../../brand/geometry";
+import Glyph from "./glyph.astro";
+import Marked from "./marked.astro";
+
+/**
+ * How it works, in five steps. On a wide screen the steps stay on the left while the scroll
+ * plays each step's scene on the right; elsewhere every step sits above its own scene. The
+ * people, companies and numbers in the scenes are illustrative.
+ */
+const steps = [
+  {
+    id: "connect",
+    title: "Plug in your inboxes",
+    text: "Connect Google Workspace, Microsoft 365 or any SMTP inbox in a few clicks. Add a few, and Norbelys rotates sending between them.",
+  },
+  {
+    id: "import",
+    title: "Upload your leads",
+    text: "Drop in a CSV or add people one at a time. Every column (title, city, that funding round you spotted) becomes something to write about.",
+  },
+  {
+    id: "personalise",
+    title: "Write once. Sound personal.",
+    text: "Use merge fields, then let AI write a custom first line for every prospect, using only the facts you pick. A/B test any step and keep the winner.",
+  },
+  {
+    id: "follow-up",
+    title: "Follow up. Then back off.",
+    text: "Schedule follow-ups days apart, during business hours only. The second a real person replies, their sequence stops. You can pause their coworkers, too.",
+  },
+  {
+    id: "one-inbox",
+    title: "Work every reply from one inbox",
+    text: "Replies from every mailbox land in one place, threaded with the email that started them. AI flags out-of-office and auto-replies, so hot leads rise to the top.",
+  },
+] as const;
+const mark = markPath();
+---
+
+<section id="how-it-works" class="tour-section section" aria-labelledby="tour-title">
+  <div class="container tour-head">
+    <h2 id="tour-title" data-inview>
+      <span class="line">From cold list</span>
+      <span class="line">to <Marked d="M2 8C32 3.5 70 3.5 98 6.5">warm reply</Marked><span class="pink">.</span></span>
+    </h2>
+    <p class="lead tour-lead">
+      Set it up once. Norbelys handles the sending, the follow-ups and the stopping. You handle
+      the conversations.
+    </p>
+  </div>
+
+  <div class="tour" data-scene="pin" data-scene-media="(min-width: 1000px)" data-steps="0.2,0.4,0.6,0.8">
+    <div class="tour-stage container">
+      <div class="tour-rail" aria-hidden="true"><span></span></div>
+      {
+        steps.map((step, index) => (
+          <>
+            <div class="tour-step" id={step.id} style={`--k: ${index}`} data-step={index}>
+              <span class="tour-number">{String(index + 1).padStart(2, "0")}</span>
+              <div class="tour-copy">
+                <h3>{step.title}</h3>
+                <div class="tour-text">
+                  <p>{step.text}</p>
+                </div>
+              </div>
+            </div>
+            <div
+              class={`tour-visual tour-visual-${step.id}`}
+              style={`--k: ${index}`}
+              data-scene="enter"
+              data-scene-media="(max-width: 999px)"
+              aria-hidden="true"
+            >
+              {index === 0 && (
+                <div class="scene scene-connect">
+                  <svg class="connect-wires" viewBox="0 0 600 470" preserveAspectRatio="none">
+                    <path d="M150 100C230 100 230 230 300 230" pathLength="1" />
+                    <path d="M150 360C230 360 230 230 300 230" pathLength="1" />
+                    <path d="M450 230C390 230 370 230 300 230" pathLength="1" />
+                  </svg>
+                  <div class="connect-hub">
+                    <svg viewBox="0 0 64 64" fill="none">
+                      <path d={mark} stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </div>
+                  {[
+                    ["G", "Google Workspace", "sam@acme.co", "18"],
+                    ["M", "Microsoft 365", "sam.r@acme.co", "25"],
+                    ["@", "SMTP & IMAP", "hello@acme.co", "9"],
+                  ].map(([letter, provider, address, sent], slot) => (
+                    <div class={`inbox-card inbox-card-${slot}`}>
+                      <span class="inbox-monogram">{letter}</span>
+                      <span class="inbox-info">
+                        <strong>{address}</strong>
+                        <span>{provider}</span>
+                      </span>
+                      <span class="inbox-meter">
+                        <span class="inbox-meter-bar" style={`--fill: ${Number(sent) / 25}`} />
+                        <span class="inbox-meter-label">{sent} / 25 today</span>
+                      </span>
+                    </div>
+                  ))}
+                  <span class="scene-chip connect-chip">
+                    Warming up gently
+                  </span>
+                </div>
+              )}
+              {index === 1 && (
+                <div class="scene scene-import">
+                  <span class="scene-chip import-file">
+                    leads.csv · 1,248 people
+                  </span>
+                  <div class="sheet">
+                    <div class="sheet-row sheet-head">
+                      <span class="sheet-cell" style="--c: 0">first_name</span>
+                      <span class="sheet-cell" style="--c: 1">company</span>
+                      <span class="sheet-cell" style="--c: 2">role</span>
+                      <span class="sheet-cell" style="--c: 3">news</span>
+                    </div>
+                    {[
+                      ["Alex", "Northwind", "Partnerships", "Opening in Lisbon"],
+                      ["Priya", "Lumen Labs", "VP Sales", "Hiring 6 SDRs"],
+                      ["Jonas", "Kraftwerk", "COO", "New warehouse"],
+                      ["María", "Solano Foods", "Head of Growth", "Series B"],
+                      ["Tom", "Brightline", "Founder", "Launched EU"],
+                    ].map((cells, row) => (
+                      <div class="sheet-row" style={`--r: ${row}`}>
+                        {cells.map((cell) => (
+                          <span class="sheet-cell">{cell}</span>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                  <div class="merge-tags">
+                    {["first_name", "company", "role", "news"].map((tag, column) => (
+                      <span class="merge-tag" style={`--c: ${column}`}>
+                        {`{${tag}}`}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {index === 2 && (
+                <div class="scene scene-write">
+                  <div class="email-card email-card-b">
+                    <span class="email-version">Version B</span>
+                    <span class="email-b-subject">Subject: Partners for your Lisbon launch</span>
+                    <span class="email-b-body">Hi Alex, saw Northwind is opening in Lisbon…</span>
+                  </div>
+                  <div class="email-card">
+                    <div class="email-meta">
+                      <span>To</span>
+                      <strong>Alex Morgan</strong>
+                      <span class="email-version email-version-a">Version A</span>
+                    </div>
+                    <div class="email-meta">
+                      <span>Subject</span>
+                      <strong>
+                        Quick idea for{" "}
+                        <span class="token" style="--t: 0">
+                          <span class="token-key">{"{company}"}</span>
+                          <span class="token-value">Northwind</span>
+                        </span>
+                      </strong>
+                    </div>
+                    <div class="email-body">
+                      <p>
+                        Hi{" "}
+                        <span class="token" style="--t: 1">
+                          <span class="token-key">{"{first_name}"}</span>
+                          <span class="token-value">Alex</span>
+                        </span>
+                        ,
+                      </p>
+                      <p class="ai-line">
+                        <span class="ai-badge">
+                          <Glyph name="ai" /> AI first line
+                        </span>
+                        <span class="ai-text">
+                          <mark>Congrats on the Lisbon launch! A new market means a lot of new partners to find.</mark>
+                        </span>
+                      </p>
+                      <p>
+                        We help teams like{" "}
+                        <span class="token" style="--t: 2">
+                          <span class="token-key">{"{company}"}</span>
+                          <span class="token-value">Northwind</span>
+                        </span>{" "}
+                        meet the right partners without months of cold calls. Worth 15 minutes
+                        next week?
+                      </p>
+                    </div>
+                  </div>
+                  <span class="scene-chip write-chip">
+                    Only facts you picked
+                  </span>
+                </div>
+              )}
+              {index === 3 && (
+                <div class="scene scene-follow">
+                  <ol class="sequence">
+                    {[
+                      ["Day 1", "Intro", "Sent"],
+                      ["Day 3", "Follow-up", "Stopped"],
+                      ["Day 7", "Follow-up", "Stopped"],
+                      ["Day 12", "Last note", "Stopped"],
+                    ].map(([day, name, state], row) => (
+                      <li class={`sequence-step sequence-step-${row}`}>
+                        <span class="sequence-dot" />
+                        <span class="sequence-day">{day}</span>
+                        <span class="sequence-name">{name}</span>
+                        <span class="sequence-state">
+                          
+                          {state}
+                        </span>
+                        {row > 0 && (
+                          <svg class="sequence-strike" viewBox="0 0 300 20" preserveAspectRatio="none">
+                            <path d="M4 12C80 6 200 14 296 8" pathLength="1" />
+                          </svg>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                  <div class="reply-bubble">
+                    <span class="reply-avatar">AM</span>
+                    <span>
+                      <strong>Alex replied</strong>
+                      Love this. Are you free Tuesday?
+                    </span>
+                  </div>
+                  <span class="scene-chip follow-chip">
+                    Also paused for 2 coworkers at Northwind
+                  </span>
+                </div>
+              )}
+              {index === 4 && (
+                <div class="scene scene-inbox">
+                  <div class="inbox-sources">
+                    <span>sam@acme.co</span>
+                    <span>sam.r@acme.co</span>
+                    <span>hello@acme.co</span>
+                  </div>
+                  <div class="unified">
+                    <div class="unified-head">
+                      <Glyph name="inbox" /> All inboxes
+                      <span class="unified-count">6 new</span>
+                    </div>
+                    <ul class="unified-list">
+                      {[
+                        ["AM", "Alex Morgan", "Love this. Are you free Tuesday?", "Interested", "hot", 0, 0],
+                        ["CL", "Chen Li", "Out of office until the 14th.", "Out of office", "auto", 1, 3],
+                        ["TB", "Tom Becker", "Yes! Let’s find 20 minutes.", "Interested", "hot", 2, 1],
+                        ["KH", "Kora Health", "We received your request #4821.", "Auto-reply", "auto", 3, 4],
+                        ["PS", "Priya Shah", "Send the deck over, looks relevant.", "Interested", "hot", 4, 2],
+                      ].map(([initials, name, message, tag, tone, from, to]) => (
+                        <li class={`unified-item is-${tone}`} style={`--from: ${from}; --to: ${to}`}>
+                          <span class="unified-avatar">{initials}</span>
+                          <span class="unified-text">
+                            <strong>{name}</strong>
+                            <span>{message}</span>
+                          </span>
+                          <span class="unified-tag">{tag}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        ))
+      }
+    </div>
+  </div>
+</section>

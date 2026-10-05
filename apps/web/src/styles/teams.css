@@ -1,0 +1,183 @@
+/*
+ * What the team pages (/for/...) and the solutions page share: the morning it takes to start,
+ * drawn as one line with its stops, and the other teams at the foot of each page. Each team's own
+ * stylesheet brings the object its page is built on.
+ */
+
+/* ——— The first hour: one thick line, a stop for each step, the last one live. ——— */
+.hour-track {
+  --line-y: 4.6rem;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--stops), minmax(0, 1fr));
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  padding-top: 0.25rem;
+}
+.hour-track::before {
+  content: "";
+  position: absolute;
+  top: var(--line-y);
+  left: 0;
+  right: 0;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 3px;
+  background: var(--ink);
+  transform-origin: left;
+}
+.hour-stop {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 3.25rem auto auto;
+  align-content: start;
+  gap: 0.6rem;
+}
+.hour-time {
+  justify-self: start;
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+  color: var(--ink-2);
+  font-size: var(--text-micro);
+  font-weight: 600;
+}
+.hour-dot {
+  align-self: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 5px solid var(--ink);
+  border-radius: 50%;
+  background: var(--white);
+}
+.hour-stop.is-live .hour-dot {
+  border-color: var(--pink-hot);
+  background: var(--pink-hot);
+  box-shadow: 0 0 0 7px var(--pink-soft);
+}
+.hour-stop.is-live .hour-time {
+  background: var(--pink-soft);
+  color: var(--pink-ink);
+}
+.hour-title {
+  font-size: clamp(1.3rem, 1.8vw, 1.625rem);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+.hour-text {
+  max-width: 22rem;
+  color: var(--ink-2);
+  font-size: var(--text-small);
+  line-height: 1.55;
+}
+.motion .hour-track::before {
+  scale: 0 1;
+  transition: scale 1400ms var(--ease-draw) 150ms;
+}
+.motion .hour-track .hour-stop {
+  opacity: 0;
+  translate: 0 1rem;
+  transition:
+    opacity 600ms var(--ease-out),
+    translate 900ms var(--ease-settle);
+  transition-delay: calc(350ms + var(--i) * 260ms);
+}
+.motion .hour-track.is-in::before {
+  scale: 1 1;
+}
+.motion .hour-track.is-in .hour-stop {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* ——— The other teams: the same plan, drawn for other desks. ——— */
+.other-teams-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  margin-bottom: clamp(1.75rem, 3.5vw, 2.75rem);
+}
+.other-teams-head h2 {
+  font-size: clamp(2rem, 3.6vw, 3.25rem);
+  line-height: 1.02;
+}
+.other-teams-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  border-top: 1px solid var(--line);
+}
+.other-team {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) 1.25rem;
+  align-items: start;
+  gap: 1rem;
+  height: 100%;
+  padding: 1.4rem 1rem 1.5rem 0.25rem;
+  border-bottom: 1px solid var(--line);
+  transition: background-color var(--duration-ui) var(--ease-out);
+}
+.other-team > .glyph {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+.other-team-text {
+  display: grid;
+  gap: 0.3rem;
+}
+.other-team-name {
+  font-size: 1.1875rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.other-team-summary {
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+.other-team-arrow.glyph {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.25rem;
+  color: var(--ink-3);
+  transition:
+    translate 420ms var(--ease-out),
+    color var(--duration-ui) var(--ease-out);
+}
+.other-team:hover {
+  background: linear-gradient(var(--pink-mist), var(--pink-mist)) no-repeat;
+}
+.other-team:hover .other-team-arrow {
+  translate: 0.3rem 0;
+  color: var(--pink-deep);
+}
+
+@media (max-width: 860px) {
+  .hour-track {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+    padding-left: 2.75rem;
+  }
+  .hour-track::before {
+    top: 0.5rem;
+    bottom: 0.5rem;
+    left: 0.7rem;
+    right: auto;
+    width: 6px;
+    height: auto;
+    margin: 0;
+    transform-origin: top;
+  }
+  .motion .hour-track::before {
+    scale: 1 0;
+  }
+  .hour-stop {
+    grid-template-rows: auto;
+    gap: 0.4rem;
+  }
+  .hour-dot {
+    position: absolute;
+    top: 0.2rem;
+    left: -2.75rem;
+  }
+}

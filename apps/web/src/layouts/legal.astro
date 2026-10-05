@@ -1,0 +1,25 @@
+---
+import BinderTabs from "../components/binder-tabs.astro";
+import Page from "./page.astro";
+import "../styles/legal.css";
+
+/**
+ * The legal binder: every legal page opens under the tabs of the whole set, the page being read
+ * raised among them. The page's contents come from the page.
+ */
+interface Props {
+  title: string;
+  description: string;
+  /** The raised tab: `overview` or a document's name. */
+  current: string;
+}
+const { current, ...meta } = Astro.props;
+---
+
+<Page {...meta} class="company-page legal">
+  <Fragment slot="head"><slot name="head" /></Fragment>
+  <div class="container legal-desk">
+    <BinderTabs current={current} />
+    <div class="legal-sheet"><slot /></div>
+  </div>
+</Page>

@@ -1,0 +1,98 @@
+---
+import Closing from "../../components/closing.astro";
+import Faq from "../../components/faq.astro";
+import Marked from "../../components/marked.astro";
+import FirstHour from "../../components/teams/first-hour.astro";
+import OtherTeams from "../../components/teams/other-teams.astro";
+import RecruiterDesk from "../../components/teams/recruiter-desk.astro";
+import RecruiterHello from "../../components/teams/recruiter-hello.astro";
+import RecruiterInbox from "../../components/teams/recruiter-inbox.astro";
+import RecruiterWall from "../../components/teams/recruiter-wall.astro";
+import Page from "../../layouts/page.astro";
+import "../../styles/teams.css";
+import "../../styles/team-recruiters.css";
+
+/**
+ * Norbelys for recruiters, built on the "HELLO my name is" sticker: the headline greets every
+ * candidate by name and the visitor can write a tag of their own, the candidate's inbox shows why
+ * a note from a person beats a blast, every opening's replies check in at one desk, and the
+ * hiring team hangs on one badge wall. Every number is a product default; people, roles and
+ * messages are illustrative.
+ */
+const steps = [
+  {
+    text: "Google Workspace, Microsoft 365 or any SMTP inbox, in a few clicks. Candidates hear from you, at your own address.",
+    time: "9:00",
+    title: "Connect your inbox",
+  },
+  {
+    text: "Drop in the CSV from your ATS or sourcing tool. Every column becomes a merge field you can write with.",
+    time: "9:10",
+    title: "Import your candidates",
+  },
+  {
+    text: "A first note and two polite follow-ups, each with its own delay. Switch on AI first lines where you want them.",
+    time: "9:25",
+    title: "Write three short steps",
+  },
+  {
+    text: "A last check comes first: who gets it, the first email, the inbox it sends from and when it begins.",
+    time: "9:40",
+    title: "Start it",
+  },
+] as const;
+
+const questions = [
+  [
+    "Can I write from my own work address?",
+    "Yes. Connect your Google Workspace, Microsoft 365 or any SMTP and IMAP inbox, and candidates get the email from you, at your address. Their replies come back to that inbox and into Norbelys’s unified inbox.",
+  ],
+  [
+    "What happens when a candidate says no?",
+    "A reply is a reply. Yes, no or not now, an answer from a person stops their sequence in every campaign, so nobody gets a follow-up after they’ve answered. You take it from there.",
+  ],
+  [
+    "Does Norbelys find candidates?",
+    "No. You bring the list: a CSV from your ATS or sourcing tool, or people added through the API. Norbelys doesn’t sell contact data or search for people, so there are no credits to buy.",
+  ],
+  [
+    "Can hiring managers see the replies?",
+    "Yes. Add them as viewers: they can read every campaign and every reply in the workspace, and change nothing. Admins manage members, keys and settings, and the owner can hand the workspace over.",
+  ],
+  [
+    "Can candidates opt out?",
+    "Always. Every email carries a one-click unsubscribe that never expires. Once someone unsubscribes, no campaign writes to them again.",
+  ],
+  [
+    "Will follow-ups stop if they’re out of office?",
+    "No. Out-of-office notes and auto-replies are recognized and set aside, so the sequence carries on as planned. Only a reply from a person stops it.",
+  ],
+  [
+    "How personal is the first line?",
+    "As personal as the facts you allow. Switch on AI first lines for a step and Norbelys writes one per candidate from their company’s website, what’s public about them, like news and posts, and the columns in your list. If there’s nothing worth mentioning, your own text goes out instead.",
+  ],
+] as const;
+---
+
+<Page
+  title="Cold email for recruiters — Norbelys"
+  description="Write to every candidate by name, from your own inbox. Norbelys opens with a line about their work, follows up politely and stops when they reply. From $20 a month, AI included."
+  class="team team-recruiters"
+>
+  <RecruiterHello />
+  <RecruiterInbox />
+  <RecruiterDesk />
+  <RecruiterWall />
+  <FirstHour lead="Most of the setup is connecting what you already have. The rest is the note you’d write anyway, written once." steps={steps}>
+    Say hello by <Marked>ten</Marked><span class="pink">.</span>
+  </FirstHour>
+  <Faq questions={questions} />
+  <OtherTeams slug="recruiters" />
+  <Closing />
+</Page>
+
+<script>
+  import { startNametag } from "../../scripts/nametag";
+
+  startNametag();
+</script>

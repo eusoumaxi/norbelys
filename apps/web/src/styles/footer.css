@@ -1,0 +1,99 @@
+/* The footer: the whole map of the site, then the word itself. */
+.site-footer {
+  padding-top: clamp(4rem, 8vw, 6rem);
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+}
+.footer-top {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 3fr);
+  gap: 3rem clamp(2rem, 5vw, 4rem);
+}
+.footer-brand {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 1.25rem;
+}
+.footer-brand .brand {
+  width: 9rem;
+}
+.footer-brand p {
+  max-width: 16rem;
+  color: var(--ink-2);
+  font-size: var(--text-small);
+  line-height: 1.5;
+}
+.footer-nav {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 3rem 2rem;
+}
+.footer-heading {
+  margin-bottom: 1rem;
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.footer-nav ul {
+  display: grid;
+  gap: 0.65rem;
+}
+.footer-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  transition: color var(--duration-ui) var(--ease-out);
+}
+.footer-nav a:hover {
+  color: var(--pink-deep);
+}
+.footer-nav .glyph {
+  width: 0.7rem;
+  height: 0.7rem;
+  color: var(--ink-3);
+}
+.footer-word {
+  width: min(var(--page), 100% - var(--gutter) * 2);
+  margin: clamp(4rem, 8vw, 6rem) auto 0;
+}
+.footer-word svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  fill: var(--pink-deep);
+}
+.word-letter {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transition:
+    transform 650ms var(--ease-settle),
+    fill 300ms var(--ease-out);
+}
+.word-letter:hover {
+  fill: var(--pink-hot);
+  transform: translateY(-10%) rotate(-5deg);
+}
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 2rem;
+  padding-block: 1.5rem 2rem;
+  color: var(--ink-3);
+  font-size: var(--text-micro);
+}
+
+@media (max-width: 1100px) {
+  .footer-top {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 760px) {
+  .footer-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

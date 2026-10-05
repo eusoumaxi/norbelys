@@ -1,0 +1,100 @@
+---
+import Closing from "../../components/closing.astro";
+import Faq from "../../components/faq.astro";
+import Marked from "../../components/marked.astro";
+import AeBoard from "../../components/teams/ae-board.astro";
+import AeLedger from "../../components/teams/ae-ledger.astro";
+import AeQuiet from "../../components/teams/ae-quiet.astro";
+import AeScore from "../../components/teams/ae-score.astro";
+import AeTray from "../../components/teams/ae-tray.astro";
+import FirstHour from "../../components/teams/first-hour.astro";
+import OtherTeams from "../../components/teams/other-teams.astro";
+import Page from "../../layouts/page.astro";
+import "../../styles/teams.css";
+import "../../styles/team-account-executives.css";
+
+/**
+ * Norbelys for account executives, built on a chess board: everyone with a say in the deal is a
+ * piece, every email a move, and the first reply pauses the rest of their company. Then the
+ * follow-ups kept as a scoresheet, the inbox as the tray beside the board, the CRM as the book
+ * of record, and the half hour it takes to start. Every number is a product default; accounts,
+ * people and messages are illustrative.
+ */
+const steps = [
+  {
+    text: "Google Workspace, Microsoft 365 or any SMTP inbox, in a few clicks. Every email goes out from your own address.",
+    time: "9:00",
+    title: "Connect your inbox",
+  },
+  {
+    text: "Everyone with a say, from a CSV or one at a time. Every column becomes a field you can write with.",
+    time: "9:10",
+    title: "Add the account’s people",
+  },
+  {
+    text: "The recap, the one-pager, the nudge for legal. Each step gets its own delay and only sends inside your hours.",
+    time: "9:20",
+    title: "Write the follow-ups",
+  },
+  {
+    text: "Switch on “Stop their colleagues too”, then start. A last check comes first: who gets it, the first email, the inbox and when it begins.",
+    time: "9:30",
+    title: "Pause colleagues, then start",
+  },
+] as const;
+
+const questions = [
+  [
+    "What exactly does pausing colleagues do?",
+    "It’s a switch on each campaign, “Stop their colleagues too”, off until you turn it on. Then a reply from one person stops that campaign for everyone else in it at the same email domain. The person who replied is stopped in every campaign, as always.",
+  ],
+  [
+    "Do out-of-office replies pause anything?",
+    "No. Out-of-office notes and auto-replies are recognized and set aside, so the sequence carries on and nobody’s colleagues are paused. Only a reply from a person counts.",
+  ],
+  [
+    "Will the emails come from my own address?",
+    "Yes. Connect your own Google Workspace, Microsoft 365 or SMTP inbox and every step goes out from it. Replies come back to it, and into your Norbelys inbox, threaded.",
+  ],
+  [
+    "Does it sync with Salesforce or HubSpot?",
+    "Not natively, and we won’t pretend otherwise. Signed webhooks tell your CRM or automation tool about every reply, stop and send, and the REST API lets you add people from your CRM. You wire it once, with an automation tool or a little code.",
+  ],
+  [
+    "Can I send a one-off email from Norbelys?",
+    "Not yet. Norbelys sends sequences; for a single email, write from your inbox as usual. Mail, for one-off emails, is on the way.",
+  ],
+  [
+    "Does it book the meeting?",
+    "Not yet. The reply lands in your inbox and you take it from there. Meetings, for turning “let’s talk Thursday” into a booked call, is on the way.",
+  ],
+  [
+    "Can my manager see my threads?",
+    "If they’re in your workspace, yes. Every workspace has four roles: owner, admin, member and viewer. A manager can be an admin who runs it or a viewer who reads everything and changes nothing, and members can be limited to their own inboxes.",
+  ],
+] as const;
+---
+
+<Page
+  title="Cold email for account executives — Norbelys"
+  description="Write to everyone on the deal from your own inbox. Norbelys follows up on schedule, stops when someone replies and can pause their colleagues at the same company. From $20 a month, AI included."
+  class="team team-account-executives"
+>
+  <AeBoard />
+  <AeQuiet />
+  <AeScore />
+  <AeTray />
+  <AeLedger />
+  <FirstHour lead="Most of it is connecting what you already have. The rest is the follow-ups you’d write anyway." steps={steps}>
+    Your opening, in <Marked>half an hour</Marked><span class="pink">.</span>
+  </FirstHour>
+  <Faq questions={questions} />
+  <OtherTeams slug="account-executives" />
+  <Closing />
+</Page>
+
+<script>
+  import { startChessboard } from "../../scripts/chessboard";
+
+  startChessboard();
+</script>

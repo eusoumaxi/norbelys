@@ -1,0 +1,171 @@
+---
+/**
+ * The follow-ups after a first call, kept the way a chess player keeps a game: on a scoresheet.
+ * Your moves go down the white column, each with the day it goes out; what came back from
+ * Northwind goes down the black one. The out-of-office on move 2 is noted and changes nothing;
+ * the reply on move 3 gets the pink ring, the move planned after it is struck out, and the rest
+ * of the sheet stays blank. When the sheet scrolls into view the moves write themselves in, one
+ * after another. Beside it, the rules every sequence plays by, with the product's own limits.
+ * The account, its people and the emails are illustrative.
+ */
+interface Move {
+  readonly white: string;
+  readonly day: number;
+  /** What came back after this move: an auto-reply that changes nothing, or a person. */
+  readonly black?: "away" | "reply";
+}
+const moves: readonly Move[] = [
+  { day: 1, white: "Recap and next steps" },
+  { black: "away", day: 4, white: "The one-pager for your CFO" },
+  { black: "reply", day: 10, white: "Anything from legal?" },
+];
+/** The move that was planned next and never went out. */
+const unplayed = { day: 17, white: "One last nudge" } as const;
+/** The sheet has room for a long game; these lines stay empty. */
+const blank = [moves.length + 2, moves.length + 3] as const;
+
+const fields = [
+  { label: "Event", value: "Northwind, after the first call", wide: true },
+  { label: "White", value: "You", wide: false },
+  { label: "Black", value: "Head of RevOps", wide: false },
+  { label: "Hours", value: "Mon–Fri, 9 to 5, one time zone", wide: true },
+] as const;
+
+const notes = [
+  {
+    term: "Each step, its own delay.",
+    text: "Day 1, day 4, day 10, or whatever the deal needs. Every step waits as long as you tell it to.",
+  },
+  {
+    term: "Only inside your hours.",
+    text: "Pick the days and hours, for the campaign and for each inbox, in one time zone. Nothing lands at midnight.",
+  },
+  {
+    term: "Up to 50 steps.",
+    text: "Room for the middle game, not just the opening.",
+  },
+  {
+    term: "Up to 50 versions of any step.",
+    text: "A/B test the recap or the nudge: split evenly, by weight, or let replies pick the winner.",
+  },
+  {
+    term: "A reply ends it everywhere.",
+    text: "A reply from a person stops their sequence in this campaign and in every other one.",
+  },
+] as const;
+---
+
+<section class="page-section container score" aria-labelledby="score-title">
+  <div class="score-head">
+    <h2 id="score-title">Your moves, written down.</h2>
+    <p class="lead">
+      The recap, the one-pager, the nudge for legal. Write the follow-ups once and Norbelys plays
+      each one on its day, until they answer.
+    </p>
+  </div>
+
+  <figure class="score-sheet" data-inview>
+    <dl class="score-fields">
+      {
+        fields.map((field) => (
+          <div class:list={["score-field", { "score-field-wide": field.wide }]}>
+            <dt>{field.label}</dt>
+            <dd>{field.value}</dd>
+          </div>
+        ))
+      }
+    </dl>
+    <table class="score-table">
+      <caption class="sr-only">
+        A follow-up sequence after a first call with Northwind, as a chess scoresheet.
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col" class="score-n"><span class="sr-only">Move</span></th>
+          <th scope="col"><span class="score-swatch" aria-hidden="true"></span>White<span class="sr-only">: your emails</span></th>
+          <th scope="col"><span class="score-swatch score-swatch-black" aria-hidden="true"></span>Black<span class="sr-only">: what came back</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          moves.map((move, index) => (
+            <tr class="score-row" style={`--r: ${index}`}>
+              <th scope="row" class="score-n numeric">{index + 1}</th>
+              <td class="score-white">
+                <span class="score-cell">
+                  <span class="score-ink">{move.white}</span>
+                  <span class="score-day numeric">day {move.day}</span>
+                </span>
+              </td>
+              <td class:list={["score-black", move.black && `score-${move.black}`]}>
+                {move.black === "away" && (
+                  <span class="score-ink">
+                    Out of office<span class="score-aside">set aside</span>
+                  </span>
+                )}
+                {move.black === "reply" && (
+                  <span class="score-ink score-reply">
+                    Reply
+                    <svg class="score-ring" viewBox="0 0 120 44" preserveAspectRatio="none" aria-hidden="true">
+                      <path d="M70 6C38 3 8 9 6 22C4 35 34 41 64 40C94 39 116 32 114 19C112 8 86 3 52 6" pathLength="1" />
+                    </svg>
+                  </span>
+                )}
+                {!move.black && <span class="sr-only">No answer</span>}
+              </td>
+            </tr>
+          ))
+        }
+        <tr class="score-row score-unplayed" style={`--r: ${moves.length}`}>
+          <th scope="row" class="score-n numeric">{moves.length + 1}</th>
+          <td class="score-white">
+            <span class="score-cell">
+              <span class="score-ink score-struck">
+                <span class="sr-only">Never sent: </span>
+                {unplayed.white}
+                <svg class="score-strike" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+                  <path d="M2 8C30 4 68 7.5 98 4.5" pathLength="1" />
+                </svg>
+              </span>
+              <span class="score-day numeric">day {unplayed.day}</span>
+            </span>
+          </td>
+          <td class="score-black"></td>
+        </tr>
+        {
+          blank.map((number) => (
+            <tr class="score-row score-blank" aria-hidden="true">
+              <th scope="row" class="score-n numeric">{number}</th>
+              <td class="score-white" />
+              <td class="score-black" />
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+    <p class="score-result">
+      <span class="score-result-label">Result</span>
+      <span class="score-ink"><span class="pink">Reply</span> — game paused.</span>
+    </p>
+    <svg class="score-pencil" viewBox="0 0 320 64" fill="none" aria-hidden="true">
+      <path class="score-pencil-wood" d="M232 10L300 32L232 54Z" />
+      <path class="score-pencil-lead" d="M278 25L300 32L278 39Z" />
+      <path class="score-pencil-body" d="M70 10H232V54H70Z" />
+      <path class="score-pencil-facet" d="M80 32H222" />
+      <path class="score-pencil-band" d="M44 10H70V54H44Z" />
+      <path class="score-pencil-facet" d="M53 14V50M61 14V50" />
+      <path class="score-pencil-body" d="M18 10H44V54H18C11 54 6 49 6 42V22C6 15 11 10 18 10Z" />
+    </svg>
+  </figure>
+
+  <dl class="score-notes">
+    {
+      notes.map((note) => (
+        <div class="score-note">
+          <dt>{note.term}</dt>
+          <dd>{note.text}</dd>
+        </div>
+      ))
+    }
+  </dl>
+</section>

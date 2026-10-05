@@ -1,0 +1,97 @@
+---
+import Glyph from "../glyph.astro";
+import { PAGES } from "../../links";
+
+/**
+ * The CRM as the game's book of record: every move is written into it as it happens. Norbelys
+ * has no built-in CRM sync, and the section says so; its signed webhooks carry each start, send,
+ * reply and stop to your CRM or automation tool, and the REST API brings people the other way.
+ * The ledger is the week at Northwind as those events would record it, the reply in pink, a
+ * dotted move carrying it in. The event names are the API's own; times and people are
+ * illustrative.
+ */
+interface Entry {
+  readonly when: string;
+  readonly move: string;
+  readonly event: string;
+  readonly reply?: boolean;
+}
+const entries: readonly Entry[] = [
+  { event: "campaign.status_changed", move: "Northwind campaign started", when: "Mon 8:55" },
+  { event: "message.sent", move: "First email to 5 people at Northwind", when: "Mon 9:00" },
+  { event: "inbound_message.received", move: "Head of RevOps replied", reply: true, when: "Wed 11:40" },
+  { event: "enrollment.stopped", move: "Stopped for RevOps and 4 colleagues", when: "Wed 11:40" },
+];
+const routes = [
+  {
+    term: "Out, the moment it happens.",
+    text: "Signed webhooks for every reply, stop and send: 19 events, retried for about three days if your end is down.",
+  },
+  {
+    term: "In, whenever you like.",
+    text: "Add people from your CRM through the REST API and enroll them in a campaign, up to 6,000 requests a minute per workspace.",
+  },
+] as const;
+---
+
+<section class="page-section container ledger" aria-labelledby="ledger-title">
+  <div class="ledger-copy">
+    <h2 id="ledger-title">Your CRM stays the source of truth.</h2>
+    <p class="lead">
+      Norbelys doesn’t sync with Salesforce or HubSpot by itself. It reports every move as it
+      happens, and your CRM, or the automation tool in front of it, writes it down.
+    </p>
+    <dl class="ledger-routes">
+      {
+        routes.map((route) => (
+          <div class="ledger-route">
+            <dt>{route.term}</dt>
+            <dd>{route.text}</dd>
+          </div>
+        ))
+      }
+    </dl>
+    <a class="text-link" href={PAGES.developers}>Webhooks and the API <Glyph name="arrow" /></a>
+  </div>
+
+  <figure class="ledger-book" data-inview>
+    <div class="ledger-page">
+      <p class="ledger-title">
+        <strong>Northwind</strong>
+        <span>Activity, in your CRM</span>
+      </p>
+      <table class="ledger-table">
+        <caption class="sr-only">An example week at Northwind as your CRM records it, with the webhook event behind each line.</caption>
+        <thead>
+          <tr>
+            <th scope="col">When</th>
+            <th scope="col">Move</th>
+            <th scope="col">Event</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            entries.map((entry, index) => (
+              <tr class:list={["ledger-row", { "ledger-reply": entry.reply }]} style={`--l: ${index}`}>
+                <td class="ledger-when numeric">
+                  {entry.when}
+                  {entry.reply && (
+                    <svg class="ledger-wire" viewBox="0 0 120 20" fill="none" aria-hidden="true">
+                      {Array.from({ length: 7 }, (_, dot) => (
+                        <circle class="ledger-dot" cx={10 + dot * 16} cy="10" r="4.6" style={`--d: ${dot}`} />
+                      ))}
+                    </svg>
+                  )}
+                </td>
+                <td class="ledger-move">{entry.move}</td>
+                <td class="ledger-event">
+                  <code>{entry.event}</code>
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </figure>
+</section>

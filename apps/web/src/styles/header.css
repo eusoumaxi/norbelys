@@ -1,0 +1,400 @@
+/* The header and its menus. */
+.site-header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 50;
+  height: var(--header-height);
+  transition:
+    transform 500ms var(--ease-out),
+    background-color 300ms var(--ease-out),
+    box-shadow 300ms var(--ease-out);
+}
+.site-header.is-scrolled {
+  background: rgb(255 255 255 / 80%);
+  box-shadow: 0 1px 0 rgb(10 10 10 / 6%);
+  -webkit-backdrop-filter: saturate(1.6) blur(18px);
+  backdrop-filter: saturate(1.6) blur(18px);
+}
+.site-header.is-hidden {
+  transform: translateY(-100%);
+}
+.header-bar {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  gap: 2.5rem;
+}
+.header-brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+.header-brand .brand {
+  width: 8.5rem;
+  height: auto;
+}
+.header-nav {
+  flex: 1;
+}
+.header-nav ul {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2.5rem;
+  padding: 0 0.9rem;
+  border-radius: var(--radius-pill);
+  color: var(--ink-2);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  transition:
+    color var(--duration-ui) var(--ease-out),
+    background-color var(--duration-ui) var(--ease-out);
+}
+.nav-link:hover,
+.nav-trigger[aria-expanded="true"] {
+  background: var(--pink-mist);
+  color: var(--ink);
+}
+.nav-trigger .glyph {
+  width: 0.8rem;
+  height: 0.8rem;
+  transition: rotate 300ms var(--ease-out);
+}
+.nav-trigger[aria-expanded="true"] .glyph {
+  rotate: 180deg;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+.header-menu-button {
+  display: none;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: var(--mist);
+}
+.burger {
+  display: grid;
+  gap: 5px;
+  width: 1.1rem;
+}
+.burger span {
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+.burger span:last-child {
+  width: 70%;
+  justify-self: end;
+}
+
+/* The product menu: a white sheet under the header. */
+.mega-menu {
+  position: fixed;
+  inset: calc(var(--header-height) + 0.25rem) 0 auto;
+  width: min(48rem, 100vw - var(--gutter) * 2);
+  margin: 0 auto;
+  padding: 0.6rem;
+  border: 0;
+  border-radius: var(--radius-l);
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: var(--shadow-float);
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 260ms var(--ease-out),
+    transform 360ms var(--ease-out),
+    display 360ms allow-discrete,
+    overlay 360ms allow-discrete;
+}
+.mega-menu:not(:popover-open) {
+  opacity: 0;
+  transform: translateY(-0.5rem) scale(0.98);
+}
+@starting-style {
+  .mega-menu:popover-open {
+    opacity: 0;
+    transform: translateY(-0.5rem) scale(0.98);
+  }
+}
+.mega-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 0.6rem;
+}
+.mega-column {
+  padding: 0.9rem 0.6rem 0.6rem;
+}
+.mega-column-soon {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-m);
+  background: var(--cloud);
+}
+.mega-heading {
+  margin: 0 0 0.5rem 0.6rem;
+  color: var(--ink-3);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.mega-list {
+  display: grid;
+  gap: 0.15rem;
+}
+.mega-item {
+  display: grid;
+  grid-template-columns: 1.75rem 1fr;
+  align-items: start;
+  gap: 0.9rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: var(--radius-s);
+  transition: background-color var(--duration-ui) var(--ease-out);
+}
+.mega-item .glyph {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: 0.1rem;
+}
+a.mega-item:hover {
+  background: var(--pink-mist);
+}
+
+.mega-text {
+  display: grid;
+  gap: 0.1rem;
+}
+.mega-name {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.mega-summary {
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+.mega-item-soon .mega-item-soon .mega-name {
+  color: var(--ink-2);
+}
+.soon-label {
+  color: var(--pink-deep);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+.mega-developers {
+  display: grid;
+  gap: 0.15rem;
+  margin: auto 0.6rem 0.4rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+}
+.mega-developers .text-link {
+  color: var(--ink);
+}
+
+/* The solutions menu: the six teams two by two, and the way to all of them. */
+.mega-menu-teams {
+  width: min(52rem, 100vw - var(--gutter) * 2);
+}
+.mega-teams {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.mega-item[aria-current="page"] {
+  background: var(--pink-mist);
+}
+.mega-item[aria-current="page"] .mega-name::after {
+  content: "You’re here";
+  color: var(--pink-deep);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.mega-all {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  margin: 0.2rem 0.6rem 0.4rem;
+  padding: 0.95rem 0.75rem 0.55rem;
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+}
+.mega-all .text-link {
+  color: var(--ink);
+}
+.mega-all:hover .text-link::after {
+  scale: 1 1;
+}
+
+/* The mobile menu: the whole screen, white, with big words. */
+.mobile-menu {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0 0 2rem;
+  border: 0;
+  overflow-y: auto;
+  background: var(--white);
+  color: var(--ink);
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 260ms var(--ease-out),
+    transform 420ms var(--ease-out),
+    display 420ms allow-discrete,
+    overlay 420ms allow-discrete;
+}
+.mobile-menu:not(:popover-open) {
+  opacity: 0;
+  transform: translateY(-1.5rem);
+}
+@starting-style {
+  .mobile-menu:popover-open {
+    opacity: 0;
+    transform: translateY(-1.5rem);
+  }
+}
+.mobile-menu-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--header-height);
+}
+.mobile-close {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: var(--mist);
+}
+.mobile-nav {
+  display: grid;
+  gap: 1.75rem;
+  padding-top: 1rem;
+}
+.mobile-products {
+  display: grid;
+  gap: 0.15rem;
+}
+.mobile-product {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 3.25rem;
+  padding: 0.35rem 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.mobile-product .glyph {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+.mobile-product.is-soon {
+  color: var(--ink-3);
+}
+.mobile-product.is-soon .glyph-point {
+  fill: var(--pink-blush);
+}
+.mobile-teams {
+  display: grid;
+  gap: 0.35rem;
+}
+.mobile-heading {
+  padding-inline: 0.25rem;
+  color: var(--ink-3);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.mobile-heading a:hover {
+  color: var(--pink-deep);
+}
+.mobile-teams ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.15rem 1rem;
+}
+.mobile-team {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 3rem;
+  padding: 0.3rem 0.25rem;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+.mobile-team .glyph {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+.mobile-team[aria-current="page"] {
+  color: var(--pink-deep);
+}
+.mobile-links {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+.mobile-links a {
+  display: flex;
+  align-items: center;
+  min-height: 3.75rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 1.625rem;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+.mobile-start {
+  justify-self: start;
+}
+
+@media (max-width: 900px) {
+  .header-nav,
+  .header-sign-in {
+    display: none;
+  }
+  .header-menu-button {
+    display: grid;
+  }
+}
+@media (max-width: 420px) {
+  .mobile-teams ul {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 480px) {
+  .header-start {
+    display: none;
+  }
+  .header-brand .brand {
+    width: 7.5rem;
+  }
+}
+.mobile-close .glyph {
+  width: 1.1rem;
+  height: 1.1rem;
+}

@@ -1,0 +1,64 @@
+---
+/**
+ * What isn't in this exhibition, said the way a gallery says it: the patch of wall where a work
+ * would hang, its nail still in, and a label saying it's not on view, with what to do instead.
+ * No contact database, no dialer, and no meeting booking yet (Meetings is on the way).
+ */
+interface Absence {
+  readonly name: string;
+  readonly status: string;
+  readonly text: string;
+  /** The size of the patch it left on the wall, in the drawing's units. */
+  readonly width: number;
+  readonly height: number;
+  readonly soon?: boolean;
+}
+const absences: readonly Absence[] = [
+  {
+    height: 150,
+    name: "A contact database",
+    status: "Not on view",
+    text: "Bring your own list: a CSV from your CRM or a data provider, or send people in through the API.",
+    width: 200,
+  },
+  {
+    height: 190,
+    name: "A dialer",
+    status: "Not on view",
+    text: "Norbelys writes emails. It doesn’t make calls.",
+    width: 140,
+  },
+  {
+    height: 140,
+    name: "Meeting booking",
+    soon: true,
+    status: "Coming soon",
+    text: "Meetings is on the way. Until then the reply lands in your inbox and you book the call.",
+    width: 170,
+  },
+];
+---
+
+<section class="page-section container gallery-absent" aria-labelledby="absent-title">
+  <div class="split-head">
+    <h2 id="absent-title">Not in this exhibition.</h2>
+    <p class="lead">Norbelys does cold email and nothing else. Here’s what you’ll bring from elsewhere, for now.</p>
+  </div>
+  <ul class="gallery-gaps">
+    {
+      absences.map((absence) => (
+        <li class:list={["gallery-gap", { "is-soon": absence.soon }]}>
+          <svg class="gallery-gap-wall" viewBox={`0 0 ${absence.width} ${absence.height + 40}`} fill="none" aria-hidden="true" style={`--w: ${absence.width}`}>
+            <circle class="gallery-gap-nail" cx={absence.width / 2} cy="9" r="6.5" />
+            <rect class="gallery-gap-patch" x="2" y="42" width={absence.width - 4} height={absence.height - 4} rx="16" />
+          </svg>
+          <p class="frame-label gallery-gap-label">
+            <span class="frame-label-title">{absence.name}</span>
+            <span class="frame-label-line gallery-gap-status">{absence.status}</span>
+            <span class="frame-label-line">{absence.text}</span>
+          </p>
+        </li>
+      ))
+    }
+  </ul>
+</section>

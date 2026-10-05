@@ -1,0 +1,98 @@
+---
+import Closing from "../../components/closing.astro";
+import Faq from "../../components/faq.astro";
+import Marked from "../../components/marked.astro";
+import FirstHour from "../../components/teams/first-hour.astro";
+import GrowthDesk from "../../components/teams/growth-desk.astro";
+import GrowthPatch from "../../components/teams/growth-patch.astro";
+import GrowthSequencer from "../../components/teams/growth-sequencer.astro";
+import GrowthSpec from "../../components/teams/growth-spec.astro";
+import OtherTeams from "../../components/teams/other-teams.astro";
+import Page from "../../layouts/page.astro";
+import "../../styles/teams.css";
+import "../../styles/team-growth-teams.css";
+
+/**
+ * Norbelys for growth teams, built on the outbound mixing desk: versions are channels, weights
+ * are faders and replies are the meters that pick the winner. Then every step as a channel of a
+ * step sequencer, the desk's back panel patched into the team's own stack, the spec sheet of
+ * what each number counts, and the morning it takes to start. Every limit and default is the
+ * product's own; people, subject lines and numbers are illustrative.
+ */
+const steps = [
+  {
+    text: "Google Workspace, Microsoft 365 or any SMTP inbox. Then a key that can do what your role can, and nothing more.",
+    time: "9:00",
+    title: "Connect inboxes, make a key",
+  },
+  {
+    text: "Send people through the API, or drop in a CSV. Every column becomes a field you can write with.",
+    time: "9:05",
+    title: "Import your people",
+  },
+  {
+    text: "Up to 50 versions a step. Split them evenly, by weight, or let replies, clicks or opens pick the winner.",
+    time: "9:20",
+    title: "Add versions to each step",
+  },
+  {
+    text: "From the app, the API or the CLI. The sends go out from your inboxes, inside your hours.",
+    time: "9:30",
+    title: "Start the experiment",
+  },
+] as const;
+
+const questions = [
+  [
+    "How does the automatic winner work?",
+    "You choose what decides it: replies, clicks or opens. While the test runs, every version goes to as many people. Once the window has passed (a week by default) and each version has gone to enough people (100 by default), the best rate per email sent wins and goes to everyone left in that step. A tie goes to the version listed first, and you can name a winner yourself at any time.",
+  ],
+  [
+    "How many versions and steps can I test?",
+    "Up to 50 versions on every step, and up to 50 steps in a sequence, each with its own delay. Weights run from 1 to 100, and a version’s share is its weight over the total.",
+  ],
+  [
+    "Which events can I subscribe to?",
+    "All 19, each signed: message.queued, message.sent, message.failed, message.uncertain, message.cancelled, message.snippets_fallback, delivery_event.recorded, inbound_message.received, enrollment.stopped, enrollment.completed, campaign.status_changed, connection.health_changed, import.completed, export.completed, suppression.created, ai.budget_warning, ai.budget_exceeded, endpoint.test and webhook_endpoint.disabled. Replay an endpoint’s history or rotate its secret from the API.",
+  ],
+  [
+    "What are the API limits?",
+    "6,000 requests a minute per workspace, reported on every response. Every change takes an idempotency key, so a retry never sends a second email, lists page with cursors, and errors come back as problem details with a stable code.",
+  ],
+  [
+    "Can I run it from Claude?",
+    "Yes. The MCP server gives Claude and other MCP clients the same operations as the API, in the workspace you choose and only with the scopes you grant. There’s a CLI too, with every resource as a command.",
+  ],
+  [
+    "Do you count bot opens?",
+    "No. Open and click tracking is off until you turn it on, runs on your own tracking domain, and leaves bots out. Sent means the mail server accepted the email, and replies leave out auto-replies and out-of-office notes.",
+  ],
+  [
+    "Can I export everything?",
+    "Yes, any time: people and their history (messages, send attempts, delivery events and replies) as CSV or JSONL, from the app or the API.",
+  ],
+] as const;
+---
+
+<Page
+  title="Cold email for growth teams — Norbelys"
+  description="Test up to 50 versions of every step, split them evenly, by weight or let replies pick the winner, and pipe every event into your stack with signed webhooks, a REST API, SDKs, a CLI and an MCP server. $20 a month, everything included."
+  class="team team-growth-teams"
+>
+  <GrowthDesk />
+  <GrowthSequencer />
+  <GrowthPatch />
+  <GrowthSpec />
+  <FirstHour lead="Most of it is plumbing you already know: a key, a list and the versions you’d write anyway." steps={steps}>
+    First experiment by <Marked>half past nine</Marked><span class="pink">.</span>
+  </FirstHour>
+  <Faq questions={questions} />
+  <OtherTeams slug="growth-teams" />
+  <Closing />
+</Page>
+
+<script>
+  import { startMixer } from "../../scripts/mixer";
+
+  startMixer();
+</script>

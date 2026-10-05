@@ -1,0 +1,1381 @@
+/*
+ * Norbelys for founders: a gallery wall. The page is the wall, and replies hang on it in thick ink
+ * frames with round corners, each beside a museum label set in Outfit. The gallery's sold dot, in
+ * pink, marks the reply that became a conversation. Further in, the founder's own email hangs on
+ * an audio tour, the price list waits by the door, the docent answers questions and a placard
+ * says what isn't in this exhibition.
+ */
+
+.team-founders {
+  /* How far a frame's nail sits above its top edge. */
+  --wire: 34px;
+}
+
+/* ——— The frame: a moulding hung on a wire, a mat inside it, the work in the mat. ——— */
+.frame {
+  --edge: 13px;
+  --mat: 1.6rem;
+  position: relative;
+  isolation: isolate;
+  transform-origin: 50% calc(var(--wire) * -1);
+}
+.frame-line {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.frame-edge {
+  rx: 18px;
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: var(--edge);
+}
+.frame-wire {
+  stroke: var(--ink);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+}
+.frame-nail {
+  fill: var(--ink);
+}
+.frame-mat {
+  padding: calc(var(--edge) / 2 + var(--mat));
+}
+/* The work, in the mat's window: the window's edge is the frame's second, thinner line. */
+.frame-art {
+  --window: 4px;
+  position: relative;
+  border: var(--window) solid var(--ink);
+  border-radius: 0.5rem;
+  background: var(--white);
+}
+
+/* The museum label: the work's title, its medium, where it came from, and the sold dot. */
+.frame-label {
+  display: grid;
+  gap: 0.1rem;
+  width: fit-content;
+  max-width: 18rem;
+  margin-top: 1.5rem;
+  padding: 0.7rem 0.95rem 0.8rem;
+  border-radius: 0.5rem;
+  background: var(--white);
+  box-shadow:
+    0 1px 2px rgb(24 4 14 / 7%),
+    0 6px 18px rgb(24 4 14 / 6%);
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.frame-label-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.1rem;
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.frame-label-work {
+  display: grid;
+  gap: 0.1rem;
+}
+.frame-sold {
+  flex: none;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  background: var(--pink-hot);
+}
+
+/* ——— Hero: the headline lettered on the wall, a salon hang around it. ——— */
+.gallery-hero {
+  padding-top: calc(var(--header-height) + clamp(2rem, 4vw, 3.5rem));
+}
+.gallery-wall {
+  display: grid;
+  grid-template-columns: minmax(0, 29rem) minmax(0, 1fr) minmax(0, 12.5rem);
+  grid-template-areas:
+    "copy reply price"
+    "copy reply next"
+    "seq reply next";
+  align-items: start;
+  gap: 2.25rem clamp(2rem, 3.4vw, 3.25rem);
+}
+.gallery-copy {
+  grid-area: copy;
+  align-self: center;
+  display: grid;
+  gap: 1.5rem;
+  padding-bottom: 2rem;
+}
+.gallery-copy .page-actions {
+  margin-top: 0.5rem;
+}
+.gallery-piece {
+  margin: 0;
+  padding-top: calc(var(--wire) + 0.75rem);
+}
+.gallery-reply {
+  --d: 0;
+  grid-area: reply;
+}
+.gallery-price {
+  --d: 1;
+  grid-area: price;
+  margin-top: 1.75rem;
+}
+.gallery-next {
+  --d: 2;
+  grid-area: next;
+}
+.gallery-sequence {
+  --d: 3;
+  grid-area: seq;
+  justify-self: center;
+  width: min(100%, 21rem);
+}
+
+/* The first reply, as it arrived. */
+.frame-email {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.15rem 1.3rem 1.25rem;
+}
+.frame-email-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--line);
+}
+.frame-email-face {
+  display: grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--white);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.frame-email-who {
+  display: grid;
+  min-width: 0;
+  line-height: 1.3;
+}
+.frame-email-who strong {
+  overflow: hidden;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.frame-email-who span {
+  overflow: hidden;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.frame-email-time {
+  align-self: start;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+}
+.frame-email-subject {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.frame-email-body {
+  font-size: clamp(1.375rem, 1.9vw, 1.75rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.18;
+  text-wrap: balance;
+}
+.frame-email-sign {
+  color: var(--ink-2);
+}
+.frame-email-quote {
+  display: grid;
+  gap: 0.15rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+/* The price, small enough to hang by the door. */
+.frame-price .frame-mat {
+  --mat: 1rem;
+}
+.frame-price-art {
+  display: grid;
+  justify-items: center;
+  gap: 0.2rem;
+  padding: 0.85rem 0.75rem 0.9rem;
+  text-align: center;
+}
+.frame-price-amount {
+  font-size: 2.75rem;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+.frame-price-period {
+  max-width: 9rem;
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  line-height: 1.3;
+}
+
+/* The empty frame: a dashed mat until a reply is hung in it. */
+.frame-next .frame-mat {
+  --mat: 1rem;
+}
+.frame-next-art {
+  container-type: inline-size;
+  display: grid;
+  min-height: 12.5rem;
+  border: 0;
+}
+.frame-next-art > * {
+  grid-area: 1 / 1;
+}
+.frame-waiting {
+  position: relative;
+}
+.frame-dash {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.frame-dash rect {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: var(--window);
+  stroke-dasharray: 0.1 11;
+  stroke-linecap: round;
+}
+.frame-hung {
+  display: grid;
+  align-content: start;
+  gap: 0.9rem;
+  padding: 0.95rem 0.9rem;
+  border: var(--window) solid var(--ink);
+  border-radius: inherit;
+  background: var(--white);
+}
+.frame-hung-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.6rem;
+}
+.frame-hung .frame-email-face {
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.75rem;
+}
+.frame-hung-message {
+  font-size: 1.1875rem;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.22;
+}
+/* In a narrow frame the reply keeps its words and gives up the sender's initials. */
+@container (max-width: 9rem) {
+  .frame-hung {
+    padding: 0.8rem 0.7rem;
+  }
+  .frame-hung-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .frame-hung .frame-email-face {
+    display: none;
+  }
+  .frame-hung-message {
+    font-size: 1.0625rem;
+  }
+}
+.frame-hang-button {
+  position: absolute;
+  inset: -0.5rem;
+  z-index: 2;
+  border-radius: 1.85rem;
+  cursor: pointer;
+}
+.frame-hang-button:focus-visible {
+  outline-offset: 2px;
+}
+.frame-label-hint {
+  color: var(--pink-ink);
+  font-weight: 500;
+}
+
+/* The sequence: one step sent, the two after the reply struck through. */
+.frame-sequence .frame-mat {
+  --mat: 1rem;
+}
+.frame-steps {
+  display: grid;
+  padding: 0.35rem 1rem;
+}
+.frame-step {
+  display: grid;
+  grid-template-columns: 3rem 0.9rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.frame-step:last-child {
+  border-bottom: 0;
+}
+.frame-step-day {
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.frame-step-dot {
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 3.5px solid var(--ink);
+  border-radius: 50%;
+  background: var(--ink);
+}
+.frame-step.is-stopped .frame-step-dot {
+  background: var(--white);
+}
+.frame-step-name {
+  position: relative;
+  justify-self: start;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.frame-step.is-stopped .frame-step-name {
+  color: var(--ink-3);
+}
+.frame-strike {
+  position: absolute;
+  top: 56%;
+  left: -0.12em;
+  width: calc(100% + 0.24em);
+  height: 0.42em;
+  overflow: visible;
+  translate: 0 -50%;
+}
+.frame-strike path {
+  fill: none;
+  stroke: var(--pink);
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+.frame-step-state {
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.frame-step.is-stopped .frame-step-state {
+  color: var(--pink-ink);
+}
+
+/* Motion: each frame hangs a little askew, its nail goes in, the wire and moulding draw, the work
+   comes into focus, the label goes up beside it, and the sold dot goes on last. */
+.motion .frame {
+  rotate: var(--tilt);
+}
+.motion .gallery-hero .frame-nail {
+  transform-box: fill-box;
+  transform-origin: center;
+  scale: 0;
+  animation: frame-pop 420ms var(--ease-settle) calc(var(--d) * 260ms) forwards;
+}
+.motion .gallery-hero .frame-wire {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: frame-draw 420ms var(--ease-out) calc(120ms + var(--d) * 260ms)
+    forwards;
+}
+.motion .gallery-hero .frame-edge {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: frame-draw 1100ms var(--ease-draw) calc(260ms + var(--d) * 260ms)
+    forwards;
+}
+.motion .gallery-hero .frame-mat {
+  opacity: 0;
+  filter: blur(6px);
+  animation: frame-focus 700ms var(--ease-out) calc(900ms + var(--d) * 260ms)
+    forwards;
+}
+.motion .gallery-hero .frame-label {
+  opacity: 0;
+  translate: 0 0.4rem;
+  animation: frame-rise 600ms var(--ease-out) calc(1150ms + var(--d) * 260ms)
+    forwards;
+}
+.motion .gallery-hero .frame-strike path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: frame-draw 520ms var(--ease-out) 2050ms forwards;
+}
+.motion .gallery-hero .frame-step:last-child .frame-strike path {
+  animation-delay: 2300ms;
+}
+.motion .gallery-hero .gallery-reply .frame-sold {
+  scale: 0;
+  animation: frame-dot 640ms var(--ease-settle) 2700ms forwards;
+}
+.motion .gallery-hero .frame-label-work.is-new .frame-sold {
+  animation: frame-dot 640ms var(--ease-settle) 380ms backwards;
+}
+.motion .gallery-hero .frame-hung.is-new {
+  animation: frame-hang 760ms var(--ease-settle);
+}
+.motion .gallery-hero .frame-label-work.is-new {
+  animation: frame-rise 520ms var(--ease-out);
+}
+@keyframes frame-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes frame-pop {
+  to {
+    scale: 1;
+  }
+}
+@keyframes frame-focus {
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+@keyframes frame-rise {
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes frame-dot {
+  0% {
+    scale: 0;
+  }
+  55% {
+    scale: 1.35;
+  }
+  100% {
+    scale: 1;
+  }
+}
+@keyframes frame-hang {
+  from {
+    opacity: 0;
+    translate: 0 -1.25rem;
+    filter: blur(4px);
+  }
+}
+
+/* ——— The audio tour: one email hung on its own, its stops leading out to their notes. ——— */
+.gallery-room {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 2.5rem clamp(3.5rem, 7vw, 7.5rem);
+}
+.frame-tour .frame-mat {
+  --mat: 2rem;
+}
+.gallery-email {
+  display: grid;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+.gallery-email-head,
+.gallery-email-body,
+.gallery-email-foot {
+  display: grid;
+  padding: 1rem 1rem 1rem 1.5rem;
+}
+.gallery-email-head {
+  gap: 0.35rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9375rem;
+}
+.gallery-email-body {
+  gap: 0.95rem;
+  padding-block: 1.4rem;
+}
+.gallery-email-foot {
+  gap: 0.75rem;
+  padding-block: 1rem 1.15rem;
+  border-top: 1px solid var(--line);
+}
+/* Each line of the email, with a margin on its right where its stop sits. */
+.gallery-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 1.75rem;
+  align-items: start;
+  gap: 1.25rem;
+  margin-inline: -0.5rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.5rem;
+  transition: background-color var(--duration-ui) var(--ease-out);
+}
+.gallery-email-head .gallery-line {
+  grid-template-columns: 4.25rem minmax(0, 1fr) 1.75rem;
+  gap: 0.75rem;
+}
+.gallery-key {
+  color: var(--ink-3);
+}
+.gallery-value {
+  overflow-wrap: anywhere;
+}
+.gallery-subject {
+  font-weight: 600;
+}
+.gallery-text {
+  display: block;
+  max-width: 34rem;
+}
+.gallery-field {
+  position: relative;
+  padding: 0 0.2em;
+  border-radius: 0.3rem;
+  background: var(--mist);
+  box-shadow: inset 0 -2px 0 var(--line-strong);
+}
+/* Behind each field, the column it came from: shown while its note is in focus. */
+.gallery-field::before {
+  content: attr(data-field);
+  position: absolute;
+  bottom: calc(100% + 0.35rem);
+  left: 50%;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--white);
+  font-family: var(--font-code);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: nowrap;
+  opacity: 0;
+  translate: -50% 0.3rem;
+  transition:
+    opacity var(--duration-ui) var(--ease-out),
+    translate 400ms var(--ease-settle);
+  pointer-events: none;
+}
+.gallery-room[data-lit="2"] .gallery-field::before {
+  opacity: 1;
+  translate: -50% 0;
+}
+.gallery-ai-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.2rem;
+  color: var(--pink-deep);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.gallery-ai-tag .glyph {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+.gallery-ai {
+  padding: 0.1em 0.2em;
+  border-radius: 0.3rem;
+  background: var(--pink-mist);
+  box-shadow: inset 0 -2px 0 var(--pink-blush);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.gallery-followup {
+  display: flex;
+  align-items: center;
+  justify-self: start;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem 0.35rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.gallery-followup .glyph {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+.gallery-unsubscribe {
+  justify-self: start;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+/* A stop on the tour: the audio guide's number, in the email's margin. */
+.gallery-stop,
+.gallery-number {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--white);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transition:
+    background-color var(--duration-ui) var(--ease-out),
+    scale 400ms var(--ease-settle);
+}
+.gallery-stop {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: -0.05rem;
+  font-size: 0.8125rem;
+}
+.gallery-number {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 0.9375rem;
+}
+.gallery-notes {
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+  padding-top: calc(var(--wire) + 0.75rem);
+}
+.gallery-note {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  align-items: start;
+  gap: 1rem;
+  padding: 0.8rem 1rem 0.9rem 0.85rem;
+  border-radius: var(--radius-m);
+  cursor: default;
+  transition: background-color var(--duration-ui) var(--ease-out);
+}
+.gallery-note-text {
+  display: grid;
+  gap: 0.3rem;
+  padding-top: 0.2rem;
+}
+.gallery-note-title {
+  font-size: 1.1875rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+.gallery-note-body {
+  max-width: 30rem;
+  color: var(--ink-2);
+  font-size: var(--text-small);
+  line-height: 1.55;
+}
+/* The leader lines, from each stop out to its note. */
+.gallery-leaders {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.gallery-leaders path {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke var(--duration-ui) var(--ease-out);
+}
+.gallery-leaders circle {
+  fill: var(--ink);
+  transition: fill var(--duration-ui) var(--ease-out);
+}
+/* The note in focus, its stop, its line and its part of the email, lit together. */
+.gallery-note.is-lit {
+  background: var(--pink-mist);
+}
+.gallery-note.is-lit .gallery-number,
+.gallery-stop.is-lit {
+  background: var(--pink-deep);
+  scale: 1.08;
+}
+.gallery-line.is-lit {
+  background: var(--pink-mist);
+}
+.gallery-leaders path.is-lit {
+  stroke: var(--pink-deep);
+}
+.gallery-leaders circle.is-lit {
+  fill: var(--pink-deep);
+}
+.motion .gallery-leaders path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition:
+    stroke-dashoffset 900ms var(--ease-draw) calc(250ms + var(--k) * 150ms),
+    stroke var(--duration-ui) var(--ease-out);
+}
+.motion .gallery-room.is-in .gallery-leaders path {
+  stroke-dashoffset: 0;
+}
+.motion .gallery-leaders circle {
+  scale: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    scale 500ms var(--ease-settle) calc(250ms + var(--k) * 150ms),
+    fill var(--duration-ui) var(--ease-out);
+}
+.motion .gallery-room.is-in .gallery-leaders circle {
+  scale: 1;
+}
+.motion .gallery-note {
+  opacity: 0;
+  translate: 0.75rem 0;
+  transition:
+    opacity 600ms var(--ease-out) calc(650ms + var(--k) * 150ms),
+    translate 800ms var(--ease-settle) calc(650ms + var(--k) * 150ms),
+    background-color var(--duration-ui) var(--ease-out);
+}
+.motion .gallery-room.is-in .gallery-note {
+  opacity: 1;
+  translate: 0 0;
+}
+/* The tour's frame draws itself as the room comes into view, then the lines lead out of it. */
+.motion .gallery-tour-piece .frame-wire,
+.motion .gallery-tour-piece .frame-edge {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1200ms var(--ease-draw);
+}
+.motion .gallery-tour-piece .frame-wire {
+  transition-duration: 500ms;
+}
+.motion .gallery-room.is-in .gallery-tour-piece :is(.frame-wire, .frame-edge) {
+  stroke-dashoffset: 0;
+}
+
+/* ——— The price list: the printed sheet by the door, clipped to a nail. ——— */
+.gallery-prices {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: start;
+  gap: 3rem clamp(3rem, 7vw, 7rem);
+}
+.gallery-prices-head {
+  position: sticky;
+  top: calc(var(--header-height) + 2.5rem);
+  display: grid;
+  justify-items: start;
+  gap: 1.5rem;
+  padding-top: 4.5rem;
+}
+.gallery-prices-head .lead {
+  max-width: 27rem;
+}
+.gallery-prices-head .page-actions {
+  margin-top: 0.5rem;
+}
+.gallery-sheet-hang {
+  position: relative;
+  padding-top: 4.25rem;
+}
+.gallery-clip {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 1;
+  width: 7.5rem;
+  overflow: visible;
+  translate: -50% 0;
+}
+.gallery-clip-nail {
+  fill: var(--ink);
+}
+.gallery-clip-loop {
+  stroke: var(--ink);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.gallery-clip-body {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 7;
+}
+.gallery-sheet {
+  padding: clamp(2.25rem, 3.5vw, 3rem) clamp(1.5rem, 3.2vw, 3rem)
+    clamp(1.75rem, 3vw, 2.5rem);
+  border-radius: 0.75rem;
+  background: var(--white);
+  box-shadow:
+    0 0 0 1px rgb(24 4 14 / 4%),
+    var(--shadow-float);
+}
+.gallery-sheet-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 3px solid var(--ink);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.gallery-sheet-title {
+  color: var(--ink);
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.gallery-work {
+  display: grid;
+  grid-template-columns: 2rem auto minmax(1.5rem, 1fr) auto;
+  grid-template-areas:
+    "number name leader price"
+    ". detail detail .";
+  align-items: baseline;
+  gap: 0.15rem 0.75rem;
+  padding: 0.95rem 0 1rem;
+  border-bottom: 1px solid var(--line);
+}
+.gallery-work-number {
+  grid-area: number;
+  color: var(--ink-3);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.gallery-work-name {
+  grid-area: name;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+}
+/* The dotted leader a printed list runs from a work to its price. */
+.gallery-work-leader {
+  grid-area: leader;
+  align-self: end;
+  height: 4px;
+  margin-bottom: 0.35rem;
+  background: radial-gradient(
+      circle,
+      var(--ink-quiet) 1.15px,
+      transparent 1.5px
+    )
+    0 50% / 7px 4px repeat-x;
+}
+.gallery-work-price {
+  grid-area: price;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+.gallery-work-detail {
+  grid-area: detail;
+  max-width: 30rem;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.gallery-total {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  margin-top: 1.4rem;
+  padding-top: 1.25rem;
+  border-top: 3px solid var(--ink);
+}
+.gallery-total-name {
+  font-size: 1.1875rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.gallery-total-price {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ink-2);
+  font-size: 1.0625rem;
+  font-weight: 500;
+}
+.gallery-total-price .frame-sold {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.35rem;
+}
+.gallery-total-price strong {
+  color: var(--ink);
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+.gallery-total-note {
+  grid-column: 1 / -1;
+  color: var(--ink-3);
+  font-size: 0.875rem;
+}
+
+/* ——— The docent: the assistant's admission ticket, and an exchange with it. ——— */
+.gallery-docent {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: start;
+  gap: 3rem clamp(3rem, 7vw, 7rem);
+}
+.gallery-docent-copy {
+  display: grid;
+  justify-items: start;
+  gap: 1.75rem;
+}
+.gallery-docent-copy .lead {
+  max-width: 30rem;
+}
+/* A ticket: the stub torn along a perforation, a notch at each end of it. */
+.gallery-ticket {
+  width: min(100%, 28rem);
+  filter: drop-shadow(0 1px 1.5px rgb(24 4 14 / 8%))
+    drop-shadow(0 10px 18px rgb(24 4 14 / 8%));
+}
+.gallery-ticket-paper {
+  --stub: 5.75rem;
+  --notch: 0.8rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--stub);
+  border-radius: 1rem;
+  background: var(--white);
+  mask:
+    radial-gradient(
+        circle at calc(100% - var(--stub)) 0,
+        transparent var(--notch),
+        #000 calc(var(--notch) + 0.5px)
+      )
+      top / 100% 51% no-repeat,
+    radial-gradient(
+        circle at calc(100% - var(--stub)) 100%,
+        transparent var(--notch),
+        #000 calc(var(--notch) + 0.5px)
+      )
+      bottom / 100% 51% no-repeat;
+}
+.gallery-ticket-main {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.35rem 1.4rem 1.3rem;
+}
+.gallery-ticket-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.gallery-ticket-terms {
+  display: grid;
+  gap: 0.45rem;
+}
+.gallery-ticket-term {
+  display: grid;
+  grid-template-columns: 5.25rem minmax(0, 1fr);
+  gap: 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+.gallery-ticket-term dt {
+  color: var(--ink-3);
+}
+.gallery-ticket-fine {
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.gallery-ticket-stub {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.4rem;
+  margin-block: 1rem;
+  border-left: 2px dashed var(--line-strong);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.gallery-ticket-stub .glyph {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+.gallery-chat {
+  display: grid;
+  gap: 1.25rem;
+  margin: 0;
+  padding-top: 0.5rem;
+}
+.gallery-chat-thread {
+  display: grid;
+  gap: 1rem;
+}
+.gallery-chat-turn {
+  display: grid;
+  gap: 0.55rem;
+  max-width: 88%;
+}
+.gallery-chat-you {
+  justify-self: end;
+}
+.gallery-chat-you p {
+  padding: 0.75rem 1.05rem;
+  border-radius: 1.2rem 1.2rem 0.35rem;
+  background: var(--pink-deep);
+  color: var(--white);
+  line-height: 1.45;
+}
+/* The docent answers the way a wall label reads: short, exact, and saying what it did. */
+.gallery-chat-docent {
+  justify-self: start;
+  padding: 0.95rem 1.15rem 1.05rem;
+  border-radius: 0.5rem;
+  background: var(--white);
+  box-shadow:
+    0 1px 2px rgb(24 4 14 / 7%),
+    0 6px 18px rgb(24 4 14 / 6%);
+}
+.gallery-chat-docent p {
+  line-height: 1.5;
+}
+.gallery-chat-tool {
+  justify-self: start;
+}
+.gallery-chat-tool code {
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+  color: var(--ink-2);
+  font-family: var(--font-code);
+  font-size: 0.75rem;
+}
+.motion .gallery-chat-turn {
+  opacity: 0;
+  translate: 0 0.75rem;
+  transition:
+    opacity 500ms var(--ease-out) calc(200ms + var(--k) * 420ms),
+    translate 800ms var(--ease-settle) calc(200ms + var(--k) * 420ms);
+}
+.motion .gallery-chat.is-in .gallery-chat-turn {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* ——— Not in this exhibition: bare patches of wall, a nail in each, and their labels. ——— */
+.gallery-gaps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 3rem clamp(2rem, 4vw, 4rem);
+}
+.gallery-gap {
+  display: grid;
+  justify-items: start;
+}
+.gallery-gap-wall {
+  width: calc(var(--w) * 1px);
+  max-width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.gallery-gap-nail {
+  fill: var(--ink);
+}
+.gallery-gap-patch {
+  stroke: var(--ink-quiet);
+  stroke-width: 3;
+  stroke-dasharray: 0.1 11;
+  stroke-linecap: round;
+}
+.gallery-gap-label {
+  margin-top: 1.25rem;
+}
+.gallery-gap-status {
+  color: var(--ink-3);
+  font-weight: 600;
+}
+.gallery-gap.is-soon .gallery-gap-status {
+  color: var(--pink-ink);
+}
+
+/* ——— Narrower screens: the hang regroups, the tour's notes come under the email. ——— */
+
+/* A laptop: the same hang, with the headline and the small frames taking a little less wall. */
+@media (max-width: 1279px) {
+  .gallery-wall {
+    --wall-copy: minmax(0, min(29rem, 34vw));
+    --wall-side: minmax(0, min(12.5rem, 17vw));
+    grid-template-columns: var(--wall-copy) minmax(0, 1fr) var(--wall-side);
+    column-gap: clamp(1.75rem, 3vw, 3.25rem);
+  }
+  .frame-reply .frame-mat {
+    --mat: 1.25rem;
+  }
+  .frame-email {
+    padding-inline: 1.1rem;
+  }
+}
+
+/* A tablet: the words across the top, then a two-column hang. The tour, the price list and the
+   docent each stack. */
+@media (max-width: 999px) {
+  .gallery-hero {
+    padding-top: calc(var(--header-height) + clamp(1.5rem, 5vw, 2.5rem));
+  }
+  .gallery-wall {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    grid-template-areas:
+      "copy copy"
+      "reply price"
+      "reply next"
+      "seq next";
+    gap: 1.75rem clamp(1.5rem, 4vw, 2.5rem);
+  }
+  .gallery-copy {
+    align-self: start;
+    max-width: 36rem;
+    padding-bottom: 0.75rem;
+  }
+  .gallery-price {
+    justify-self: center;
+    width: min(100%, 12.5rem);
+    margin-top: 0;
+  }
+  .gallery-next {
+    justify-self: center;
+    width: min(100%, 14rem);
+  }
+
+  .gallery-room {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem;
+  }
+  .gallery-tour-piece {
+    justify-self: center;
+    width: min(100%, 44rem);
+  }
+  .gallery-notes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem 1.5rem;
+    padding-top: 0;
+  }
+  .motion .gallery-note {
+    translate: 0 0.75rem;
+  }
+
+  .gallery-prices {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .gallery-prices-head {
+    position: static;
+    padding-top: 0;
+  }
+  .gallery-sheet-hang {
+    justify-self: center;
+    width: min(100%, 44rem);
+  }
+
+  .gallery-docent {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .gallery-chat {
+    max-width: 40rem;
+  }
+}
+
+/* A phone: a salon hung down the wall. The words and the button first, then the first reply,
+   then the sequence, and the price beside the empty frame. */
+@media (max-width: 640px) {
+  .gallery-wall {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    grid-template-areas:
+      "copy copy"
+      "reply reply"
+      "seq seq"
+      "price next";
+    gap: 1.5rem 2rem;
+  }
+  .gallery-copy {
+    gap: 1.25rem;
+    padding-bottom: 0.25rem;
+  }
+  .gallery-sequence {
+    justify-self: end;
+    width: min(94%, 21rem);
+  }
+  /* The two small frames tilt towards each other, so they hang a step apart. */
+  .gallery-price {
+    justify-self: stretch;
+    width: auto;
+  }
+  .gallery-next {
+    justify-self: stretch;
+    width: auto;
+    margin-top: 2.75rem;
+  }
+  /* Kept in from the screen's edge, where its tilt swings the bottom corner. */
+  .frame-reply {
+    margin-inline: 0.4rem;
+  }
+  .frame-reply .frame-mat {
+    --mat: 1rem;
+  }
+  .frame-email {
+    gap: 0.8rem;
+    padding: 1rem 1rem 1.1rem;
+  }
+  .frame-price .frame-mat,
+  .frame-next .frame-mat,
+  .frame-sequence .frame-mat {
+    --mat: 0.75rem;
+  }
+  .frame-price-art {
+    padding-inline: 0.4rem;
+  }
+  .frame-price-amount {
+    font-size: 2.375rem;
+  }
+  .frame-next-art {
+    min-height: 11rem;
+  }
+  .frame-steps {
+    padding-inline: 0.85rem;
+  }
+  .frame-step {
+    grid-template-columns: 2.75rem 0.9rem minmax(0, 1fr) auto;
+    gap: 0.55rem;
+  }
+
+  /* The tour's email: each header field's name over its value, the stops still in the margin. */
+  .frame-tour .frame-mat {
+    --mat: 0.9rem;
+  }
+  .gallery-email {
+    font-size: 0.9375rem;
+  }
+  .gallery-email-head,
+  .gallery-email-body,
+  .gallery-email-foot {
+    padding-inline: 0.95rem 0.7rem;
+  }
+  .gallery-email-head {
+    gap: 0.55rem;
+  }
+  .gallery-line {
+    gap: 0.75rem;
+  }
+  .gallery-email-head .gallery-line {
+    grid-template-columns: minmax(0, 1fr) 1.75rem;
+    row-gap: 0;
+  }
+  .gallery-email-head .gallery-key {
+    grid-column: 1;
+    font-size: 0.8125rem;
+  }
+  .gallery-email-head .gallery-value {
+    grid-column: 1;
+  }
+  .gallery-email-head .gallery-stop {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+  }
+  .gallery-followup {
+    align-items: flex-start;
+    border-radius: 0.85rem;
+  }
+  .gallery-followup .glyph {
+    flex: none;
+    margin-top: 0.15rem;
+  }
+  .gallery-notes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .gallery-note {
+    gap: 0.85rem;
+    padding-inline: 0.5rem 0.75rem;
+  }
+
+  /* The price list: no room for the dotted leader, so each price sits at the end of its line. */
+  .gallery-sheet-hang {
+    padding-top: 3.75rem;
+  }
+  .gallery-clip {
+    width: 6.5rem;
+  }
+  .gallery-sheet {
+    padding: 2.25rem 1.15rem 1.5rem;
+  }
+  .gallery-work {
+    grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+    grid-template-areas:
+      "number name price"
+      ". detail detail";
+    column-gap: 0.6rem;
+  }
+  .gallery-work-leader {
+    display: none;
+  }
+  .gallery-total-price strong {
+    font-size: 2.125rem;
+  }
+
+  .gallery-ticket-paper {
+    --stub: 4.5rem;
+  }
+  .gallery-ticket-main {
+    padding: 1.2rem 1.1rem 1.15rem;
+  }
+  .gallery-ticket-term {
+    grid-template-columns: 4.75rem minmax(0, 1fr);
+    gap: 0.6rem;
+  }
+  .gallery-chat-turn {
+    max-width: 92%;
+  }
+
+  /* Not in this exhibition: each patch of wall beside its label, still at its own size. */
+  .gallery-gaps {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+  }
+  .gallery-gap {
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    align-items: center;
+    column-gap: 1.25rem;
+  }
+  .gallery-gap-wall {
+    justify-self: center;
+    width: calc(var(--w) * 0.5px);
+  }
+  .gallery-gap-label {
+    margin-top: 0;
+  }
+}

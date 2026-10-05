@@ -1,0 +1,96 @@
+---
+import Closing from "../../components/closing.astro";
+import Faq from "../../components/faq.astro";
+import Marked from "../../components/marked.astro";
+import FirstHour from "../../components/teams/first-hour.astro";
+import OtherTeams from "../../components/teams/other-teams.astro";
+import SdrBell from "../../components/teams/sdr-bell.astro";
+import SdrFloor from "../../components/teams/sdr-floor.astro";
+import SdrTodo from "../../components/teams/sdr-todo.astro";
+import Page from "../../layouts/page.astro";
+import "../../styles/teams.css";
+import "../../styles/team-sdrs.css";
+
+/**
+ * Norbelys for SDRs, built on the sales-floor bell: replies ring it, the busywork leaves the
+ * to-do list, the floor plan shows how a team shares one workspace, then the morning it takes to
+ * start. Every number is a product default; people and messages are illustrative.
+ */
+const steps = [
+  {
+    text: "Google Workspace, Microsoft 365 or any SMTP inbox, in a few clicks. Add a few and sending rotates between them.",
+    time: "9:00",
+    title: "Connect your inboxes",
+  },
+  {
+    text: "Drop in the CSV from your CRM or your data provider. Every column becomes a field you can write with.",
+    time: "9:10",
+    title: "Import your list",
+  },
+  {
+    text: "Each step gets its own delay and its own versions to test. Switch on AI first lines where you want them.",
+    time: "9:25",
+    title: "Write the sequence",
+  },
+  {
+    text: "A last check comes first: who gets it, the first email, the inboxes it sends from and when it begins.",
+    time: "9:45",
+    title: "Start it",
+  },
+] as const;
+
+const questions = [
+  [
+    "Can every rep send from their own inbox?",
+    "Yes. Each rep connects their own Google Workspace, Microsoft 365 or SMTP inboxes, and each campaign picks the addresses it sends from, each with its own daily cap and pace.",
+  ],
+  [
+    "What counts as a reply?",
+    "A message from a person. Out-of-office notes and auto-replies are recognized and set aside, so the sequence carries on. Rules catch bounces and unsubscribes before anything else looks.",
+  ],
+  [
+    "What if a prospect is in two reps’ campaigns?",
+    "A reply stops them in every campaign by default. And when a sequence ends, other campaigns wait 72 hours before writing to that person.",
+  ],
+  [
+    "Does it book the meeting for me?",
+    "Not yet. The reply lands in your inbox and you take it from there. Meetings, for turning “let’s talk” into a booked call, is on the way.",
+  ],
+  [
+    "Can my manager see my replies?",
+    "Yes. Everyone in the workspace reads the same unified inbox, so a teammate can pick up a thread while you’re out. Owners and admins also manage members, keys and settings.",
+  ],
+  [
+    "Will it burn my domain?",
+    "No tool can promise the inbox, and we won’t pretend to. Norbelys keeps you careful: 50 emails a day per inbox and 10 minutes apart by default, only inside your hours, an optional ramp for new inboxes and a check on every address before it sends.",
+  ],
+  [
+    "Where do the leads come from?",
+    "From you: a CSV from your CRM or a data provider, or the API. Norbelys doesn’t sell contact data, so there are no credits to buy.",
+  ],
+] as const;
+---
+
+<Page
+  title="Cold email for SDRs — Norbelys"
+  description="Norbelys sends your sequences from your own inboxes, follows up on schedule and stops when someone replies, so SDRs spend the day on conversations. From $20 a month, AI included."
+  class="team team-sdrs"
+>
+  <SdrBell />
+  <SdrTodo />
+  <SdrFloor />
+  <FirstHour lead="Most of the setup is connecting what you already have. The rest is the sequence you’d write anyway." steps={steps}>
+    Live before <Marked>lunch</Marked><span class="pink">.</span>
+  </FirstHour>
+  <Faq questions={questions} />
+  <OtherTeams slug="sdrs" />
+  <Closing />
+</Page>
+
+<script>
+  import { startBell } from "../../scripts/bell";
+  import { startTodo } from "../../scripts/todo";
+
+  startBell();
+  startTodo();
+</script>

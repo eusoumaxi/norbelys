@@ -1,0 +1,109 @@
+---
+import ArrowButton from "../arrow-button.astro";
+import Glyph from "../glyph.astro";
+import { GLYPHS } from "../../glyphs";
+import type { GlyphName } from "../../glyphs";
+import { START } from "../../links";
+import { TEAMS } from "../../solutions";
+
+/**
+ * The solutions page's opening: one sentence with a slot, "Cold email for ___", that turns through
+ * the teams Norbelys is built for. Each team brings the object its page is built on, drawn large
+ * beside the sentence; pointing at a team's link turns the slot to it. Without the script the
+ * sentence names the first team and every team is a link below it.
+ */
+
+/**
+ * What each object hangs from or stands on, drawn past the icon's own grid: the bell's chain and
+ * the badge's lanyard rise out of the picture, the frame hangs on its nail, the rest stand on the
+ * ground.
+ */
+const STAGING: Partial<Record<GlyphName, readonly string[]>> = {
+  badge: ["M24.5 -18L28 9", "M39.5 -18L36 9"],
+  bell: ["M32 -18V7"],
+  fader: ["M2 62H62"],
+  frame: ["M22 13L32 4L42 13"],
+  pawn: ["M2 62H62"],
+  report: ["M2 62H62"],
+};
+---
+
+<section class="page-hero slot-hero" aria-labelledby="solutions-title" data-slot-hero>
+  <div class="container slot-grid">
+    <div class="slot-copy">
+      <h1 id="solutions-title" class="page-title slot-title">
+        <span class="line">Cold email for</span>
+        <span class="slot-line" aria-hidden="true">
+          {
+            TEAMS.map((team, index) => (
+              <span class:list={["slot-word", { "is-on": index === 0 }]} data-slot-word={team.slug}>
+                <span class="slot-name">{team.name}</span><span class="pink">.</span>
+                <svg class="slot-mark" viewBox="0 0 100 12" preserveAspectRatio="none">
+                  <path d="M3 8.5C28 3.5 70 3 97 6.5" pathLength="1" />
+                </svg>
+              </span>
+            ))
+          }
+        </span>
+        <span class="sr-only">everyone who sells: {TEAMS.map((team) => team.name).join(", ")}.</span>
+      </h1>
+      <p class="lead page-lead">
+        One product and one price, drawn six ways. Find your desk, see how Norbelys fits the way
+        you already sell, and start the same afternoon.
+      </p>
+      <ul class="slot-teams" aria-label="Teams">
+        {
+          TEAMS.map((team, index) => (
+            <li>
+              <a class:list={["slot-team glyph-host", { "is-on": index === 0 }]} href={team.href} data-slot-link={team.slug}>
+                <Glyph name={team.glyph} />
+                {team.label.replace("For ", "")}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <div class="page-actions">
+        <ArrowButton href={START}>Start for $20/mo</ArrowButton>
+        <a class="button button-ghost" href="#desks">Compare the desks</a>
+      </div>
+    </div>
+
+    <div class="slot-stage" aria-hidden="true">
+      {
+        TEAMS.map((team, index) => {
+          const drawing = GLYPHS[team.glyph];
+          return (
+            <svg class:list={["slot-object", `slot-object-${team.glyph}`, { "is-on": index === 0 }]} viewBox="0 0 64 64" fill="none" data-slot-object={team.slug}>
+              <defs>
+                <linearGradient id={`slot-fade-${team.slug}`} gradientUnits="userSpaceOnUse" x1="0" x2="0" y1="-18" y2="6">
+                  <stop offset="0" stop-color="var(--ink)" stop-opacity="0" />
+                  <stop offset="1" stop-color="var(--ink)" />
+                </linearGradient>
+              </defs>
+              {STAGING[team.glyph]?.map((d) => (
+                <path class="slot-staging" d={d} pathLength="1" style={d.includes("-18") ? `stroke: url(#slot-fade-${team.slug})` : undefined} />
+              ))}
+              <g class="slot-body">
+                {drawing.lines.map((d) => (
+                  <path class="slot-line-path" d={d} pathLength="1" />
+                ))}
+                {"points" in drawing &&
+                  drawing.points.map(([cx, cy]) => <circle class="slot-point" cx={cx} cy={cy} r={"radius" in drawing ? drawing.radius : 5.5} />)}
+              </g>
+            </svg>
+          );
+        })
+      }
+      <p class="slot-caption">
+        {
+          TEAMS.map((team, index) => (
+            <span class:list={["slot-caption-text", { "is-on": index === 0 }]} data-slot-caption={team.slug}>
+              {team.summary}
+            </span>
+          ))
+        }
+      </p>
+    </div>
+  </div>
+</section>

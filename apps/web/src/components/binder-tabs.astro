@@ -1,0 +1,33 @@
+---
+import { documentUrl, getDocuments, LEGAL } from "../legal";
+
+/**
+ * The binder's tabs: its front page, then every legal document in order, on one rail. The page
+ * being read is the raised tab. On a narrow screen the rail scrolls sideways and opens on the
+ * current tab (scripts/binder.ts).
+ */
+interface Props {
+  /** `overview` for the front page, or a document's name. */
+  current: string;
+}
+const { current } = Astro.props;
+const documents = await getDocuments();
+const tabs = [
+  { href: LEGAL, id: "overview", label: "Overview" },
+  ...documents.map((document) => ({ href: documentUrl(document), id: document.id, label: document.data.tab })),
+];
+---
+
+<nav class="binder" aria-label="Legal documents" data-binder>
+  <ul>
+    {
+      tabs.map((tab) => (
+        <li>
+          <a href={tab.href} aria-current={tab.id === current ? "page" : undefined}>
+            {tab.label}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>

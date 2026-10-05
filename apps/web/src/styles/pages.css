@@ -1,0 +1,448 @@
+/*
+ * What the pages beyond the homepage share: a hero that clears the header, the section rhythm,
+ * a heading with its lead beside it, the fine print and the illustrated cards. Each page brings
+ * its own scenes, and draws its own pictures in the cards.
+ */
+
+:root {
+  --font-code:
+    ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, monospace;
+}
+
+/*
+ * Code, wherever it shows: highlighted at build time, coloured from the site's own palette. The
+ * colours live on the code itself, not the page, which stays white around it.
+ */
+.astro-code {
+  --astro-code-background: var(--ink);
+  --astro-code-foreground: #f4f4f5;
+  --astro-code-token-comment: #a1a1aa;
+  --astro-code-token-keyword: var(--pink);
+  --astro-code-token-string: var(--pink-blush);
+  --astro-code-token-string-expression: var(--pink-blush);
+  --astro-code-token-constant: #f9a8d4;
+  --astro-code-token-function: var(--white);
+  --astro-code-token-parameter: #e4e4e7;
+  --astro-code-token-punctuation: #a1a1aa;
+  --astro-code-token-link: var(--pink);
+}
+/* Shiki wraps each line in `.line`; the site's own `.line` (a headline's line) must not reach it. */
+.astro-code .line {
+  display: inline;
+}
+
+/* How far through a long page the reader is: a pink line across the top, driven by the scroll. */
+.read-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 60;
+  height: 3px;
+  background: var(--pink-hot);
+  transform-origin: left;
+  scale: 0 1;
+  pointer-events: none;
+}
+@supports (animation-timeline: scroll()) {
+  .motion .read-progress {
+    animation: read-progress linear both;
+    animation-timeline: scroll(root);
+  }
+}
+@keyframes read-progress {
+  to {
+    scale: 1 1;
+  }
+}
+
+.page-hero {
+  position: relative;
+  padding-top: calc(var(--header-height) + clamp(3rem, 7vw, 6rem));
+}
+.page-title {
+  font-size: var(--text-hero);
+  letter-spacing: var(--tracking-display);
+  line-height: 0.98;
+}
+.page-lead {
+  max-width: 34rem;
+}
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.85rem 1.25rem;
+}
+.page-section {
+  position: relative;
+  padding-top: var(--section-space);
+}
+.split-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  align-items: end;
+  gap: 1.5rem clamp(2rem, 6vw, 6rem);
+  margin-bottom: clamp(2.5rem, 5vw, 4rem);
+}
+.split-head .lead {
+  max-width: 28rem;
+  padding-bottom: 0.4rem;
+}
+.fine-print {
+  max-width: 34rem;
+  color: var(--ink-3);
+  font-size: var(--text-micro);
+  line-height: 1.6;
+}
+.fine-print a {
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 0.2em;
+}
+.fine-print a:hover {
+  color: var(--pink-deep);
+  text-decoration-color: currentcolor;
+}
+
+/* The company and legal pages: white like every page, opening just under the header. */
+.company-page {
+  padding: calc(var(--header-height) + clamp(1.25rem, 3vw, 2.5rem)) 0
+    clamp(4rem, 8vw, 7rem);
+}
+
+/* The company's signature (components/signature.astro): the mark drawn over the line, the name beneath. */
+.signature {
+  display: grid;
+  justify-items: start;
+  max-width: 19rem;
+}
+.signature-mark {
+  width: 5.25rem;
+  height: 5.25rem;
+  margin: 0 0 -0.85rem 1.25rem;
+  overflow: visible;
+  rotate: -7deg;
+}
+.signature-mark path {
+  stroke: var(--pink-deep);
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+.motion .signature[data-inview] .signature-mark path {
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1600ms var(--ease-draw) 150ms;
+}
+.motion .signature.is-in .signature-mark path {
+  stroke-dashoffset: 0;
+}
+.signature figcaption {
+  display: grid;
+  gap: 0.15rem;
+  width: 100%;
+  padding-top: 0.85rem;
+  border-top: 1.5px solid var(--ink);
+}
+.signature-name {
+  font-weight: 600;
+}
+.signature-detail {
+  color: var(--ink-3);
+  font-size: var(--text-micro);
+}
+
+/* Two sides of a question (who should pick which, what it does and doesn't): one hairline between. */
+.choose {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+}
+.choose-side {
+  display: grid;
+  align-content: start;
+  gap: 1.35rem;
+  padding: clamp(1.75rem, 3vw, 2.5rem) clamp(1.5rem, 3vw, 3rem) 0 0;
+}
+.choose-side + .choose-side {
+  padding-left: clamp(1.5rem, 3vw, 3rem);
+  border-left: 1px solid var(--line);
+}
+.choose-side h3 {
+  font-size: var(--text-h3);
+}
+.choose-side ul {
+  display: grid;
+  gap: 0.9rem;
+}
+.choose-side li {
+  position: relative;
+  max-width: 34rem;
+  padding-left: 1.5rem;
+  color: var(--ink-2);
+  font-size: var(--text-body);
+  line-height: 1.5;
+}
+.choose-side li::before {
+  content: "";
+  position: absolute;
+  top: 0.6em;
+  left: 0.15rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--ink-quiet);
+}
+.choose-us h3 {
+  color: var(--pink-deep);
+}
+.choose-us li::before {
+  background: var(--pink-hot);
+}
+
+/*
+ * A wide table's box is positioned so the screen-reader-only words inside it stay inside it
+ * instead of widening the page.
+ */
+.compare-table-wrap {
+  position: relative;
+}
+
+/* A cell's column name, repeated inside it for phones, where the table stacks into rows. */
+.cell-label {
+  display: none;
+}
+
+/* A table cell's answer: a pink check for yes, a quiet dash for no, or a few words. */
+.answer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.answer-yes .glyph {
+  width: 1.2rem;
+  height: 1.2rem;
+  color: var(--pink-deep);
+}
+.answer-no {
+  color: var(--ink-quiet);
+  font-weight: 600;
+}
+
+/*
+ * Illustrated cards: a heading, a line or two, and a small piece of the product drawn on white
+ * below them. Two to a row; three with `.tiles-three`, where a `.tile-wide` card takes two; or
+ * wide and narrow by turns with `.tiles-stagger`, where a narrow card takes two fifths of the
+ * row and a wide one three.
+ *
+ * A page's own stylesheet can load before this one, so a drawing that changes the scene's own
+ * spacing or columns names both classes (`.tile-scene.scene-window`) to win either way.
+ */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1rem, 2vw, 1.5rem);
+}
+.tiles-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.tiles-stagger {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.tile {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: clamp(1.5rem, 2.6vw, 2.25rem);
+  border-radius: var(--radius-xl);
+  background: var(--mist);
+}
+.tile-wide {
+  grid-column: span 2;
+}
+.tiles-stagger > .tile {
+  grid-column: span 2;
+}
+.tiles-stagger > .tile-wide {
+  grid-column: span 3;
+}
+.tile h3 {
+  font-size: clamp(1.4rem, 2vw, 1.875rem);
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+.tile > p {
+  max-width: 32rem;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.tile-scene {
+  display: grid;
+  align-self: end;
+  gap: 1rem;
+  min-width: 0;
+  margin-top: 1.25rem;
+  padding: 1.15rem 1.25rem;
+  border-radius: var(--radius-l);
+  background: var(--white);
+  box-shadow: var(--shadow-card);
+}
+.tile-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.tile-chip .glyph {
+  width: 1rem;
+  height: 1rem;
+}
+.tile-chip-pink {
+  background: var(--pink-soft);
+  color: var(--pink-ink);
+}
+.tile-switch {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.tile-face {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--white);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.tile-face-pink {
+  background: var(--pink-deep);
+}
+
+/* A dark page: ink ground, white words, the same pink; the header follows it until it opens. */
+.page-dark {
+  background: var(--ink);
+  color: var(--white);
+  color-scheme: dark;
+}
+.page-dark .astro-code {
+  --astro-code-background: #141416;
+}
+/* On ink, a pink-tinted shadow reads as a glow: a dark page's shadows are plain black. */
+:root:has(.page-dark) {
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 30%), 0 16px 32px rgb(0 0 0 / 35%);
+  --shadow-float: 0 2px 4px rgb(0 0 0 / 25%), 0 24px 56px rgb(0 0 0 / 45%);
+  --shadow-pink: 0 14px 34px rgb(0 0 0 / 40%);
+}
+.page-dark .lead,
+.page-dark .fine-print {
+  color: rgb(255 255 255 / 72%);
+}
+.page-dark .fine-print a {
+  color: var(--white);
+  text-decoration-color: rgb(255 255 255 / 35%);
+}
+.page-dark .fine-print a:hover {
+  color: var(--pink);
+  text-decoration-color: currentcolor;
+}
+.page-dark .site-header .header-brand,
+.page-dark .site-header .nav-link {
+  color: var(--white);
+}
+.page-dark .site-header .nav-link:hover,
+.page-dark .site-header .nav-trigger[aria-expanded="true"] {
+  background: rgb(255 255 255 / 10%);
+  color: var(--white);
+}
+.page-dark .site-header.is-scrolled {
+  background: rgb(10 10 10 / 78%);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 8%);
+}
+.page-dark .site-header .burger span {
+  background: var(--white);
+}
+.page-dark .site-header .header-menu-button {
+  background: rgb(255 255 255 / 10%);
+}
+.page-dark ::selection {
+  background: var(--pink-deep);
+  color: var(--white);
+}
+
+@media (max-width: 1180px) {
+  .tiles-stagger {
+    grid-template-columns: 1fr;
+  }
+  .tiles-stagger > .tile {
+    grid-column: auto;
+  }
+}
+/* A narrow card alone on a wide row: its words on the left, its drawing on the right. */
+@media (min-width: 761px) and (max-width: 1180px) {
+  .tiles-stagger > .tile:not(.tile-wide) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto 1fr;
+    column-gap: clamp(2rem, 5vw, 4rem);
+  }
+  .tiles-stagger > .tile:not(.tile-wide) > .tile-scene {
+    grid-row: 1 / -1;
+    grid-column: 2;
+    align-self: center;
+    margin-top: 0;
+  }
+}
+@media (max-width: 1100px) {
+  .tiles-three {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 1000px) {
+  .tiles:not(.tiles-three) {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 760px) {
+  .split-head {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 700px) {
+  .tiles-three {
+    grid-template-columns: 1fr;
+  }
+  .tile-wide {
+    grid-column: auto;
+  }
+}
+@media (max-width: 640px) {
+  .cell-label {
+    display: block;
+    margin-bottom: 0.2rem;
+    color: var(--ink-3);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .choose {
+    grid-template-columns: 1fr;
+  }
+  .choose-side + .choose-side {
+    margin-top: 2rem;
+    padding-left: 0;
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+}

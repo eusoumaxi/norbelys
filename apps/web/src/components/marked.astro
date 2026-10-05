@@ -1,0 +1,12 @@
+---
+/**
+ * A word underlined by hand in the brand's pink. The line draws itself when its heading
+ * (`data-inview`) scrolls into view; without motion it is simply there.
+ */
+interface Props {
+  d?: string;
+}
+const { d = "M3 8.5C28 3.5 70 3 97 6.5" } = Astro.props;
+---
+
+<span class="marked"><slot /><svg class="marked-line" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d={d} pathLength="1"></path></svg></span>

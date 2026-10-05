@@ -1,0 +1,51 @@
+---
+import Glyph from "./glyph.astro";
+import { PRODUCTS } from "../products";
+
+/** Everything the plan includes, as a list a buyer can scan, and what is on its way. */
+const live = PRODUCTS.filter((product) => !product.soon);
+const soon = PRODUCTS.filter((product) => product.soon);
+---
+
+<section id="products" class="products section" aria-labelledby="products-title">
+  <div class="container">
+    <div class="products-head">
+      <h2 id="products-title">
+        <span class="line">Everything you need.</span>
+        <span class="line">One price<span class="pink">.</span></span>
+      </h2>
+      <p class="lead">
+        No add-ons, no upsells, no surprise AI bill. You get the whole platform from day one.
+      </p>
+    </div>
+    <ul class="capabilities">
+      {
+        live.map((product) => (
+          <li>
+            <a class="capability glyph-host" href={product.href}>
+              <Glyph name={product.glyph} class="capability-glyph" />
+              <span class="capability-name">{product.name}</span>
+              <span class="capability-summary">{product.summary}</span>
+              <Glyph name="arrow" class="capability-go" />
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <div class="capabilities-soon">
+      <p>Coming soon</p>
+      <ul>
+        {
+          soon.map((product) => (
+            <li>
+              <Glyph name={product.glyph} />
+              <span>
+                <strong>{product.name}</strong> {product.summary}
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,170 @@
+/*
+ * The pages a person meets before the app: white, in the app's square corners, beside the
+ * brand's pink. The pink side draws the @ and lets replies land one after another, which is
+ * the whole point of the product. Every animation rests on its last frame for reduced motion.
+ */
+
+/* The page around them is white too, scrollbars and overscroll included. */
+html:has(.auth-page) {
+  color-scheme: light !important;
+  background: #fff;
+}
+html:has(.auth-page) body {
+  background: #fff;
+}
+
+.auth-pink {
+  background: #db2777;
+  color: #fff;
+}
+
+/* The @, drawn once and then travelled by a brighter dash. */
+.auth-mark {
+  pointer-events: none;
+  position: absolute;
+  z-index: -1;
+  stroke: rgb(255 255 255 / 0.16);
+}
+.auth-mark-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: auth-draw 1800ms var(--nb-ease-draw) 120ms forwards;
+}
+.auth-mark-comet {
+  stroke: rgb(255 255 255 / 0.4);
+  stroke-dasharray: 0.04 0.96;
+  stroke-dashoffset: 1.04;
+  animation: auth-comet 9s linear 2s infinite;
+}
+.auth-pink > .auth-mark {
+  top: -12%;
+  right: -24%;
+  width: 96%;
+}
+.auth-band .auth-mark {
+  top: -46%;
+  right: -56px;
+  width: 300px;
+}
+/* The band is small: the @ is drawn and stays still there. */
+.auth-band .auth-mark-comet {
+  display: none;
+}
+
+/* Replies landing: each card rises in at the top, steps down as newer ones arrive, then goes. */
+.auth-feed {
+  --reply-height: 104px;
+  --reply-step: calc(var(--reply-height) + 18px);
+  position: relative;
+  width: min(460px, 100%);
+  height: calc(var(--reply-step) * 3);
+}
+.auth-reply {
+  position: absolute;
+  inset: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  height: var(--reply-height);
+  padding: 18px;
+  background: #fff;
+  color: #131313;
+  box-shadow:
+    0 2px 6px rgb(80 7 36 / 0.22),
+    0 24px 48px -18px rgb(80 7 36 / 0.5);
+  opacity: 0;
+  animation: auth-feed 14s var(--nb-ease-out) infinite;
+  animation-delay: calc(var(--i) * -3.5s);
+}
+.auth-reply-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  background: #fce7f3;
+  color: #9d174d;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+}
+.auth-reply-tag {
+  flex: none;
+  padding: 3px 8px;
+  background: #fce7f3;
+  color: #9d174d;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+@keyframes auth-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes auth-comet {
+  to {
+    stroke-dashoffset: 0.04;
+  }
+}
+@keyframes auth-feed {
+  0% {
+    opacity: 0;
+    transform: translateY(-28px);
+  }
+  5%,
+  25% {
+    opacity: 1;
+    transform: none;
+  }
+  30%,
+  50% {
+    opacity: 1;
+    transform: translateY(var(--reply-step));
+  }
+  55%,
+  75% {
+    opacity: 1;
+    transform: translateY(calc(var(--reply-step) * 2));
+  }
+  80%,
+  100% {
+    opacity: 0;
+    transform: translateY(calc(var(--reply-step) * 3));
+  }
+}
+
+/* The code's six squares: the one being typed shows a caret. */
+.auth-caret {
+  width: 2px;
+  height: 28px;
+  background: #db2777;
+  animation: auth-blink 1s steps(1) infinite;
+}
+@keyframes auth-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-mark-line {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+  .auth-mark-comet {
+    display: none;
+  }
+  .auth-reply {
+    opacity: 1;
+    transform: translateY(calc(var(--reply-step) * var(--i)));
+    animation: none;
+  }
+  .auth-reply:last-child {
+    display: none;
+  }
+  .auth-caret {
+    animation: none;
+  }
+}

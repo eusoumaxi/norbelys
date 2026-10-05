@@ -1,0 +1,48 @@
+---
+import { markPath } from "../../../../brand/geometry";
+import { TEAMS } from "../solutions";
+
+/**
+ * Who Norbelys is for, in letters as big as the page allows, drifting past as the page scrolls.
+ * Each role leads to its own page; only the first copy of the first row is reachable by keyboard
+ * and read aloud, the drifting copies are the same links for a pointer.
+ */
+const roles = ["sdrs", "founders", "agencies", "account-executives", "recruiters", "growth-teams"]
+  .map((slug) => TEAMS.find((team) => team.slug === slug))
+  .filter((team) => team !== undefined)
+  .map((team) => ({ href: team.href, name: team.name.charAt(0).toUpperCase() + team.name.slice(1) }));
+const mark = markPath();
+---
+
+<section class="audience" aria-labelledby="audience-title" data-scene>
+  <div class="container audience-head">
+    <h2 id="audience-title" class="audience-title">Made for people who sell</h2>
+  </div>
+  <div class="marquee" data-marquee>
+    {
+      [0, 1].map((row) => (
+        <div class:list={["marquee-row", { "marquee-row-outline": row === 1 }]} aria-hidden={row === 1 ? "true" : undefined}>
+          <div class="marquee-track">
+            {[0, 1].map((copy) => {
+              const hidden = copy === 1 || row === 1;
+              return (
+                <ul class="marquee-group" aria-hidden={hidden ? "true" : undefined}>
+                  {(row === 0 ? roles : [...roles].reverse()).map((role) => (
+                    <li>
+                      <a class="marquee-link" href={role.href} tabindex={hidden ? "-1" : undefined}>
+                        {role.name}
+                      </a>
+                      <svg class="marquee-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                        <path d={mark} stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </li>
+                  ))}
+                </ul>
+              );
+            })}
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</section>

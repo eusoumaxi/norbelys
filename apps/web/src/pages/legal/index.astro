@@ -1,0 +1,190 @@
+---
+import { render } from "astro:content";
+import Glyph from "../../components/glyph.astro";
+import Marked from "../../components/marked.astro";
+import Signature from "../../components/signature.astro";
+import Legal from "../../layouts/legal.astro";
+import { COMPANY, INBOXES, mailto } from "../../company";
+import { documentUrl, formatLongDate, getDocuments, latest, readingMinutes, splitHeading } from "../../legal";
+import { SOURCE } from "../../links";
+
+/**
+ * The binder's front page: how the set is written (the usual clause struck through line by line,
+ * ours written in its place on blush, the way the record of changes marks words), every document
+ * with its version, the promises the documents make with the clause that makes each one binding,
+ * and who the reader is dealing with.
+ */
+const documents = await getDocuments();
+/** The day the set last changed: the newest version of any document. */
+const newest = new Date(Math.max(...documents.map((document) => latest(document).effective.valueOf())));
+
+/** Every clause in the set, by document and anchor, so a promise always names its real number. */
+const rendered = await Promise.all(documents.map(async (document) => ({ document, ...(await render(document)) })));
+const clauses = new Map<string, { href: string; label: string }>();
+for (const { document, headings } of rendered) {
+  for (const heading of headings.filter((entry) => entry.depth === 2)) {
+    clauses.set(`${document.id}#${heading.slug}`, {
+      href: `${documentUrl(document)}#${heading.slug}`,
+      label: `${document.data.tab}, section ${splitHeading(heading.text).number}`,
+    });
+  }
+}
+const binding = (clause: string): { href: string; label: string } => {
+  const found = clauses.get(clause);
+  if (!found) {
+    throw new Error(`The promise points at ${clause}, which no document has`);
+  }
+  return found;
+};
+const promises = [
+  ["We don’t sell personal data, and we never use it for ads.", "privacy#how-we-use-personal-data"],
+  [`Your workspace lives in the EU, on servers in ${COMPANY.regions}.`, "privacy#where-your-data-lives"],
+  ["Nobody trains AI models on your data, or on the people you email.", "privacy#ai"],
+  ["Delete a workspace and everything in it is erased 30 days later.", "dpa#return-and-deletion"],
+  ["If a breach touches your data, you hear from us within 48 hours.", "dpa#security-incidents"],
+  ["Changes that matter come with 30 days’ notice, and every change is shown.", "terms#changes-to-these-terms"],
+].map(([text = "", clause = ""]) => ({ text, ...binding(clause) }));
+
+/** A clause the way most contracts write it, line by line, for the demonstration to strike. */
+const legalese = [
+  "Notwithstanding anything herein,",
+  "the Company may disclose Personal",
+  "Information to affiliates, partners",
+  "and other third parties for any",
+  "legitimate business purpose.",
+] as const;
+
+const desks = new Set(["legal", "privacy", "security", "abuse"]);
+const inboxes = INBOXES.filter((inbox) => desks.has(inbox.id));
+---
+
+<Legal
+  title="Legal — Norbelys"
+  description="Norbelys’s Privacy Policy, Terms of Service, DPA, Acceptable Use Policy and sub-processors, each clause with a summary in plain words. Norbelys is made by Xuxil, Inc."
+  current="overview"
+>
+  <header class="legal-cover">
+    <div class="legal-cover-copy">
+      <h1 class="legal-title" data-inview>
+        <span class="line">Legal, in</span>
+        <span class="line"><Marked>plain</Marked> words<span class="pink">.</span></span>
+      </h1>
+      <p class="lead">
+        Norbelys is made by {COMPANY.name}, {COMPANY.incorporation}. These documents say what you agree
+        to when you use it and what we promise in return. Every clause has a short version beside it:
+        the short version helps you read, the clause is what counts.
+      </p>
+    </div>
+    <figure class="plain" data-inview>
+      <p class="plain-before">
+        <del>
+          {
+            legalese.map((line, index) => (
+              <span class="plain-line" style={`--k: ${index}`}>
+                {line}
+                <svg class="plain-strike" viewBox="0 0 400 40" preserveAspectRatio="none" aria-hidden="true">
+                  <path d={index % 2 === 0 ? "M6 24C90 14 210 26 394 14" : "M6 16C120 26 250 12 394 22"} pathLength="1"></path>
+                </svg>
+              </span>
+            ))
+          }
+        </del>
+      </p>
+      <p class="plain-after"><ins>We don’t sell your data, or the data of the people you email.</ins></p>
+      <figcaption>The usual clause, struck through. Ours, written in its place.</figcaption>
+    </figure>
+  </header>
+
+  <section class="legal-part" aria-labelledby="documents-title">
+    <div class="legal-part-head">
+      <h2 id="documents-title">The documents</h2>
+      <p>Last updated <time datetime={newest.toISOString().slice(0, 10)}>{formatLongDate(newest)}</time>.</p>
+    </div>
+    <ol class="legal-index">
+      {
+        documents.map((document) => {
+          const revision = latest(document);
+          return (
+            <li>
+              <a class="legal-index-link" href={documentUrl(document)}>
+                <span class="legal-index-name">{document.data.title}</span>
+                <span class="legal-index-summary">{document.data.summary}</span>
+                <span class="legal-index-meta">
+                  Version {revision.version} · {formatLongDate(revision.effective)} · {readingMinutes(document)} min read
+                </span>
+                <span class="legal-index-go" aria-hidden="true">
+                  <Glyph name="arrow" />
+                </span>
+              </a>
+            </li>
+          );
+        })
+      }
+    </ol>
+  </section>
+
+  <section class="legal-part" aria-labelledby="promises-title">
+    <div class="legal-part-head">
+      <h2 id="promises-title">What we promise</h2>
+      <p>Each promise links to the clause that makes it binding.</p>
+    </div>
+    <ul class="legal-promises">
+      {
+        promises.map((promise) => (
+          <li>
+            <Glyph name="check" />
+            <p>{promise.text}</p>
+            <a class="legal-promise-clause" href={promise.href}>
+              {promise.label}
+              <Glyph name="arrow" />
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="legal-part" aria-labelledby="company-title">
+    <div class="legal-part-head">
+      <h2 id="company-title">Who you’re dealing with</h2>
+      <p>The company behind Norbelys, and where to write.</p>
+    </div>
+    <div class="legal-company">
+      <dl class="legal-company-facts">
+        <div>
+          <dt>Company</dt>
+          <dd>{COMPANY.name}</dd>
+        </div>
+        <div>
+          <dt>Incorporated in</dt>
+          <dd>{COMPANY.state}, {COMPANY.country}</dd>
+        </div>
+        <div>
+          <dt>Post</dt>
+          <dd>{COMPANY.address.map((line) => <span class="line">{line}</span>)}</dd>
+        </div>
+        <div>
+          <dt>Source code</dt>
+          <dd>
+            <a href={SOURCE}>Apache License 2.0 <Glyph name="external" /></a>
+            <span class="legal-company-note">The name and logo stay ours.</span>
+          </dd>
+        </div>
+      </dl>
+      <ul class="legal-desks">
+        {
+          inboxes.map((inbox) => (
+            <li>
+              <span class="legal-desk-team">{inbox.team}</span>
+              <a href={mailto(inbox.address, inbox.subject)}>{inbox.address}</a>
+              <span class="legal-desk-for">{inbox.for}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+    <div class="legal-cover-sign">
+      <Signature date={newest} />
+    </div>
+  </section>
+</Legal>

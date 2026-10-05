@@ -1,0 +1,134 @@
+---
+import { WORDMARK } from "../../../../brand/geometry";
+import ArrowButton from "./arrow-button.astro";
+import Brand from "./brand.astro";
+import Glyph from "./glyph.astro";
+import { APP, BLOG, COMPARISONS, DEVELOPERS, DOCS, PAGES, SOLUTIONS, SOURCE, START } from "../links";
+
+/**
+ * The footer: the published pages of the site, then the word
+ * itself as large as the page allows.
+ */
+interface Column {
+  readonly title: string;
+  readonly links: readonly (readonly [string, string])[];
+}
+const columns: readonly Column[] = [
+  {
+    links: [
+      ["Campaigns", PAGES.campaigns],
+      ["Sequences", PAGES.sequences],
+      ["AI personalization", PAGES.aiPersonalization],
+      ["MCP server", PAGES.mcp],
+      ["Pricing", "/#pricing"],
+    ],
+    title: "Product",
+  },
+  {
+    links: SOLUTIONS,
+    title: "Solutions",
+  },
+  {
+    links: COMPARISONS.map(([name, href]) => [`Norbelys vs ${name}`, href] as const),
+    title: "Compare",
+  },
+  {
+    links: [
+      ["Blog", BLOG],
+      ["Docs", DOCS],
+    ],
+    title: "Resources",
+  },
+  {
+    links: [
+      ["For developers", PAGES.developers],
+      ["API reference", DEVELOPERS],
+      ["Webhooks", PAGES.webhooks],
+      ["MCP", PAGES.mcp],
+      ["CLI", PAGES.cli],
+      ["GitHub", SOURCE],
+    ],
+    title: "Developers",
+  },
+  {
+    links: [
+      ["About", PAGES.about],
+      ["Contact", PAGES.contact],
+      ["Sign in", APP],
+    ],
+    title: "Company",
+  },
+  {
+    links: [
+      ["Privacy policy", PAGES.privacy],
+      ["Terms of service", PAGES.terms],
+      ["DPA", PAGES.dpa],
+      ["Acceptable use", PAGES.acceptableUse],
+      ["Sub-processors", PAGES.subprocessors],
+    ],
+    title: "Legal",
+  },
+];
+const external = (href: string): boolean => href.startsWith("https://");
+const year = new Date().getFullYear();
+// The wordmark's own box: from its ascenders' top to its descender, across its advance.
+const word = { height: 60, width: Math.ceil(WORDMARK.width), y: 11 };
+// The wordmark, letter by letter: each outline with the counters that sit inside it.
+const outlines = WORDMARK.d
+  .split(/(?=M)/u)
+  .map((d) => {
+    const xs = (d.match(/-?\d+(?:\.\d+)?/gu) ?? [])
+      .map(Number)
+      .filter((_, index) => index % 2 === 0);
+    return { d, max: Math.max(...xs), min: Math.min(...xs) };
+  })
+  .toSorted((a, b) => a.min - b.min);
+const groups: { d: string; max: number; min: number }[] = [];
+for (const outline of outlines) {
+  const last = groups.at(-1);
+  if (last && outline.min >= last.min && outline.max <= last.max) {
+    last.d += outline.d;
+  } else {
+    groups.push({ ...outline });
+  }
+}
+const letters = groups.map((letter) => letter.d);
+---
+
+<footer class="site-footer">
+  <div class="container footer-top">
+    <div class="footer-brand">
+      <a href="/" aria-label="Norbelys home"><Brand /></a>
+      <p>Cold email that gets replies. From $20 a month, everything included.</p>
+      <ArrowButton class="button-small" href={START}>Start for $20</ArrowButton>
+    </div>
+    <nav class="footer-nav" aria-label="Footer">
+      {
+        columns.map((column) => (
+          <div>
+            <p class="footer-heading">{column.title}</p>
+            <ul>
+              {column.links.map(([label, href]) => (
+                <li>
+                  <a href={href}>
+                    {label}
+                    {external(href) && <Glyph name="external" />}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </nav>
+  </div>
+  <div class="footer-word" aria-hidden="true">
+    <svg viewBox={`0 ${word.y} ${word.width} ${word.height}`}>
+      {letters.map((d, index) => <path class="word-letter" d={d} style={`--l: ${index}`} />)}
+    </svg>
+  </div>
+  <div class="container footer-bottom">
+    <span>© {year} Xuxil, Inc. All rights reserved.</span>
+    <span>Made for people who sell.</span>
+  </div>
+</footer>

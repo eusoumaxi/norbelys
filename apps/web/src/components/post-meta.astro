@@ -1,0 +1,18 @@
+---
+import { formatDate, readingMinutes } from "../posts";
+import type { Post } from "../posts";
+
+/** A post's topic, date and reading time, on one quiet line. */
+interface Props {
+  post: Post;
+}
+const { post } = Astro.props;
+---
+
+<p class="post-meta">
+  <span class="post-tag">{post.data.tag}</span>
+  <span aria-hidden="true">·</span>
+  <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
+  <span aria-hidden="true">·</span>
+  <span>{readingMinutes(post)} min read</span>
+</p>

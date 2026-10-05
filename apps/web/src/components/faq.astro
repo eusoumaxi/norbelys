@@ -1,0 +1,76 @@
+---
+import Glyph from "./glyph.astro";
+import { DOCS } from "../links";
+
+/**
+ * Questions and answers that open in place. The homepage asks what a sales team asks before
+ * trusting a tool with its domain and its budget; other pages pass their own.
+ */
+interface Props {
+  questions?: readonly (readonly [string, string])[];
+}
+
+const HOMEPAGE = [
+  [
+    "What do I get for $20 a month?",
+    "Everything Norbelys does today: campaigns and sequences, A/B testing, the unified inbox, warm-up, open and click tracking, AI first lines and reply sorting, plus webhooks, the API and the MCP server. It’s launch pricing, so there’s nothing to unlock.",
+  ],
+  [
+    "Do you charge extra for AI?",
+    "No. AI-written first lines and reply sorting come with the plan. You decide where AI is used, and it only works from the facts you pick.",
+  ],
+  [
+    "How is Norbelys different from other cold email tools?",
+    "It’s built around replies, not volume. Follow-ups stop the moment someone answers, every reply lands in one inbox and AI sorts the hot ones to the top. And you get the whole platform, from AI and warm-up to tracking and the API, for one price instead of a base plan plus add-ons.",
+  ],
+  [
+    "Can I use my own Gmail or Outlook?",
+    "Yes. Connect Google Workspace or Microsoft 365 in a few clicks, or any inbox that speaks SMTP and IMAP. You choose which addresses each campaign sends from, with a daily limit and a pace for each one.",
+  ],
+  [
+    "Will my emails land in spam?",
+    "No tool can promise the inbox, and we won’t pretend to. What Norbelys does is keep you out of trouble: it sends at a human pace during business hours, warms up new inboxes gradually, catches dead addresses before you send and honors every unsubscribe.",
+  ],
+  [
+    "What happens when someone replies?",
+    "Their reply shows up in your unified inbox, threaded with the email that started it. Turn on stop-on-reply and their next follow-up never goes out. You can pause emails to their coworkers at the same company, too.",
+  ],
+  [
+    "Can I run Norbelys from Claude or other AI assistants?",
+    "Yes. Norbelys has an MCP server, so Claude and other MCP-ready assistants can work with your campaigns, people and replies, using only the access you grant. There’s a public API and webhooks for everything else.",
+  ],
+] as const;
+const { questions = HOMEPAGE } = Astro.props;
+---
+
+<section id="faq" class="faq section" aria-labelledby="faq-title">
+  <div class="container faq-layout">
+    <div class="faq-head">
+      <h2 id="faq-title">
+        <span class="line">Questions,</span>
+        <span class="line">answered<span class="pink">.</span></span>
+      </h2>
+      <p class="faq-more">
+        Still curious?{" "}
+        <a class="text-link" href={DOCS}>Read the docs <Glyph name="external" /></a>
+      </p>
+    </div>
+    <div class="faq-list">
+      {
+        questions.map(([question, answer]) => (
+          <details class="faq-item">
+            <summary>
+              <span>{question}</span>
+              <span class="faq-toggle" aria-hidden="true">
+                <Glyph name="plus" />
+              </span>
+            </summary>
+            <div class="faq-answer">
+              <p>{answer}</p>
+            </div>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>

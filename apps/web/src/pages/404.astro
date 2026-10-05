@@ -1,0 +1,112 @@
+---
+import { MARK, markPath } from "../../../../brand/geometry";
+import ArrowButton from "../components/arrow-button.astro";
+import Glyph from "../components/glyph.astro";
+import Page from "../layouts/page.astro";
+import { BLOG, PAGES } from "../links";
+import "../styles/not-found.css";
+
+/**
+ * The page for an address that doesn't exist: it bounced. A giant 4@4 is drawn in the mark's one
+ * line, and envelopes thrown at it bounce off its strokes and pile up on the ground; click or tap
+ * to send another, drag one to throw it (scripts/bounce.ts). Below, the notice a mail server sends
+ * when a message bounces, and the ways back. Without the script the page is whole, just still.
+ */
+
+/** A four in the mark's line: up the stem, down the diagonal, across the bar. */
+const FOUR = "M41 56.5V7.5L8.5 41.5H56.5";
+/** The drawings' box: the mark's 64-unit grid, trimmed to the outer edge of its line. */
+const BOX = "4.5 4.5 55 55";
+const links = [
+  ["Campaigns", PAGES.campaigns],
+  ["AI personalization", PAGES.aiPersonalization],
+  ["Developers", PAGES.developers],
+  ["Blog", BLOG],
+] as const;
+---
+
+<Page
+  title="Page not found — Norbelys"
+  description="This page bounced: the address doesn’t exist, or it moved."
+  class="not-found"
+>
+  <meta slot="head" name="robots" content="noindex" />
+  <div class="nf-stage" data-bounce aria-hidden="true">
+    <div class="nf-word">
+      <svg class="nf-glyph" viewBox={BOX} style="--g: 0" data-bounce-glyph>
+        <path d={FOUR} pathLength="1" stroke-width={MARK.stroke}></path>
+      </svg>
+      <svg class="nf-glyph nf-mark" viewBox={BOX} style="--g: 1" data-bounce-glyph>
+        <path d={markPath()} pathLength="1" stroke-width={MARK.stroke}></path>
+        <path class="mark-comet" d={markPath()} pathLength="1" stroke-width={MARK.stroke}></path>
+      </svg>
+      <svg class="nf-glyph" viewBox={BOX} style="--g: 2" data-bounce-glyph>
+        <path d={FOUR} pathLength="1" stroke-width={MARK.stroke}></path>
+      </svg>
+    </div>
+    <canvas class="nf-canvas" data-bounce-canvas></canvas>
+    <p class="nf-hint" data-bounce-hint hidden>
+      <span class="nf-hint-pointer">Click anywhere to send one. Drag one to throw it.</span>
+      <span class="nf-hint-touch">Tap anywhere to send one.</span>
+    </p>
+  </div>
+
+  <section class="container nf-body" aria-labelledby="nf-title">
+    <div class="nf-copy">
+      <p class="nf-eyebrow">Error 404</p>
+      <h1 id="nf-title">This page bounced<span class="pink">.</span></h1>
+      <p class="lead">
+        The address you followed doesn’t exist, or it moved. Some of our pages are still being
+        written, so check back soon.
+      </p>
+      <div class="page-actions">
+        <ArrowButton href="/">Back to the homepage</ArrowButton>
+        <button class="button button-ghost" type="button" data-bounce-send hidden>Send another one</button>
+      </div>
+      <nav class="nf-links" aria-label="Popular pages">
+        <p>Or try</p>
+        <ul>
+          {
+            links.map(([label, href]) => (
+              <li>
+                <a href={href}>
+                  {label}
+                  <Glyph name="arrow" />
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </div>
+    <aside class="nf-notice" aria-label="Delivery status notification">
+      <p class="nf-notice-head">
+        <span class="nf-notice-badge">Undeliverable</span>
+        Mail Delivery Subsystem
+      </p>
+      <dl class="nf-fields">
+        <div>
+          <dt>Final-Recipient</dt>
+          <dd data-bounce-path>norbelys.com/this-page</dd>
+        </div>
+        <div>
+          <dt>Action</dt>
+          <dd>failed</dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd>5.1.1 (address not found)</dd>
+        </div>
+        <div>
+          <dt>Diagnostic-Code</dt>
+          <dd>smtp; 550 5.1.1 No such page here</dd>
+        </div>
+        <div>
+          <dt>Attempts</dt>
+          <dd data-bounce-count>1</dd>
+        </div>
+      </dl>
+      <p class="nf-notice-foot" data-bounce-note>In Norbelys, an address that bounces is never emailed again.</p>
+    </aside>
+  </section>
+</Page>

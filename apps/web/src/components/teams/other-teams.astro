@@ -1,0 +1,35 @@
+---
+import Glyph from "../glyph.astro";
+import { PAGES } from "../../links";
+import { otherTeams } from "../../solutions";
+
+/** The foot of a team's page: the same product, drawn for the other teams that sell. */
+interface Props {
+  slug: string;
+}
+const { slug } = Astro.props;
+const others = otherTeams(slug);
+---
+
+<nav class="page-section container other-teams" aria-labelledby="other-teams-title">
+  <div class="other-teams-head">
+    <h2 id="other-teams-title">Same plan, other desks.</h2>
+    <a class="text-link" href={PAGES.solutions}>Every team <Glyph name="arrow" /></a>
+  </div>
+  <ul class="other-teams-list">
+    {
+      others.map((team) => (
+        <li>
+          <a class="other-team glyph-host" href={team.href}>
+            <Glyph name={team.glyph} />
+            <span class="other-team-text">
+              <span class="other-team-name">{team.label}</span>
+              <span class="other-team-summary">{team.summary}</span>
+            </span>
+            <Glyph name="arrow" class="other-team-arrow" />
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>

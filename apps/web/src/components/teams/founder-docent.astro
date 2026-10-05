@@ -1,0 +1,86 @@
+---
+import Glyph from "../glyph.astro";
+import { PAGES } from "../../links";
+
+/**
+ * Ask the docent: founders already live in Claude or ChatGPT, so the gallery's guide is the
+ * assistant they use. Norbelys's MCP server lets it work with campaigns, people and replies,
+ * with only the access granted, shown as the admission ticket it signs in with. Beside it, an
+ * example conversation: the founder asks, the assistant answers like a wall label, short and
+ * exact, naming the Norbelys action it used. The conversation and its people are illustrative;
+ * every action in it is one the MCP server offers.
+ */
+const chat = [
+  { from: "you", text: "How did this week go?" },
+  {
+    from: "docent",
+    text: "Two people replied to Q4 partners. Alex Morgan wants to talk Thursday, and Dana Kim asked about pricing. Two out-of-office notes came in too, so those follow-ups carry on.",
+    tool: "inbound_messages.list",
+  },
+  { from: "you", text: "Pause the webinar follow-up until I’m back." },
+  {
+    from: "docent",
+    text: "Paused. Anything queued is held until you start it again.",
+    tool: "campaigns.pause",
+  },
+] as const;
+
+/** What the ticket says: who it admits, where to, and what they may touch. */
+const terms = [
+  ["Admits", "Claude, ChatGPT or any MCP client"],
+  ["Workspace", "The one you pick when you sign in"],
+  ["Access", "Campaigns, people and replies, as far as you grant"],
+] as const;
+---
+
+<section class="page-section container gallery-docent" aria-labelledby="docent-title">
+  <div class="gallery-docent-copy">
+    <h2 id="docent-title">Ask the docent.</h2>
+    <p class="lead">
+      You already live in Claude or ChatGPT. Connect Norbelys through its MCP server and your
+      assistant can read your replies, add people and run your campaigns, using only the access
+      you grant.
+    </p>
+    <div class="gallery-ticket">
+      <div class="gallery-ticket-paper">
+      <div class="gallery-ticket-main">
+        <p class="gallery-ticket-title">Admit one assistant</p>
+        <dl class="gallery-ticket-terms">
+          {
+            terms.map(([term, value]) => (
+              <div class="gallery-ticket-term">
+                <dt>{term}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))
+          }
+        </dl>
+        <p class="gallery-ticket-fine">Signed in with OAuth. Revoke it any time under Connected apps.</p>
+      </div>
+      <div class="gallery-ticket-stub glyph-host" aria-hidden="true">
+        <Glyph name="connect" />
+        <span>MCP</span>
+      </div>
+      </div>
+    </div>
+    <a class="text-link" href={PAGES.mcp}>How the MCP server works <Glyph name="arrow" /></a>
+  </div>
+  <figure class="gallery-chat" data-inview>
+    <ol class="gallery-chat-thread">
+      {
+        chat.map((turn, index) => (
+          <li class:list={["gallery-chat-turn", `gallery-chat-${turn.from}`]} style={`--k: ${index}`}>
+            <span class="sr-only">{turn.from === "you" ? "You:" : "Assistant:"}</span>
+            {"tool" in turn && (
+              <span class="gallery-chat-tool">
+                <code>{turn.tool}</code>
+              </span>
+            )}
+            <p>{turn.text}</p>
+          </li>
+        ))
+      }
+    </ol>
+    <figcaption class="fine-print">An example conversation, with made-up replies.</figcaption>
+  </figure>
+</section>

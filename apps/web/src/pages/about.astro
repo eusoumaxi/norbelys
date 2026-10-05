@@ -1,0 +1,209 @@
+---
+import { MARK, markPath } from "../../../../brand/geometry";
+import ArrowButton from "../components/arrow-button.astro";
+import Glyph from "../components/glyph.astro";
+import Marked from "../components/marked.astro";
+import Signature from "../components/signature.astro";
+import Page from "../layouts/page.astro";
+import { COMPANY, HELLO, mailto } from "../company";
+import { formatLongDate } from "../legal";
+import { PAGES, SOURCE, START } from "../links";
+import "../styles/about.css";
+
+/**
+ * About: the cold email we'd send you. A short letter from Xuxil, Inc., set large: who we are and
+ * what we believe, each belief underlined by hand with the setting in the product that keeps it
+ * noted in the margin, signed with the mark, with a P.S. and one ask, then the plain facts for
+ * whoever signs off.
+ */
+const written = new Date("2026-10-05T00:00:00Z");
+const subject = "Who we are, and why Norbelys exists";
+
+interface Belief {
+  readonly title: string;
+  readonly text: string;
+  /** Where the product keeps the belief, noted in the margin: a setting and its value. */
+  readonly note: { readonly label: string; readonly value: string; readonly href?: string };
+}
+const beliefs: readonly Belief[] = [
+  {
+    note: { label: "Stop on reply", value: "On" },
+    text: "A campaign isn’t done when it sends. It’s done when someone writes back. So follow-ups stop the moment a person answers, every reply lands in one inbox and the ones that matter rise to the top.",
+    title: "Replies are the point.",
+  },
+  {
+    note: { label: "Each inbox sends", value: "50 a day, 10 minutes apart" },
+    text: "Every inbox sends at a human pace: 50 emails a day, ten minutes apart, unless you choose otherwise. Your domain stays healthy, and you’re still sending next quarter.",
+    title: "Slower is faster.",
+  },
+  {
+    note: { label: "Export", value: "people.csv, history.jsonl" },
+    text: "Norbelys sends from the inboxes you already own. Your contacts and your replies stay yours: export them whenever you like, and if you leave, everything is erased 30 days later.",
+    title: "Your mailboxes, your data.",
+  },
+  {
+    note: { label: "AI first lines", value: "Only from facts you approve" },
+    text: "It writes first lines from facts you approve and sends your own words when it has nothing true to say. It never sees the address of the person it writes to, and nobody trains a model on your data.",
+    title: "AI that only says what’s true.",
+  },
+  {
+    note: { label: "Plan", value: "$20 a month, all in" },
+    text: "AI, warm-up, tracking, the inbox and the API are all in the plan. No credits, no add-ons, no surprise invoice.",
+    title: "One price, everything in it.",
+  },
+  {
+    note: { href: SOURCE, label: "Source code", value: "Apache-2.0" },
+    text: "The code is public under the Apache License 2.0. Read it, run it on your own servers, or let us run it for you on Hetzner in the EU, behind Cloudflare.",
+    title: "Open, so you can check.",
+  },
+];
+
+const attachments = [
+  ["Terms of Service", PAGES.terms],
+  ["Privacy Policy", PAGES.privacy],
+  ["Data Processing Addendum", PAGES.dpa],
+  ["LICENSE (Apache-2.0)", `${SOURCE}/blob/main/LICENSE`],
+] as const;
+
+const facts = [
+  ["Company", `${COMPANY.name}, ${COMPANY.incorporation}`],
+  ["Product", `Norbelys, launched in ${COMPANY.launched}`],
+  ["Where it runs", `${COMPANY.hosting}, behind ${COMPANY.edge}`],
+  ["Your data", "Stored in the EU, erased 30 days after you delete it"],
+  ["Price", "$20 a month, everything included"],
+  ["Source code", "Public, under the Apache License 2.0"],
+] as const;
+
+const structured = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  brand: { "@type": "Brand", name: "Norbelys" },
+  email: HELLO,
+  legalName: COMPANY.name,
+  name: COMPANY.name,
+  url: "https://norbelys.com",
+});
+---
+
+<Page
+  title="About — Norbelys"
+  description="Norbelys is made by Xuxil, Inc., a Delaware company. Why we built it, what we believe, where it runs and what it costs, in one short letter."
+  class="company-page about"
+>
+  <script slot="head" is:inline type="application/ld+json" set:html={structured} />
+  <div class="container about-desk">
+    <article class="letter" aria-labelledby="about-title">
+      <header class="letter-head">
+        <dl class="letter-fields">
+          <div>
+            <dt>From</dt>
+            <dd>{COMPANY.name} <span class="letter-address">&lt;{HELLO}&gt;</span></dd>
+          </div>
+          <div>
+            <dt>To</dt>
+            <dd>You</dd>
+          </div>
+          <div>
+            <dt>Subject</dt>
+            <dd>{subject}</dd>
+          </div>
+          <div>
+            <dt>Date</dt>
+            <dd><time datetime="2026-10-05">{formatLongDate(written)}</time></dd>
+          </div>
+        </dl>
+      </header>
+
+      <div class="letter-body">
+        <p class="letter-greeting">Hi there,</p>
+        <h1 id="about-title" class="letter-title" data-inview>
+          We built Norbelys because cold email got <Marked d="M3 8C26 4.5 66 3.5 97 6.5">loud</Marked><span class="pink">.</span>
+        </h1>
+        <p class="letter-lead">
+          Most tools help you send more. We wanted one that helps you get answered. We’re {COMPANY.name}, a software
+          company incorporated in {COMPANY.state}, and Norbelys is what we make.
+        </p>
+        <p class="letter-turn">Here’s what we believe, and where you’ll find it in the product.</p>
+
+        <div class="beliefs">
+          {
+            beliefs.map((belief) => (
+              <div class="belief" data-inview>
+                <p class="belief-text">
+                  <Marked>{belief.title}</Marked> {belief.text}
+                </p>
+                <p class="belief-note">
+                  <span class="sr-only">In the product: </span>
+                  <span class="belief-note-label">{belief.note.label}</span>
+                  {belief.note.href ? (
+                    <a class="belief-note-value" href={belief.note.href}>
+                      {belief.note.value} <Glyph name="external" />
+                    </a>
+                  ) : (
+                    <span class="belief-note-value">{belief.note.value}</span>
+                  )}
+                </p>
+              </div>
+            ))
+          }
+        </div>
+
+        <div class="letter-close">
+          <p>When you write to us, a person who works on Norbelys reads it and writes back.</p>
+          <p>Thanks for reading this far. That’s more than most cold emails get.</p>
+        </div>
+
+        <div class="letter-sign">
+          <Signature date={written} role="The Norbelys team" />
+        </div>
+
+        <aside class="letter-ps" aria-label="P.S." data-inview>
+          <svg class="ps-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+            <path d={markPath()} pathLength="1" stroke-width={MARK.stroke} stroke-linecap="round" stroke-linejoin="round"></path>
+            <circle class="ps-open" cx="51.5" cy="51.5" r="3.6"></circle>
+          </svg>
+          <p>
+            <strong>P.S.</strong> Look closely at our logo. The @ is one line, and it never closes. We left it open for
+            your reply.
+          </p>
+        </aside>
+
+        <div class="letter-actions">
+          <ArrowButton href={mailto(HELLO, `Re: ${subject}`)}>Reply to this letter</ArrowButton>
+          <a class="button button-ghost" href={START}>Start for $20/mo</a>
+        </div>
+
+        <ul class="letter-attachments" aria-label="Attachments">
+          {
+            attachments.map(([label, href]) => (
+              <li>
+                <a href={href}>
+                  <Glyph name="paperclip" />
+                  {label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </article>
+
+    <section class="about-facts" aria-labelledby="facts-title">
+      <h2 id="facts-title">The facts, for whoever signs off.</h2>
+      <dl class="about-ledger">
+        {
+          facts.map(([term, detail]) => (
+            <div>
+              <dt>{term}</dt>
+              <dd>{detail}</dd>
+            </div>
+          ))
+        }
+      </dl>
+      <p class="about-more">
+        <a class="text-link" href={PAGES.legal}>Read the legal binder <Glyph name="arrow" /></a>
+        <a class="text-link" href={PAGES.contact}>Write to a person <Glyph name="arrow" /></a>
+      </p>
+    </section>
+  </div>
+</Page>

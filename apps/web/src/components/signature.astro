@@ -1,0 +1,29 @@
+---
+import { MARK, markPath } from "../../../../brand/geometry";
+import { COMPANY } from "../company";
+import { formatLongDate } from "../legal";
+
+/**
+ * The company's signature: the mark's one line, drawn as if by hand above a signature line when
+ * it scrolls into view, with the company's name and the date beneath. Without motion it is
+ * simply there.
+ */
+interface Props {
+  date: Date;
+  /** What the company signs as, under its name. */
+  role?: string;
+}
+const { date, role = "Norbelys" } = Astro.props;
+---
+
+<figure class="signature" data-inview>
+  <svg class="signature-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+    <path d={markPath()} pathLength="1" stroke-width={MARK.stroke} stroke-linecap="round" stroke-linejoin="round"></path>
+  </svg>
+  <figcaption>
+    <span class="signature-name">{COMPANY.name}</span>
+    <span class="signature-detail">
+      {role} · <time datetime={date.toISOString().slice(0, 10)}>{formatLongDate(date)}</time>
+    </span>
+  </figcaption>
+</figure>

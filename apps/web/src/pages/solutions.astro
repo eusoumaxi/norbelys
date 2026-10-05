@@ -1,0 +1,105 @@
+---
+import ArrowButton from "../components/arrow-button.astro";
+import Closing from "../components/closing.astro";
+import Glyph from "../components/glyph.astro";
+import SolutionsSlot from "../components/teams/solutions-slot.astro";
+import Page from "../layouts/page.astro";
+import { START } from "../links";
+import { TEAMS } from "../solutions";
+import "../styles/teams.css";
+import "../styles/solutions.css";
+
+/**
+ * The solutions page: who Norbelys is for. A sentence with a slot turns through the teams, then
+ * each team's desk is a row with what its page is built on, and the plan they all share closes it.
+ */
+
+/** What each team's page is built on, in a line, in the order of TEAMS. */
+const desks: Readonly<Record<string, string>> = {
+  "account-executives": "A chess board for the buying committee. Write to everyone with a say; the first reply quiets the rest of the company.",
+  agencies: "Friday’s stack of client reports. One workspace per client, with its own inboxes, people and keys.",
+  founders: "A gallery wall for your first reply. Outbound from your own inbox that runs while you build, for $20 a month.",
+  "growth-teams": "A mixing desk for experiments. Versions on every step, weights, a winner picked by replies and every event piped out.",
+  recruiters: "A name tag for every candidate. A line about their work, and follow-ups that stop at any answer.",
+  sdrs: "The sales-floor bell, rung by replies. The busywork leaves your to-do list; the conversations stay.",
+};
+
+const included = [
+  "Campaigns & sequences",
+  "A/B tests on every step",
+  "Unified inbox",
+  "AI first lines & reply sorting",
+  "Warm-up, limits & business hours",
+  "Open & click tracking",
+  "Bounce & unsubscribe protection",
+  "Webhooks, API & MCP",
+] as const;
+---
+
+<Page
+  title="Solutions: cold email for every team that sells — Norbelys"
+  description="Norbelys for SDRs, founders, agencies, recruiters, account executives and growth teams: one product, one price, from $20 a month with every feature included."
+  class="solutions"
+>
+  <SolutionsSlot />
+
+  <section id="desks" class="page-section container desks" aria-labelledby="desks-title">
+    <div class="split-head">
+      <h2 id="desks-title">Pick your desk.</h2>
+      <p class="lead">
+        Every page is drawn around the job: what fills your day, what Norbelys takes off it and
+        how you’d set it up.
+      </p>
+    </div>
+    <ul class="desk-list">
+      {
+        TEAMS.map((team) => (
+          <li>
+            <a class="desk-row glyph-host" href={team.href}>
+              <Glyph name={team.glyph} class="desk-glyph" />
+              <span class="desk-name">{team.name.charAt(0).toUpperCase() + team.name.slice(1)}</span>
+              <span class="desk-line">{desks[team.slug]}</span>
+              <span class="desk-go" aria-hidden="true">
+                <Glyph name="arrow" />
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="page-section container desk-plan" aria-labelledby="plan-title">
+    <div class="desk-plan-panel">
+      <div class="desk-plan-head">
+        <h2 id="plan-title">
+          <span class="line">Six desks.</span>
+          <span class="line">One plan<span class="pink">.</span></span>
+        </h2>
+        <p class="desk-plan-price">
+          <span class="desk-plan-amount numeric">$20</span>
+          <span>a month, everything included. Launch pricing, AI too.</span>
+        </p>
+        <ArrowButton href={START}>Start for $20/mo</ArrowButton>
+      </div>
+      <ul class="desk-plan-list">
+        {
+          included.map((item) => (
+            <li>
+              <Glyph name="check" />
+              {item}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <Closing />
+</Page>
+
+<script>
+  import { startSlot } from "../scripts/slot";
+
+  startSlot();
+</script>

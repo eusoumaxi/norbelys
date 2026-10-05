@@ -1,0 +1,154 @@
+---
+import AePiece from "./ae-piece.astro";
+
+/**
+ * The unified inbox as the tray beside the board, where a player keeps the pieces that have
+ * moved: everyone who wrote back stands in it, whichever account they're from and whichever of
+ * your inboxes they wrote to, each with their thread above them. The Head of RevOps answered
+ * (the pink ring), and the card says who at Northwind was paused because of it; the CFO's
+ * out-of-office was set aside and stopped nothing; at Lumen Labs, AI couldn't tell what a reply
+ * meant, so it asks you. In the app the inbox is one list, newest first; the tray keeps the same
+ * threads. Accounts, people and messages are illustrative.
+ */
+type Kind = "king" | "queen" | "knight";
+interface Thread {
+  readonly id: string;
+  readonly who: string;
+  readonly account: string;
+  readonly kind: Kind;
+  /** The ring at the piece's feet: pink for the reply, grey for paused, none for a question. */
+  readonly ring: "replied" | "paused" | "none";
+  readonly chip: { readonly text: string; readonly tone: "pink" | "grey" | "ink" };
+  readonly when: string;
+  readonly said: string;
+  readonly note?: string;
+}
+const threads: readonly Thread[] = [
+  {
+    account: "Northwind",
+    chip: { text: "Person · positive", tone: "pink" },
+    id: "revops",
+    kind: "knight",
+    ring: "replied",
+    said: "Let’s talk Thursday.",
+    when: "Wed 11:40",
+    who: "Head of RevOps",
+  },
+  {
+    account: "Northwind",
+    chip: { text: "Out of office", tone: "grey" },
+    id: "cfo",
+    kind: "king",
+    note: "Set aside. An auto-reply isn’t a reply, so it stopped nothing.",
+    ring: "paused",
+    said: "Away until Monday.",
+    when: "Tue 9:02",
+    who: "CFO",
+  },
+  {
+    account: "Lumen Labs",
+    chip: { text: "Needs review", tone: "ink" },
+    id: "lumen",
+    kind: "queen",
+    note: "AI couldn’t tell what this means, so it asks you instead of guessing.",
+    ring: "none",
+    said: "Forwarding this to our CTO.",
+    when: "Wed 15:18",
+    who: "Head of Sales",
+  },
+];
+/** Everyone else at Northwind: no thread, paused when the Head of RevOps answered. */
+const paused = ["CFO", "VP Sales", "Legal", "IT"] as const;
+/** The email every thread at Northwind started from. */
+const opening = { subject: "A quick idea for Northwind", when: "Mon" } as const;
+
+const facts = [
+  {
+    term: "Threaded.",
+    text: "Each reply sits under the email that started it, from every inbox you’ve connected.",
+  },
+  {
+    term: "Sorting is yours to switch on.",
+    text: "AI reply sorting is off until you turn it on. Out-of-office notes and auto-replies are set aside either way.",
+  },
+  {
+    term: "Unsure means it asks.",
+    text: "When AI can’t tell what a reply means, it waits for you in Needs review.",
+  },
+] as const;
+---
+
+<section class="page-section container tray" aria-labelledby="tray-title">
+  <div class="split-head">
+    <h2 id="tray-title">Every thread, one inbox.</h2>
+    <p class="lead">
+      Whoever writes back leaves the board and lands in your tray: every account, every inbox
+      you’ve connected, each person with their whole conversation.
+    </p>
+  </div>
+
+  <figure class="tray-box" data-inview>
+    <ul class="tray-slots">
+      {
+        threads.map((thread, index) => (
+          <li class:list={["tray-slot", `tray-slot-${thread.id}`]} style={`--s: ${index}`}>
+            <article class:list={["tray-card", `tray-card-${thread.chip.tone}`]} aria-labelledby={`tray-${thread.id}`}>
+              <header class="tray-card-head">
+                <h3 id={`tray-${thread.id}`} class="tray-who">
+                  {thread.who}
+                  <span>{thread.account}</span>
+                </h3>
+                <time class="tray-when numeric">{thread.when}</time>
+              </header>
+              <p class={`tray-chip tray-chip-${thread.chip.tone}`}>{thread.chip.text}</p>
+              {thread.ring === "replied" ? (
+                <div class="tray-thread">
+                  <p class="tray-mail tray-mail-ours">
+                    <span class="tray-mail-from">You · {opening.when}</span>
+                    {opening.subject}
+                  </p>
+                  <p class="tray-mail tray-mail-theirs">{thread.said}</p>
+                </div>
+              ) : (
+                <p class="tray-said">“{thread.said}”</p>
+              )}
+              {thread.note && <p class="tray-note">{thread.note}</p>}
+              {thread.ring === "replied" && (
+                <div class="tray-paused">
+                  <p>Paused at northwind.co</p>
+                  <ul>
+                    {paused.map((title) => (
+                      <li>{title}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </article>
+            <svg class="tray-piece" viewBox="-80 -244 160 274" fill="none" aria-hidden="true">
+              {thread.ring !== "none" && (
+                <ellipse class={`tray-ring tray-ring-${thread.ring}`} cx="0" cy="-2" rx="66" ry="22" pathLength="1" />
+              )}
+              <AePiece kind={thread.kind} />
+            </svg>
+          </li>
+        ))
+      }
+    </ul>
+    <figcaption class="tray-plate">
+      <strong>Your inbox</strong>
+      <span>3 threads, 2 accounts</span>
+    </figcaption>
+  </figure>
+
+  <dl class="tray-facts">
+    {
+      facts.map((fact) => (
+        <div class="tray-fact">
+          <dt>{fact.term}</dt>
+          <dd>{fact.text}</dd>
+        </div>
+      ))
+    }
+  </dl>
+  <p class="fine-print tray-fine">Northwind, Lumen Labs and their people are examples.</p>
+</section>

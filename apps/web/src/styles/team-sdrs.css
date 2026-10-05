@@ -1,0 +1,790 @@
+/*
+ * Norbelys for SDRs: the sales-floor bell. It hangs from above the page and rings for every
+ * reply; below it the morning's to-do list ticks itself off, and the floor plan shows the team.
+ */
+
+/* ——— Hero: the bell hangs from above; replies ring out of its mouth. ——— */
+.bell-hero {
+  --stage-width: min(52vw, 46rem);
+  position: relative;
+  min-height: max(40rem, calc(var(--stage-width) * 1.1875));
+}
+.bell-grid {
+  display: flex;
+  align-items: center;
+  min-height: calc(
+    var(--stage-width) * 1.1875 - var(--header-height) - clamp(3rem, 7vw, 6rem)
+  );
+  padding-bottom: clamp(2rem, 5vw, 4rem);
+}
+.bell-copy {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 1.5rem;
+  max-width: 36rem;
+}
+.bell-copy .page-actions {
+  margin-top: 0.5rem;
+}
+.bell-stage {
+  position: absolute;
+  top: 0;
+  right: max(0.5rem, (100% - var(--page)) / 2 - 2rem);
+  width: var(--stage-width);
+  aspect-ratio: 640 / 760;
+}
+.bell-art {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.bell-ink {
+  stroke: var(--ink);
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.bell-rod {
+  stroke: url("#bell-rod");
+}
+.bell-body,
+.bell-lip,
+.bell-handle,
+.bell-board-frame {
+  fill: var(--white);
+}
+.bell-detail {
+  stroke: var(--ink);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+.bell-lanyard,
+.bell-handle {
+  stroke-width: 10;
+}
+.bell-ball {
+  fill: var(--pink-hot);
+}
+.bell-wave {
+  fill: none;
+  stroke: var(--pink);
+  stroke-width: 10;
+  stroke-linecap: round;
+  opacity: 0;
+  transform-box: view-box;
+  transform-origin: 360px 452px;
+}
+.bell-board-frame {
+  stroke-width: 10;
+}
+.bell-board .bell-detail {
+  stroke-width: 6;
+}
+.bell-board-label {
+  fill: var(--ink-2);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.bell-mark {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 6.5;
+  stroke-linecap: round;
+}
+.bell-mark-strike {
+  stroke: var(--pink-hot);
+}
+
+/* The two ways in: the bell itself, and the lanyard hanging from its clapper. */
+.bell-hit,
+.bell-pull {
+  position: absolute;
+  z-index: 3;
+  -webkit-tap-highlight-color: transparent;
+}
+.bell-hit {
+  top: 18%;
+  left: 31%;
+  width: 50%;
+  height: 46%;
+  border-radius: 45% 45% 14% 14%;
+  cursor: pointer;
+}
+.bell-pull {
+  top: 66%;
+  left: 47%;
+  width: 18%;
+  height: 32%;
+  border-radius: var(--radius-l);
+  cursor: grab;
+  touch-action: none;
+}
+.bell-pull:active {
+  cursor: grabbing;
+}
+.bell-hit:focus-visible,
+.bell-pull:focus-visible {
+  outline-offset: 6px;
+}
+.bell-hint {
+  position: absolute;
+  top: 31%;
+  left: 2%;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+  color: var(--ink-2);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  transition:
+    opacity 400ms var(--ease-out),
+    translate 600ms var(--ease-settle);
+}
+.bell-hint::after {
+  content: "";
+  width: 1.5rem;
+  height: 2px;
+  border-radius: 1px;
+  background: currentcolor;
+}
+.bell-hero.is-touched .bell-hint {
+  opacity: 0;
+  translate: 0.75rem 0;
+}
+
+/* The replies the bell has rung out, the newest in front. */
+.bell-replies {
+  position: absolute;
+  top: 64%;
+  left: -4%;
+  z-index: 2;
+  width: min(21rem, 78vw);
+  height: 6rem;
+}
+.bell-reply {
+  position: absolute;
+  inset: 0 0 auto;
+  display: grid;
+  grid-template-columns: 2.4rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 1.25rem;
+  background: var(--white);
+  box-shadow: var(--shadow-float);
+  transform-origin: 50% 0;
+  transition:
+    transform 700ms var(--ease-settle),
+    opacity 500ms var(--ease-out);
+}
+.bell-reply > * {
+  transition: opacity 300ms var(--ease-out);
+}
+.bell-reply[data-slot="0"] {
+  z-index: 3;
+}
+.bell-reply[data-slot="1"] {
+  z-index: 2;
+  transform: translateY(0.85rem) scale(0.94);
+}
+.bell-reply[data-slot="2"] {
+  z-index: 1;
+  transform: translateY(1.7rem) scale(0.88);
+}
+.bell-reply[data-slot="out"] {
+  z-index: 0;
+  opacity: 0;
+  transform: translateY(2.4rem) scale(0.82);
+}
+.bell-reply:not([data-slot="0"]) > * {
+  opacity: 0;
+}
+.bell-reply.is-new {
+  animation: bell-reply-out 820ms var(--ease-settle);
+}
+.bell-reply-avatar {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: var(--pink-deep);
+  color: var(--white);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.bell-reply-text {
+  display: grid;
+  min-width: 0;
+  line-height: 1.3;
+}
+.bell-reply-name {
+  overflow: hidden;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bell-reply-name span {
+  color: var(--ink-3);
+  font-weight: 400;
+}
+.bell-reply-message {
+  overflow: hidden;
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bell-reply-tag {
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--pink-deep);
+  color: var(--white);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.bell-reply-warm .bell-reply-tag {
+  background: var(--pink-soft);
+  color: var(--pink-ink);
+}
+.bell-reply-calm .bell-reply-avatar {
+  background: var(--mist);
+  color: var(--ink-2);
+}
+.bell-reply-calm .bell-reply-tag {
+  background: var(--mist);
+  color: var(--ink-2);
+}
+
+/* Motion: the bell draws itself in, then rings; the waves draw round its mouth. */
+.motion .bell-hero .bell-ink,
+.motion .bell-hero .bell-detail {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: bell-draw 1300ms var(--ease-draw) forwards;
+}
+.motion .bell-hero .bell-mount .bell-ink {
+  animation-delay: 100ms;
+}
+.motion .bell-hero .bell-canon,
+.motion .bell-hero .bell-body {
+  animation-delay: 250ms;
+}
+.motion .bell-hero .bell-detail,
+.motion .bell-hero .bell-lip {
+  animation-delay: 550ms;
+}
+.motion .bell-hero .bell-clapper .bell-ink {
+  animation-delay: 800ms;
+}
+.motion .bell-hero .bell-board .bell-ink,
+.motion .bell-hero .bell-board .bell-detail {
+  animation-delay: 950ms;
+}
+.motion .bell-hero .bell-ball,
+.motion .bell-hero .bell-board-label,
+.motion .bell-hero .bell-tally {
+  opacity: 0;
+  animation: bell-fade 500ms var(--ease-out) 1300ms forwards;
+}
+.motion .bell-hero .bell-mark.is-new {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: bell-draw 420ms var(--ease-out) 120ms forwards;
+}
+.motion .bell-replies {
+  opacity: 0;
+  animation: bell-fade 600ms var(--ease-out) 1200ms forwards;
+}
+.motion .bell-hint {
+  opacity: 0;
+  animation: bell-fade 600ms var(--ease-out) 2400ms forwards;
+}
+.bell-stage.is-ringing .bell-wave {
+  animation: bell-wave 1100ms var(--ease-out) calc(var(--w) * 110ms);
+}
+@keyframes bell-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes bell-fade {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes bell-wave {
+  0% {
+    opacity: 0;
+    scale: 0.9;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.08;
+  }
+}
+@keyframes bell-reply-out {
+  from {
+    opacity: 0;
+    transform: translate(55%, -95%) scale(0.35) rotate(-10deg);
+  }
+}
+
+/* ——— The to-do list: struck through one task at a time, down to the one that's yours. ——— */
+.todo {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: start;
+  gap: 2.5rem clamp(2rem, 6vw, 6rem);
+}
+.todo-side {
+  position: sticky;
+  top: calc(var(--header-height) + 2.5rem);
+  display: grid;
+  gap: 1.5rem;
+}
+.todo-side .lead {
+  max-width: 27rem;
+}
+.todo-count {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+.todo-count-number {
+  min-width: 1ch;
+  font-size: clamp(5.5rem, 12vw, 10.5rem);
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  line-height: 0.8;
+}
+.todo-count-label {
+  color: var(--ink-2);
+  font-size: var(--text-lead);
+  font-weight: 500;
+}
+.todo-list {
+  border-top: 1px solid var(--line);
+}
+.todo-item {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  gap: clamp(1rem, 2vw, 1.5rem);
+  padding-block: clamp(1.4rem, 2.6vw, 2rem);
+  border-bottom: 1px solid var(--line);
+}
+.todo-box {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-top: 0.1rem;
+  border: 4.5px solid var(--ink);
+  border-radius: 0.85rem;
+  transition:
+    background-color 400ms var(--ease-out),
+    border-color 400ms var(--ease-out);
+}
+.todo-box svg {
+  width: 1.75rem;
+  height: 1.75rem;
+  overflow: visible;
+}
+.todo-box path {
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 5.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.todo-item:not(.todo-yours) .todo-box {
+  border-color: var(--ink);
+  background: var(--ink);
+}
+.todo-task {
+  font-size: clamp(1.375rem, 2.3vw, 2rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+.todo-words {
+  position: relative;
+  display: inline;
+}
+.todo-item:not(.todo-yours) .todo-words {
+  color: var(--ink-3);
+}
+.todo-strike {
+  position: absolute;
+  top: 58%;
+  left: -0.04em;
+  width: calc(100% + 0.08em);
+  height: 0.32em;
+  overflow: visible;
+  translate: 0 -45%;
+}
+.todo-strike path {
+  fill: none;
+  stroke: var(--pink);
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+.todo-done {
+  max-width: 34rem;
+  margin-top: 0.55rem;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.todo-yours .todo-box {
+  border-color: var(--pink-hot);
+  box-shadow: 0 0 0 0.45rem var(--pink-soft);
+}
+.todo-yours .todo-done {
+  color: var(--pink-ink);
+  font-weight: 500;
+}
+
+/* With motion, each task waits undone until it scrolls up into place, then ticks itself off. */
+.motion .todo-item:not(.todo-yours) .todo-box {
+  background: transparent;
+}
+.motion .todo-item:not(.todo-yours) .todo-box path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 420ms var(--ease-out) 120ms;
+}
+.motion .todo-item:not(.todo-yours) .todo-words {
+  color: var(--ink);
+  transition: color 500ms var(--ease-out) 300ms;
+}
+.motion .todo-strike path {
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 700ms var(--ease-draw) 260ms;
+}
+.motion .todo-item:not(.todo-yours) .todo-done {
+  opacity: 0;
+  translate: 0 0.5rem;
+  transition:
+    opacity 500ms var(--ease-out) 420ms,
+    translate 700ms var(--ease-settle) 420ms;
+}
+.motion .todo-item.is-done:not(.todo-yours) .todo-box {
+  background: var(--ink);
+}
+.motion .todo-item.is-done .todo-box path,
+.motion .todo-item.is-done .todo-strike path {
+  stroke-dashoffset: 0;
+}
+.motion .todo-item.is-done:not(.todo-yours) .todo-words {
+  color: var(--ink-3);
+}
+.motion .todo-item.is-done .todo-done {
+  opacity: 1;
+  translate: 0 0;
+}
+.motion .todo-yours.is-done .todo-box {
+  animation: todo-wait 2200ms var(--ease-out) 600ms infinite;
+}
+@keyframes todo-wait {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0.45rem var(--pink-soft);
+  }
+  50% {
+    box-shadow: 0 0 0 0.85rem var(--pink-mist);
+  }
+}
+
+/* ——— The floor: the team from the ceiling, its roles beside it. ——— */
+.floor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.85fr);
+  align-items: start;
+  gap: 1.5rem clamp(2rem, 4vw, 4rem);
+}
+.floor-plan {
+  position: relative;
+  margin: 0;
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+  border-radius: var(--radius-xl);
+  background: var(--mist);
+}
+.floor-art {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.floor-wall {
+  stroke: var(--ink);
+  stroke-width: 12;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.floor-door {
+  stroke: var(--ink-quiet);
+  stroke-width: 3;
+  stroke-dasharray: 2 9;
+  stroke-linecap: round;
+}
+.floor-window {
+  stroke: var(--ink);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+.floor-top {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 6;
+  transition:
+    fill 300ms var(--ease-out),
+    stroke 300ms var(--ease-out);
+}
+.floor-chair {
+  fill: var(--white);
+  stroke: var(--ink-quiet);
+  stroke-width: 5;
+}
+.floor-screen {
+  stroke: var(--ink);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+.floor-bell path {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+.floor-bell .floor-bell-wave {
+  fill: none;
+  stroke: var(--pink);
+  stroke-linecap: round;
+}
+.floor-bell-ball {
+  fill: var(--pink-hot);
+}
+.motion .floor-wall {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1600ms var(--ease-draw);
+}
+.motion .floor-plan.is-in .floor-wall {
+  stroke-dashoffset: 0;
+}
+.floor-labels {
+  position: absolute;
+  inset: clamp(0.75rem, 2vw, 1.5rem);
+  pointer-events: none;
+}
+.floor-label {
+  position: absolute;
+  top: var(--y);
+  left: var(--x);
+  display: grid;
+  justify-items: center;
+  translate: -50% -50%;
+  font-size: clamp(0.6875rem, 1.1vw, 0.9375rem);
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+.floor-label strong {
+  font-weight: 600;
+}
+.floor-label span {
+  color: var(--ink-2);
+  font-size: 0.85em;
+}
+.floor-side {
+  display: grid;
+  gap: 1.5rem;
+}
+.floor-roles {
+  border-top: 1px solid var(--line);
+}
+.floor-role {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  cursor: default;
+  transition: background-color var(--duration-ui) var(--ease-out);
+}
+.floor-role:hover,
+.floor-role:focus-visible {
+  background: var(--pink-mist);
+}
+.floor-role-name {
+  font-size: 1.1875rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.floor-role-can {
+  color: var(--ink-2);
+  font-size: var(--text-small);
+  line-height: 1.5;
+}
+.floor-rule {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1.25rem 1.35rem;
+  border-radius: var(--radius-l);
+  background: var(--pink-mist);
+  color: var(--ink-2);
+  font-size: var(--text-small);
+  line-height: 1.55;
+}
+.floor-rule-title {
+  color: var(--ink);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+/* A reply lands at one rep's desk after another, and the bell on the wall rings for each. */
+.motion .floor-plan.is-in .floor-member .floor-top {
+  animation: floor-reply 18s var(--ease-out) calc(1.2s + var(--d) * 3s) infinite;
+}
+.motion .floor-plan.is-in .floor-bell-wave {
+  animation: floor-ring 3s var(--ease-out) 1.2s infinite;
+}
+.floor-bell-wave {
+  opacity: 0;
+}
+@keyframes floor-reply {
+  0%,
+  13%,
+  100% {
+    fill: var(--white);
+    stroke: var(--ink);
+  }
+  2%,
+  9% {
+    fill: var(--pink-soft);
+    stroke: var(--pink-deep);
+  }
+}
+@keyframes floor-ring {
+  0%,
+  45%,
+  100% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+}
+/* Pointing at a role lights the desks that hold it, and quiets the rest. */
+.floor-layout:has(.floor-role:is(:hover, :focus-visible)) .floor-top {
+  animation: none;
+}
+.floor-layout:has(.floor-role-owner:is(:hover, :focus-visible))
+  .floor-owner
+  .floor-top,
+.floor-layout:has(.floor-role-admin:is(:hover, :focus-visible))
+  .floor-admin
+  .floor-top,
+.floor-layout:has(.floor-role-member:is(:hover, :focus-visible))
+  .floor-member
+  .floor-top,
+.floor-layout:has(.floor-role-viewer:is(:hover, :focus-visible))
+  .floor-viewer
+  .floor-top {
+  fill: var(--pink-soft);
+  stroke: var(--pink-deep);
+}
+
+@media (min-width: 1000px) and (max-width: 1300px) {
+  .bell-hero {
+    --stage-width: 48vw;
+  }
+  .bell-copy {
+    max-width: 44vw;
+  }
+  .bell-replies {
+    left: 2%;
+    width: min(21rem, 46%);
+  }
+}
+@media (max-width: 1100px) {
+  .floor-layout {
+    grid-template-columns: 1fr;
+  }
+  .floor-side {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+@media (max-width: 999px) {
+  .bell-hero {
+    --stage-width: min(100%, 30rem);
+    min-height: 0;
+    padding-top: var(--header-height);
+  }
+  .bell-grid {
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 0;
+  }
+  .bell-stage {
+    position: relative;
+    right: auto;
+    order: -1;
+    width: var(--stage-width);
+    margin: 0 0 1rem auto;
+  }
+  .bell-stage {
+    width: min(72%, 24rem);
+  }
+  .bell-replies {
+    top: 66%;
+    left: -42%;
+    width: min(15.5rem, 64vw);
+  }
+  .bell-reply-tag {
+    display: none;
+  }
+  .bell-reply {
+    grid-template-columns: 2.1rem minmax(0, 1fr);
+    padding: 0.7rem 0.75rem;
+  }
+  .bell-reply-avatar {
+    width: 2.1rem;
+    height: 2.1rem;
+  }
+  .bell-hint {
+    top: 30%;
+    left: -40%;
+  }
+  .todo {
+    grid-template-columns: 1fr;
+  }
+  .todo-side {
+    position: static;
+  }
+  .todo-count {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .floor-side {
+    grid-template-columns: 1fr;
+  }
+  .floor-label span {
+    display: none;
+  }
+}

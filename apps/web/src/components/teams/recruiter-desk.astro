@@ -1,0 +1,161 @@
+---
+/**
+ * Every opening runs as its own campaign, pinned up as a role badge, and every reply checks in
+ * at one desk: the unified inbox, each reply threaded under the email that started it and marked
+ * with its role. A reply from a person is a check-in, and it stops their sequence everywhere; an
+ * out-of-office note is set aside and the sequence carries on; what AI isn't sure about waits for
+ * the recruiter. The rows check in one by one as the desk arrives. Roles, people and replies are
+ * illustrative.
+ */
+interface Opening {
+  readonly role: string;
+  readonly place: string;
+  readonly inbox: string;
+  readonly steps: number;
+  readonly people: number;
+}
+const openings: readonly Opening[] = [
+  { inbox: "alex@northwind.co", people: 64, place: "Lisbon", role: "Senior Backend Engineer", steps: 3 },
+  { inbox: "sam@northwind.co", people: 22, place: "Remote", role: "Head of Design", steps: 4 },
+  { inbox: "alex@northwind.co", people: 40, place: "New York", role: "Account Executive", steps: 3 },
+];
+
+/** How a reply checks in: the hot one, any other person, set aside, or waiting for a person. */
+type Arrival = "hot" | "in" | "aside" | "review";
+interface Reply {
+  readonly name: string;
+  readonly role: string;
+  readonly subject: string;
+  readonly message: string;
+  /** What sorted it, its label, and what it did to the sequence. */
+  readonly by: string;
+  readonly label: string;
+  readonly outcome: string;
+  readonly arrival: Arrival;
+}
+const replies: readonly Reply[] = [
+  {
+    arrival: "hot",
+    by: "AI",
+    label: "Positive",
+    message: "Happy to chat. Tuesday?",
+    name: "Priya Raman",
+    outcome: "Stopped everywhere",
+    role: "Backend · Lisbon",
+    subject: "Re: Priya, your async Rust talk",
+  },
+  {
+    arrival: "aside",
+    by: "Rules",
+    label: "Out of office",
+    message: "I’m away until the 14th.",
+    name: "Chen Li",
+    outcome: "Set aside, carries on",
+    role: "Design · Remote",
+    subject: "Re: Chen, a design team in the making",
+  },
+  {
+    arrival: "in",
+    by: "AI",
+    label: "Neutral",
+    message: "Not looking right now. Try me in spring?",
+    name: "Tom Becker",
+    outcome: "Stopped everywhere",
+    role: "AE · New York",
+    subject: "Re: Tom, the New York team",
+  },
+  {
+    arrival: "review",
+    by: "AI, unsure",
+    label: "Needs review",
+    message: "Received, thanks.",
+    name: "Aisha Bello",
+    outcome: "Waits for you",
+    role: "Design · Remote",
+    subject: "Re: Aisha, your checkout redesign",
+  },
+  {
+    arrival: "in",
+    by: "AI",
+    label: "Positive",
+    message: "Who would I report to?",
+    name: "María López",
+    outcome: "Stopped everywhere",
+    role: "Backend · Lisbon",
+    subject: "Re: María, build times in half",
+  },
+];
+const marks: Record<Arrival, string> = {
+  aside: "Set aside: ",
+  hot: "Checked in: ",
+  in: "Checked in: ",
+  review: "Waiting for you: ",
+};
+---
+
+<section id="roles" class="page-section container tag-roles" aria-labelledby="roles-title">
+  <div class="split-head">
+    <h2 id="roles-title">Every role, one inbox.</h2>
+    <p class="lead">
+      Run a campaign for each opening, from the inboxes you choose. Every reply checks in at one
+      desk, threaded under the email that started it and marked with its role.
+    </p>
+  </div>
+  <div class="tag-desk-layout" data-inview>
+    <ul class="tag-openings" aria-label="Openings, each its own campaign">
+      {
+        openings.map((opening, index) => (
+          <li class="tag-opening" style={`--k: ${index}`}>
+            <p class="tag-opening-role">{opening.role}</p>
+            <div class="tag-opening-body">
+              <p class="tag-opening-place">{opening.place}</p>
+              <p class="tag-opening-detail">
+                {opening.steps} steps · {opening.people} candidates
+              </p>
+              <p class="tag-opening-inbox">From {opening.inbox}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+    <span class="tag-desk-join" aria-hidden="true"></span>
+    <div class="tag-desk">
+      <div class="tag-desk-head">
+        <p class="tag-desk-title">Inbox</p>
+        <p class="tag-desk-scope">All roles · 5 new</p>
+      </div>
+      <ul class="tag-arrivals">
+        {
+          replies.map((reply, index) => (
+            <li class={`tag-arrival tag-arrival-${reply.arrival}`} style={`--k: ${index}`}>
+              <span class="tag-check" aria-hidden="true">
+                <svg viewBox="0 0 40 40">
+                  {reply.arrival === "review" ? <path d="M13 20H27" pathLength="1" /> : <path d="M11.5 20.5L17.5 26.5L29 14.5" pathLength="1" />}
+                </svg>
+              </span>
+              <div class="tag-arrival-who">
+                <p class="tag-arrival-name">
+                  <span class="sr-only">{marks[reply.arrival]}</span>
+                  {reply.name}
+                </p>
+                <p class="tag-arrival-role">{reply.role}</p>
+              </div>
+              <div class="tag-arrival-text">
+                <p class="tag-arrival-subject">{reply.subject}</p>
+                <p class="tag-arrival-message">{reply.message}</p>
+              </div>
+              <div class="tag-arrival-sort">
+                <span class="tag-arrival-label">{reply.label}</span>
+                <span class="tag-arrival-outcome">
+                  {reply.by} · {reply.outcome}
+                </span>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="tag-desk-switch">Sorting replies with AI is off until you turn it on.</p>
+    </div>
+  </div>
+  <p class="fine-print tag-desk-fine">Roles, people and replies are examples.</p>
+</section>

@@ -1,0 +1,220 @@
+---
+import AePiece from "./ae-piece.astro";
+
+/**
+ * How one reply quiets the account, move by move, on a chess diagram: the board seen from
+ * above, the way a chess column prints a position. The five moves are listed beside it; on a
+ * wide screen the section holds still while the scroll plays them on the diagram: the AE writes
+ * to five people at Northwind, the CFO's out-of-office comes back and changes nothing, the Head
+ * of RevOps answers, everyone else at northwind.co is paused, and the thread lands in the inbox.
+ * Elsewhere, and without motion, the diagram shows the end of the game. Northwind, its people
+ * and their messages are illustrative.
+ */
+type Kind = "king" | "queen" | "rook" | "bishop" | "knight";
+interface Seat {
+  readonly id: string;
+  readonly title: string;
+  readonly kind: Kind;
+  /** Column and row on the diagram, counted from its top left square. */
+  readonly square: readonly [number, number];
+}
+const seats: readonly Seat[] = [
+  { id: "cfo", kind: "king", square: [4, 0], title: "CFO" },
+  { id: "vp-sales", kind: "queen", square: [6, 1], title: "VP Sales" },
+  { id: "revops", kind: "knight", square: [1, 2], title: "Head of RevOps" },
+  { id: "legal", kind: "bishop", square: [3, 3], title: "Legal" },
+  { id: "it", kind: "rook", square: [6, 4], title: "IT" },
+];
+const moves = [
+  {
+    detail: "One campaign, five people with a say, every email from your own inbox.",
+    title: "You write to five people at Northwind.",
+  },
+  {
+    detail: "Out-of-office notes and auto-replies are set aside, so the sequence carries on.",
+    title: "The CFO’s out-of-office doesn’t count.",
+  },
+  {
+    detail: "A reply from a person stops their sequence, in this campaign and in every other.",
+    title: "The Head of RevOps replies.",
+  },
+  {
+    detail: "If you switched on “Stop their colleagues too” for this campaign. It’s off until you do.",
+    title: "Everyone else at northwind.co is paused.",
+  },
+  {
+    detail: "Threaded with the email that started it, waiting for your answer.",
+    title: "Their thread lands in your inbox.",
+  },
+] as const;
+
+// The diagram: eight squares of 70 a side inside a 40 margin.
+const SQUARE = 70;
+const EDGE = 40;
+const SIZE = 8;
+const VIEW = EDGE * 2 + SQUARE * SIZE;
+const SCALE = 0.27;
+const RING = 31;
+const round = (value: number): number => Math.round(value * 10) / 10;
+const middle = (square: readonly [number, number]): { x: number; y: number } => ({
+  x: EDGE + square[0] * SQUARE + SQUARE / 2,
+  y: EDGE + square[1] * SQUARE + SQUARE / 2,
+});
+const darkSquares = Array.from({ length: SIZE * SIZE }, (_, index) => ({ column: index % SIZE, row: Math.floor(index / SIZE) })).filter(
+  (square) => (square.column + square.row) % 2 === 1
+);
+const YOU = middle([2, 6]);
+/** The pieces stand a little low in their squares, the way a diagram sets them. */
+const FOOT = 25;
+
+/** A move: dots along a gentle curve from the pawn to the edge of a piece's ring. */
+const moveTo = (to: { x: number; y: number }): { x: number; y: number; t: number }[] => {
+  const from = { x: YOU.x, y: YOU.y - 12 };
+  const angle = Math.atan2(from.y - to.y, from.x - to.x);
+  const end = { x: to.x + Math.cos(angle) * (RING + 8), y: to.y + Math.sin(angle) * (RING + 8) };
+  const bend = { x: (from.x + end.x) / 2 - (end.y - from.y) * 0.12, y: (from.y + end.y) / 2 + (end.x - from.x) * 0.12 };
+  const point = (t: number): { x: number; y: number } => ({
+    x: (1 - t) ** 2 * from.x + 2 * (1 - t) * t * bend.x + t ** 2 * end.x,
+    y: (1 - t) ** 2 * from.y + 2 * (1 - t) * t * bend.y + t ** 2 * end.y,
+  });
+  const samples = Array.from({ length: 161 }, (_, index) => point(index / 160));
+  let length = 0;
+  for (const [index, sample] of samples.entries()) {
+    const previous = samples[index - 1];
+    if (previous) {
+      length += Math.hypot(sample.x - previous.x, sample.y - previous.y);
+    }
+  }
+  const dots: { x: number; y: number; t: number }[] = [];
+  let travelled = 0;
+  let next = 14;
+  for (const [index, sample] of samples.entries()) {
+    const previous = samples[index - 1];
+    if (!previous) {
+      continue;
+    }
+    travelled += Math.hypot(sample.x - previous.x, sample.y - previous.y);
+    if (travelled >= next) {
+      dots.push({ t: round(travelled / length), x: round(sample.x), y: round(sample.y) });
+      next += 11;
+    }
+  }
+  return dots;
+};
+const placed = seats.map((seat, index) => {
+  const spot = middle(seat.square);
+  return { ...seat, dots: moveTo(spot), index, spot };
+});
+/** Where the HTML over the diagram sits, in the diagram's own units. */
+const place = (x: number, y: number): string => `--px: ${round(x)}; --py: ${round(y)}`;
+const revops = placed.find((seat) => seat.id === "revops");
+const cfo = placed.find((seat) => seat.id === "cfo");
+---
+
+<section id="board" class="page-section quiet" aria-labelledby="quiet-title">
+  <div class="container split-head">
+    <h2 id="quiet-title">
+      <span class="line"><span class="pink">One reply.</span></span>
+      <span class="line">The board goes quiet.</span>
+    </h2>
+    <p class="lead">
+      Five people at Northwind, one campaign. Here’s the game, move by move, and what Norbelys
+      does at each one.
+    </p>
+  </div>
+  <div class="quiet-track" data-scene="pin" data-scene-media="(min-width: 1000px)" data-steps="0.18,0.38,0.58,0.78">
+    <div class="quiet-stage container">
+      <ol class="quiet-moves">
+        {
+          moves.map((move, index) => (
+            <li class="quiet-move" data-move={index}>
+              <span class="quiet-number numeric" aria-hidden="true">
+                {index + 1}.
+              </span>
+              <span class="quiet-text">
+                <strong>{move.title}</strong>
+                <span>{move.detail}</span>
+              </span>
+            </li>
+          ))
+        }
+      </ol>
+      <figure class="quiet-figure" aria-hidden="true">
+        <svg class="quiet-art" viewBox={`0 0 ${VIEW} ${VIEW}`} fill="none">
+          <rect class="quiet-frame" x="6" y="6" width={VIEW - 12} height={VIEW - 12} rx="26" />
+          <g class="quiet-squares">
+            {
+              darkSquares.map((square) => (
+                <rect class="quiet-square" x={EDGE + square.column * SQUARE} y={EDGE + square.row * SQUARE} width={SQUARE} height={SQUARE} />
+              ))
+            }
+          </g>
+          <rect class="quiet-edge" x={EDGE} y={EDGE} width={SQUARE * SIZE} height={SQUARE * SIZE} />
+          <rect class="quiet-zone" x={EDGE + 8} y={EDGE + 8} width={SQUARE * SIZE - 16} height={SQUARE * 5 - 8} rx="22" pathLength="1" />
+          {
+            placed.map((seat) => (
+              <circle
+                class:list={["quiet-ring", seat.id === "revops" ? "quiet-ring-replied" : "quiet-ring-paused"]}
+                cx={seat.spot.x}
+                cy={seat.spot.y}
+                r={RING}
+                pathLength="1"
+              />
+            ))
+          }
+          {
+            placed.map((seat) => (
+              <g class:list={["quiet-path", { "quiet-path-kept": seat.id === "revops" }]} style={`--m: ${seat.index}`}>
+                {seat.dots.map((dot) => (
+                  <circle class="quiet-dot" cx={dot.x} cy={dot.y} r="3.4" style={`--t: ${dot.t}`} />
+                ))}
+              </g>
+            ))
+          }
+          <AePiece kind="pawn" x={YOU.x} y={YOU.y + FOOT - 4} scale={0.24} black />
+          {placed.map((seat) => <AePiece kind={seat.kind} x={seat.spot.x} y={seat.spot.y + FOOT} scale={SCALE} />)}
+        </svg>
+        <span class="quiet-tag quiet-tag-you" style={place(YOU.x, YOU.y + 36)}>You</span>
+        <span class="quiet-domain" style={place(EDGE + 30, EDGE + 8)}>@northwind.co</span>
+        {
+          placed.map((seat) => (
+            <span class:list={["quiet-tag", seat.id === "revops" ? "quiet-tag-replied" : "quiet-tag-paused"]} style={place(seat.spot.x, seat.spot.y + 36)}>
+              {seat.title}
+              <span class="quiet-tag-state">{seat.id === "revops" ? "Replied" : "Paused"}</span>
+            </span>
+          ))
+        }
+        {
+          cfo && (
+            <span class="quiet-bubble quiet-bubble-away" style={place(cfo.spot.x + 26, cfo.spot.y - 30)}>
+              <span class="quiet-bubble-who">Auto-reply · set aside</span>
+              Out of office until Monday.
+            </span>
+          )
+        }
+        {
+          revops && (
+            <span class="quiet-bubble quiet-bubble-reply" style={place(revops.spot.x - 20, revops.spot.y - 34)}>
+              <span class="quiet-bubble-who">Head of RevOps</span>
+              Let’s talk Thursday.
+            </span>
+          )
+        }
+        <div class="quiet-thread">
+          <p class="quiet-thread-head">
+            <span>Inbox</span>
+            <span class="quiet-thread-chip">Person · positive</span>
+          </p>
+          <div class="quiet-thread-mail quiet-thread-ours">
+            <span class="quiet-thread-from">You <span>to Head of RevOps · Mon</span></span>
+            <span class="quiet-thread-subject">A quick idea for Northwind</span>
+          </div>
+          <div class="quiet-thread-mail quiet-thread-theirs">
+            <span class="quiet-thread-from">Head of RevOps <span>Wed 11:40</span></span>
+            <span class="quiet-thread-body">Let’s talk Thursday.</span>
+          </div>
+        </div>
+      </figure>
+    </div>
+  </div>
+</section>

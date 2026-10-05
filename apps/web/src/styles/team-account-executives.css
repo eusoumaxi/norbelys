@@ -1,0 +1,1743 @@
+/*
+ * Norbelys for account executives: the deal as a chess board. Everyone with a say stands on it
+ * as a white piece, the AE plays the black pawn, emails are pink dotted moves, and the one who
+ * answers gets the pink ring while the rest of the company waits inside grey ones. The board is
+ * drawn in thin ink and mist squares; the pieces in the brand's thick line, filled white.
+ */
+
+/* ——— The pieces: thick ink outlines filled white, the same weight at any scale. ——— */
+.piece-body,
+.piece-line {
+  stroke: var(--ink);
+  stroke-width: calc(var(--piece-stroke, 9px) / var(--scale, 1));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.piece-body {
+  fill: var(--white);
+}
+.piece-line {
+  fill: none;
+}
+.piece-dot {
+  fill: var(--ink);
+}
+.piece-black .piece-body {
+  fill: var(--ink);
+}
+.piece-black .piece-line {
+  stroke: var(--white);
+}
+
+/* ——— Hero: the board on its corner, the committee standing on it. ——— */
+.board-hero {
+  --stage-width: min(83.33vw, 75rem);
+  position: relative;
+  min-height: calc(var(--stage-width) * 980 / 1200);
+  overflow-x: clip;
+}
+.board-copy {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: start;
+  gap: 1.5rem;
+  max-width: 36rem;
+}
+.board-copy .page-actions {
+  margin-top: 0.5rem;
+}
+.board-fine {
+  max-width: 25rem;
+}
+.board-stage {
+  --u: calc(100cqw / 1200);
+  position: absolute;
+  top: 0;
+  left: calc(max(var(--gutter), (100% - var(--page)) / 2) + 14.75rem);
+  width: var(--stage-width);
+  aspect-ratio: 1200 / 980;
+  container-type: inline-size;
+}
+.board-art {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* The board: a white table edged in ink, mist squares, hairlines between them. */
+.board-side {
+  stroke: var(--ink);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+.board-side-left {
+  fill: var(--cloud);
+}
+.board-side-right {
+  fill: var(--mist);
+}
+.board-frame {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 3.5;
+  stroke-linejoin: round;
+}
+.board-square {
+  fill: var(--mist);
+}
+.board-line {
+  stroke: var(--line-strong);
+  stroke-width: 1.5;
+}
+.board-edge {
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+/* Rings at the pieces' feet: pink for the one who answered, grey for everyone paused. */
+.board-ring-line {
+  fill: transparent;
+  stroke: var(--line-strong);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+  opacity: 0;
+}
+.board-ring:is([data-state="paused"], [data-state="replied"]) .board-ring-line {
+  stroke-dashoffset: 0;
+  opacity: 1;
+}
+.board-ring[data-state="replied"] .board-ring-line {
+  fill: var(--pink-soft);
+  stroke: var(--pink-hot);
+  stroke-width: 7;
+}
+
+/* The moves: a dotted line from the pawn to each piece; a paused piece's move fades away. */
+.board-dot {
+  fill: var(--pink-hot);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.board-move[data-state="paused"] {
+  opacity: 0;
+}
+
+/* Over the drawing: each piece's title at its feet, and the piece itself, as one button. */
+.board-labels,
+.board-bubbles {
+  position: absolute;
+  inset: 0;
+}
+.board-bubbles {
+  pointer-events: none;
+}
+.board-pick {
+  position: absolute;
+  top: calc((var(--py) - var(--tall)) * var(--u));
+  left: calc(var(--px) * var(--u));
+  width: calc(124 * var(--u));
+  height: calc((var(--tall) + 92) * var(--u));
+  border-radius: calc(40 * var(--u));
+  translate: -50% 0;
+  cursor: pointer;
+}
+.board-pick:focus-visible {
+  outline-offset: 0;
+}
+.board-tag {
+  position: absolute;
+  bottom: calc(14 * var(--u));
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.35em 0.75em;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  box-shadow: var(--shadow-card);
+  color: var(--ink);
+  font-size: clamp(0.6875rem, 1.3cqw, 0.9375rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  white-space: nowrap;
+  translate: -50% 0;
+}
+.board-tag-state {
+  display: none;
+  max-width: 6em;
+  overflow: hidden;
+  padding: 0.15em 0.5em;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+  color: var(--ink-2);
+  font-size: 0.85em;
+}
+.board-pick[data-state="paused"] .board-tag-state,
+.board-pick[data-state="replied"] .board-tag-state {
+  display: inline-block;
+}
+.board-pick[data-state="paused"] .board-tag-title {
+  color: var(--ink-2);
+}
+.board-pick[data-state="replied"] .board-tag {
+  background: var(--pink-deep);
+  box-shadow: var(--shadow-pink);
+  color: var(--white);
+}
+.board-pick[data-state="replied"] .board-tag-state {
+  background: var(--white);
+  color: var(--pink-ink);
+}
+.board-pick:hover .board-tag {
+  box-shadow: var(--shadow-float);
+}
+.board-tag.board-tag-you {
+  top: calc((var(--py) + 26) * var(--u));
+  bottom: auto;
+  left: calc(var(--px) * var(--u));
+  background: var(--ink);
+  color: var(--white);
+  box-shadow: none;
+}
+
+/* The answer: a speech bubble over the piece that replied. */
+.board-bubble {
+  position: absolute;
+  top: calc(var(--py) * var(--u));
+  left: calc(var(--px) * var(--u));
+  display: grid;
+  gap: 0.15em;
+  width: max-content;
+  max-width: calc(300 * var(--u));
+  padding: 0.75em 1em 0.8em;
+  border-radius: 1.1em;
+  background: var(--white);
+  box-shadow: var(--shadow-float);
+  font-size: clamp(0.75rem, 1.45cqw, 1.0625rem);
+  line-height: 1.3;
+  opacity: 0;
+  scale: 0.85;
+  translate: -50% -100%;
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+.board-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -0.45em;
+  left: 50%;
+  width: 1em;
+  height: 1em;
+  border-radius: 0.2em;
+  background: var(--white);
+  rotate: 45deg;
+  translate: -50% 0;
+}
+.board-bubble-left {
+  translate: calc(-100% + 3.2em) -100%;
+  transform-origin: calc(100% - 3.2em) 100%;
+}
+.board-bubble-left::after {
+  left: calc(100% - 3.2em);
+}
+.board-bubble-right {
+  translate: -3.2em -100%;
+  transform-origin: 3.2em 100%;
+}
+.board-bubble-right::after {
+  left: 3.2em;
+}
+.board-bubble[data-state="replied"] {
+  opacity: 1;
+  scale: 1;
+}
+.board-bubble-who {
+  color: var(--pink-ink);
+  font-size: 0.78em;
+  font-weight: 600;
+}
+.board-bubble-text {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* The panel at the near corner: what just happened, and the way back to the start. */
+.board-panel {
+  position: absolute;
+  top: calc(800 * var(--u));
+  left: calc(180 * var(--u));
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 0.1rem 1.25rem;
+  padding: 0.8rem 0.8rem 0.8rem 1.15rem;
+  border-radius: var(--radius-l);
+  background: var(--white);
+  box-shadow: var(--shadow-card);
+  font-size: var(--text-micro);
+  line-height: 1.4;
+}
+.board-status {
+  font-weight: 600;
+}
+.board-hint {
+  grid-row: 2;
+  color: var(--ink-3);
+}
+.board-reset {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  font-weight: 600;
+  transition: box-shadow var(--duration-ui) var(--ease-out);
+}
+.board-reset:hover {
+  box-shadow: inset 0 0 0 1.5px var(--pink);
+}
+
+/*
+ * The opening, with motion: the board draws itself, the pieces rise, the moves go out one after
+ * another, the Head of RevOps answers and the others are paused. Each step starts from where the
+ * board will end, so a page that never moves shows the same answer. From the visitor's first
+ * touch (`.is-live`) the opening gives way to transitions between their own choices.
+ */
+.motion .board-stage:not(.is-live) .board-frame,
+.motion .board-stage:not(.is-live) .board-edge,
+.motion .board-stage:not(.is-live) .board-line {
+  stroke-dasharray: 1;
+  animation: board-draw 1100ms var(--ease-draw) backwards;
+}
+.motion .board-stage:not(.is-live) .board-edge {
+  animation-delay: 150ms;
+}
+.motion .board-stage:not(.is-live) .board-line {
+  animation-duration: 900ms;
+  animation-delay: 300ms;
+}
+.motion .board-stage:not(.is-live) .board-square {
+  animation: board-appear 500ms var(--ease-out) calc(250ms + var(--w) * 45ms)
+    backwards;
+}
+.motion .board-stage:not(.is-live) .board-side {
+  animation: board-appear 600ms var(--ease-out) 500ms backwards;
+}
+.motion .board-stage:not(.is-live) .board-piece {
+  animation: board-rise 800ms var(--ease-settle) calc(750ms + var(--k) * 90ms)
+    backwards;
+}
+.motion .board-stage:not(.is-live) .board-dot,
+.motion .board-stage.is-replaying .board-dot {
+  animation: board-dot 260ms var(--ease-settle)
+    calc(1450ms + var(--m) * 380ms + var(--t) * 1ms) backwards;
+}
+.motion .board-stage.is-replaying .board-dot {
+  animation-delay: calc(150ms + var(--m) * 380ms + var(--t) * 1ms);
+}
+/* The answer: the champion's ring draws, its bubble opens, its title turns pink. */
+.motion
+  .board-stage:not(.is-live)
+  .board-ring[data-state="replied"]
+  .board-ring-line {
+  animation: board-ring 700ms var(--ease-draw) 3500ms backwards;
+}
+.motion .board-stage:not(.is-live) .board-bubble[data-state="replied"] {
+  animation: board-bubble 700ms var(--ease-settle) 3650ms backwards;
+}
+.motion
+  .board-stage:not(.is-live)
+  .board-pick[data-state="replied"]
+  .board-tag {
+  animation: board-tag-replied 500ms var(--ease-out) 3500ms backwards;
+}
+.motion
+  .board-stage:not(.is-live)
+  .board-pick[data-state="replied"]
+  .board-tag-state {
+  animation: board-tag-state 600ms var(--ease-settle) 3500ms backwards;
+}
+/* Then the rest of the company: grey rings, the moves fade, "Paused" at their feet. */
+.motion
+  .board-stage:not(.is-live)
+  .board-ring[data-state="paused"]
+  .board-ring-line {
+  animation: board-ring 800ms var(--ease-draw) calc(4150ms + var(--k, 0) * 60ms)
+    backwards;
+}
+.motion .board-stage:not(.is-live) .board-move[data-state="paused"] {
+  animation: board-fade 700ms var(--ease-out) 4150ms backwards;
+}
+.motion
+  .board-stage:not(.is-live)
+  .board-pick[data-state="paused"]
+  .board-tag-state {
+  animation: board-tag-state 600ms var(--ease-settle) 4250ms backwards;
+}
+.motion .board-stage:not(.is-live) .board-panel {
+  animation: board-panel 700ms var(--ease-settle) 4700ms backwards;
+}
+/* The visitor's own moves: rings draw and fade, moves fade, bubbles open, in their time. */
+.motion .board-ring-line {
+  transition:
+    stroke-dashoffset 700ms var(--ease-draw),
+    opacity 300ms var(--ease-out),
+    stroke 400ms var(--ease-out),
+    fill 400ms var(--ease-out);
+}
+.motion .board-move {
+  transition: opacity 600ms var(--ease-out);
+}
+.motion .board-bubble {
+  transition:
+    opacity 300ms var(--ease-out),
+    scale 600ms var(--ease-settle);
+}
+.motion .board-tag {
+  transition:
+    background-color 400ms var(--ease-out),
+    color 400ms var(--ease-out),
+    box-shadow 400ms var(--ease-out);
+}
+@keyframes board-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+@keyframes board-appear {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes board-rise {
+  from {
+    opacity: 0;
+    translate: 0 34px;
+  }
+}
+@keyframes board-dot {
+  from {
+    opacity: 0;
+    scale: 0.2;
+  }
+}
+@keyframes board-ring {
+  from {
+    fill: transparent;
+    stroke-dashoffset: 1;
+  }
+}
+@keyframes board-bubble {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+@keyframes board-tag-replied {
+  from {
+    background: var(--white);
+    box-shadow: var(--shadow-card);
+    color: var(--ink);
+  }
+}
+@keyframes board-tag-state {
+  from {
+    max-width: 0;
+    margin-left: -0.4em;
+    padding-inline: 0;
+    opacity: 0;
+  }
+}
+@keyframes board-fade {
+  from {
+    opacity: 1;
+  }
+}
+@keyframes board-panel {
+  from {
+    opacity: 0;
+    translate: 0 0.75rem;
+  }
+}
+
+/* ——— One reply, move by move: the moves listed beside a chess diagram of the account. ——— */
+.quiet-track {
+  --p: 1;
+  position: relative;
+}
+.quiet-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+  align-items: center;
+  gap: 2.5rem clamp(2.5rem, 6vw, 6rem);
+}
+.quiet-moves {
+  border-top: 1px solid var(--line);
+}
+.quiet-move {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding-block: 1.1rem 1.2rem;
+  border-bottom: 1px solid var(--line);
+}
+.quiet-number {
+  color: var(--ink-3);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+  transition: color 400ms var(--ease-out);
+}
+.quiet-text {
+  display: grid;
+  gap: 0.3rem;
+}
+.quiet-text strong {
+  font-size: clamp(1.1875rem, 1.6vw, 1.4375rem);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+.quiet-text span {
+  max-width: 30rem;
+  color: var(--ink-2);
+  font-size: var(--text-small);
+  line-height: 1.5;
+}
+
+/* The diagram: the board from above, the committee on the far ranks, the AE's pawn below. */
+.quiet-figure {
+  --u: calc(100cqw / 640);
+  --piece-stroke: 4.6px;
+  position: relative;
+  justify-self: end;
+  width: min(100%, 40rem);
+  margin: 0;
+  container-type: inline-size;
+}
+.quiet-art {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.quiet-frame {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+.quiet-square {
+  fill: var(--mist);
+}
+.quiet-edge {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.quiet-zone {
+  stroke: var(--ink-3);
+  stroke-width: 2.5;
+  stroke-dasharray: 0.004 0.009;
+  stroke-linecap: round;
+}
+.quiet-ring {
+  fill: transparent;
+  stroke: var(--line-strong);
+  stroke-width: 4;
+  stroke-dasharray: 1;
+}
+.quiet-ring-replied {
+  fill: var(--pink-soft);
+  stroke: var(--pink-hot);
+  stroke-width: 4.5;
+}
+.quiet-dot {
+  fill: var(--pink-hot);
+}
+.quiet-path:not(.quiet-path-kept) {
+  opacity: 0;
+}
+
+/* Over the diagram: titles under the pieces, the domain, the bubbles, the thread. */
+.quiet-tag,
+.quiet-domain,
+.quiet-bubble {
+  position: absolute;
+  top: calc(var(--py) * var(--u));
+  left: calc(var(--px) * var(--u));
+  font-size: clamp(0.625rem, 2cqw, 0.8125rem);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.quiet-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.3em 0.65em;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  box-shadow: var(--shadow-card);
+  translate: -50% 0;
+}
+.quiet-tag-state {
+  max-width: 6em;
+  overflow: hidden;
+  padding: 0.12em 0.45em;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+  color: var(--ink-2);
+  font-size: 0.85em;
+}
+.quiet-tag-paused {
+  color: var(--ink-2);
+}
+.quiet-tag-replied {
+  background: var(--pink-deep);
+  box-shadow: var(--shadow-pink);
+  color: var(--white);
+}
+.quiet-tag-replied .quiet-tag-state {
+  background: var(--white);
+  color: var(--pink-ink);
+}
+.quiet-tag-you {
+  background: var(--ink);
+  box-shadow: none;
+  color: var(--white);
+}
+.quiet-domain {
+  padding: 0.3em 0.7em;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  color: var(--ink-2);
+  translate: 0 -50%;
+}
+.quiet-bubble {
+  display: grid;
+  gap: 0.15em;
+  padding: 0.6em 0.85em 0.65em;
+  border-radius: 1em;
+  background: var(--white);
+  box-shadow: var(--shadow-float);
+  font-size: clamp(0.6875rem, 2.3cqw, 0.9375rem);
+  font-weight: 500;
+}
+.quiet-bubble::after {
+  content: "";
+  position: absolute;
+  width: 0.9em;
+  height: 0.9em;
+  border-radius: 0.18em;
+  background: var(--white);
+  rotate: 45deg;
+}
+.quiet-bubble-who {
+  color: var(--pink-ink);
+  font-size: 0.8em;
+  font-weight: 600;
+}
+.quiet-bubble-away {
+  translate: 0 -50%;
+}
+.quiet-bubble-away::after {
+  top: 50%;
+  left: -0.4em;
+  translate: 0 -50%;
+}
+.quiet-bubble-away .quiet-bubble-who {
+  color: var(--ink-3);
+}
+.quiet-bubble-reply {
+  translate: -1.6em -100%;
+}
+.quiet-bubble-reply::after {
+  bottom: -0.4em;
+  left: 1.2em;
+}
+.quiet-thread {
+  position: absolute;
+  right: -5%;
+  bottom: -7%;
+  display: grid;
+  gap: 0.7em;
+  width: 56%;
+  padding: 1em 1.1em 1.1em;
+  border-radius: var(--radius-l);
+  background: var(--white);
+  box-shadow: var(--shadow-float);
+  font-size: clamp(0.6875rem, 2.1cqw, 0.875rem);
+  line-height: 1.35;
+}
+.quiet-thread-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  font-weight: 600;
+}
+.quiet-thread-chip {
+  padding: 0.2em 0.6em;
+  border-radius: var(--radius-pill);
+  background: var(--pink-soft);
+  color: var(--pink-ink);
+  font-size: 0.9em;
+}
+.quiet-thread-mail {
+  display: grid;
+  gap: 0.15em;
+  padding: 0.65em 0.8em;
+  border-radius: 0.8em;
+}
+.quiet-thread-ours {
+  background: var(--mist);
+  color: var(--ink-2);
+}
+.quiet-thread-theirs {
+  margin-left: 1.25em;
+  background: var(--pink-mist);
+}
+.quiet-thread-from {
+  font-weight: 600;
+}
+.quiet-thread-ours .quiet-thread-from {
+  color: var(--ink);
+}
+.quiet-thread-from span {
+  color: var(--ink-2);
+  font-weight: 400;
+}
+.quiet-thread-body {
+  font-size: 1.15em;
+  font-weight: 500;
+}
+
+/*
+ * On a wide screen with motion, the section holds still and the scroll plays the moves: `--p`
+ * runs from 0 to 1 and each part of the diagram arrives at its move's threshold.
+ */
+@media (min-width: 1000px) {
+  .motion .quiet-track {
+    height: 340vh;
+  }
+  .motion .quiet-stage {
+    position: sticky;
+    top: 0;
+    min-height: 100vh;
+    padding-top: calc(var(--header-height) + 1rem);
+    padding-bottom: 2rem;
+  }
+  .motion .quiet-figure {
+    width: min(100%, 40rem, calc(100vh - var(--header-height) - 6rem));
+  }
+  .motion .quiet-move {
+    transition: opacity 500ms var(--ease-out);
+  }
+  .motion .quiet-track[data-stage="0"] .quiet-move:nth-child(n + 2),
+  .motion .quiet-track[data-stage="1"] .quiet-move:nth-child(n + 3),
+  .motion .quiet-track[data-stage="2"] .quiet-move:nth-child(n + 4),
+  .motion .quiet-track[data-stage="3"] .quiet-move:nth-child(n + 5) {
+    opacity: 0.32;
+  }
+  .motion .quiet-track[data-stage="0"] .quiet-move:nth-child(1) .quiet-number,
+  .motion .quiet-track[data-stage="1"] .quiet-move:nth-child(2) .quiet-number,
+  .motion .quiet-track[data-stage="2"] .quiet-move:nth-child(3) .quiet-number,
+  .motion .quiet-track[data-stage="3"] .quiet-move:nth-child(4) .quiet-number,
+  .motion .quiet-track[data-stage="4"] .quiet-move:nth-child(5) .quiet-number {
+    color: var(--pink-deep);
+  }
+}
+.motion .quiet-figure {
+  --sent: clamp(0, var(--p) * 6, 1);
+  --away: clamp(0, (var(--p) - 0.18) * 14, 1);
+  --replied: clamp(0, (var(--p) - 0.38) * 14, 1);
+  --paused: clamp(0, (var(--p) - 0.58) * 12, 1);
+  --landed: clamp(0, (var(--p) - 0.78) * 12, 1);
+}
+.motion .quiet-dot {
+  opacity: clamp(0, (var(--p) * 6 - var(--m) * 0.16 - var(--t) * 0.3) * 4, 1);
+}
+.motion .quiet-path:not(.quiet-path-kept) {
+  opacity: calc(1 - var(--paused));
+}
+.motion .quiet-bubble-away {
+  opacity: var(--away);
+  scale: calc(0.8 + 0.2 * var(--away));
+}
+.motion .quiet-ring-replied,
+.motion .quiet-bubble-reply {
+  opacity: var(--replied);
+}
+.motion .quiet-ring-replied {
+  stroke-dashoffset: calc(1 - var(--replied));
+}
+.motion .quiet-bubble-reply {
+  scale: calc(0.8 + 0.2 * var(--replied));
+}
+.motion .quiet-tag-replied {
+  background: color-mix(
+    in srgb,
+    var(--pink-deep) calc(var(--replied) * 100%),
+    var(--white)
+  );
+  color: color-mix(
+    in srgb,
+    var(--white) calc(var(--replied) * 100%),
+    var(--ink)
+  );
+}
+.motion .quiet-tag-replied .quiet-tag-state {
+  max-width: calc(var(--replied) * 6em);
+  padding-inline: calc(var(--replied) * 0.45em);
+  opacity: var(--replied);
+}
+.motion .quiet-ring-paused {
+  stroke-dashoffset: calc(1 - var(--paused));
+}
+.motion .quiet-zone,
+.motion .quiet-domain {
+  opacity: var(--paused);
+}
+.motion .quiet-tag-paused .quiet-tag-state {
+  max-width: calc(var(--paused) * 6em);
+  padding-inline: calc(var(--paused) * 0.45em);
+  opacity: var(--paused);
+}
+.motion .quiet-tag-paused {
+  color: color-mix(
+    in srgb,
+    var(--ink-2) calc(var(--paused) * 100%),
+    var(--ink)
+  );
+}
+.motion .quiet-thread {
+  opacity: var(--landed);
+  translate: 0 calc((1 - var(--landed)) * 1.5rem);
+}
+
+/* ——— Your moves, written down: the follow-ups kept on a chess scoresheet. ——— */
+.score {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "sheet head"
+    "sheet notes";
+  gap: clamp(2rem, 3.5vw, 3rem) clamp(3rem, 7vw, 7.5rem);
+}
+.score-head {
+  display: grid;
+  grid-area: head;
+  gap: 1.25rem;
+  align-self: end;
+}
+.score-head .lead {
+  max-width: 30rem;
+}
+
+/* The sheet: a printed form, the moves written into its ruled grid, a pencil on its corner. */
+.score-sheet {
+  position: relative;
+  grid-area: sheet;
+  align-self: start;
+  margin: 0;
+  padding: clamp(1.25rem, 2.6vw, 2.25rem) clamp(1rem, 2.6vw, 2.25rem)
+    clamp(1.5rem, 3vw, 2.5rem);
+  border-radius: var(--radius-xl);
+  background: var(--white);
+  box-shadow: var(--shadow-float);
+}
+.score-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.75rem;
+  margin-bottom: clamp(1.25rem, 2.4vw, 1.75rem);
+}
+.score-field {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  min-width: 0;
+  padding-bottom: 0.4rem;
+  border-bottom: 1.5px solid var(--line-strong);
+}
+.score-field-wide {
+  grid-column: 1 / -1;
+}
+.score-field dt {
+  flex: none;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+.score-field dd {
+  min-width: 0;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+.score-table {
+  width: 100%;
+  border: 3px solid var(--ink);
+  border-radius: var(--radius-m);
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  table-layout: fixed;
+}
+.score-table th,
+.score-table td {
+  padding: 0 clamp(0.6rem, 1.4vw, 1rem);
+  text-align: left;
+}
+.score-table thead th {
+  height: 2.75rem;
+  border-bottom: 2px solid var(--ink);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.score-table thead th + th {
+  border-left: 1.5px solid var(--line-strong);
+}
+.score-table thead th:last-child {
+  width: 34%;
+}
+.score-swatch {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  margin-right: 0.5em;
+  border: 2px solid var(--ink);
+  border-radius: 0.2em;
+  background: var(--white);
+  vertical-align: -0.08em;
+}
+.score-swatch-black {
+  background: var(--ink);
+}
+.score-table .score-n {
+  width: 3rem;
+  padding: 0;
+  background: var(--mist);
+  color: var(--ink-2);
+  font-weight: 600;
+  text-align: center;
+}
+.score-row > * {
+  height: 3.75rem;
+  border-top: 1.5px solid var(--line);
+}
+.score-row:first-child > * {
+  border-top: 0;
+}
+.score-row td {
+  border-left: 1.5px solid var(--line-strong);
+}
+.score-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.15rem 0.75rem;
+}
+.score-ink {
+  position: relative;
+  display: inline-block;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+.score-day {
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.score-away .score-ink {
+  color: var(--ink-2);
+}
+.score-aside {
+  display: block;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+}
+.score-reply {
+  padding-inline: 0.2em;
+  color: var(--pink-deep);
+  font-weight: 600;
+}
+.score-ring {
+  position: absolute;
+  max-width: none;
+  top: -0.6em;
+  left: -0.85em;
+  width: calc(100% + 1.7em);
+  height: calc(100% + 1.2em);
+  overflow: visible;
+}
+.score-ring path {
+  fill: none;
+  stroke: var(--pink-hot);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  vector-effect: non-scaling-stroke;
+}
+.score-struck {
+  color: var(--ink-3);
+}
+.score-strike {
+  position: absolute;
+  max-width: none;
+  top: 50%;
+  left: -0.2em;
+  width: calc(100% + 0.4em);
+  height: 0.7em;
+  overflow: visible;
+  translate: 0 -40%;
+}
+.score-strike path {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  vector-effect: non-scaling-stroke;
+}
+.score-unplayed .score-day {
+  text-decoration: line-through;
+  text-decoration-color: var(--ink-3);
+}
+.score-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.85rem;
+  max-width: 68%;
+  margin-top: clamp(1.25rem, 2.4vw, 1.75rem);
+  padding-bottom: 0.4rem;
+  border-bottom: 1.5px solid var(--line-strong);
+}
+.score-result-label {
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+.score-result .score-ink {
+  font-size: 1.1875rem;
+  font-weight: 600;
+}
+.score-pencil {
+  position: absolute;
+  max-width: none;
+  right: clamp(-3.5rem, -3vw, -1rem);
+  bottom: clamp(1.25rem, 2.5vw, 2.25rem);
+  width: clamp(9rem, 15vw, 14rem);
+  overflow: visible;
+  rotate: -24deg;
+  pointer-events: none;
+}
+.score-pencil path {
+  stroke: var(--ink);
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.score-pencil-body,
+.score-pencil-wood,
+.score-pencil-band {
+  fill: var(--white);
+}
+.score-pencil-lead {
+  fill: var(--ink);
+}
+.score-pencil-facet {
+  stroke-width: 5;
+}
+
+/* Beside the sheet: the rules every game plays by, a pen stroke over each. */
+.score-notes {
+  display: grid;
+  grid-area: notes;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 1.75rem 2rem;
+}
+.score-note {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+}
+.score-note::before {
+  content: "";
+  width: 2.25rem;
+  height: 4px;
+  margin-bottom: 0.6rem;
+  border-radius: 2px;
+  background: var(--ink);
+}
+.score-note:last-child {
+  grid-column: 1 / -1;
+}
+.score-note:last-child::before {
+  background: var(--pink-hot);
+}
+.score-note dt {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+.score-note dd {
+  max-width: 26rem;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+/* With motion, the moves write themselves in, one after another, then the reply is ringed. */
+.motion .score-sheet .score-row .score-ink {
+  clip-path: inset(-1em 100% -1em -1em);
+  transition: clip-path 650ms var(--ease-draw);
+  transition-delay: calc(250ms + var(--r) * 420ms);
+}
+.motion .score-sheet .score-black .score-ink {
+  transition-delay: calc(550ms + var(--r) * 420ms);
+}
+.motion .score-sheet.is-in .score-row .score-ink {
+  clip-path: inset(-1em -2em -1em -1em);
+}
+.motion .score-sheet .score-day {
+  opacity: 0;
+  transition: opacity 400ms var(--ease-out);
+  transition-delay: calc(650ms + var(--r) * 420ms);
+}
+.motion .score-sheet.is-in .score-day {
+  opacity: 1;
+}
+.motion .score-ring path {
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 800ms var(--ease-draw) 1750ms;
+}
+.motion .score-strike path {
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 600ms var(--ease-draw) 2250ms;
+}
+.motion .score-sheet.is-in :is(.score-ring, .score-strike) path {
+  stroke-dashoffset: 0;
+}
+.motion .score-result {
+  opacity: 0;
+  translate: 0 0.5rem;
+  transition:
+    opacity 500ms var(--ease-out) 2600ms,
+    translate 800ms var(--ease-settle) 2600ms;
+}
+.motion .score-pencil {
+  translate: -2.5rem -1rem;
+  transition: translate 2800ms var(--ease-settle) 200ms;
+}
+.motion .score-sheet.is-in .score-result,
+.motion .score-sheet.is-in .score-pencil {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* ——— Every thread, one inbox: the tray beside the board, everyone who wrote back in it. ——— */
+.tray-box {
+  --felt: 3.25rem;
+  position: relative;
+  margin: 0;
+  border: 3.5px solid var(--ink);
+  border-radius: var(--radius-xl);
+  background: var(--white);
+}
+.tray-slots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: clamp(1.75rem, 3.5vw, 3rem) clamp(0.75rem, 2vw, 1.5rem) 0;
+  border-radius: calc(var(--radius-xl) - 3.5px) calc(var(--radius-xl) - 3.5px) 0
+    0;
+  background: linear-gradient(
+    to top,
+    var(--mist) var(--felt),
+    transparent var(--felt)
+  );
+}
+.tray-slot {
+  position: relative;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  gap: 1rem;
+  padding-inline: clamp(0.5rem, 1.6vw, 1.5rem);
+}
+/* The walls between the compartments, standing in the felt. */
+.tray-slot + .tray-slot::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: -1.75px;
+  width: 3.5px;
+  height: calc(var(--felt) + 1.25rem);
+  border-radius: 2px 2px 0 0;
+  background: var(--ink);
+}
+.tray-card {
+  position: relative;
+  display: grid;
+  align-self: end;
+  gap: 0.65rem;
+  width: min(100%, 20rem);
+  padding: 1rem 1.1rem 1.15rem;
+  border-radius: var(--radius-l);
+  background: var(--white);
+  box-shadow: var(--shadow-float);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+.tray-card::after {
+  content: "";
+  position: absolute;
+  bottom: -0.5rem;
+  left: 50%;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 0.2rem;
+  background: var(--white);
+  rotate: 45deg;
+  translate: -50% 0;
+}
+.tray-card-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.tray-who {
+  font-size: 1.0625rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.tray-who span {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.tray-when {
+  flex: none;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+}
+.tray-chip {
+  justify-self: start;
+  padding: 0.25em 0.7em;
+  border-radius: var(--radius-pill);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.tray-chip-pink {
+  background: var(--pink-soft);
+  color: var(--pink-ink);
+}
+.tray-chip-grey {
+  background: var(--mist);
+  color: var(--ink-2);
+}
+.tray-chip-ink {
+  background: var(--ink);
+  color: var(--white);
+}
+.tray-thread {
+  display: grid;
+  gap: 0.4rem;
+}
+.tray-mail {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.8rem;
+}
+.tray-mail-ours {
+  background: var(--mist);
+  color: var(--ink-2);
+}
+.tray-mail-from {
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+}
+.tray-mail-theirs {
+  margin-left: 1.25rem;
+  background: var(--pink-mist);
+  font-size: 1.0625rem;
+  font-weight: 500;
+}
+.tray-said {
+  font-size: 1.0625rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.tray-note {
+  color: var(--ink-2);
+  font-size: 0.875rem;
+}
+.tray-paused {
+  display: grid;
+  gap: 0.4rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--line);
+}
+.tray-paused p {
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.tray-paused ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.tray-paused li {
+  padding: 0.2em 0.6em;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+/* The pieces stand in the felt, rings at their feet: pink for the reply, grey for paused. */
+.tray-piece {
+  --piece-stroke: 10px;
+  width: auto;
+  height: clamp(8.5rem, 12vw, 11rem);
+  margin-bottom: calc(var(--felt) / 2 - 1.1rem);
+  overflow: visible;
+}
+.tray-ring {
+  fill: transparent;
+  stroke: var(--line-strong);
+  stroke-width: 7;
+  stroke-dasharray: 1;
+}
+.tray-ring-replied {
+  fill: var(--pink-soft);
+  stroke: var(--pink-hot);
+  stroke-width: 8;
+}
+.tray-plate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding: 0.95rem clamp(1.25rem, 2.5vw, 2rem) 1.05rem;
+  border-top: 3.5px solid var(--ink);
+}
+.tray-plate strong {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.tray-plate span {
+  color: var(--ink-3);
+  font-size: var(--text-micro);
+  font-weight: 500;
+}
+.tray-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem clamp(1.5rem, 4vw, 3.5rem);
+  margin-top: clamp(2.25rem, 4vw, 3rem);
+}
+.tray-fact dt {
+  margin-bottom: 0.3rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.tray-fact dd {
+  max-width: 24rem;
+  color: var(--ink-2);
+  font-size: var(--text-small);
+  line-height: 1.5;
+}
+.tray-fine {
+  margin-top: 1.5rem;
+}
+
+/* With motion, the pieces are set down in the tray, then their threads open above them. */
+.motion .tray-piece {
+  opacity: 0;
+  translate: 0 -1.75rem;
+  transition:
+    opacity 400ms var(--ease-out),
+    translate 900ms var(--ease-settle);
+  transition-delay: calc(150ms + var(--s) * 180ms);
+}
+.motion .tray-ring {
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 700ms var(--ease-draw);
+  transition-delay: calc(650ms + var(--s) * 180ms);
+}
+.motion .tray-card {
+  opacity: 0;
+  scale: 0.92;
+  transform-origin: 50% 100%;
+  transition:
+    opacity 450ms var(--ease-out),
+    scale 800ms var(--ease-settle);
+  transition-delay: calc(900ms + var(--s) * 200ms);
+}
+.motion .tray-box.is-in :is(.tray-piece, .tray-card) {
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+}
+.motion .tray-box.is-in .tray-ring {
+  stroke-dashoffset: 0;
+}
+
+/* ——— Your CRM stays the source of truth: each move written into the book of record. ——— */
+.ledger {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  align-items: center;
+  gap: 3rem clamp(3rem, 6vw, 6rem);
+}
+.ledger-copy {
+  display: grid;
+  justify-items: start;
+  gap: 1.5rem;
+}
+.ledger-copy .lead {
+  max-width: 31rem;
+}
+.ledger-routes {
+  display: grid;
+  gap: 1.1rem;
+  max-width: 31rem;
+}
+.ledger-route dt {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.ledger-route dd {
+  color: var(--ink-2);
+  font-size: var(--text-small);
+  line-height: 1.5;
+}
+.ledger-book {
+  position: relative;
+  margin: 0;
+}
+.ledger-page {
+  padding: clamp(1.25rem, 2.4vw, 2rem) clamp(1rem, 2.4vw, 2rem)
+    clamp(1rem, 2vw, 1.5rem);
+  border-radius: var(--radius-l);
+  background: var(--white);
+  box-shadow: var(--shadow-float);
+}
+.ledger-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 5px double var(--ink);
+}
+.ledger-title strong {
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+.ledger-title span {
+  color: var(--ink-3);
+  font-size: var(--text-micro);
+  font-weight: 500;
+}
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+}
+.ledger-table th {
+  padding: 0.85rem 0.7rem 0.5rem;
+  border-bottom: 1.5px solid var(--ink);
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: left;
+}
+.ledger-table td {
+  padding: 0.9rem 0.7rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.ledger-table :is(td, th):first-child {
+  padding-left: 0;
+}
+.ledger-table :is(td, th):last-child {
+  padding-right: 0;
+}
+.ledger-table tr:last-child td {
+  border-bottom: 0;
+}
+.ledger-when {
+  position: relative;
+  width: 6.25rem;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.ledger-move {
+  font-weight: 500;
+}
+.ledger-event code {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+  color: var(--ink-2);
+  font-family: var(--font-code);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+.ledger-reply .ledger-move {
+  font-weight: 600;
+}
+.ledger-reply .ledger-when {
+  color: var(--ink);
+  font-weight: 600;
+}
+.ledger-reply .ledger-event code {
+  background: var(--pink-soft);
+  color: var(--pink-ink);
+}
+/* The move coming in from outside the book, dot by dot, to the line it writes. */
+.ledger-wire {
+  position: absolute;
+  max-width: none;
+  top: 50%;
+  right: calc(100% + 0.6rem);
+  width: 7.5rem;
+  translate: 0 -50%;
+  overflow: visible;
+}
+.ledger-dot {
+  fill: var(--pink-hot);
+}
+.motion .ledger-row > td {
+  opacity: 0;
+  translate: -0.75rem 0;
+  transition:
+    opacity 450ms var(--ease-out),
+    translate 800ms var(--ease-settle);
+  transition-delay: calc(200ms + var(--l) * 420ms);
+}
+.motion .ledger-dot {
+  opacity: 0;
+  transition: opacity 240ms var(--ease-out);
+  transition-delay: calc(560ms + var(--d) * 70ms);
+}
+.motion .ledger-book.is-in .ledger-row > td {
+  opacity: 1;
+  translate: 0 0;
+}
+.motion .ledger-book.is-in .ledger-dot {
+  opacity: 1;
+}
+
+/* ——— Smaller screens: the board under the words, the diagram above its moves. ——— */
+/* On a laptop the board shrinks to keep IT on screen, and drops so its far edge clears the note. */
+@media (min-width: 1100px) and (max-width: 1300px) {
+  .board-hero {
+    --stage-width: 78vw;
+    --stage-drop: clamp(3rem, (1300px - 100vw) * 0.25 + 3rem, 6rem);
+    min-height: calc(var(--stage-width) * 980 / 1200 + var(--stage-drop));
+  }
+  .board-stage {
+    top: var(--stage-drop);
+    left: calc(var(--gutter) + 13.5rem);
+  }
+  .board-fine {
+    max-width: 21rem;
+  }
+}
+@media (max-width: 1099px) {
+  .board-hero {
+    --stage-width: min(146vw, 64rem);
+    min-height: 0;
+  }
+  .board-stage {
+    position: relative;
+    left: auto;
+    margin-top: calc(var(--stage-width) * -0.16);
+    margin-left: calc(50% - var(--stage-width) * 0.6167);
+  }
+  .board-panel {
+    top: calc(850 * var(--u));
+    left: calc(340 * var(--u));
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: calc(780 * var(--u));
+  }
+}
+@media (max-width: 1100px) {
+  .score {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+    column-gap: clamp(2.5rem, 5vw, 4rem);
+  }
+  .score-notes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .score-note:last-child {
+    grid-column: auto;
+  }
+}
+@media (max-width: 999px) {
+  .quiet-stage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .quiet-figure {
+    order: -1;
+    justify-self: center;
+  }
+  .quiet-thread {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    width: min(88%, 20rem);
+    margin: -2.5rem 0 0 auto;
+  }
+  .quiet-bubble {
+    max-width: calc(250 * var(--u));
+    white-space: normal;
+  }
+  .score {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "head"
+      "sheet"
+      "notes";
+    grid-template-rows: auto;
+  }
+  .score-notes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .score-note:last-child {
+    grid-column: 1 / -1;
+  }
+  .ledger {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ledger-wire {
+    display: none;
+  }
+}
+@media (max-width: 860px) {
+  .tray-slots {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding: 0.5rem clamp(0.75rem, 3vw, 1.5rem) 0;
+    background: none;
+  }
+  .tray-slot {
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    grid-template-rows: auto;
+    align-items: end;
+    gap: 1.1rem;
+    padding: 1.25rem 0;
+  }
+  .tray-slot + .tray-slot {
+    border-top: 1.5px solid var(--line-strong);
+  }
+  .tray-slot + .tray-slot::before {
+    display: none;
+  }
+  .tray-piece {
+    order: -1;
+    justify-self: center;
+    height: 6.5rem;
+    margin-bottom: 0.25rem;
+  }
+  .tray-card {
+    width: 100%;
+  }
+  .tray-card::after {
+    bottom: 1.6rem;
+    left: 0;
+  }
+  .tray-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .score-fields {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+  .score-field {
+    grid-column: auto;
+  }
+  .score-table thead th:last-child {
+    width: 31%;
+  }
+  .score-row > * {
+    height: 3.5rem;
+  }
+  .score-ink {
+    font-size: 0.9375rem;
+  }
+  .score-cell {
+    display: grid;
+    justify-content: start;
+  }
+  .score-result {
+    max-width: 62%;
+  }
+  .score-pencil {
+    right: -0.5rem;
+    bottom: 1.25rem;
+  }
+  .score-notes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .score-note:last-child {
+    grid-column: auto;
+  }
+  .ledger-table thead {
+    display: none;
+  }
+  .ledger-table tr {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.35rem 0.85rem;
+    padding-block: 0.85rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .ledger-table tr:last-child {
+    border-bottom: 0;
+  }
+  .ledger-table td {
+    padding: 0;
+    border: 0;
+  }
+  .ledger-when {
+    width: auto;
+  }
+  .ledger-event {
+    grid-column: 1 / -1;
+  }
+}

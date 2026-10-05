@@ -1,0 +1,68 @@
+---
+import Glyph from "./glyph.astro";
+
+/**
+ * The AI you know, set up for cold email: Norbelys runs on Claude, and anyone who already lives
+ * in ChatGPT or Claude can connect Norbelys there (through its MCP server, signing in with their
+ * account) and run their outreach from the chat. The conversation is an example; each thing the
+ * assistant does in it is an action the connection offers: adding people, reading replies,
+ * pausing a campaign.
+ */
+const chat = [
+  { from: "you", text: "Add the 12 people in this sheet to Q4 partners." },
+  { done: "Added 12 people", from: "assistant", text: "Done. All 12 are in Q4 partners." },
+  { from: "you", text: "Who replied this week?" },
+  {
+    done: "Read 3 replies",
+    from: "assistant",
+    text: "Alex Morgan wants a call on Tuesday. Jonas Weber says to try again in January. Priya Shah’s reply needs your review.",
+  },
+  { from: "you", text: "Pause the webinar follow-up." },
+  { done: "Paused 1 campaign", from: "assistant", text: "Paused. Nothing else goes out until you start it again." },
+] as const;
+const steps = ["Add Norbelys as a connector", "Sign in", "Pick the workspace"] as const;
+---
+
+<section class="page-section container" aria-labelledby="connect-title">
+  <div class="connect">
+    <div class="connect-copy">
+      <h2 id="connect-title">The AI you know, set up for cold email.</h2>
+      <p class="lead">
+        Norbelys runs on Claude, so there’s nothing new to learn and no prompts to write. Already
+        living in ChatGPT or Claude? Connect Norbelys and run your outreach from the chat.
+      </p>
+      <ol class="connect-steps">
+        {
+          steps.map((step, index) => (
+            <li>
+              <span aria-hidden="true">{index + 1}</span>
+              {step}
+            </li>
+          ))
+        }
+      </ol>
+      <p class="fine-print">An example conversation. Your assistant signs in to Norbelys with your account and asks which workspace it may use.</p>
+    </div>
+    <figure class="connect-chat" data-scene="enter">
+      <figcaption class="connect-bar">
+        <span class="connect-dot" aria-hidden="true"></span>
+        Your assistant, with Norbelys connected
+      </figcaption>
+      <ol class="connect-thread">
+        {
+          chat.map((turn, index) => (
+            <li class:list={["connect-turn", `connect-${turn.from}`]} style={`--k: ${index}`}>
+              <span class="sr-only">{turn.from === "you" ? "You:" : "Assistant:"}</span>
+              {"done" in turn && (
+                <span class="connect-done">
+                  <Glyph name="check" /> Norbelys · {turn.done}
+                </span>
+              )}
+              <p>{turn.text}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </figure>
+  </div>
+</section>

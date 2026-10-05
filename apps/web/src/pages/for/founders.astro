@@ -1,0 +1,100 @@
+---
+import Closing from "../../components/closing.astro";
+import Faq from "../../components/faq.astro";
+import Marked from "../../components/marked.astro";
+import FirstHour from "../../components/teams/first-hour.astro";
+import FounderDocent from "../../components/teams/founder-docent.astro";
+import FounderNotShown from "../../components/teams/founder-not-shown.astro";
+import FounderPriceList from "../../components/teams/founder-price-list.astro";
+import FounderTour from "../../components/teams/founder-tour.astro";
+import FounderWall from "../../components/teams/founder-wall.astro";
+import OtherTeams from "../../components/teams/other-teams.astro";
+import Page from "../../layouts/page.astro";
+import "../../styles/teams.css";
+import "../../styles/team-founders.css";
+
+/**
+ * Norbelys for founders, built as a gallery wall: the first reply hangs framed with the
+ * gallery's sold dot, the founder's own email hangs annotated like a work on an audio tour, the
+ * price list hangs by the door, the docent answers from the assistant they already use, and a
+ * placard says what isn't in this exhibition. Then the afternoon it takes to start. Every number
+ * is a product default; people, companies and messages are illustrative.
+ */
+const steps = [
+  {
+    text: "Google Workspace, Microsoft 365 or any SMTP inbox. Your own address, so every reply comes straight back to you.",
+    time: "2:00",
+    title: "Connect your inbox",
+  },
+  {
+    text: "A CSV from your CRM or a data provider. Every column becomes a field you can write with.",
+    time: "2:10",
+    title: "Import your list",
+  },
+  {
+    text: "A first email and two follow-ups, each with its own delay. Switch on AI first lines where you want them.",
+    time: "2:25",
+    title: "Write three emails",
+  },
+  {
+    text: "A last check comes first: who gets it, the first email, the inbox it sends from and when it begins.",
+    time: "2:45",
+    title: "Start it",
+  },
+] as const;
+
+const questions = [
+  [
+    "I’m not a salesperson. Will I figure this out?",
+    "Yes. If you can write an email, you can run a campaign: connect your inbox, import a list, write a few short emails and pick the hours they go out. Norbelys does the sending, the following up and the stopping.",
+  ],
+  [
+    "Is $20 really everything?",
+    "Yes. It’s launch pricing, $20 a month, with every feature in it: AI first lines and reply sorting, A/B tests, warm-up, tracking, the unified inbox, webhooks, the API and the MCP server. There are no credits or add-ons. AI has a monthly limit per workspace, so it can’t run up a surprise bill.",
+  ],
+  [
+    "Can I start with just my own inbox?",
+    "Yes. One Google Workspace, Microsoft 365 or SMTP inbox is enough to start. It sends up to 50 emails a day by default; connect more inboxes later and sending rotates between them.",
+  ],
+  [
+    "Will it hurt my domain?",
+    "No tool can promise the inbox, and we won’t pretend to. Norbelys keeps you careful by default: at most 50 emails a day per inbox, 10 minutes apart, only inside your business hours, an optional 8-day ramp for a new inbox and a check on every address before it sends.",
+  ],
+  [
+    "Can my first sales hire take over?",
+    "Yes. Invite them by email and give them a role: owner, admin, member or viewer. They connect their own inbox, and every reply you’ve had is already in the workspace’s one inbox, threaded with the email that started it.",
+  ],
+  [
+    "Can I run it from Claude or ChatGPT?",
+    "Yes. Connect Norbelys to your assistant through its MCP server, sign in and pick the workspace. It can work with your campaigns, people and replies, using only the access you grant.",
+  ],
+  [
+    "Where do the replies go?",
+    "Back to the inbox you sent from, like any email. Norbelys also gathers every reply into one inbox, sets aside out-of-office notes and auto-replies, and stops that person’s follow-ups.",
+  ],
+] as const;
+---
+
+<Page
+  title="Cold email for founders — Norbelys"
+  description="Founder-led outbound from your own inbox: write your emails once, and Norbelys sends them, follows up on schedule and stops when someone replies. From $20 a month, AI included."
+  class="team team-founders"
+>
+  <FounderWall />
+  <FounderTour />
+  <FounderPriceList />
+  <FounderDocent />
+  <FounderNotShown />
+  <FirstHour lead="Most of the afternoon is the writing you’d do anyway. The rest is connecting what you already have." steps={steps}>
+    Live before your next <Marked>meeting</Marked><span class="pink">.</span>
+  </FirstHour>
+  <Faq questions={questions} />
+  <OtherTeams slug="founders" />
+  <Closing />
+</Page>
+
+<script>
+  import { startGallery } from "../../scripts/gallery";
+
+  startGallery();
+</script>

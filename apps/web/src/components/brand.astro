@@ -1,11 +1,29 @@
 ---
 import { GRID, LOCKUP, MARK, markPath, WORDMARK } from "../../../../brand/geometry";
 
-/** Renders the canonical brand geometry as either a mark or a horizontal logo. */
-interface Props { mark?: boolean }
-const { mark = false } = Astro.props;
+/** Renders the canonical brand geometry as either the mark alone or the horizontal logo. */
+interface Props {
+  mark?: boolean;
+  class?: string;
+}
+const { mark = false, class: className } = Astro.props;
 ---
-<svg class:list={["brand", { "brand-mark": mark }]} viewBox={mark ? `0 0 ${GRID} ${GRID}` : `0 0 ${LOCKUP.width} ${LOCKUP.height}`} fill="none" aria-hidden="true">
-  <g transform={mark ? undefined : `scale(${LOCKUP.markScale})`}><path class="nb-line" d={markPath()} pathLength="1" stroke="var(--accent)" stroke-width={MARK.stroke} stroke-linecap="round" stroke-linejoin="round" /></g>
+
+<svg
+  class:list={["brand", { "brand-mark": mark }, className]}
+  viewBox={mark ? `0 0 ${GRID} ${GRID}` : `0 0 ${LOCKUP.width} ${LOCKUP.height}`}
+  fill="none"
+  aria-hidden="true"
+>
+  <g transform={mark ? undefined : `scale(${LOCKUP.markScale})`}>
+    <path
+      class="nb-line"
+      d={markPath()}
+      pathLength="1"
+      stroke="var(--brand-mark, var(--pink-deep))"
+      stroke-width={MARK.stroke}
+      stroke-linecap="round"
+      stroke-linejoin="round"></path>
+  </g>
   {!mark && <path d={WORDMARK.d} transform={`translate(${LOCKUP.wordX} 0)`} fill="currentColor" />}
 </svg>

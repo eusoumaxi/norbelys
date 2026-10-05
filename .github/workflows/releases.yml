@@ -1,29 +1,36 @@
+# Version changes are reviewed source commits. Immutable version tags trigger the package
+# workflows directly; this entry point retries publication of an existing tag without
+# generating version commits, branches or pull requests.
 name: Package releases
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing typescript-vX.Y.Z, python-vX.Y.Z or norbelys-cli-vX.Y.Z tag
+        type: string
+        required: true
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
   actions: write
+concurrency:
+  group: package-release-${{ inputs.tag }}
+  cancel-in-progress: false
 jobs:
-  versions:
+  publish:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
-      - uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071
-        id: release
-        with:
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
-      # Tags created with GITHUB_TOKEN do not trigger push workflows. Dispatch explicitly.
-      - name: Publish tagged packages
+      - name: Publish the selected immutable version
         env:
           GH_TOKEN: ${{ github.token }}
-          TS_TAG: ${{ steps.release.outputs['sdks/typescript--tag_name'] }}
-          PY_TAG: ${{ steps.release.outputs['sdks/python--tag_name'] }}
-          CLI_TAG: ${{ steps.release.outputs['crates/cli--tag_name'] }}
+          RELEASE_TAG: ${{ inputs.tag }}
         run: |
-          if [ -n "$TS_TAG" ]; then gh workflow run sdk.yml --repo "$GITHUB_REPOSITORY" --ref "$TS_TAG" -f publish=true -f tag="$TS_TAG"; fi
-          if [ -n "$PY_TAG" ]; then gh workflow run python.yml --repo "$GITHUB_REPOSITORY" --ref "$PY_TAG" -f publish=true -f tag="$PY_TAG"; fi
-          if [ -n "$CLI_TAG" ]; then gh workflow run norbelys-cli-release.yml --repo "$GITHUB_REPOSITORY" --ref "$CLI_TAG" -f tag="$CLI_TAG"; fi
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^(typescript|python|norbelys-cli)-v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" > /dev/null
+          case "$RELEASE_TAG" in
+            typescript-*) gh workflow run sdk.yml --repo "$GITHUB_REPOSITORY" --ref "$RELEASE_TAG" -f publish=true -f tag="$RELEASE_TAG" ;;
+            python-*) gh workflow run python.yml --repo "$GITHUB_REPOSITORY" --ref "$RELEASE_TAG" -f publish=true -f tag="$RELEASE_TAG" ;;
+            norbelys-cli-*) gh workflow run norbelys-cli-release.yml --repo "$GITHUB_REPOSITORY" --ref "$RELEASE_TAG" -f tag="$RELEASE_TAG" ;;
+          esac

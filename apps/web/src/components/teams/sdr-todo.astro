@@ -1,0 +1,91 @@
+---
+/**
+ * The SDR's morning as a to-do list: everything that eats it, ticked off and struck through as
+ * the list scrolls past, each with what Norbelys does instead, until one task is left, the one
+ * that's theirs. The count beside the list follows (scripts/todo.ts); without the script every
+ * task but the last is simply done.
+ */
+const tasks = [
+  {
+    task: "Send today’s first emails",
+    done: "Norbelys sends them from your own inboxes: up to 50 a day from each, 10 minutes apart, inside the hours you pick.",
+  },
+  {
+    task: "Follow up with everyone who went quiet",
+    done: "Each follow-up waits its own delay and goes out in the same thread. The weekend stays quiet.",
+  },
+  {
+    task: "Stop the ones who already answered",
+    done: "A reply stops that person in every campaign. Their coworkers at the same company can wait too, if you like.",
+  },
+  {
+    task: "Check four inboxes for replies",
+    done: "Replies from every mailbox land in one inbox, threaded with the email that started them.",
+  },
+  {
+    task: "Weed out the out-of-office notes",
+    done: "Out-of-office notes and auto-replies are set aside, and the sequence carries on without you.",
+  },
+  {
+    task: "Write a first line for every prospect",
+    done: "Switch on AI for a step and it writes one per person, from the facts you allow it to use.",
+  },
+  {
+    task: "Clean the bounces off the list",
+    done: "Every address is checked right before it sends. Bounces and unsubscribes stick across every campaign.",
+  },
+] as const;
+const total = tasks.length + 1;
+---
+
+<section id="todo" class="page-section container todo" aria-labelledby="todo-title" data-todo>
+  <div class="todo-side">
+    <h2 id="todo-title">
+      <span class="line">{total} things due today.</span>
+      <span class="line">You do <span class="pink">one</span>.</span>
+    </h2>
+    <p class="lead">
+      Everything that eats an SDR’s morning, ticked off before you’ve opened your laptop. What’s
+      left is the reason you took the job.
+    </p>
+    <p class="todo-count" aria-hidden="true">
+      <span class="todo-count-number numeric" data-todo-count>1</span>
+      <span class="todo-count-label">left for you</span>
+    </p>
+  </div>
+  <ul class="todo-list">
+    {
+      tasks.map((item) => (
+        <li class="todo-item" data-todo-item>
+          <span class="todo-box" aria-hidden="true">
+            <svg viewBox="0 0 40 40">
+              <path d="M10 21L17 28L30 13" pathLength="1" />
+            </svg>
+          </span>
+          <div class="todo-text">
+            <p class="todo-task">
+              <span class="sr-only">Done by Norbelys: </span>
+              <span class="todo-words">
+                {item.task}
+                <svg class="todo-strike" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+                  <path d="M2 7C30 4.5 70 8.5 98 5" pathLength="1" />
+                </svg>
+              </span>
+            </p>
+            <p class="todo-done">{item.done}</p>
+          </div>
+        </li>
+      ))
+    }
+    <li class="todo-item todo-yours" data-todo-item>
+      <span class="todo-box" aria-hidden="true" />
+      <div class="todo-text">
+        <p class="todo-task">
+          <span class="sr-only">Left for you: </span>
+          <span class="todo-words">Answer the replies</span>
+        </p>
+        <p class="todo-done">That one’s yours. They’re all in one inbox, the hot ones on top.</p>
+      </div>
+    </li>
+  </ul>
+</section>

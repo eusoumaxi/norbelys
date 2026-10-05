@@ -1,0 +1,350 @@
+---
+import Brand from "./brand.astro";
+
+/**
+ * The box, opened: the processes an email passes through, drawn as one loop. Out along the top
+ * from your app, through the API and Postgres to the sender and Alex; back along the other side
+ * as a reply, through the inbox and Postgres to the worker, which tells your app. The loop
+ * crosses itself at Postgres, where every hand-off is kept. Your assistant and your terminal come
+ * in through one port on top; opens and clicks come back to tracking. Wherever a line crosses
+ * the box, it does so through a port, as in the hero.
+ *
+ * Two drawings of the same map: wide (1200 × 600) and, for narrow screens, tall (360 × 686). Each
+ * hop is its own path, so the loop draws itself hop by hop as the section arrives, and the point
+ * (scripts/box.ts) can travel any part of it. Every name links to the part of the page about it,
+ * and the steps beside the map say in words what the point shows: the map's text, with or
+ * without motion.
+ */
+
+interface Hop {
+  readonly id: string;
+  readonly d: string;
+}
+interface Node {
+  readonly id: string;
+  readonly x: number;
+  readonly y: number;
+  /** The part of the page about this process. */
+  readonly href: string;
+  /** Where the word sits, relative to the node. */
+  readonly dx?: number;
+  readonly dy?: number;
+  readonly anchor?: "start" | "middle" | "end";
+  readonly caption?: string;
+  /** Where the caption sits, when not under the word: beside the line, towards the middle. */
+  readonly beside?: "start" | "end";
+}
+interface Person {
+  readonly id: string;
+  readonly x: number;
+  readonly y: number;
+  readonly anchor: "start" | "middle" | "end";
+  readonly name: string;
+  readonly way: string;
+  readonly href?: string;
+}
+interface Drawing {
+  readonly name: "wide" | "tall";
+  readonly viewBox: string;
+  readonly box: string;
+  readonly wordmark: { readonly x: number; readonly y: number; readonly width: number };
+  readonly hops: readonly Hop[];
+  readonly branches: readonly Hop[];
+  readonly nodes: readonly Node[];
+  readonly people: readonly Person[];
+  /** Where lines cross the box. */
+  readonly ports: readonly (readonly [number, number])[];
+  /** Words set along a line, saying what travels on it. */
+  readonly edges: readonly { readonly x: number; readonly y: number; readonly text: string }[];
+  readonly stops: Readonly<Record<string, readonly [number, number]>>;
+}
+
+const wide: Drawing = {
+  box: "M360 90H840A120 120 0 0 1 960 210V390A120 120 0 0 1 840 510H360A120 120 0 0 1 240 390V210A120 120 0 0 1 360 90Z",
+  branches: [
+    { d: "M300 34C340 34 380 42 380 66V180", id: "assistant" },
+    { d: "M460 34C420 34 380 42 380 66V180", id: "terminal" },
+    { d: "M977 406C962 462 935 482 888 482H700", id: "tracking" },
+  ],
+  edges: [{ text: "opens and clicks", x: 990, y: 470 }],
+  hops: [
+    { d: "M155 300C155 235 205 180 290 180H380", id: "s1" },
+    { d: "M380 180C470 180 520 255 600 300", id: "s2" },
+    { d: "M600 300C680 345 730 420 820 420", id: "s3" },
+    { d: "M820 420H910C995 420 1045 365 1045 300", id: "s4" },
+    { d: "M1045 300C1045 235 995 180 910 180H820", id: "s5" },
+    { d: "M820 180C730 180 680 255 600 300", id: "s6" },
+    { d: "M600 300C520 345 470 420 380 420", id: "s7" },
+    { d: "M380 420H290C205 420 155 365 155 300", id: "s8" },
+  ],
+  name: "wide",
+  nodes: [
+    { caption: "takes every request", href: "#api", id: "api", x: 380, y: 180 },
+    { caption: "every hand-off, kept", dy: 54, href: "#self-host", id: "postgres", x: 600, y: 300 },
+    { caption: "sends from your mailbox", href: "#start", id: "sender", x: 820, y: 420 },
+    { caption: "reads your mailbox", href: "#webhooks", id: "inbox", x: 820, y: 180 },
+    { caption: "signs and posts events", href: "#webhooks", id: "worker", x: 380, y: 420 },
+    { href: "#webhooks", id: "tracking", x: 640, y: 482 },
+  ],
+  people: [
+    { anchor: "end", href: "#start", id: "app", name: "Your app", way: "API and SDKs", x: 136, y: 300 },
+    { anchor: "end", href: "#mcp", id: "assistant", name: "Your assistant", way: "MCP", x: 288, y: 30 },
+    { anchor: "start", href: "#cli", id: "terminal", name: "Your terminal", way: "CLI", x: 472, y: 30 },
+    { anchor: "start", id: "alex", name: "Alex", way: "who you write to", x: 1066, y: 300 },
+  ],
+  ports: [
+    [380, 90],
+    [242.4, 186.5],
+    [242.3, 413.5],
+    [957.7, 413.5],
+    [957.6, 186.5],
+    [922.6, 477.1],
+  ],
+  stops: { alex: [1045, 300], api: [380, 180], app: [155, 300], assistant: [300, 34], postgres: [600, 300] },
+  viewBox: "0 0 1200 600",
+  wordmark: { width: 132, x: 534, y: 108 },
+};
+
+const tall: Drawing = {
+  box: "M90 100H270A70 70 0 0 1 340 170V490A70 70 0 0 1 270 560H90A70 70 0 0 1 20 490V170A70 70 0 0 1 90 100Z",
+  branches: [{ d: "M180 610V548", id: "tracking" }],
+  edges: [],
+  hops: [
+    { d: "M180 50C245 50 280 95 280 145V190", id: "s1" },
+    { d: "M280 190C280 255 215 290 180 330", id: "s2" },
+    { d: "M180 330C145 370 80 405 80 470", id: "s3" },
+    { d: "M80 470V515C80 565 115 610 180 610", id: "s4" },
+    { d: "M180 610C245 610 280 565 280 515V470", id: "s5" },
+    { d: "M280 470C280 405 215 370 180 330", id: "s6" },
+    { d: "M180 330C145 290 80 255 80 190", id: "s7" },
+    { d: "M80 190V145C80 95 115 50 180 50", id: "s8" },
+  ],
+  name: "tall",
+  nodes: [
+    { beside: "end", caption: "requests", href: "#api", id: "api", x: 280, y: 190 },
+    { anchor: "start", caption: "every hand-off", dx: 34, dy: 6, href: "#self-host", id: "postgres", x: 180, y: 330 },
+    { beside: "start", caption: "sends", href: "#start", id: "sender", x: 80, y: 470 },
+    { beside: "end", caption: "replies", href: "#webhooks", id: "inbox", x: 280, y: 470 },
+    { beside: "start", caption: "webhooks", href: "#webhooks", id: "worker", x: 80, y: 190 },
+    { href: "#webhooks", id: "tracking", x: 180, y: 530 },
+  ],
+  people: [
+    // Set high, so a tag at the point beneath has room under the words.
+    { anchor: "middle", href: "#start", id: "app", name: "Your app", way: "or your assistant, or your terminal", x: 180, y: -28 },
+    { anchor: "middle", id: "alex", name: "Alex", way: "who you write to", x: 180, y: 636 },
+  ],
+  ports: [
+    [269.5, 100],
+    [90.5, 100],
+    [90.5, 560],
+    [269.5, 560],
+    [180, 560],
+  ],
+  // No room for the assistant's own line on a phone: it comes in where your app does.
+  stops: { alex: [180, 610], api: [280, 190], app: [180, 50], assistant: [180, 50], postgres: [180, 330] },
+  viewBox: "0 -50 360 720",
+  wordmark: { width: 96, x: 132, y: 116 },
+};
+
+/** What the map can show, step by step, in the order the point plays it. */
+const scenarios = [
+  {
+    id: "send",
+    label: "Send",
+    steps: [
+      ["Your app calls ", ["POST /v1/messages"], " with an ", ["Idempotency-Key"], "."],
+      ["The API writes it to Postgres and answers ", ["202 Accepted"], ". It’s ", ["queued"], "."],
+      ["When it’s due, the sender sends it from your own mailbox, paced to your limits."],
+      ["It reaches Alex, and the worker tells your app: ", ["message.sent"], "."],
+    ],
+  },
+  {
+    id: "retry",
+    label: "Retry",
+    steps: [
+      ["The network drops, so your app sends the same request with the same key."],
+      ["The API finds the first answer and replays it: ", ["Idempotent-Replayed: true"], "."],
+      ["Nothing new is queued. Alex gets one email."],
+    ],
+  },
+  {
+    id: "reply",
+    label: "Reply",
+    steps: [
+      ["Alex answers. The inbox reads the reply from your mailbox."],
+      ["Norbelys sorts it, stops the campaign for Alex and keeps it in Postgres."],
+      ["The worker posts ", ["inbound_message.received"], " to your app, signed."],
+    ],
+  },
+  {
+    id: "assistant",
+    label: "Ask your assistant",
+    steps: [
+      ["You ask Claude to email Alex. It calls the ", ["messages.create"], " tool on the MCP server."],
+      ["The API checks what the assistant was allowed on the consent screen, then queues it: ", ["202"], "."],
+      ["From there it’s the same trip: your own mailbox, then Alex."],
+    ],
+  },
+  {
+    id: "down",
+    label: "Your server is down",
+    steps: [
+      ["Your app answers ", ["503"], ", or nothing within 15 seconds."],
+      ["The worker tries again after 5 s, 5 min, 30 min, 2 h and on: ten attempts over about three days."],
+      ["Your app answers ", ["200"], " and the event is delivered."],
+    ],
+  },
+] as const;
+
+const drawings = [wide, tall];
+
+/** How far a caption set beside its line moves off it. */
+const BESIDE = { end: -14, start: 14 } as const;
+const captionX = (node: Node): number => node.x + (node.dx ?? 0) + (node.beside ? BESIDE[node.beside] : 0);
+---
+
+<div class="map" data-map>
+  <div class="map-stage" data-scene="enter">
+    {
+      drawings.map((drawing) => (
+        <svg
+          class:list={["map-drawing", `map-${drawing.name}`]}
+          viewBox={drawing.viewBox}
+          fill="none"
+          role="group"
+          aria-label="Map of Norbelys: what one email passes through"
+          data-drawing={drawing.name}
+        >
+          <defs>
+            {/* The hops again, unscaled, for the point to measure and follow. */}
+            {[...drawing.hops, ...drawing.branches].map((hop) => (
+              <path d={hop.d} data-route={hop.id} />
+            ))}
+          </defs>
+          <g aria-hidden="true">
+            <path class="map-box" d={drawing.box} pathLength="1" />
+            <svg
+              class="map-wordmark"
+              x={drawing.wordmark.x}
+              y={drawing.wordmark.y}
+              width={drawing.wordmark.width}
+              height={drawing.wordmark.width * (80 / 333)}
+            >
+              <Brand />
+            </svg>
+            {drawing.branches.map((branch) => (
+              <path class="map-branch" d={branch.d} pathLength="1" data-hop={branch.id} />
+            ))}
+            {drawing.hops.map((hop, index) => (
+              <path class="map-hop" d={hop.d} pathLength="1" data-hop={hop.id} style={`--i: ${index}`} />
+            ))}
+            <circle class="map-crossing" cx={drawing.stops.postgres[0]} cy={drawing.stops.postgres[1]} r="9" />
+            {drawing.ports.map(([x, y]) => (
+              <circle class="map-port" cx={x} cy={y} r={drawing.name === "wide" ? 9 : 7} />
+            ))}
+            {drawing.edges.map((edge) => (
+              <text class="map-edge" x={edge.x} y={edge.y}>
+                {edge.text}
+              </text>
+            ))}
+          </g>
+          {drawing.people
+            .filter((person) => person.href)
+            .map((person) => (
+              <a class="map-link map-person" href={person.href} data-person={person.id}>
+                <text class="map-name" x={person.x} y={person.y + 2} text-anchor={person.anchor}>
+                  {person.name}
+                </text>
+                <text class="map-way" x={person.x} y={person.y + 24} text-anchor={person.anchor}>
+                  {person.way}
+                </text>
+              </a>
+            ))}
+          {drawing.nodes.map((node) => (
+            <a class="map-link map-node" href={node.href} data-node={node.id}>
+              <text
+                class="map-word"
+                x={node.x + (node.dx ?? 0)}
+                y={node.y + (node.dy ?? 0) + 10}
+                text-anchor={node.anchor ?? "middle"}
+              >
+                {node.id}
+              </text>
+              {node.caption && (
+                <text
+                  class="map-caption"
+                  x={captionX(node)}
+                  y={node.y + (node.dy ?? 0) + (drawing.name === "wide" ? 38 : 32)}
+                  text-anchor={node.beside ?? node.anchor ?? "middle"}
+                >
+                  {node.caption}
+                </text>
+              )}
+            </a>
+          ))}
+          <g aria-hidden="true">
+            {drawing.people
+              .filter((person) => !person.href)
+              .map((person) => (
+                <g class="map-person" data-person={person.id}>
+                  <text class="map-name" x={person.x} y={person.y + 2} text-anchor={person.anchor}>
+                    {person.name}
+                  </text>
+                  <text class="map-way" x={person.x} y={person.y + 24} text-anchor={person.anchor}>
+                    {person.way}
+                  </text>
+                </g>
+              ))}
+            {Object.entries(drawing.stops).map(([stop, [x, y]]) => (
+              <circle class="map-stop" cx={x} cy={y} r="0" data-stop={stop} />
+            ))}
+            <g class="map-tag" data-tag>
+              <rect class="map-tag-plate" x="0" y="-15" width="10" height="30" rx="15" />
+              <text class="map-tag-text" x="0" y="5" text-anchor="middle" />
+            </g>
+            <circle class="map-point" cx={drawing.stops.app[0]} cy={drawing.stops.app[1]} r={drawing.name === "wide" ? 11 : 9} data-point />
+          </g>
+        </svg>
+      ))
+    }
+  </div>
+  <div class="map-story">
+    <div class="map-choices" role="tablist" aria-label="What happens to the email">
+      {
+        scenarios.map((scenario, index) => (
+          <button
+            type="button"
+            role="tab"
+            id={`map-tab-${scenario.id}`}
+            aria-controls={`map-panel-${scenario.id}`}
+            aria-selected={index === 0 ? "true" : "false"}
+            tabindex={index === 0 ? undefined : "-1"}
+            data-scenario={scenario.id}
+          >
+            {scenario.label}
+          </button>
+        ))
+      }
+    </div>
+    {
+      scenarios.map((scenario, index) => (
+        <div
+          class="map-panel"
+          id={`map-panel-${scenario.id}`}
+          role="tabpanel"
+          aria-labelledby={`map-tab-${scenario.id}`}
+          hidden={index > 0}
+        >
+          <ol class="map-steps" data-steps-for={scenario.id}>
+            {scenario.steps.map((step) => (
+              <li>
+                {step.map((part) => (typeof part === "string" ? part : <code>{part[0]}</code>))}
+              </li>
+            ))}
+          </ol>
+        </div>
+      ))
+    }
+    <button type="button" class="map-replay" data-replay hidden>Play it again</button>
+  </div>
+</div>

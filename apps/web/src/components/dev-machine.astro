@@ -1,0 +1,44 @@
+---
+import { services } from "../developers";
+
+/**
+ * The box again, small, on your own machine: the seven processes `selfhost:start` runs, set the
+ * way the map sets them, with a line from each to what it talks to and the ports it opens on
+ * 127.0.0.1. The lines are drawn on a six-by-six grid stretched over the three-by-three one the
+ * names sit on, so each runs from the middle of one cell to the middle of another.
+ */
+const middle = (place: number): number => place * 2 - 1;
+const links = services.flatMap((service) => {
+  const target = services.find((other) => other.name === service.to);
+  return target
+    ? [
+        `M${middle(service.column)} ${middle(service.row)}L${middle(target.column)} ${middle(target.row)}`,
+      ]
+    : [];
+});
+---
+
+<figure class="dev-machine" data-scene="enter">
+  <div class="machine-box">
+    <p class="machine-name">Your machine</p>
+    <div class="machine-plan">
+      <svg class="machine-lines" viewBox="0 0 6 6" preserveAspectRatio="none" aria-hidden="true">
+        {links.map((d, index) => <path d={d} vector-effect="non-scaling-stroke" style={`--i: ${index}`} />)}
+      </svg>
+      <ul class="machine-services" aria-label="What runs">
+        {
+          services.map((service) => (
+            <li class:list={["machine-service", { "is-database": service.to === undefined }]} style={`grid-area: ${service.row} / ${service.column}`}>
+              <span class="machine-service-name">{service.name}</span>
+              {service.port && <code class="machine-port">:{service.port}</code>}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+  <figcaption>
+    Five of them are one server binary in different roles, and the dashboard talks only to the API.
+    Every port they publish is bound to 127.0.0.1.
+  </figcaption>
+</figure>

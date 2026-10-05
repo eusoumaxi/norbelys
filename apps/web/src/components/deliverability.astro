@@ -1,0 +1,95 @@
+---
+import { MARK, markPath } from "../../../../brand/geometry";
+import Glyph from "./glyph.astro";
+
+/**
+ * Deliverability, the way a rep worries about it: "will this burn my domain?" One sheet shows an
+ * example inbox's day, its warm-up and the list check, drawn as the block arrives. Values are
+ * illustrative.
+ */
+// 25 sends spread across the 9 AM–5 PM window, about 19 minutes apart, with a little jitter.
+const sends = Array.from({ length: 25 }, (_, index) => {
+  const minutes = 9 * 60 + 6 + index * 19 + ((index * 7) % 5);
+  return { at: (minutes / (24 * 60)) * 100, index };
+});
+// Daily limits over a 21-day warm-up, from 5 to 25 a day.
+const ramp = Array.from({ length: 21 }, (_, day) => Math.round(5 + (day * 20) / 20));
+const hours = [
+  { at: 0, label: "12 AM" },
+  { at: 37.5, label: "9 AM" },
+  { at: 70.83, label: "5 PM" },
+  { at: 100, label: "12 AM" },
+];
+---
+
+<section id="deliverability" class="pace section" aria-labelledby="pace-title">
+  <div class="pace-panel" data-scene="enter">
+    <svg class="pace-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <path d={markPath()} stroke-width={MARK.stroke} stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+    <div class="pace-inner container">
+      <div class="pace-head">
+        <h2 id="pace-title">
+          <span class="line">Send like a human.</span>
+          <span class="line">Not like a cannon.</span>
+        </h2>
+        <p class="lead pace-lead">
+          Your domain is your reputation. Norbelys sends with the habits of a careful rep, so
+          inbox providers keep trusting you.
+        </p>
+      </div>
+
+      <div class="pace-sheet">
+        <div class="pace-row">
+          <div class="pace-copy">
+            <h3>Business hours only</h3>
+            <p>Pick the days, the hours and the time zone. Set a daily cap and a gap between emails for every inbox. Nothing goes out at 3 a.m.</p>
+          </div>
+          <div class="day" aria-hidden="true">
+            <div class="day-head">
+              <span>sam@acme.co · a typical Tuesday</span>
+              <span class="numeric">25 a day · ~19 min apart</span>
+            </div>
+            <div class="day-track">
+              <span class="day-window"></span>
+              {sends.map((send) => <span class="day-send" style={`--at: ${send.at.toFixed(2)}%; --i: ${send.index}`} />)}
+              <span class="day-playhead"></span>
+            </div>
+            <div class="day-hours">
+              {hours.map((hour) => <span style={`--at: ${hour.at}%`}>{hour.label}</span>)}
+            </div>
+          </div>
+        </div>
+
+        <div class="pace-row">
+          <div class="pace-copy">
+            <h3>Warm-up that’s actually patient</h3>
+            <p>New inboxes start small and earn their volume day by day. No fake opens, no fake replies.</p>
+          </div>
+          <div class="ramp" aria-hidden="true">
+            <div class="ramp-bars">
+              {ramp.map((limit, day) => <span style={`--h: ${(limit / 25) * 100}%; --d: ${day}`} />)}
+            </div>
+            <div class="ramp-labels">
+              <span><strong class="numeric">5</strong> a day on day 1</span>
+              <span><strong class="numeric">25</strong> a day by day 21</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pace-row">
+          <div class="pace-copy">
+            <h3>Clean lists, automatically</h3>
+            <p>Dead domains get caught before you hit send, and unsubscribes stick across every campaign.</p>
+          </div>
+          <ul class="checks" aria-hidden="true">
+            <li class="check is-ok" style="--i: 0"><Glyph name="check" /><span class="check-address">alex@northwind.co</span></li>
+            <li class="check is-bad" style="--i: 1"><Glyph name="close" /><span class="check-address">info@closed-shop.biz</span><em>No mail server</em></li>
+            <li class="check is-ok" style="--i: 2"><Glyph name="check" /><span class="check-address">priya@lumenlabs.io</span></li>
+            <li class="check is-bad" style="--i: 3"><Glyph name="close" /><span class="check-address">chen@bamboo.dev</span><em>Unsubscribed</em></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

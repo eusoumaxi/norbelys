@@ -1,0 +1,157 @@
+---
+import Glyph from "./glyph.astro";
+
+/**
+ * Your data, handled like it's yours: when the AI works, what it may use, what it never sees and
+ * what it costs, each as a card with the idea drawn in it. Narrow and wide cards take turns, and
+ * each drawing plays as its card arrives. Every default is the product's own; the person, the
+ * reply and the numbers are examples.
+ */
+
+/** The steps of an example campaign, and whether Personalize with AI is on for each. */
+const steps = [
+  ["Step 1 · First email", true],
+  ["Step 2 · Follow-up", false],
+  ["Step 3 · Last touch", false],
+] as const;
+
+/** A person's details, and the ones AI may use. The email address is never one of them. */
+const fields = [
+  { allowed: true, label: "First name", value: "Alex" },
+  { allowed: false, label: "Last name", value: "Morgan" },
+  { allowed: true, label: "Company", value: "Northwind" },
+  { allowed: true, label: "News", value: "Opened in Lisbon" },
+] as const;
+---
+
+<section class="page-section container" aria-labelledby="data-title">
+  <div class="split-head">
+    <h2 id="data-title">Your data, handled like it’s yours.</h2>
+    <p class="lead">It only sees what it needs, and only when you say so. People and numbers here are examples.</p>
+  </div>
+  <div class="tiles tiles-stagger">
+    <article class="tile" data-scene="enter">
+      <h3>Off until you turn it on.</h3>
+      <p>AI only works where you switch it on: sorting replies for the whole workspace, and first lines step by step.</p>
+      <div class="tile-scene scene-switches">
+        <p class="switch-row switch-row-main">
+          <span class="switch-name"><Glyph name="inbox" /> Sort replies with AI</span>
+          <span class="switch"><span class="sr-only">Off</span></span>
+        </p>
+        <div class="switch-group">
+          <p class="switch-title">Q4 partners · Personalize with AI</p>
+          <ul>
+            {
+              steps.map(([name, on]) => (
+                <li class="switch-row">
+                  <span class="switch-name">{name}</span>
+                  <span class:list={["switch", { "is-on": on }]}>
+                    <span class="sr-only">{on ? "On" : "Off"}</span>
+                  </span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="tile tile-wide" data-scene="enter">
+      <h3>Only what you allow.</h3>
+      <p>You choose what it may use about each person. When it writes, their email address never goes to the AI.</p>
+      <div class="tile-scene scene-flow">
+        <div class="flow">
+          <div class="flow-from">
+            <p class="fields-person">
+              <span class="tile-face tile-face-pink" aria-hidden="true">A</span>
+              <strong>Alex Morgan</strong>
+            </p>
+            <ul class="fields-list">
+              {
+                fields.map((field, index) => (
+                  <li class:list={{ "is-allowed": field.allowed }} style={`--k: ${index}`}>
+                    <span class="fields-box" aria-hidden="true">
+                      {field.allowed && <Glyph name="check" />}
+                    </span>
+                    <span class="fields-label">{field.label}</span>
+                    <span class="fields-value">
+                      {field.value}
+                      <span class="sr-only">{field.allowed ? "(AI may use it)" : "(not shared)"}</span>
+                    </span>
+                  </li>
+                ))
+              }
+              <li class="fields-never">
+                <span class="fields-box" aria-hidden="true"><Glyph name="close" /></span>
+                <span class="fields-label">Email</span>
+                <span class="fields-value"><span class="tile-chip">Never sent</span></span>
+              </li>
+            </ul>
+          </div>
+          <Glyph name="arrow" class="flow-arrow" />
+          <div class="flow-to">
+            <p class="flow-title"><Glyph name="ai" /> What AI gets</p>
+            <p class="fields-brief">
+              <span>Your instructions</span>
+              “Mention their news in one friendly line.”
+            </p>
+            <ul class="fields-chips">
+              {
+                fields
+                  .filter((field) => field.allowed)
+                  .map((field, index) => (
+                    <li style={`--k: ${index}`}>
+                      <span>{field.label}</span> {field.value}
+                    </li>
+                  ))
+              }
+            </ul>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="tile tile-wide" data-scene="enter">
+      <h3>Private details stay private.</h3>
+      <p>Before it reads a reply, the old thread is cut, and any links, email addresses and phone numbers in the text are hidden.</p>
+      <div class="tile-scene scene-flow">
+        <div class="flow">
+          <div class="flow-from">
+            <p class="flow-title">Alex’s reply</p>
+            <p class="mask-body">
+              Sounds good! Grab a time at <span class="mask-hit">cal.northwind.co/alex</span> or call me on
+              <span class="mask-hit">+1 (555) 010-9999</span>. Looping in <span class="mask-hit">sam@northwind.co</span>.
+            </p>
+            <div class="mask-quote">
+              <p class="mask-cut"><span>Cut</span></p>
+              <p>On Mon, Oct 5, Jamie Lee wrote:</p>
+              <p>› Would you like a quick demo?</p>
+            </div>
+          </div>
+          <Glyph name="arrow" class="flow-arrow" />
+          <div class="flow-to">
+            <p class="flow-title"><Glyph name="ai" /> What AI reads</p>
+            <p class="mask-body">
+              Sounds good! Grab a time at <span class="mask-token" style="--k: 0">[url]</span> or call me on
+              <span class="mask-token" style="--k: 1">[phone]</span>. Looping in <span class="mask-token" style="--k: 2">[email]</span>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="tile" data-scene="enter">
+      <h3>Included, with a limit.</h3>
+      <p>AI comes with your plan. Each workspace has a monthly limit, so there’s never a surprise bill. If you reach it, emails go out with your own words.</p>
+      <div class="tile-scene scene-budget">
+        <p class="budget-head"><span>AI used this month</span> <strong>80%</strong></p>
+        <span class="budget-meter" aria-hidden="true"><i></i></span>
+        <p class="budget-note">
+          <span class="tile-chip">At the limit</span>
+          <Glyph name="arrow" />
+          <span>Your own words go out</span>
+        </p>
+      </div>
+    </article>
+  </div>
+</section>

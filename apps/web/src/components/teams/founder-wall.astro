@@ -1,0 +1,198 @@
+---
+import ArrowButton from "../arrow-button.astro";
+import Marked from "../marked.astro";
+import FounderFrame from "./founder-frame.astro";
+import { START } from "../../links";
+
+/**
+ * The founders page's opening: a gallery wall. Founders frame their first dollar; here they frame
+ * their first reply. The headline is lettered on the wall among a salon hang: the big frame holds
+ * the reply itself with its museum label and the gallery's sold dot (the reply that became a
+ * conversation), a smaller one holds the sequence that stopped because of it, a small one the
+ * price, and an empty one waits for the next reply. Pressing the empty frame hangs one in it
+ * (scripts/gallery.ts), each with its own label and each label teaching one thing the product
+ * does. Every person, address and message is illustrative.
+ */
+interface Work {
+  readonly name: string;
+  readonly address: string;
+  readonly initials: string;
+  readonly message: string;
+  /** The museum label: the work's title, its medium, and where it came from. */
+  readonly title: string;
+  readonly medium: string;
+  readonly note: string;
+}
+
+/** The replies the empty frame hangs, one per press, before it waits again. */
+const works: readonly Work[] = [
+  {
+    address: "dana@harbor.io",
+    initials: "DK",
+    medium: "Email, on day 1",
+    message: "Good timing. Can you show me on Tuesday?",
+    name: "Dana Kim",
+    note: "An answer to the first email. Days 4 and 9 never went out.",
+    title: "Second reply",
+  },
+  {
+    address: "tom@tally.co",
+    initials: "TB",
+    medium: "Email, on day 4",
+    message: "Looping in Mia, our COO. She owns this.",
+    name: "Tom Becker",
+    note: "Same thread as the first email. His reply stopped him in every campaign.",
+    title: "Third reply",
+  },
+  {
+    address: "chen@quill.co",
+    initials: "CL",
+    medium: "Email, on day 9",
+    message: "Back from leave. Yes, let’s talk.",
+    name: "Chen Li",
+    note: "Her out-of-office note came first. It didn’t count; her reply did.",
+    title: "Fourth reply",
+  },
+  {
+    address: "rafa@kiln.dev",
+    initials: "RS",
+    medium: "Email, on day 1, with an AI first line",
+    message: "Funny timing. We were just talking about this.",
+    name: "Rafa Silva",
+    note: "The first line came from Kiln’s job posts.",
+    title: "Fifth reply",
+  },
+];
+
+/** The sequence the first reply came from: one step sent, two that never needed to go. */
+const steps = [
+  { day: "Day 1", name: "First email", sent: true },
+  { day: "Day 4", name: "Follow-up", sent: false },
+  { day: "Day 9", name: "Last note", sent: false },
+] as const;
+---
+
+<section class="page-hero gallery-hero" aria-labelledby="founders-title" data-wall>
+  <div class="container gallery-wall">
+    <div class="gallery-copy">
+      <h1 id="founders-title" class="page-title gallery-title" data-inview>
+        <span class="line">Frame the</span>
+        <span class="line"><Marked>first reply</Marked><span class="pink">.</span></span>
+      </h1>
+      <p class="lead page-lead">
+        Founder-led sales without the busywork. Write your outreach once; Norbelys sends it from
+        your own inbox, follows up on schedule and stops the moment someone answers. From $20 a
+        month, AI included.
+      </p>
+      <div class="page-actions">
+        <ArrowButton href={START}>Start for $20/mo</ArrowButton>
+        <a class="button button-ghost" href="#gallery">Walk the gallery</a>
+      </div>
+    </div>
+
+    <figure class="gallery-piece gallery-reply">
+      <FounderFrame tilt={1.6} class="frame-reply">
+        <div class="frame-art frame-email">
+          <div class="frame-email-head">
+            <span class="frame-email-face" aria-hidden="true">AM</span>
+            <span class="frame-email-who">
+              <strong>Alex Morgan</strong>
+              <span>alex@northwind.co</span>
+            </span>
+            <span class="frame-email-time">Wed 4:12 PM</span>
+          </div>
+          <p class="frame-email-subject">Re: Quick idea for Northwind</p>
+          <p class="frame-email-body">This is exactly what we need. Could we talk Thursday?</p>
+          <p class="frame-email-sign">Alex</p>
+          <p class="frame-email-quote">
+            <span>On Mon, Sam Rivera &lt;sam@acme.co&gt; wrote:</span>
+            <span>Hi Alex, congrats on the Lisbon launch. A new market usually means a lot of new partners to find.</span>
+          </p>
+        </div>
+      </FounderFrame>
+      <figcaption class="frame-label">
+        <span class="frame-label-title">First reply <span class="frame-sold" aria-hidden="true"></span></span>
+        <span class="frame-label-line">Email, on day 3 of a three-step sequence</span>
+        <span class="frame-label-line">Sent from sam@acme.co. Follow-ups stopped on reply.</span>
+      </figcaption>
+    </figure>
+
+    <figure class="gallery-piece gallery-price">
+      <FounderFrame tilt={-2.8} class="frame-price">
+        <div class="frame-art frame-price-art">
+          <span class="frame-price-amount numeric">$20</span>
+          <span class="frame-price-period">a month, everything in it</span>
+        </div>
+      </FounderFrame>
+    </figure>
+
+    <figure class="gallery-piece gallery-next" data-hang>
+      <FounderFrame tilt={2.6} class="frame-next">
+        <div class="frame-art frame-next-art">
+          <span class="frame-waiting" data-work="0">
+            <svg class="frame-dash" aria-hidden="true"><rect width="100%" height="100%" rx="10"></rect></svg>
+          </span>
+          {
+            works.map((work, index) => (
+              <span class="frame-hung" data-work={index + 1} hidden>
+                <span class="frame-hung-head">
+                  <span class="frame-email-face" aria-hidden="true">
+                    {work.initials}
+                  </span>
+                  <span class="frame-email-who">
+                    <strong>{work.name}</strong>
+                    <span>{work.address}</span>
+                  </span>
+                </span>
+                <span class="frame-hung-message">{work.message}</span>
+              </span>
+            ))
+          }
+        </div>
+        <button class="frame-hang-button" type="button" data-hang-button aria-label="Hang the next reply in the empty frame"></button>
+      </FounderFrame>
+      <figcaption class="frame-label" aria-live="polite">
+        <span class="frame-label-work" data-label="0">
+          <span class="frame-label-title">Your next reply</span>
+          <span class="frame-label-line">Email, any day now</span>
+          <span class="frame-label-line frame-label-hint">Press the frame to hang it.</span>
+        </span>
+        {
+          works.map((work, index) => (
+            <span class="frame-label-work" data-label={index + 1} hidden>
+              <span class="frame-label-title">
+                {work.title} <span class="frame-sold" aria-hidden="true" />
+              </span>
+              <span class="frame-label-line">{work.medium}</span>
+              <span class="frame-label-line">{work.note}</span>
+            </span>
+          ))
+        }
+      </figcaption>
+    </figure>
+
+    <figure class="gallery-piece gallery-sequence">
+      <FounderFrame tilt={-1.4} class="frame-sequence">
+        <ol class="frame-art frame-steps">
+          {
+            steps.map((step) => (
+              <li class:list={["frame-step", { "is-stopped": !step.sent }]}>
+                <span class="frame-step-day numeric">{step.day}</span>
+                <span class="frame-step-dot" aria-hidden="true" />
+                <span class="frame-step-name">
+                  {step.name}
+                  {!step.sent && (
+                    <svg class="frame-strike" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+                      <path d="M2 7C30 4.5 70 8.5 98 5" pathLength="1" />
+                    </svg>
+                  )}
+                </span>
+                <span class="frame-step-state">{step.sent ? "Sent" : "Stopped"}</span>
+              </li>
+            ))
+          }
+        </ol>
+      </FounderFrame>
+    </figure>
+  </div>
+</section>

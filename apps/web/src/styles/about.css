@@ -1,0 +1,329 @@
+/*
+ * About: a letter on the page, set large. A quiet message header, the opening line at display
+ * size and the rest of the letter not far below it, each belief a paragraph that opens on words
+ * underlined by hand, with the setting in the product that keeps it noted in the margin, the mark
+ * signed and the @ left open in the P.S., then the plain facts.
+ */
+
+.about {
+  --letter: 72rem;
+  /* The letter's own size: everything but its header, title and margin notes. */
+  --letter-size: clamp(1.25rem, 2.35vw, 2.125rem);
+}
+.about-desk {
+  display: grid;
+  justify-items: center;
+  gap: clamp(3rem, 6vw, 5rem);
+}
+
+/* ——— The letter, written straight on the page. ——— */
+.letter {
+  width: min(100%, var(--letter));
+}
+.letter-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  padding-bottom: clamp(1.25rem, 3vw, 1.75rem);
+  border-bottom: 1px solid var(--line);
+}
+.letter-fields {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+  font-size: 0.9375rem;
+}
+.letter-fields div {
+  display: grid;
+  grid-template-columns: 4.75rem minmax(0, 1fr);
+  gap: 0.75rem;
+}
+.letter-fields dt {
+  color: var(--ink-3);
+}
+.letter-fields dd {
+  min-width: 0;
+  color: var(--ink);
+  font-weight: 500;
+}
+.letter-address {
+  color: var(--ink-3);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.letter-body {
+  display: grid;
+  padding-top: clamp(2.5rem, 6vw, 4.5rem);
+}
+.letter-greeting,
+.letter-lead,
+.letter-turn,
+.belief-text,
+.letter-close {
+  color: var(--ink);
+  font-size: var(--letter-size);
+  letter-spacing: -0.015em;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+.letter-greeting {
+  margin-bottom: 0.5em;
+}
+.letter-title {
+  font-size: clamp(2.6rem, 6.1vw, 5.5rem);
+  letter-spacing: var(--tracking-display);
+  line-height: 1;
+  text-wrap: balance;
+}
+.letter-lead {
+  max-width: 50rem;
+  margin-top: 0.85em;
+}
+.letter-turn {
+  max-width: 50rem;
+  margin-top: 1.6em;
+}
+
+/* Each belief: a paragraph opening on words underlined by hand, its setting noted in the margin. */
+.beliefs {
+  display: grid;
+  gap: 1.1em;
+  margin-top: 1.1em;
+  font-size: var(--letter-size);
+}
+.belief {
+  display: grid;
+  grid-template-columns: minmax(0, 50rem) minmax(0, 15rem);
+  justify-content: space-between;
+  align-items: start;
+  column-gap: clamp(2rem, 5vw, 5rem);
+}
+.belief-text .marked {
+  color: var(--ink);
+  font-weight: 600;
+}
+/* The margin note: on a hairline level with the belief's first line, the setting and its value. */
+.belief-note {
+  display: grid;
+  gap: 0.15rem;
+  margin-top: 0.35em;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--line-strong);
+  font-size: 1rem;
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+.belief-note-label {
+  color: var(--ink-2);
+}
+.belief-note-value {
+  color: var(--ink);
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+a.belief-note-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  justify-self: start;
+  color: var(--pink-deep);
+}
+a.belief-note-value .glyph {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+a.belief-note-value:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+.letter-close {
+  display: grid;
+  gap: 0.5em;
+  margin-top: 1.6em;
+}
+.letter-close p {
+  max-width: 50rem;
+}
+.letter-sign {
+  margin-top: clamp(2.5rem, 5vw, 3.5rem);
+}
+
+/* The P.S.: the mark with its opening, and a pink point in it waiting for the reply. */
+.letter-ps {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 1.25rem clamp(1.25rem, 3vw, 2rem);
+  max-width: 40rem;
+  margin-top: clamp(2.5rem, 5vw, 3.5rem);
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border-radius: var(--radius-l);
+  background: var(--pink-mist);
+}
+.letter-ps p {
+  font-size: clamp(1.125rem, 1.6vw, 1.375rem);
+  line-height: 1.5;
+}
+.ps-mark {
+  width: clamp(4.5rem, 9vw, 6.5rem);
+  height: auto;
+  overflow: visible;
+}
+.ps-mark path {
+  stroke: var(--ink);
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+.ps-open {
+  fill: var(--pink-hot);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.motion .letter-ps[data-inview] .ps-mark path {
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1400ms var(--ease-draw) 200ms;
+}
+.motion .letter-ps[data-inview] .ps-open {
+  opacity: 0;
+  scale: 0.4;
+  transition:
+    opacity 300ms var(--ease-out) 1500ms,
+    scale 600ms var(--ease-settle) 1500ms;
+}
+.motion .letter-ps.is-in .ps-mark path {
+  stroke-dashoffset: 0;
+}
+.motion .letter-ps.is-in .ps-open {
+  opacity: 1;
+  scale: 1;
+  animation: open-wait 1800ms var(--ease-out) 2200ms 3;
+}
+@keyframes open-wait {
+  50% {
+    scale: 1.45;
+  }
+}
+
+.letter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.85rem 1.25rem;
+  margin-top: clamp(2rem, 4vw, 2.75rem);
+}
+.letter-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: clamp(2rem, 4vw, 3rem);
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--line-strong);
+}
+.letter-attachments a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.5rem;
+  padding: 0 1rem 0 0.8rem;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition:
+    background-color var(--duration-ui) var(--ease-out),
+    color var(--duration-ui) var(--ease-out);
+}
+.letter-attachments .glyph {
+  width: 1.05rem;
+  height: 1.05rem;
+  color: var(--ink-3);
+  transition: color var(--duration-ui) var(--ease-out);
+}
+.letter-attachments a:hover {
+  background: var(--pink-mist);
+  color: var(--pink-ink);
+}
+.letter-attachments a:hover .glyph {
+  color: var(--pink-deep);
+}
+
+/* ——— The facts, on the desk below the letter. ——— */
+.about-facts {
+  display: grid;
+  gap: 1.75rem;
+  width: min(100%, var(--letter));
+}
+.about-facts h2 {
+  font-size: clamp(1.9rem, 3.4vw, 2.75rem);
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+.about-ledger {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: clamp(2rem, 5vw, 4rem);
+}
+.about-ledger div {
+  display: grid;
+  gap: 0.2rem;
+  padding: 1rem 0 1.1rem;
+  border-top: 1px solid var(--line);
+}
+.about-ledger dt {
+  color: var(--ink-2);
+  font-size: var(--text-micro);
+  font-weight: 500;
+}
+.about-ledger dd {
+  font-size: 1.0625rem;
+  font-weight: 500;
+}
+.about-more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 2rem;
+}
+.about-more .text-link {
+  color: var(--pink-deep);
+}
+.about-more .glyph {
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (max-width: 860px) {
+  .beliefs {
+    gap: 1.75em;
+  }
+  .belief {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .belief-note {
+    justify-self: start;
+    min-width: min(100%, 16rem);
+    margin-top: 0.75rem;
+  }
+}
+@media (max-width: 640px) {
+  .letter-head {
+    flex-direction: column;
+  }
+  .letter-fields div {
+    grid-template-columns: 4rem minmax(0, 1fr);
+  }
+  .letter-ps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .about-ledger {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ps-open {
+    animation: none;
+  }
+}

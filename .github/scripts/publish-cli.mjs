@@ -1,4 +1,4 @@
-/** Attach native assets to the release-please release; retries preserve published bytes. */
+/** Attach native assets to the versioned release; retries preserve published bytes. */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";

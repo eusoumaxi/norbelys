@@ -6,5 +6,7 @@
   "compatibility_date": "2026-09-25",
   "assets": {
     "directory": "./dist",
+    // An address that matches no page gets the site's own 404 page, with a 404 status.
+    "not_found_handling": "404-page",
   },
 }

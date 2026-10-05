@@ -1,0 +1,215 @@
+---
+import Glyph from "../glyph.astro";
+
+/**
+ * How the clients stay apart: each one a file folder in a row, drawn in thick ink with its name
+ * on the tab, the way an agency keeps its clients in a drawer. Pointing at a folder, or focusing
+ * it, opens it: the front drops and the sheet inside comes up with what lives in that client's
+ * workspace, from its mailboxes, people and lists to its campaigns, keys and webhooks. Northwind's
+ * lies open until another is chosen; on phones they all lie open. Under them, the app's workspace
+ * menu as a paper cut-out, its check following the open folder, and the plain mechanism behind
+ * it. The clients, roles and counts are examples.
+ */
+interface Folder {
+  readonly client: string;
+  readonly mailboxes: number;
+  /** New mailboxes still on the optional ramp. */
+  readonly ramping: number;
+  readonly people: string;
+  readonly campaigns: string;
+  readonly keys: string;
+  /** Which half of the top edge carries the tab, as in a box of half-cut folders. */
+  readonly tab: "left" | "right";
+  /** The signed-in person's role in the client's workspace, as the menu shows it. */
+  readonly role: "Owner" | "Admin" | "Member" | "Viewer";
+  readonly tilt: number;
+}
+
+const folders: readonly Folder[] = [
+  {
+    campaigns: "2 active",
+    client: "Northwind",
+    keys: "1 key, 2 webhooks",
+    mailboxes: 6,
+    people: "2,140 in 3 lists",
+    ramping: 0,
+    role: "Owner",
+    tab: "left",
+    tilt: -0.6,
+  },
+  {
+    campaigns: "1 active",
+    client: "Lumen Labs",
+    keys: "2 keys, 1 webhook",
+    mailboxes: 4,
+    people: "1,380 in 2 lists",
+    ramping: 0,
+    role: "Owner",
+    tab: "right",
+    tilt: 0.5,
+  },
+  {
+    campaigns: "3 active",
+    client: "Kraftwerk",
+    keys: "1 key, 3 webhooks",
+    mailboxes: 8,
+    people: "3,050 in 4 lists",
+    ramping: 3,
+    role: "Admin",
+    tab: "left",
+    tilt: -0.3,
+  },
+  {
+    campaigns: "2 active, 1 paused",
+    client: "Solano Foods",
+    keys: "1 key, 1 webhook",
+    mailboxes: 5,
+    people: "1,720 in 2 lists",
+    ramping: 0,
+    role: "Owner",
+    tab: "right",
+    tilt: 0.7,
+  },
+  {
+    campaigns: "1 draft",
+    client: "Brightline",
+    keys: "None yet",
+    mailboxes: 3,
+    people: "860 in 1 list",
+    ramping: 0,
+    role: "Member",
+    tab: "left",
+    tilt: -0.5,
+  },
+];
+
+/** The folder's drawing, in its own units: a body with rounded corners and a tab on top. */
+const FOLDER = { height: 276, radius: 16, shoulder: 13, tab: 30, width: 240 } as const;
+const TABS = { left: [20, 146], right: [94, 220] } as const;
+
+/** The back of a folder as one line: up the left side, over the tab, round the body. */
+const backOf = (side: Folder["tab"]): string => {
+  const { height: h, radius: r, shoulder: s, tab: t, width: w } = FOLDER;
+  const [a, b] = TABS[side];
+  return [
+    `M0 ${t + r}A${r} ${r} 0 0 1 ${r} ${t}H${a}`,
+    `C${a + s * 0.7} ${t} ${a + s * 0.45} 0 ${a + s * 1.3} 0H${b - s * 1.3}`,
+    `C${b - s * 0.45} 0 ${b - s * 0.7} ${t} ${b} ${t}H${w - r}`,
+    `A${r} ${r} 0 0 1 ${w} ${t + r}V${h - r}A${r} ${r} 0 0 1 ${w - r} ${h}H${r}A${r} ${r} 0 0 1 0 ${h - r}Z`,
+  ].join("");
+};
+
+/** Where a tab's name sits, as shares of the folder's width. */
+const tabOf = (side: Folder["tab"]): string => {
+  const [a, b] = TABS[side];
+  return `--tab-left: ${((a / FOLDER.width) * 100).toFixed(2)}%; --tab-width: ${(((b - a) / FOLDER.width) * 100).toFixed(2)}%`;
+};
+
+const ways = [
+  {
+    text: "Every workspace you belong to sits behind the same sign-in. There’s no second account to keep per client.",
+    title: "One login.",
+  },
+  {
+    text: "The workspace menu in the top bar moves you to another client, or starts a new one. Each opens on its own overview.",
+    title: "A click to switch.",
+  },
+  {
+    text: "Row-level security in the database keeps each workspace’s rows to itself, so a list, a reply or a key stays where it was made.",
+    title: "Apart in the database.",
+  },
+  {
+    text: "Owner, admin, member or viewer, given workspace by workspace. Someone who works on one client sees that client only.",
+    title: "Roles per workspace.",
+  },
+] as const;
+---
+
+<section id="apart" class="page-section container apart" aria-labelledby="apart-title">
+  <div class="split-head">
+    <h2 id="apart-title">Kept apart, by design.</h2>
+    <p class="lead">
+      Agencies use one workspace per client. Open a client’s folder and everything in it is
+      theirs, from the inboxes that send to the keys that read it.
+    </p>
+  </div>
+
+  <ul class="folders" data-inview>
+    {
+      folders.map((folder, index) => (
+        <li class="folder" style={`--tilt: ${folder.tilt}deg; --i: ${index}; ${tabOf(folder.tab)}`} tabindex="0">
+          <svg class="folder-back" viewBox={`0 0 ${FOLDER.width} ${FOLDER.height}`} preserveAspectRatio="none" fill="none" aria-hidden="true">
+            <path d={backOf(folder.tab)} />
+          </svg>
+          <h3 class="folder-name">{folder.client}</h3>
+          <span class="folder-under" aria-hidden="true" />
+          <dl class="folder-sheet">
+            <div class="folder-item">
+              <dt>Mailboxes</dt>
+              <dd>
+                <span class="report-dots" aria-hidden="true">
+                  {Array.from({ length: folder.mailboxes }, (_, inbox) => (
+                    <span class:list={["report-dot", { "is-ramping": inbox >= folder.mailboxes - folder.ramping }]} />
+                  ))}
+                </span>
+                {folder.mailboxes}
+                {folder.ramping > 0 && <span class="sr-only">, {folder.ramping} on the ramp</span>}
+              </dd>
+            </div>
+            <div class="folder-item">
+              <dt>People and lists</dt>
+              <dd>{folder.people}</dd>
+            </div>
+            <div class="folder-item">
+              <dt>Campaigns</dt>
+              <dd>{folder.campaigns}</dd>
+            </div>
+            <div class="folder-item">
+              <dt>Keys and webhooks</dt>
+              <dd>{folder.keys}</dd>
+            </div>
+          </dl>
+          <span class="folder-front" aria-hidden="true" />
+        </li>
+      ))
+    }
+  </ul>
+
+  <div class="apart-foot">
+    <div
+      class="folder-switch"
+      role="img"
+      aria-label="The app’s workspace menu: Switch workspace, then Northwind, Lumen Labs, Kraftwerk, Solano Foods and Brightline, each with your role in it and a check on the one that’s open, then New workspace."
+    >
+      <p class="folder-switch-title">Switch workspace</p>
+      <ul class="folder-switch-list">
+        {
+          folders.map((folder) => (
+            <li class="folder-switch-item">
+              <span class="folder-switch-mark">{folder.client.charAt(0)}</span>
+              <span class="folder-switch-name">
+                {folder.client}
+                <span>{folder.role}</span>
+              </span>
+              <Glyph name="check" class="folder-switch-check" />
+            </li>
+          ))
+        }
+      </ul>
+      <p class="folder-switch-new">
+        <Glyph name="plus" />
+        New workspace
+      </p>
+    </div>
+    <ul class="folder-ways">
+      {
+        ways.map((way) => (
+          <li>
+            <strong>{way.title}</strong>
+            {way.text}
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>

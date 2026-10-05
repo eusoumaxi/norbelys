@@ -1,0 +1,252 @@
+---
+import AiConnect from "../components/ai-connect.astro";
+import AiData from "../components/ai-data.astro";
+import ArrowButton from "../components/arrow-button.astro";
+import Closing from "../components/closing.astro";
+import Faq from "../components/faq.astro";
+import Glyph from "../components/glyph.astro";
+import Marked from "../components/marked.astro";
+import Page from "../layouts/page.astro";
+import { START } from "../links";
+import "../styles/ai.css";
+
+/**
+ * The AI page, for people who don't use AI much or are tired of hearing about it: Norbelys does
+ * the homework on every prospect, writes the first line that shows it, sorts the replies, and
+ * works with the assistant they already use. The demo's facts and lines are written in advance
+ * for the page, and the replies being sorted are made up.
+ */
+
+/** What Norbelys found about the demo's prospect, where it found it, and the line each mix of facts gives. */
+const facts = [
+  { label: "Opened an office in Lisbon", source: "From northwind.com", value: "lisbon" },
+  { label: "Hiring six SDRs", source: "From their careers page", value: "hiring" },
+  { label: "Raised a Series B", source: "From the news", value: "series-b" },
+] as const;
+const lines = [
+  ["none", ""],
+  ["lisbon", "Congrats on the Lisbon launch. A new market usually means a lot of new partners to find."],
+  ["hiring", "Saw Northwind is hiring six SDRs. That’s a lot of new pipeline to feed."],
+  ["series-b", "Congrats on the Series B. The next question is usually how to turn it into pipeline."],
+  ["lisbon+hiring", "A new office in Lisbon and six SDR roles open. That’s a team about to need a lot of conversations."],
+  ["lisbon+series-b", "A Series B and a new office in Lisbon in the same season. Busy year at Northwind."],
+  ["hiring+series-b", "Fresh off the Series B and hiring six SDRs. Sounds like outbound is about to get serious."],
+  ["lisbon+hiring+series-b", "A Series B, a Lisbon office and six SDR roles. Northwind is clearly going for it."],
+] as const;
+
+/** Replies as they land, and the lane each one ends up in. */
+const lanes = ["From a person", "Out of office", "Auto-reply", "Bounce", "Unsubscribe"] as const;
+const replies = [
+  { from: "Alex Morgan", lane: 0, mood: "Positive", row: 0, text: "Love this. Are you free Tuesday at 10?" },
+  { from: "Jonas Weber", lane: 0, mood: "Neutral", row: 1, text: "Not this quarter. Try me in January." },
+  { from: "Sam Ortiz", lane: 0, mood: "Negative", row: 2, text: "Please take me off your list." },
+  { from: "Chen Li", lane: 1, row: 0, text: "I’m out of the office until the 14th." },
+  { from: "Help desk", lane: 2, row: 0, text: "We received your request #4821." },
+  { from: "Mail Delivery Subsystem", lane: 3, row: 0, text: "Address not found." },
+  { from: "Priya Shah", lane: 4, row: 0, text: "unsubscribe" },
+] as const;
+
+const does = [
+  "Looks up each person before it writes.",
+  "Writes the first line the way you ask, from what it found.",
+  "Sends your own text if anything goes wrong, so no email waits on it.",
+  "Sorts every reply, and asks you when it isn’t sure.",
+] as const;
+const never = [
+  "Makes up anything about a person or their company.",
+  "Adds a link, an email address or a phone number.",
+  "Sees the person’s email address when it writes.",
+  "Stops or unsubscribes anyone. Rules and people do that.",
+  "Overrules a correction you made.",
+] as const;
+
+const questions = [
+  [
+    "Do I need to know anything about AI?",
+    "No. There are no prompts to write. Switch it on for a step, say in a sentence what the first line should mention, and Norbelys does the rest.",
+  ],
+  [
+    "Where does it look?",
+    "At the company’s website and what’s public about the person and their company, like news and job posts, plus anything already in your list. If there’s nothing worth mentioning, your own text goes out instead.",
+  ],
+  [
+    "Does AI cost extra?",
+    "No. It’s part of the plan. Each workspace has a monthly AI limit, so a big campaign can’t run up a surprise bill.",
+  ],
+  [
+    "Can I use ChatGPT or Claude?",
+    "Yes. Connect Norbelys to either one and run your outreach from the chat. Norbelys’s own AI runs on Anthropic’s Claude.",
+  ],
+  [
+    "What if it gets something wrong?",
+    "A first line that breaks the rules gets one more try, then your own text goes out. A reply it isn’t sure about waits for you, and your corrections always win.",
+  ],
+  [
+    "Can I turn it off?",
+    "Yes. Sorting replies with AI is off until you turn it on, and first lines only run on the steps where you switch them on.",
+  ],
+  [
+    "Is my data used to train AI?",
+    "No. Neither we nor Anthropic train models on your data or on the people you email. Section 5 of our Privacy Policy lists exactly what the AI sees, and what it never does.",
+  ],
+] as const;
+---
+
+<Page
+  title="AI personalization — Norbelys"
+  description="Norbelys looks up every prospect, writes a first line that shows it and sorts your replies. No prompts, no copy and paste, and it works with ChatGPT and Claude."
+  class="ai"
+>
+  <section class="page-hero ai-hero" aria-labelledby="ai-title">
+    <div class="container ai-stage">
+      <svg class="ai-bubble" viewBox="0 0 1200 620" fill="none" aria-hidden="true">
+        <path
+          class="ai-bubble-line"
+          d="M860 560H300L120 612L150 530A110 110 0 0 1 40 420V160A140 140 0 0 1 180 20H1020A140 140 0 0 1 1160 160V360"
+          pathLength="1"></path>
+        <circle class="ai-bubble-dot" cx="555" cy="112" r="15" style="--n: 0"></circle>
+        <circle class="ai-bubble-dot" cx="600" cy="112" r="15" style="--n: 1"></circle>
+        <circle class="ai-bubble-dot" cx="645" cy="112" r="15" style="--n: 2"></circle>
+      </svg>
+      <div class="ai-hero-copy">
+        <Glyph name="ai" class="ai-hero-glyph" />
+        <h1 id="ai-title" class="page-title" data-inview>
+          <span class="line">Cold email that</span>
+          <span class="line">does its <span class="ai-keep"><Marked>homework</Marked><span class="pink">.</span></span></span>
+        </h1>
+        <p class="lead page-lead">
+          Norbelys looks up every person on your list, from their company’s website to the latest
+          news, and writes the first line you’d write if you had the time. Then it sorts the
+          replies. No prompts, no copy and paste.
+        </p>
+        <div class="page-actions">
+          <ArrowButton href={START}>Start for $20/mo</ArrowButton>
+          <a class="button button-ghost" href="#facts">See it work</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="facts" class="page-section container" aria-labelledby="facts-title">
+    <div class="split-head">
+      <h2 id="facts-title">It does the homework.</h2>
+      <p class="lead">
+        Here’s what Norbelys found about Alex. Tick what it may use and watch the first line follow.
+        Untick everything and it writes nothing, rather than make something up.
+      </p>
+    </div>
+    <div class="facts" data-facts>
+      <fieldset class="facts-lead">
+        <legend class="facts-person">
+          <span class="facts-avatar" aria-hidden="true">AM</span>
+          <span>
+            <strong>Alex Morgan</strong>
+            <span>Head of Partnerships, Northwind</span>
+          </span>
+        </legend>
+        <p class="facts-hint">What Norbelys found</p>
+        <ul>
+          {
+            facts.map((fact) => (
+              <li>
+                <label class="fact">
+                  <input type="checkbox" name="fact" value={fact.value} checked={fact.value === "lisbon"} />
+                  <span>
+                    {fact.label}
+                    <small class="fact-source">{fact.source}</small>
+                  </span>
+                </label>
+              </li>
+            ))
+          }
+        </ul>
+      </fieldset>
+      <div class="facts-email">
+        <p class="facts-meta"><span>To</span> Alex Morgan <span class="facts-subject">Quick idea for Northwind</span></p>
+        <p>Hi Alex,</p>
+        <output class="facts-output" aria-live="polite">
+          {
+            lines.map(([key, text]) =>
+              key === "none" ? (
+                <span class="facts-line facts-empty" data-line={key} hidden>
+                  No facts to go on, so no first line. The email starts with the next sentence.
+                </span>
+              ) : (
+                <span class="facts-line is-typing" data-line={key} hidden={key !== "lisbon"}>
+                  <span class="facts-tag"><Glyph name="ai" /> AI first line</span>
+                  <span class="facts-text"><mark>{text}</mark></span>
+                </span>
+              )
+            )
+          }
+        </output>
+        <p>We help teams like Northwind meet the right partners without months of cold calls. Worth 15 minutes next week?</p>
+      </div>
+    </div>
+    <p class="fine-print facts-note">
+      Facts and lines written for this demo. In the app, switch on Personalize with AI for a step
+      and say in a sentence what the first line should mention.
+    </p>
+  </section>
+
+  <section class="page-section container" aria-labelledby="sort-title">
+    <div class="split-head">
+      <h2 id="sort-title">Every reply, sorted for you.</h2>
+      <p class="lead">
+        Norbelys reads every reply and puts it where it belongs: a person, an out-of-office note, an
+        auto-reply, a bounce or an unsubscribe. Anything it isn’t sure about waits for you.
+      </p>
+    </div>
+    <figure class="sort" data-scene="enter">
+      <div class="sort-lanes" aria-hidden="true">
+        {
+          lanes.map((lane, index) => (
+            <div class="sort-lane" style={`--col: ${index + 1}; --order: ${index * 10}`}>
+              <p class="sort-lane-name">{lane}</p>
+            </div>
+          ))
+        }
+        {
+          replies.map((reply, index) => (
+            <div
+              class="sort-card"
+              style={`--col: ${reply.lane + 1}; --row: ${reply.row + 2}; --k: ${index}; --order: ${reply.lane * 10 + reply.row + 1}`}
+            >
+              <strong>{reply.from}</strong>
+              <span>{reply.text}</span>
+              {"mood" in reply && <em class:list={["sort-mood", `sort-mood-${reply.mood.toLowerCase()}`]}>{reply.mood}</em>}
+            </div>
+          ))
+        }
+      </div>
+      <figcaption class="fine-print">
+        Made-up replies. After an out-of-office note the sequence carries on, and bounces and
+        unsubscribes are never emailed again.
+      </figcaption>
+    </figure>
+  </section>
+
+  <AiConnect />
+
+  <section class="page-section container" aria-labelledby="rules-title">
+    <div class="split-head">
+      <h2 id="rules-title">It only says what’s true.</h2>
+      <p class="lead">These rules are built into the product. If a line breaks one, Norbelys tries once more, then sends your own words.</p>
+    </div>
+    <div class="choose">
+      <div class="choose-side choose-us">
+        <h3>It does</h3>
+        <ul>{does.map((item) => <li>{item}</li>)}</ul>
+      </div>
+      <div class="choose-side">
+        <h3>It never</h3>
+        <ul>{never.map((item) => <li>{item}</li>)}</ul>
+      </div>
+    </div>
+  </section>
+
+  <AiData />
+
+  <Faq questions={questions} />
+  <Closing />
+</Page>

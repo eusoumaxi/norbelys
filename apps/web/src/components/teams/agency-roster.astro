@@ -1,0 +1,226 @@
+---
+/**
+ * Many inboxes at one careful pace, drawn as the sheet an agency pins up: a sending roster for
+ * Thursday, with the clients' inboxes in groups down the side and the day across, in the
+ * agency's own London time. Each inbox's row is its campaign's window, 9 to 5 in the client's
+ * time zone, so Berlin and Madrid start at 8 and New York at 2. One dot is one email, 10
+ * minutes apart; ink for sent, grey for still to come, and a pink line for now. New inboxes on
+ * the ramp stop early, at their share of the cap. Beside it, the same rules in words. The
+ * inboxes, names and counts are examples; the cap, gap, ramp and hours are the product's
+ * defaults.
+ */
+interface Inbox {
+  readonly name: string;
+  readonly sent: number;
+  /** A new inbox's stage on the optional ramp, 0 to 7: its day on the ramp is one more. */
+  readonly stage?: number;
+}
+
+interface Crew {
+  readonly client: string;
+  readonly city: string;
+  /** The client's hours ahead of London in October; behind when negative. */
+  readonly ahead: number;
+  readonly inboxes: readonly Inbox[];
+}
+
+const crews: readonly Crew[] = [
+  {
+    ahead: 1,
+    city: "Berlin",
+    client: "Kraftwerk",
+    inboxes: [
+      { name: "Jonas", sent: 34 },
+      { name: "Lena", sent: 34 },
+      { name: "Felix", sent: 33 },
+      { name: "Marie", sent: 34 },
+      { name: "Paul", sent: 32 },
+      { name: "Anna", sent: 30, stage: 4 },
+      { name: "Tobias", sent: 15, stage: 2 },
+      { name: "Clara", sent: 10, stage: 1 },
+    ],
+  },
+  {
+    ahead: 1,
+    city: "Madrid",
+    client: "Solano Foods",
+    inboxes: [
+      { name: "Lucía", sent: 34 },
+      { name: "Mateo", sent: 33 },
+      { name: "Carmen", sent: 34 },
+      { name: "Javier", sent: 32 },
+      { name: "Elena", sent: 34 },
+    ],
+  },
+  {
+    ahead: -5,
+    city: "New York",
+    client: "Northwind",
+    inboxes: [
+      { name: "Ava", sent: 0 },
+      { name: "Noah", sent: 0 },
+      { name: "Mia", sent: 0 },
+      { name: "Liam", sent: 0 },
+      { name: "Emma", sent: 0 },
+      { name: "Owen", sent: 0 },
+    ],
+  },
+];
+
+/** The product's defaults: 50 a day per inbox, 10 minutes apart, the ramp's share by stage. */
+const CAP = 50;
+const GAP = 10;
+const RAMP = [10, 20, 30, 45, 60, 75, 90, 100] as const;
+/** The day across the sheet, in London minutes, and the moment it's read: 13:40. */
+const DAY = { from: 7 * 60, to: 23 * 60 } as const;
+const NOW = 13 * 60 + 40;
+const OPEN = 9;
+const CLOSE = 17;
+
+const at = (minutes: number): string => `${(((minutes - DAY.from) / (DAY.to - DAY.from)) * 100).toFixed(3)}%`;
+const span = (minutes: number): string => `${((minutes / (DAY.to - DAY.from)) * 100).toFixed(3)}%`;
+
+const rows = crews.map((crew) => {
+  const start = (OPEN - crew.ahead) * 60;
+  const end = (CLOSE - crew.ahead) * 60;
+  const slots = (end - start) / GAP;
+  const passed = Math.min(slots, Math.max(0, Math.floor((NOW - start) / GAP)));
+  return {
+    ...crew,
+    end,
+    hours: `9 to 5, ${crew.city} time`,
+    inboxes: crew.inboxes.map((inbox) => {
+      const share = inbox.stage === undefined ? 100 : (RAMP[inbox.stage] ?? 100);
+      const allowance = Math.ceil((CAP * share) / 100);
+      const due = Math.max(0, Math.min(slots - passed, allowance - inbox.sent));
+      return {
+        ...inbox,
+        allowance,
+        due: { left: at(start + passed * GAP), n: due, width: span(due * GAP) },
+        ramp: inbox.stage === undefined ? undefined : `Ramp, day ${inbox.stage + 1} of 8`,
+        sent: { left: at(start), n: inbox.sent, width: span(inbox.sent * GAP) },
+      };
+    }),
+    window: { left: at(start), width: span(end - start) },
+  };
+});
+
+/** Every hour gets a rule; every other one a label, and on phones every fourth. */
+const hours = Array.from({ length: (DAY.to - DAY.from) / 60 - 1 }, (_, index) => DAY.from / 60 + index + 1)
+  .filter((hour) => hour % 2 === 0)
+  .map((hour) => ({ at: at(hour * 60), label: `${hour}:00`, minor: hour % 4 !== 0 }));
+
+/** The week along the top: Thursday is today, and the weekend stays quiet. */
+const WEEK = ["M", "T", "W", "T", "F", "S", "S"] as const;
+const TODAY = 3;
+---
+
+<section class="page-section container pace" aria-labelledby="pace-title">
+  <div class="pace-side">
+    <h2 id="pace-title">Dozens of inboxes, one careful pace.</h2>
+    <p class="lead">
+      Every inbox keeps its own daily cap and gap, and every campaign keeps its client’s hours,
+      in the client’s own time zone. However many inboxes you run, each one writes like a careful
+      person.
+    </p>
+    <ul class="roster-key">
+      <li>
+        <span class="roster-swatch roster-swatch-dots" aria-hidden="true"></span>
+        Up to {CAP} a day from each inbox, {GAP} minutes apart. Both are defaults you can change.
+      </li>
+      <li>
+        <span class="roster-swatch roster-swatch-window" aria-hidden="true"></span>
+        Each campaign’s hours, in its own time zone: 9 to 5 in New York is 2 to 10 in London.
+      </li>
+      <li>
+        <span class="roster-swatch roster-swatch-quiet" aria-hidden="true"></span>
+        Weekends stay quiet.
+      </li>
+      <li>
+        <svg class="roster-swatch roster-swatch-ramp" viewBox="0 0 40 28" fill="none" aria-hidden="true">
+          <path d="M3 25H11V19H19V12H27V5H37" />
+        </svg>
+        New inboxes can take the ramp: {RAMP[0]}% of the cap at first, the full cap after 8 clean days.
+      </li>
+    </ul>
+    <p class="fine-print">The inboxes, names and numbers on this roster are examples.</p>
+  </div>
+
+  <figure class="roster" data-inview style={`--now: ${at(NOW)}`}>
+    <span class="roster-pin" aria-hidden="true"></span>
+    <div class="roster-paper" role="img" aria-labelledby="roster-caption">
+      <header class="roster-head">
+        <div class="roster-title">
+          <p class="roster-name">Sending roster</p>
+          <p class="roster-when">Thursday, week 41 · London time</p>
+        </div>
+        <ol class="roster-week">
+          {
+            WEEK.map((letter, day) => (
+              <li class:list={["roster-day", { "is-quiet": day > 4, "is-today": day === TODAY }]}>{letter}</li>
+            ))
+          }
+        </ol>
+      </header>
+
+      <div class="roster-body">
+        <div class="roster-hours">
+          {
+            hours.map((hour) => (
+              <span class:list={["roster-hour", { "is-minor": hour.minor }]} style={`--at: ${hour.at}`}>
+                {hour.label}
+              </span>
+            ))
+          }
+        </div>
+        <span class="roster-rules"></span>
+        <span class="roster-now">
+          <span class="roster-now-label">Now, 13:40</span>
+        </span>
+        {
+          rows.map((crew, group) => (
+            <div class="roster-crew" style={`--g: ${group}`}>
+              <div class="roster-row roster-crew-head">
+                <span class="roster-client">{crew.client}</span>
+                <span class="roster-track">
+                  <span class="roster-hours-note" style={`--left: ${crew.window.left}`}>
+                    {crew.hours}
+                  </span>
+                </span>
+              </div>
+              {crew.inboxes.map((inbox) => (
+                <div class="roster-row">
+                  <span class="roster-inbox">{inbox.name}</span>
+                  <span class="roster-track">
+                    <span class="roster-window" style={`--left: ${crew.window.left}; --width: ${crew.window.width}`} />
+                    {inbox.sent.n > 0 && (
+                      <span class="roster-sent" style={`--left: ${inbox.sent.left}; --width: ${inbox.sent.width}; --n: ${inbox.sent.n}`} />
+                    )}
+                    {inbox.due.n > 0 && (
+                      <span class="roster-due" style={`--left: ${inbox.due.left}; --width: ${inbox.due.width}; --n: ${inbox.due.n}`} />
+                    )}
+                    {inbox.ramp && (
+                      <span class="roster-ramp" style={`--left: ${at(crew.end)}`}>
+                        {inbox.ramp}
+                      </span>
+                    )}
+                  </span>
+                  <span class="roster-count numeric">
+                    {inbox.sent.n}/{inbox.allowance}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ))
+        }
+      </div>
+    </div>
+    <figcaption id="roster-caption" class="sr-only">
+      A sending roster for Thursday in London time. Kraftwerk’s eight inboxes and Solano Foods’
+      five send from 9 to 5 in Berlin and Madrid, 8 to 4 in London; by 13:40 each full inbox has
+      sent about 33 of its 50, one every 10 minutes, and three new Kraftwerk inboxes on the ramp
+      have already sent their 30, 15 and 10 for the day. Northwind’s six inboxes wait for 9 in
+      New York, 2 in London. Saturday and Sunday are quiet.
+    </figcaption>
+  </figure>
+</section>

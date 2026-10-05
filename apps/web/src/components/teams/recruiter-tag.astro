@@ -1,0 +1,25 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+/**
+ * One "HELLO my name is" sticker, the object the recruiter page is built on: a thick ink outline
+ * with round corners, an ink band with white lettering across the top, the person's name big in
+ * the white below it, whatever the page writes under the name, and a thin band at the foot that
+ * says where the first line's fact came from. The tag whose turn it is (`.is-active`, set on the
+ * tag or on whatever holds it) wears its bands in pink.
+ */
+interface Props extends HTMLAttributes<"div"> {
+  /** The foot band's words: where the first line's fact came from. */
+  foot?: string;
+}
+const { class: className, foot, ...attributes } = Astro.props;
+---
+
+<div class:list={["tag", className]} {...attributes}>
+  <p class="tag-band" aria-hidden="true">
+    <span class="tag-hello">Hello</span>
+    <span class="tag-my">my name is</span>
+  </p>
+  <div class="tag-body"><slot /></div>
+  <p class="tag-foot">{foot}</p>
+</div>

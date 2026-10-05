@@ -1,0 +1,311 @@
+---
+import { Code } from "astro:components";
+import { MARK, markPath } from "../../../../brand/geometry";
+import ArrowButton from "../components/arrow-button.astro";
+import DevCode from "../components/dev-code.astro";
+import DevCommand from "../components/dev-command.astro";
+import DevExchange from "../components/dev-exchange.astro";
+import DevHero from "../components/dev-hero.astro";
+import DevMachine from "../components/dev-machine.astro";
+import DevMap from "../components/dev-map.astro";
+import DevRetries from "../components/dev-retries.astro";
+import Glyph from "../components/glyph.astro";
+import Marked from "../components/marked.astro";
+import Page from "../layouts/page.astro";
+import {
+  accepted,
+  agentPrompt,
+  API_URL,
+  assistants,
+  cli,
+  conflict,
+  events,
+  install,
+  problem,
+  replayed,
+  retry,
+  selfhost,
+  send,
+  testAddresses,
+  verify,
+} from "../developers";
+import { APP, DEVELOPERS, PAGES, SOURCE } from "../links";
+import "../styles/developers.css";
+import codeFace from "@fontsource-variable/martian-mono/files/martian-mono-latin-standard-normal.woff2?url";
+
+/**
+ * The developers page: Norbelys opened up. A closed box with your app on one side and the person
+ * you write to on the other; then the box opened, as a map of the processes one email passes
+ * through; then each way in, from the first request to running the whole box yourself. Every
+ * endpoint, header, number and command comes from the repository (see src/developers.ts).
+ */
+const eventCount = events.reduce((total, group) => total + group.names.length, 0);
+---
+
+<Page
+  title="Developers — Norbelys"
+  description="The Norbelys API, TypeScript and Python SDKs, signed webhooks, an MCP server for your AI assistant and a CLI, built so a retry never sends the same email twice. Or run it yourself: it’s Apache-2.0."
+  class="dev"
+  cta={{ href: APP, label: "Get an API key" }}
+>
+  <link slot="head" rel="preload" href={codeFace} as="font" type="font/woff2" crossorigin />
+  <DevHero />
+
+  <section id="inside" class="page-section container dev-inside" aria-labelledby="inside-title">
+    <div class="split-head">
+      <h2 id="inside-title">Open the box.</h2>
+      <p class="lead">
+        Norbelys is a few small processes around one Postgres database. Pick what happens to the
+        email and follow it through.
+      </p>
+    </div>
+    <DevMap />
+  </section>
+
+  <section id="start" class="page-section container dev-start" aria-labelledby="start-title">
+    <div class="split-head">
+      <h2 id="start-title">Your first email, in three steps.</h2>
+      <p class="lead">Start in a test workspace: everything works, and nothing reaches a real inbox.</p>
+    </div>
+    <ol class="dev-steps">
+      <li class="dev-step">
+        <span class="dev-step-number" aria-hidden="true">1</span>
+        <h3>Make a test key</h3>
+        <p>
+          Create one in the dashboard. A test key belongs to a test workspace, where the first word
+          of an address decides what happens to the email.
+        </p>
+        <table class="test-addresses">
+          <caption class="sr-only">What a test workspace does with each address</caption>
+          <thead>
+            <tr><th scope="col">Send to</th><th scope="col">And it’s</th></tr>
+          </thead>
+          <tbody>
+            {
+              testAddresses.map((row) => (
+                <tr>
+                  <th scope="row"><code>{row.address}</code></th>
+                  <td>{row.outcome} <span class="test-code">{row.code}</span></td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+        <a class="text-link" href={APP}>Create a key <Glyph name="arrow" /></a>
+      </li>
+      <li class="dev-step">
+        <span class="dev-step-number" aria-hidden="true">2</span>
+        <h3>Install</h3>
+        <p>Typed SDKs for TypeScript and Python, made from the same contract as the API. Or the CLI.</p>
+        <ul class="dev-installs">
+          {
+            install.map((way) => (
+              <li>
+                <span class="dev-install-label">{way.label}</span>
+                <DevCommand command={way.command} />
+              </li>
+            ))
+          }
+        </ul>
+        <p class="dev-note">Keep the key in <code>NORBELYS_API_KEY</code>. The SDKs and the CLI read it from there.</p>
+      </li>
+      <li class="dev-step dev-step-send">
+        <span class="dev-step-number" aria-hidden="true">3</span>
+        <h3>Send</h3>
+        <p>
+          One request, and the email is queued. The SDKs add the <code>Idempotency-Key</code> for
+          you; with cURL, name your own.
+        </p>
+        <div class="dev-send">
+          <DevCode id="send" samples={send} />
+          <figure class="dev-answer">
+            <figcaption class="dev-answer-status"><span class="dev-answer-code">202</span> Accepted</figcaption>
+            <Code code={accepted} lang="json" theme="css-variables" />
+          </figure>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section id="api" class="dev-band" aria-labelledby="api-title">
+    <div class="container page-section dev-habits">
+      <div class="split-head">
+        <h2 id="api-title">Retry anything. It sends once.</h2>
+        <p class="lead">
+          An email can’t be unsent, so the API is careful in the boring places. Here they are, on a
+          real request and its answers.
+        </p>
+      </div>
+      <div class="dev-exchanges">
+        <DevExchange label="Your request, sent twice" lines={retry} />
+        <DevExchange label="What the second one gets back" lines={replayed} />
+        <DevExchange label="An edit made from an old copy" lines={conflict} />
+        <DevExchange label="And what it gets back" lines={problem} />
+      </div>
+      <p class="dev-pages">
+        Lists come in pages of up to 100 with a cursor, and the SDKs walk every page for you. Every
+        resource is in the <a href={DEVELOPERS}>API reference</a>, made from the same contract.
+      </p>
+    </div>
+  </section>
+
+  <section id="webhooks" class="page-section dev-hooks" aria-labelledby="webhooks-title">
+    <div class="container split-head">
+      <h2 id="webhooks-title">Replies come back signed.</h2>
+      <p class="lead">
+        {eventCount} events, signed the Standard Webhooks way. If your server is down, Norbelys keeps
+        trying for about three days.
+      </p>
+    </div>
+    <DevRetries />
+    <div class="container dev-hooks-grid">
+      <ul class="dev-facts">
+        <li><code>webhook-id</code>, <code>webhook-timestamp</code> and <code>webhook-signature</code> on every delivery. The id stays the same on every attempt, so you can drop a repeat.</li>
+        <li>Answer <code>410</code> and the endpoint switches itself off.</li>
+        <li>Rotate a secret and the old one keeps signing for 24 hours.</li>
+        <li>Replay an endpoint’s last days, or retry one delivery, from the API.</li>
+      </ul>
+      <DevCode id="verify" samples={verify} />
+    </div>
+    <div class="container dev-events" aria-labelledby="events-title">
+      <h3 id="events-title" class="dev-events-title">All {eventCount} events</h3>
+      {
+        events.map((group) => (
+          <div class="dev-event-group">
+            <p class="dev-event-name">{group.group}</p>
+            <ul>
+              {group.names.map((name) => (
+                <li><code>{name}</code></li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section id="mcp" class="page-section container dev-ai" aria-labelledby="mcp-title">
+    <div class="split-head">
+      <h2 id="mcp-title">Bring your AI.</h2>
+      <p class="lead">
+        The MCP server gives Claude, ChatGPT, Cursor or any MCP client the API’s operations as
+        tools, and only the ones its access allows.
+      </p>
+    </div>
+    <div class="dev-ai-grid">
+      <div class="dev-ai-connect">
+        <DevCode id="assistants" samples={assistants} label="Assistant" />
+        <ul class="dev-facts">
+          <li>Sign in with OAuth and pick the workspace. The consent screen lists what the assistant may do.</li>
+          <li>98 tools, named like the API: <code>messages.create</code>, <code>inbound_messages.list</code>, <code>campaigns.start</code>.</li>
+          <li>Access lasts 10 minutes at a time. Revoke it whenever you like under Connected apps.</li>
+        </ul>
+      </div>
+      <figure class="transcript" data-scene="enter">
+        <span class="transcript-point" aria-hidden="true"></span>
+        <ol class="transcript-turns">
+          <li class="turn turn-you" style="--i: 0"><span class="turn-who">You</span> Who replied to the Q4 founders campaign today?</li>
+          <li class="turn turn-tool" style="--i: 1"><code>inbound_messages.list</code></li>
+          <li class="turn turn-ai" style="--i: 2">
+            <span class="turn-who">Claude</span> Two people. Alex Morgan at Northwind asked whether Tuesday at 10
+            works, and Chen Li is out of the office until the 14th.
+          </li>
+          <li class="turn turn-you" style="--i: 3"><span class="turn-who">You</span> Tell Alex that Tuesday at 10 works.</li>
+          <li class="turn turn-tool" style="--i: 4"><code>messages.create</code></li>
+          <li class="turn turn-ai" style="--i: 5">
+            <span class="turn-who">Claude</span> Done. I replied in the same thread, from sam@acme.example.
+          </li>
+        </ol>
+        <figcaption>An example conversation.</figcaption>
+      </figure>
+    </div>
+    <div class="dev-agent">
+      <div class="dev-agent-copy">
+        <h3>Building it with a coding agent?</h3>
+        <p>
+          Hand it the contract and the house rules. The whole API is one OpenAPI file, and this
+          prompt covers keys, test mode, retries, errors and webhooks.
+        </p>
+        <details class="dev-agent-prompt">
+          <summary>Read the prompt</summary>
+          <pre>{agentPrompt}</pre>
+        </details>
+      </div>
+      <div class="dev-agent-actions">
+        <button type="button" class="button dev-copy-prompt copy-button" data-copy={agentPrompt} hidden>
+          <span class="copy-icons" aria-hidden="true"><Glyph name="copy" /><Glyph name="check" /></span>
+          <span class="copy-word">Copy the prompt</span><span class="copy-done" aria-hidden="true">Copied</span>
+        </button>
+        <dl class="dev-agent-links">
+          <div>
+            <dt>The contract</dt>
+            <dd><a href={`${API_URL}/openapi.json`}><code>api.norbelys.com/openapi.json</code></a></dd>
+          </div>
+          <div>
+            <dt>For AI readers</dt>
+            <dd><a href="/llms.txt"><code>norbelys.com/llms.txt</code></a></dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <div class="container dev-tools">
+    <section id="cli" class="page-section dev-tool" aria-labelledby="cli-title">
+      <h2 id="cli-title">Every operation, a command.</h2>
+      <p class="lead">
+        One binary for macOS, Linux and Windows. Approve it in your browser once, then all 99
+        operations are commands, with <code>--json</code> when a script is reading.
+      </p>
+      <DevCode id="cli-session" samples={[{ code: cli, label: "Terminal", lang: "bash" }]} />
+      <p class="dev-note">
+        <code>listen</code> forwards your workspace’s events to your laptop, signed like the real
+        ones, so your handler is tested before it’s deployed.
+      </p>
+    </section>
+
+    <section id="self-host" class="page-section dev-tool" aria-labelledby="self-title">
+      <h2 id="self-title">Or run the box yourself.</h2>
+      <p class="lead">
+        Norbelys is Apache-2.0. The processes on the map run on your own machine, with Docker.
+      </p>
+      <DevMachine />
+      <ol class="dev-selfhost">
+        {
+          selfhost.map((step) => (
+            <li>
+              <DevCommand command={step.command} />
+              <p>{step.text}</p>
+            </li>
+          ))
+        }
+      </ol>
+      <a class="text-link" href={SOURCE}>Read the source <Glyph name="external" /></a>
+    </section>
+  </div>
+
+  <section class="dev-close" aria-labelledby="close-title">
+    <div class="dev-close-panel container" data-scene="enter">
+      <svg class="dev-close-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+        <path d={markPath()} pathLength="1" stroke-width={MARK.stroke} stroke-linecap="round" stroke-linejoin="round"></path>
+        <circle class="dev-close-point" cx={MARK.end + 6.5} cy="56.5" r="3.4"></circle>
+      </svg>
+      <div class="dev-close-copy">
+        <h2 id="close-title" data-inview>
+          <span class="line">Your first email is</span>
+          <span class="line">one <Marked>request</Marked> away<span class="pink">.</span></span>
+        </h2>
+        <div class="page-actions">
+          <ArrowButton href={APP}>Get an API key</ArrowButton>
+          <a class="button button-ghost" href={DEVELOPERS}>Read the API reference</a>
+        </div>
+      </div>
+    </div>
+    <p class="fine-print dev-terms">
+      The API, webhooks, the MCP server and the CLI are covered by <a href={`${PAGES.terms}#the-api-webhooks-mcp-and-cli`}>section 7 of our Terms</a>,
+      and personal data by our <a href={PAGES.dpa}>DPA</a>. The code itself is yours under Apache-2.0.
+    </p>
+  </section>
+
+  <p class="sr-only" aria-live="polite" data-copy-status></p>
+</Page>

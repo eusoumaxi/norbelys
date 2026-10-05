@@ -1,0 +1,163 @@
+---
+import CampaignRoad from "../components/campaign-road.astro";
+import CampaignRules from "../components/campaign-rules.astro";
+import Closing from "../components/closing.astro";
+import Faq from "../components/faq.astro";
+import Glyph from "../components/glyph.astro";
+import Page from "../layouts/page.astro";
+import "../styles/campaigns.css";
+
+/**
+ * Campaigns and sequences, for the people who run outbound and the people who sign off on it:
+ * a drive through an example campaign, the rules of the road (every control, drawn as a card),
+ * then who can do what, what gets counted, how it's secured and how the data leaves. Every
+ * setting and default here is the product's own; the example campaign is made up.
+ */
+
+/** Each role, and how many of the seven permissions it holds (a half is its own mailboxes only). */
+const roles = [
+  ["Owner", 7],
+  ["Admin", 6],
+  ["Member", 3.5],
+  ["Viewer", 1],
+] as const;
+
+const numbers = [
+  ["1,200", "Sent"],
+  ["43", "Replies"],
+  ["6", "Bounced"],
+  ["3", "Unsubscribed"],
+] as const;
+
+const security = [
+  "Passkeys and email codes",
+  "Single sign-on with OIDC",
+  "AES-256-GCM for secrets",
+  "Row-level isolation",
+  "TLS to every mail server",
+  "180-day audit log",
+] as const;
+
+const questions = [
+  [
+    "Who can start a campaign?",
+    "Owners, admins and members. Viewers see everything but can’t start or change anything. Starting always shows a last check first: who gets it, the first email, the inboxes it sends from and when it begins.",
+  ],
+  [
+    "Can we change a campaign while it runs?",
+    "Yes. An edit makes a new revision: emails not sent yet use it, and anything already sent keeps the version it went out with. Pausing also holds mail that was already queued.",
+  ],
+  [
+    "What happens when someone replies?",
+    "A reply from a person stops their sequence in every campaign by default. You can stop their colleagues at the same email domain too. Out-of-office notes don’t count as replies, so the sequence just carries on.",
+  ],
+  [
+    "How much can each inbox send?",
+    "You decide. Every inbox has a daily cap, 50 by default, and a gap between emails, 10 minutes by default. Norbelys also stays under the daily limits Google and Microsoft set.",
+  ],
+  [
+    "Where does our data live, and who can see it?",
+    "Each workspace is kept apart in the database with row-level security, mailbox credentials are encrypted, and access follows four roles. Owners and admins can read a 180-day audit log.",
+  ],
+  [
+    "Can we take our data with us?",
+    "Any time. Export people and their message history as CSV or JSONL. An owner can delete the whole workspace, and it’s erased 30 days later.",
+  ],
+] as const;
+---
+
+<Page
+  title="Campaigns and sequences — Norbelys"
+  description="Plan a campaign once and Norbelys sends every step on schedule, from your own inboxes, and stops when someone replies. Every control and its default, roles, reporting and security."
+  class="campaigns"
+>
+  <CampaignRoad />
+
+  <CampaignRules />
+
+  <section class="page-section container" aria-labelledby="wheel-title">
+    <div class="split-head">
+      <h2 id="wheel-title">Behind the wheel.</h2>
+      <p class="lead">For the people who sign off on outbound: who can do what, what gets counted, and how it’s kept safe.</p>
+    </div>
+    <div class="tiles">
+      <article class="tile">
+        <h3>Four roles, one set of keys.</h3>
+        <p>Owners, admins, members and viewers. The API itself enforces what each one can do.</p>
+        <div class="tile-scene">
+          <ul class="vignette-roles">
+            {
+              roles.map(([role, held]) => (
+                <li>
+                  <span class="tile-face" aria-hidden="true">{role.charAt(0)}</span>
+                  <span class="vignette-role">{role}</span>
+                  <span class="vignette-dots" role="img" aria-label={`${Math.floor(held)} of 7 permissions${held % 1 === 0 ? "" : ", and their own mailboxes"}`}>
+                    {Array.from({ length: 7 }, (_, index) => (
+                      <i class:list={{ "is-half": index + 0.5 === held, "is-on": index < Math.floor(held) }} />
+                    ))}
+                  </span>
+                </li>
+              ))
+            }
+          </ul>
+          <p class="vignette-foot">Seven permissions, from reading every reply to deleting the workspace.</p>
+        </div>
+      </article>
+
+      <article class="tile">
+        <h3>Numbers you can defend.</h3>
+        <p>Sent means it really left. Replies leave out auto-replies. Opens and clicks only count if you turn them on.</p>
+        <div class="tile-scene">
+          <dl class="vignette-numbers">
+            {
+              numbers.map(([value, label]) => (
+                <div>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))
+            }
+          </dl>
+          <p class="vignette-toggle">
+            <span>Open and click tracking</span>
+            <span class="tile-switch">Off</span>
+          </p>
+        </div>
+      </article>
+
+      <article class="tile">
+        <h3>Security, built in.</h3>
+        <p>The controls your IT team will ask about, working in the product today.</p>
+        <div class="tile-scene vignette-security">
+          <svg class="vignette-lock" viewBox="0 0 64 64" aria-hidden="true">
+            <path d="M20 28V20A12 12 0 0 1 44 20V28" />
+            <rect x="12" y="28" width="40" height="28" rx="9" />
+            <circle cx="32" cy="42" r="4.5" />
+          </svg>
+          <ul class="vignette-chips">
+            {security.map((item) => <li><Glyph name="check" />{item}</li>)}
+          </ul>
+        </div>
+      </article>
+
+      <article class="tile">
+        <h3>Your data, your call.</h3>
+        <p>Export people and their history whenever you like. Delete the workspace and it’s erased 30 days later.</p>
+        <div class="tile-scene">
+          <ul class="vignette-files">
+            <li><Glyph name="arrow" class="vignette-download" /> people.csv</li>
+            <li><Glyph name="arrow" class="vignette-download" /> history.jsonl</li>
+          </ul>
+          <div class="vignette-erase">
+            <span>Workspace deleted</span>
+            <span class="vignette-bar" aria-hidden="true"><i></i></span>
+            <span>Erased in 30 days</span>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <Faq questions={questions} />
+  <Closing />
+</Page>

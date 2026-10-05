@@ -1,0 +1,322 @@
+/*
+ * A comparison page: what each tool does drawn as two overlapping circles, who each one is for,
+ * the table with our column tinted, where each one wins and the sources behind every claim.
+ */
+
+.compare-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  align-items: center;
+  gap: 3rem clamp(2rem, 5vw, 5rem);
+}
+.compare-hero-copy {
+  display: grid;
+  justify-items: start;
+  gap: 1.5rem;
+}
+.compare-vs {
+  color: var(--pink-deep);
+}
+.compare-checked {
+  color: var(--ink-3);
+  font-size: var(--text-micro);
+}
+.compare-checked a {
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 0.2em;
+}
+.compare-checked a:hover {
+  color: var(--pink-deep);
+  text-decoration-color: currentcolor;
+}
+
+/* ——— The overlap: two rings that draw themselves, and the shared part filled in pink. ——— */
+.overlap {
+  position: relative;
+  aspect-ratio: 640 / 440;
+  width: 100%;
+  margin: 0;
+}
+.overlap-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.overlap-ring {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+}
+.overlap-ring-them {
+  stroke: var(--ink-quiet);
+}
+.overlap-ring-us {
+  stroke: var(--pink-deep);
+}
+.overlap-lens {
+  fill: var(--pink-soft);
+}
+.motion .overlap-ring {
+  stroke-dashoffset: calc(1 - clamp(0, var(--p) / 0.7, 1));
+}
+.motion .overlap-ring-us {
+  stroke-dashoffset: calc(1 - clamp(0, (var(--p) - 0.1) / 0.7, 1));
+}
+.motion .overlap-lens {
+  opacity: clamp(0, (var(--p) - 0.45) / 0.35, 1);
+}
+.overlap-side {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  gap: 0.6rem;
+  translate: 0 -50%;
+}
+.overlap-them {
+  left: 7%;
+  width: 23%;
+}
+.overlap-both {
+  left: 50%;
+  width: 26%;
+  translate: -50% -50%;
+  justify-items: center;
+  text-align: center;
+}
+.overlap-us {
+  right: 7%;
+  width: 23%;
+  justify-items: end;
+  text-align: right;
+}
+.overlap-name {
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.overlap-us .overlap-name {
+  color: var(--pink-deep);
+}
+.overlap-side ul {
+  display: grid;
+  gap: 0.3rem;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  line-height: 1.35;
+}
+.motion .overlap-side {
+  opacity: clamp(0, (var(--p) - 0.35) / 0.35, 1);
+}
+
+.together {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 1.5rem;
+  max-width: 52rem;
+  margin-top: clamp(2.5rem, 5vw, 3.5rem);
+  padding: clamp(1.5rem, 3vw, 2rem);
+  border-radius: var(--radius-l);
+  background: var(--pink-mist);
+}
+.together-glyph {
+  width: 3rem;
+  height: 3rem;
+}
+.together h3 {
+  font-size: 1.375rem;
+  letter-spacing: -0.025em;
+}
+.together p {
+  margin-top: 0.4rem;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+
+/* ——— The table: our column tinted, a check where there's a yes, a dash where there isn't. ——— */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-small);
+  line-height: 1.45;
+}
+.compare-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 1rem 1.25rem;
+  border-bottom: 2px solid var(--ink);
+  background: var(--white);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-align: left;
+}
+.compare-table thead th.compare-us {
+  background: var(--pink-mist);
+  color: var(--pink-ink);
+}
+.compare-table th[scope="row"] {
+  width: 38%;
+  padding: 1rem 1.25rem 1rem 0;
+  color: var(--ink);
+  font-weight: 500;
+  text-align: left;
+  vertical-align: top;
+}
+.compare-table td {
+  width: 31%;
+  padding: 1rem 1.25rem;
+  color: var(--ink-2);
+  vertical-align: top;
+}
+.compare-table td.compare-us {
+  background: var(--pink-mist);
+}
+.compare-table tbody tr:not(.compare-group) {
+  border-bottom: 1px solid var(--line);
+}
+.compare-group th {
+  padding: 2.5rem 0 0.85rem;
+  color: var(--ink);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  text-align: left;
+}
+/* ——— Moving over: the steps in order, numbered because the order matters. ——— */
+.switch-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2rem clamp(1.5rem, 3vw, 2.5rem);
+  counter-reset: step;
+}
+.switch-steps li {
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+  padding-top: 1.25rem;
+  border-top: 2px solid var(--ink);
+  color: var(--ink-2);
+  line-height: 1.5;
+  counter-increment: step;
+}
+.switch-steps li::before {
+  content: counter(step);
+  color: var(--pink-deep);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.compare-sources {
+  display: grid;
+  gap: 1rem;
+  padding-top: clamp(2rem, 4vw, 3rem);
+}
+.compare-sources-title {
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+.compare-source-list {
+  display: grid;
+  gap: 0.35rem;
+}
+
+@media (max-width: 1000px) {
+  .compare-hero {
+    grid-template-columns: 1fr;
+  }
+  .overlap {
+    max-width: 40rem;
+  }
+  .switch-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .overlap {
+    display: grid;
+    gap: 0.75rem;
+    aspect-ratio: auto;
+  }
+  .overlap-art {
+    display: none;
+  }
+  .overlap-side,
+  .overlap-both,
+  .overlap-us {
+    position: static;
+    width: auto;
+    padding: 1.15rem 1.25rem;
+    border-radius: var(--radius-m);
+    background: var(--mist);
+    justify-items: start;
+    text-align: left;
+    translate: none;
+  }
+  .overlap-both {
+    background: var(--pink-soft);
+  }
+  .overlap-us {
+    background: var(--pink-mist);
+  }
+  .overlap-us .overlap-name {
+    color: var(--pink-ink);
+  }
+  .motion .overlap-side {
+    opacity: 1;
+  }
+  /* The table stacks: each feature over its two answers, side by side, each named. */
+  .compare-table,
+  .compare-table tbody {
+    display: block;
+  }
+  .compare-table thead {
+    display: none;
+  }
+  .compare-table tr,
+  .compare-table tbody tr:not(.compare-group) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-bottom: 0;
+  }
+  .compare-group th,
+  .compare-table th[scope="row"] {
+    grid-column: 1 / -1;
+    width: auto;
+  }
+  .compare-group th {
+    padding-top: 2rem;
+  }
+  .compare-table th[scope="row"] {
+    padding: 1rem 0 0.6rem;
+  }
+  .compare-table td {
+    width: auto;
+    margin-bottom: 1rem;
+    padding: 0.7rem 0.85rem 0.8rem;
+  }
+  .compare-table td.compare-us {
+    border-radius: var(--radius-s) 0 0 var(--radius-s);
+  }
+  .compare-table td:not(.compare-us) {
+    border-radius: 0 var(--radius-s) var(--radius-s) 0;
+    background: var(--mist);
+  }
+  .compare-us .cell-label {
+    color: var(--pink-ink);
+  }
+  .switch-steps {
+    grid-template-columns: 1fr;
+  }
+  .together {
+    grid-template-columns: 1fr;
+  }
+}

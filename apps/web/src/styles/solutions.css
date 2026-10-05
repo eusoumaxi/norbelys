@@ -1,0 +1,439 @@
+/*
+ * The solutions page: a sentence whose last word turns through the teams, each bringing the
+ * object its page is built on, drawn large; then a row per team's desk, and the one plan they share.
+ */
+
+/* ——— Hero: "Cold email for ___", the slot and the object beside it. ——— */
+.slot-hero {
+  padding-bottom: clamp(1rem, 3vw, 2rem);
+}
+.slot-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  align-items: center;
+  gap: clamp(2rem, 5vw, 5rem);
+}
+.slot-copy {
+  display: grid;
+  gap: 1.6rem;
+  container-type: inline-size;
+}
+.slot-title {
+  display: grid;
+  /* Sized to the column, so "account executives." still fits on one line. */
+  font-size: min(var(--text-hero), 10.2cqi);
+}
+.slot-line {
+  display: grid;
+  padding-bottom: 0.14em;
+}
+.slot-word {
+  position: relative;
+  grid-area: 1 / 1;
+  justify-self: start;
+  white-space: nowrap;
+}
+.slot-name {
+  color: var(--pink-deep);
+}
+.slot-mark {
+  position: absolute;
+  bottom: -0.1em;
+  left: -0.04em;
+  width: calc(100% - 0.3em);
+  height: 0.26em;
+  overflow: visible;
+}
+.slot-mark path {
+  fill: none;
+  stroke: var(--pink);
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+.slot-word:not(.is-on) {
+  visibility: hidden;
+}
+.motion .slot-word {
+  transition:
+    opacity 420ms var(--ease-out),
+    translate 700ms var(--ease-settle),
+    filter 420ms var(--ease-out),
+    visibility 0s linear 700ms;
+}
+.motion .slot-word:not(.is-on) {
+  opacity: 0;
+  translate: 0 0.45em;
+  filter: blur(8px);
+}
+.motion .slot-word.is-leaving {
+  visibility: visible;
+  translate: 0 -0.45em;
+}
+.motion .slot-word.is-on {
+  visibility: visible;
+  transition-delay: 0s;
+}
+.motion .slot-mark path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.motion .slot-word.is-on .slot-mark path {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 900ms var(--ease-draw) 280ms;
+}
+.slot-copy .page-lead {
+  max-width: 33rem;
+}
+
+/* The teams, as pills, three to a row: each one turns the slot and leads to its page. */
+.slot-teams {
+  display: grid;
+  grid-template-columns: repeat(3, max-content);
+  gap: 0.6rem;
+}
+.slot-team {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 2.9rem;
+  padding: 0 1.05rem 0 0.8rem;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  font-size: 0.9875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition:
+    background-color var(--duration-ui) var(--ease-out),
+    box-shadow var(--duration-ui) var(--ease-out);
+}
+.slot-team .glyph {
+  width: 1.45rem;
+  height: 1.45rem;
+}
+.slot-team:hover,
+.slot-team.is-on {
+  background: var(--pink-mist);
+  box-shadow: inset 0 0 0 1.5px var(--pink);
+}
+
+/* The object: the team's icon, drawn at the size of a poster, hung or stood where it belongs. */
+.slot-stage {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 2rem;
+  padding-top: 2rem;
+}
+.slot-object {
+  grid-area: 1 / 1;
+  width: min(100%, 25rem);
+  height: auto;
+  overflow: visible;
+}
+.slot-line-path,
+.slot-staging {
+  stroke: var(--ink);
+  stroke-width: 3.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.slot-staging {
+  stroke: var(--line-strong);
+}
+.slot-object-bell .slot-staging,
+.slot-object-badge .slot-staging,
+.slot-object-frame .slot-staging {
+  stroke: var(--ink);
+}
+.slot-point {
+  fill: var(--pink-hot);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.slot-body {
+  transform-box: view-box;
+}
+.slot-object-bell .slot-body {
+  transform-origin: 32px 7px;
+}
+.slot-object-frame .slot-body,
+.slot-object-frame .slot-staging {
+  transform-box: view-box;
+  transform-origin: 32px 4px;
+}
+.slot-object-badge .slot-body {
+  transform-origin: 32px -18px;
+}
+.slot-object-pawn .slot-body {
+  transform-origin: 32px 62px;
+}
+.slot-object:not(.is-on) {
+  visibility: hidden;
+}
+.motion .slot-object {
+  transition:
+    opacity 360ms var(--ease-out),
+    visibility 0s linear 360ms;
+}
+.motion .slot-object:not(.is-on) {
+  opacity: 0;
+}
+.motion .slot-object.is-on {
+  transition-delay: 0s;
+}
+.motion .slot-object .slot-line-path,
+.motion .slot-object .slot-staging {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.motion .slot-object.is-on .slot-staging {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 700ms var(--ease-draw);
+}
+.motion .slot-object.is-on .slot-line-path {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1100ms var(--ease-draw) 150ms;
+}
+.motion .slot-object.is-on .slot-line-path:nth-child(2) {
+  transition-delay: 270ms;
+}
+.motion .slot-object.is-on .slot-line-path:nth-child(n + 3) {
+  transition-delay: 390ms;
+}
+.motion .slot-object .slot-point {
+  scale: 0;
+}
+.motion .slot-object.is-on .slot-point {
+  scale: 1;
+  transition: scale 700ms var(--ease-settle) 1000ms;
+}
+/* Once drawn, each object does what it does: the bell rings, the frame sways on its nail, the
+   report's reading climbs, the badge swings on its lanyard, the pawn steps, the fader rises. */
+.motion .slot-object-bell.is-on .slot-body {
+  animation: slot-ring 1600ms var(--ease-out) 1300ms;
+}
+.motion .slot-object-frame.is-on .slot-body,
+.motion .slot-object-frame.is-on .slot-staging {
+  animation: slot-sway 2200ms var(--ease-out) 1300ms;
+}
+.motion .slot-object-report.is-on .slot-point {
+  animation: point-plug 900ms var(--ease-settle) 1700ms both;
+}
+.motion .slot-object-badge.is-on .slot-body {
+  animation: slot-sway 2400ms var(--ease-out) 1300ms;
+}
+.motion .slot-object-pawn.is-on .slot-body {
+  animation: slot-step 1100ms var(--ease-settle) 1300ms;
+}
+.motion .slot-object-fader.is-on .slot-point {
+  animation: point-rise 1200ms var(--ease-settle) 1500ms both;
+}
+@keyframes slot-ring {
+  15% {
+    rotate: 14deg;
+  }
+  38% {
+    rotate: -10deg;
+  }
+  60% {
+    rotate: 6deg;
+  }
+  80% {
+    rotate: -3deg;
+  }
+}
+@keyframes slot-sway {
+  25% {
+    rotate: 4deg;
+  }
+  60% {
+    rotate: -2.5deg;
+  }
+}
+@keyframes slot-step {
+  40% {
+    translate: 0 -8px;
+  }
+  70% {
+    translate: 0 0;
+  }
+  82% {
+    translate: 0 -2px;
+  }
+}
+.slot-caption {
+  display: grid;
+  max-width: 22rem;
+  color: var(--ink-2);
+  font-weight: 500;
+  text-align: center;
+  text-wrap: balance;
+}
+.slot-caption-text {
+  grid-area: 1 / 1;
+}
+.slot-caption-text:not(.is-on) {
+  visibility: hidden;
+}
+.motion .slot-caption-text {
+  transition:
+    opacity 400ms var(--ease-out) 200ms,
+    visibility 0s linear 400ms;
+}
+.motion .slot-caption-text:not(.is-on) {
+  opacity: 0;
+  transition-delay: 0s, 400ms;
+}
+
+/* ——— The desks: a row per team, the name as big as the row allows. ——— */
+.desk-list {
+  border-top: 1px solid var(--line);
+}
+.desk-row {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 0.95fr) minmax(0, 1.05fr) 3.25rem;
+  align-items: center;
+  gap: 1rem clamp(1rem, 3vw, 2.5rem);
+  padding: clamp(1.4rem, 2.6vw, 2.2rem) 0.25rem;
+  border-bottom: 1px solid var(--line);
+}
+.desk-glyph.glyph {
+  width: 3.25rem;
+  height: 3.25rem;
+}
+.desk-name {
+  font-size: clamp(2rem, 4.4vw, 4rem);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  transition:
+    translate 600ms var(--ease-settle),
+    color var(--duration-ui) var(--ease-out);
+}
+.desk-line {
+  max-width: 32rem;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.desk-go {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  transition:
+    background-color 300ms var(--ease-out),
+    color 300ms var(--ease-out),
+    box-shadow 300ms var(--ease-out);
+}
+.desk-go .glyph {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+.desk-row:hover .desk-name {
+  color: var(--pink-deep);
+  translate: 0.4rem 0;
+}
+.desk-row:hover .desk-go {
+  background: var(--pink-deep);
+  color: var(--white);
+  box-shadow: none;
+}
+
+/* ——— The plan: one dark sheet, the price and everything in it. ——— */
+.desk-plan-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 2.5rem clamp(2rem, 6vw, 6rem);
+  padding: clamp(2rem, 5vw, 4.5rem);
+  border-radius: var(--radius-xl);
+  background: var(--ink);
+  color: var(--white);
+}
+.desk-plan-head {
+  display: grid;
+  justify-items: start;
+  gap: 1.5rem;
+}
+.desk-plan-head h2 {
+  font-size: clamp(2.4rem, 4.6vw, 4.25rem);
+}
+.desk-plan-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.9rem;
+  color: rgb(255 255 255 / 72%);
+}
+.desk-plan-amount {
+  color: var(--white);
+  font-size: clamp(3rem, 6vw, 5rem);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+.desk-plan-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem 1.5rem;
+}
+.desk-plan-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  color: rgb(255 255 255 / 86%);
+  line-height: 1.4;
+}
+.desk-plan-list .glyph {
+  width: 1.2rem;
+  height: 1.2rem;
+  margin-top: 0.1rem;
+  color: var(--pink);
+}
+
+@media (max-width: 999px) {
+  .slot-grid {
+    grid-template-columns: 1fr;
+  }
+  .slot-stage {
+    order: -1;
+    width: min(100%, 22rem);
+    margin-inline: auto;
+  }
+  .slot-stage {
+    padding-top: 3.5rem;
+  }
+  .slot-object {
+    width: min(64%, 14rem);
+  }
+  .desk-row {
+    grid-template-columns: 2.75rem minmax(0, 1fr) 2.75rem;
+  }
+  .desk-line {
+    grid-column: 2 / -1;
+  }
+  .desk-go {
+    grid-row: 1;
+    grid-column: 3;
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+  .desk-glyph.glyph {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  .desk-plan-panel {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .desk-plan-list {
+    grid-template-columns: 1fr;
+  }
+  .slot-teams {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

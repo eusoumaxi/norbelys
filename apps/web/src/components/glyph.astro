@@ -1,0 +1,44 @@
+---
+import { GLYPHS } from "../glyphs";
+import type { Drawing, GlyphName } from "../glyphs";
+
+/**
+ * Draws one of the site's icons; every line carries `pathLength="1"` so it can draw itself in.
+ * Inside another drawing, `x`, `y` and `size` place it in that drawing's own units.
+ */
+interface Props {
+  name: GlyphName;
+  class?: string;
+  x?: number;
+  y?: number;
+  size?: number;
+}
+const { name, class: className, x, y, size } = Astro.props;
+const drawing: Drawing = GLYPHS[name];
+// The size wins over the stylesheet's em-based one, which suits icons set in text.
+const placed = size === undefined ? undefined : `width: ${size}px; height: ${size}px`;
+---
+
+<svg
+  class:list={["glyph", className]}
+  data-glyph={name}
+  viewBox="0 0 64 64"
+  x={x}
+  y={y}
+  width={size}
+  height={size}
+  style={placed}
+  fill="none"
+  aria-hidden="true"
+>
+  {
+    drawing.lines.map((d) => (
+      <path class="glyph-line" d={d} pathLength="1" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" />
+    ))
+  }
+  {
+    drawing.points?.map(([cx, cy], index) => (
+      <circle class="glyph-point" cx={cx} cy={cy} r={drawing.radius ?? 5.5} style={`--n: ${index}`} />
+    ))
+  }
+</svg>

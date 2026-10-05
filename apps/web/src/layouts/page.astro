@@ -1,0 +1,33 @@
+---
+import Base from "./base.astro";
+import SiteFooter from "../components/site-footer.astro";
+import SiteHeader from "../components/site-header.astro";
+import "../styles/pages.css";
+
+/**
+ * Every page but the homepage: the document shell, the header, the page's own content and the
+ * footer, with the one script that makes the header, the marks and the scroll scenes work.
+ */
+interface Props {
+  title: string;
+  description?: string;
+  type?: "website" | "article";
+  class?: string;
+  /** A dark page (ink ground, white words) above the usual white footer. */
+  dark?: boolean;
+  /** The header's way in, when the page has a better one than the default. */
+  cta?: { readonly label: string; readonly href: string };
+}
+const { class: className, dark = false, cta, ...meta } = Astro.props;
+---
+
+<Base {...meta}>
+  <Fragment slot="head"><slot name="head" /></Fragment>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class:list={{ "page-dark": dark }}>
+    <SiteHeader cta={cta} />
+    <main id="main" class={className}><slot /></main>
+  </div>
+  <SiteFooter />
+  <script src="../page.ts"></script>
+</Base>

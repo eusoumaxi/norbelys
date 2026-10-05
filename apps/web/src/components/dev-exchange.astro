@@ -1,0 +1,33 @@
+---
+import type { ExchangeLine } from "../developers";
+
+/**
+ * A piece of HTTP, line by line, with a line drawn from each header that matters to what it's
+ * for: the API's habits read off a real request and its answer.
+ */
+interface Props {
+  lines: readonly ExchangeLine[];
+  /** What this piece is, for screen readers and as its small heading. */
+  label: string;
+}
+const { lines, label } = Astro.props;
+---
+
+<figure class="exchange" data-inview>
+  <figcaption class="exchange-label">{label}</figcaption>
+  <ol class="exchange-lines">
+    {
+      lines.map((line) => (
+        <li class:list={["exchange-line", `exchange-${line.kind ?? "header"}`, { "has-note": line.note }]}>
+          <code>{line.text}</code>
+          {line.note && <span class="exchange-leader" aria-hidden="true" />}
+          {line.note && (
+            <p class="exchange-note">
+              <strong>{line.note.name}.</strong> {line.note.text}
+            </p>
+          )}
+        </li>
+      ))
+    }
+  </ol>
+</figure>

@@ -1,0 +1,1057 @@
+/*
+ * Campaigns and sequences: a drive through an example campaign, the rules of the road on a dark
+ * board, and four cards for the people who sign off on outbound.
+ */
+
+.campaigns [id] {
+  scroll-margin-top: calc(var(--header-height) + 1rem);
+}
+
+/* ——— The drive: the pitch beside a framed road that opens to the whole screen. ——— */
+.road {
+  position: relative;
+}
+.road-head {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  align-items: center;
+  gap: clamp(2rem, 4vw, 4.5rem);
+  height: 100svh;
+  min-height: 40rem;
+  padding-top: var(--header-height);
+  padding-bottom: 3rem;
+  pointer-events: none;
+}
+.road-copy {
+  display: grid;
+  justify-items: start;
+  gap: 1.75rem;
+  pointer-events: auto;
+}
+.road-copy .page-title {
+  font-size: clamp(3rem, 5.4vw, 5.5rem);
+  text-wrap: balance;
+}
+.road-copy .lead {
+  max-width: 31rem;
+}
+.road-slot {
+  height: min(76svh, 46rem);
+  border-radius: 36px;
+}
+.road-hint {
+  position: absolute;
+  bottom: 1.1rem;
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--ink-3);
+  font-size: var(--text-micro);
+  opacity: calc(1 - var(--opened, 0) * 4);
+  translate: -50% 0;
+}
+.road-hint .glyph {
+  width: 1rem;
+  height: 1rem;
+}
+.motion .road-track {
+  height: calc(var(--stops) * 100svh);
+}
+.road-stage {
+  position: relative;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--white);
+}
+.motion .road-stage {
+  position: sticky;
+  top: 0;
+}
+.road-view {
+  position: absolute;
+  inset: 0;
+}
+.road-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The road: line drawing in ink and grey, with the brand's pink for the way and for replies. */
+.road-surface {
+  fill: var(--mist);
+}
+.road-ramp {
+  fill: var(--pink-soft);
+}
+.road-edge,
+.road-horizon,
+.road-ramp-edge {
+  fill: none;
+  stroke-width: 1.5;
+}
+.road-edge {
+  stroke: var(--line-strong);
+}
+.road-horizon {
+  stroke: var(--line-strong);
+}
+.road-ramp-edge {
+  stroke: var(--pink-hot);
+  stroke-width: 2;
+}
+.road-dash {
+  fill: var(--pink-hot);
+}
+.road-reflector {
+  fill: var(--pink);
+}
+.road-steel,
+.road-beam,
+.road-truss,
+.road-post {
+  fill: none;
+  stroke: var(--ink);
+  stroke-linecap: round;
+}
+.road-steel {
+  stroke-width: 9;
+}
+.road-beam {
+  stroke-width: 10;
+}
+.road-truss {
+  stroke-width: 4;
+}
+.road-post {
+  stroke-width: 7;
+}
+.road-board {
+  fill: var(--ink);
+}
+.road-board-pink {
+  fill: var(--pink-deep);
+}
+.road-board-glyph {
+  color: var(--pink);
+}
+.road-board-glyph-white {
+  color: var(--white);
+}
+.road-board-glyph-white .glyph-point {
+  fill: var(--white);
+}
+.road-board-title {
+  fill: var(--white);
+  font-size: 31px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.road-board-day {
+  fill: var(--pink-blush);
+  font-size: 22px;
+  font-weight: 600;
+}
+.road-box {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 4.5;
+  stroke-linejoin: round;
+}
+.road-box-door {
+  stroke: var(--ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+/* A mailbox's flag goes up as the drive reaches it: the email has landed. */
+.road-flag {
+  fill: var(--pink-hot);
+  transform-box: fill-box;
+  transform-origin: 0% 50%;
+  transition: rotate 600ms var(--ease-settle);
+}
+.is-up .road-flag {
+  rotate: -90deg;
+}
+.road-plate {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 5;
+}
+.road-plate-dark {
+  fill: var(--ink);
+}
+.road-plate-small {
+  fill: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.road-plate-quiet {
+  fill: var(--ink-3);
+}
+.road-plate-big {
+  fill: var(--ink);
+  font-size: 54px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+.road-plate-mid {
+  fill: var(--ink);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.road-plate-white {
+  fill: var(--white);
+}
+.road-plate-blush {
+  fill: var(--pink-blush);
+}
+.road-octagon {
+  fill: var(--pink-deep);
+}
+.road-octagon-rim {
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 4;
+}
+.road-stop-word {
+  fill: var(--white);
+  font-size: 36px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* The stops: one card at a time, rising as the camera arrives. */
+.road-note {
+  position: absolute;
+  right: var(--gutter);
+  bottom: clamp(1.25rem, 4svh, 2.5rem);
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  opacity: var(--opened, 0);
+}
+.road-cards {
+  position: absolute;
+  bottom: clamp(1.25rem, 4svh, 2.5rem);
+  left: max(var(--gutter), (100% - var(--page)) / 2);
+  width: min(26rem, 100% - var(--gutter) * 2);
+}
+.road-card {
+  position: absolute;
+  inset: auto 0 0;
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.25rem 1.35rem 1.35rem;
+  border-radius: var(--radius-l);
+  background: var(--white);
+  box-shadow: var(--shadow-float);
+  opacity: 0;
+  pointer-events: none;
+  translate: 0 1rem;
+  transition:
+    opacity 400ms var(--ease-out),
+    translate 500ms var(--ease-out);
+}
+.road-card.is-active {
+  opacity: 1;
+  pointer-events: auto;
+  translate: 0 0;
+}
+.road-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.road-card-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.8rem;
+  background: var(--ink);
+  color: var(--pink);
+}
+.road-card-icon .glyph {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.road-card-title {
+  font-size: 1.375rem;
+  letter-spacing: -0.025em;
+}
+.road-card-day {
+  margin-left: auto;
+  color: var(--ink-3);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.road-card-text {
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.road-card-text strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.road-card-chip {
+  display: inline-flex;
+  justify-self: start;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: var(--radius-pill);
+  background: var(--pink-soft);
+  color: var(--pink-ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.road-card-chip .glyph {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Without motion the drive is a picture, and its stops are cards beneath it. */
+html:not(.motion) .road-head {
+  position: static;
+  grid-template-columns: 1fr;
+  height: auto;
+  min-height: 0;
+  padding-top: calc(var(--header-height) + clamp(3rem, 7vw, 6rem));
+  padding-bottom: 0;
+}
+html:not(.motion) .road-slot,
+html:not(.motion) .road-hint,
+html:not(.motion) .road-note {
+  display: none;
+}
+html:not(.motion) .road-track {
+  width: min(var(--page), 100% - var(--gutter) * 2);
+  margin: clamp(2.5rem, 5vw, 4rem) auto 0;
+}
+html:not(.motion) .road-stage {
+  height: auto;
+  overflow: visible;
+}
+html:not(.motion) .road-view {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 25 / 16;
+  border-radius: var(--radius-xl);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+html:not(.motion) .road-cards {
+  position: static;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: 1rem;
+  width: auto;
+  margin-top: 1.5rem;
+}
+html:not(.motion) .road-card {
+  position: static;
+  opacity: 1;
+  translate: none;
+  background: var(--mist);
+  box-shadow: none;
+}
+
+/* ——— What the cards draw (the cards themselves are shared, in pages.css). ——— */
+
+/* The sending window: a week, the open hours filling in pink day by day. */
+.tile-scene.scene-window {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 1.25rem clamp(1.5rem, 4vw, 3rem);
+}
+.window-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 2.1rem);
+  grid-auto-rows: 0.62rem;
+  gap: 0.28rem 0.3rem;
+}
+.window-day {
+  padding-bottom: 0.35rem;
+  color: var(--ink-3);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+}
+.window-grid i {
+  border-radius: 3px;
+  background: var(--mist);
+}
+.window-grid .is-weekend {
+  background: var(--cloud);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.window-grid .is-open {
+  background: var(--pink-hot);
+  transform-origin: bottom;
+}
+.motion .window-grid .is-open {
+  scale: 1 clamp(0, var(--p) * 2.6 - var(--k) * 0.28, 1);
+}
+.window-legend {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+}
+.window-hours {
+  color: var(--ink-2);
+  font-size: 1.125rem;
+}
+.window-hours strong {
+  display: block;
+  color: var(--ink);
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+.window-note {
+  max-width: 18rem;
+  color: var(--ink-3);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+/* The daily cap and the gap: today's count filling up, and four sends ten minutes apart. */
+.cap-inbox {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+.cap-address {
+  overflow: hidden;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cap-count {
+  margin-left: auto;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.cap-count strong {
+  color: var(--ink);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+.cap-meter {
+  display: block;
+  overflow: hidden;
+  height: 0.55rem;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+}
+.cap-meter i {
+  display: block;
+  width: 64%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--pink-hot);
+  transform-origin: left;
+}
+.motion .cap-meter i {
+  scale: clamp(0, var(--p) * 1.5, 1) 1;
+}
+.cap-line {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  padding-top: 1.25rem;
+}
+.cap-line::before {
+  content: "";
+  position: absolute;
+  top: 0.45rem;
+  right: 0.9rem;
+  left: 0.9rem;
+  height: 2px;
+  background: var(--line-strong);
+}
+.cap-line li {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  color: var(--ink-3);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.cap-line li::before {
+  content: "";
+  position: absolute;
+  top: -1.2rem;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  background: var(--pink-deep);
+  box-shadow: 0 0 0 3px var(--white);
+}
+.motion .cap-line li::before {
+  scale: clamp(0, var(--p) * 4 - var(--k) * 0.6, 1);
+}
+
+/* The A/B test: two versions, their replies as bars, the winner in pink. */
+.tile-scene.scene-ab {
+  gap: 0.9rem;
+}
+.ab-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem 0.7rem;
+}
+.ab-tag {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.55rem;
+  background: var(--ink);
+  color: var(--white);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.is-winner .ab-tag {
+  background: var(--pink-deep);
+}
+.ab-subject {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.ab-count {
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.is-winner .ab-count {
+  color: var(--pink-deep);
+}
+.ab-bar {
+  display: block;
+  grid-column: 2 / -1;
+  overflow: hidden;
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+}
+.ab-bar i {
+  display: block;
+  width: calc(var(--w) * 100%);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ink-quiet);
+  transform-origin: left;
+}
+.is-winner .ab-bar i {
+  background: var(--pink-hot);
+}
+.motion .ab-bar i {
+  scale: clamp(0, var(--p) * 1.6, 1) 1;
+}
+
+/* Sorting replies: who decided each one, rules or AI, and what it became. */
+.triage-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 10.5rem) minmax(0, 1fr) auto minmax(
+      0,
+      8.5rem
+    );
+  align-items: center;
+  gap: 0.35rem 1rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.triage-list li:first-child {
+  padding-top: 0;
+}
+.triage-from {
+  overflow: hidden;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.triage-text {
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  line-height: 1.35;
+}
+.triage-by {
+  color: var(--ink-3);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.triage-by-ai {
+  color: var(--pink-deep);
+}
+.triage-tag {
+  justify-self: end;
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.triage-tag-quiet {
+  background: var(--mist);
+  color: var(--ink-2);
+}
+.triage-tag-pink {
+  background: var(--pink-soft);
+  color: var(--pink-ink);
+}
+.triage-tag-ink {
+  background: var(--ink);
+  color: var(--white);
+}
+.motion .triage-tag {
+  scale: calc(0.7 + 0.3 * clamp(0, var(--p) * 4 - var(--k) * 0.55, 1));
+}
+
+/* Stop on reply: one reply, and every campaign that person was in says Stopped. */
+.tile-scene.scene-stop {
+  grid-template-columns: minmax(0, 0.95fr) auto minmax(0, 1.05fr);
+  align-items: center;
+  gap: 1rem 1.25rem;
+}
+.stop-reply {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.95rem 1.05rem;
+  border-radius: 1.1rem 1.1rem 1.1rem 0.35rem;
+  background: var(--pink-mist);
+}
+.stop-reply strong,
+.away-bubble strong {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.stop-reply p,
+.away-bubble p {
+  margin-top: 0.15rem;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+.stop-arrow {
+  width: 1.6rem;
+  height: 1.6rem;
+  color: var(--pink-deep);
+}
+.stop-campaigns li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.stop-campaigns li:last-child {
+  border-bottom: 0;
+}
+.stop-campaigns .stop-colleagues {
+  color: var(--ink-2);
+  font-weight: 500;
+}
+.motion .stop-campaigns .tile-chip {
+  scale: calc(0.7 + 0.3 * clamp(0, var(--p) * 4 - var(--k) * 0.5, 1));
+}
+
+/* The ramp: eight days of bars, from a tenth of the cap to all of it. */
+.ramp-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  height: 6.5rem;
+}
+.ramp-bars i {
+  flex: 1;
+  height: calc(var(--h) * 100%);
+  border-radius: 0.45rem 0.45rem 0.2rem 0.2rem;
+  background: var(--pink-blush);
+  transform-origin: bottom;
+}
+.ramp-bars i:last-child {
+  background: var(--pink-hot);
+}
+.motion .ramp-bars i {
+  scale: 1 clamp(0, var(--p) * 2.2 - var(--k) * 0.14, 1);
+}
+.ramp-axis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+/* Out of office: the note, set aside, and the sequence going on. */
+.away-bubble {
+  padding: 0.9rem 1rem;
+  border-radius: 1.1rem 1.1rem 1.1rem 0.35rem;
+  background: var(--mist);
+}
+/* On one line: on a narrow card the words wrap beside the arrow, not under it. */
+.away-result {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.away-result .glyph {
+  width: 1rem;
+  height: 1rem;
+  color: var(--pink-deep);
+}
+
+/* A first line from the fields you allow, highlighted as it's written. */
+.line-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.line-fields li {
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.6rem;
+  background: var(--cloud);
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.line-out {
+  display: grid;
+  justify-items: start;
+  gap: 0.45rem;
+}
+.line-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--pink-deep);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.line-tag .glyph {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+.line-out p {
+  font-size: 1.0625rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+/* Inline in its paragraph, so a line that wraps gets a band on each line, not one block. */
+.line-out mark {
+  padding-inline: 0.1em;
+  border-radius: 0.2em;
+  background: linear-gradient(var(--pink-blush), var(--pink-blush)) 0 75% / 100%
+    62% no-repeat;
+  box-decoration-break: clone;
+  color: inherit;
+}
+.motion .line-out mark {
+  background-size: calc(clamp(0, var(--p) * 1.6, 1) * 100%) 62%;
+}
+
+/* Before each send: three addresses checked, one turned away, and the unsubscribe link. */
+.check-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.check-list li > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.check-result {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--pink-deep);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+.check-result.is-bad {
+  color: var(--ink-3);
+}
+.check-result .glyph {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+.motion .check-result .glyph {
+  scale: clamp(0, var(--p) * 4 - var(--k) * 0.6, 1);
+}
+.check-unsubscribe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+}
+.check-link {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--pink-hot);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+/* Behind the wheel: roles, numbers, security and the data's way out. */
+.vignette-foot {
+  color: var(--ink-3);
+  font-size: 0.875rem;
+}
+.vignette-roles {
+  display: grid;
+  gap: 0.15rem;
+}
+.vignette-roles li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.vignette-roles li:last-child {
+  border-bottom: 0;
+}
+.vignette-role {
+  font-weight: 600;
+}
+.vignette-dots {
+  display: flex;
+  gap: 0.35rem;
+}
+.vignette-dots i {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+}
+.vignette-dots .is-on {
+  background: var(--pink-deep);
+  box-shadow: none;
+}
+.vignette-dots .is-half {
+  background: linear-gradient(90deg, var(--pink-deep) 50%, transparent 50%);
+  box-shadow: inset 0 0 0 1.5px var(--pink-deep);
+}
+.vignette-numbers {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.vignette-numbers div {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: var(--radius-m);
+  background: var(--cloud);
+}
+.vignette-numbers dt {
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+.vignette-numbers dd {
+  margin: 0;
+  font-size: 1.625rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+.vignette-numbers div:nth-child(2) dd {
+  color: var(--pink-deep);
+}
+.vignette-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+.tile-scene.vignette-security {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 1.25rem;
+}
+.vignette-lock {
+  width: 4.5rem;
+  height: 4.5rem;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.vignette-lock circle {
+  fill: var(--pink-hot);
+  stroke: none;
+}
+.vignette-chips {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 1rem;
+}
+.vignette-chips li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+.vignette-chips .glyph {
+  width: 1rem;
+  height: 1rem;
+  color: var(--pink-deep);
+}
+.vignette-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.vignette-files li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.95rem;
+  border-radius: var(--radius-m);
+  background: var(--cloud);
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.vignette-files .glyph {
+  width: 1rem;
+  height: 1rem;
+  color: var(--pink-deep);
+}
+.vignette-download {
+  rotate: 90deg;
+}
+.vignette-erase {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.vignette-bar {
+  overflow: hidden;
+  height: 0.45rem;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+}
+.vignette-bar i {
+  display: block;
+  width: 22%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--pink-hot);
+}
+
+@media (max-width: 900px) {
+  .road-head {
+    position: static;
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: 0;
+    padding-top: calc(var(--header-height) + 2.5rem);
+    padding-bottom: 2rem;
+    pointer-events: auto;
+  }
+  .road-slot,
+  .road-hint {
+    display: none;
+  }
+  .road-cards {
+    right: 1rem;
+    bottom: 1rem;
+    left: 1rem;
+    width: auto;
+  }
+  .road-note {
+    top: calc(var(--header-height) + 0.75rem);
+    right: 1rem;
+    bottom: auto;
+  }
+}
+@media (max-width: 760px) {
+  .vignette-numbers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .tile-scene.vignette-security {
+    grid-template-columns: 1fr;
+    row-gap: 1rem;
+  }
+}
+@media (max-width: 700px) {
+  .tile-scene.scene-window,
+  .tile-scene.scene-stop {
+    grid-template-columns: 1fr;
+  }
+  .stop-arrow {
+    justify-self: center;
+    rotate: 90deg;
+  }
+  .triage-list li {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "from tag"
+      "text by";
+  }
+  .triage-from {
+    grid-area: from;
+  }
+  .triage-text {
+    grid-area: text;
+  }
+  .triage-by {
+    grid-area: by;
+    justify-self: end;
+  }
+  .triage-tag {
+    grid-area: tag;
+  }
+}
+@media (max-width: 480px) {
+  .vignette-chips {
+    grid-template-columns: 1fr;
+  }
+}

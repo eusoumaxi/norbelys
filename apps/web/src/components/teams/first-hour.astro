@@ -1,0 +1,38 @@
+---
+/**
+ * How a team gets going, as a morning: a few stops along one line, each at the time it takes
+ * place. The line draws itself as the section arrives and the last stop, the moment it's live,
+ * is the pink one. Each team's page passes its own steps and heading.
+ */
+interface Step {
+  readonly time: string;
+  readonly title: string;
+  readonly text: string;
+}
+interface Props {
+  id?: string;
+  lead: string;
+  steps: readonly Step[];
+}
+const { id = "first-hour", lead, steps } = Astro.props;
+const titleId = `${id}-title`;
+---
+
+<section id={id} class="page-section container first-hour" aria-labelledby={titleId}>
+  <div class="split-head">
+    <h2 id={titleId} data-inview><slot /></h2>
+    <p class="lead">{lead}</p>
+  </div>
+  <ol class="hour-track" data-inview style={`--stops: ${steps.length}`}>
+    {
+      steps.map((step, index) => (
+        <li class:list={["hour-stop", { "is-live": index === steps.length - 1 }]} style={`--i: ${index}`}>
+          <span class="hour-time numeric">{step.time}</span>
+          <span class="hour-dot" aria-hidden="true" />
+          <h3 class="hour-title">{step.title}</h3>
+          <p class="hour-text">{step.text}</p>
+        </li>
+      ))
+    }
+  </ol>
+</section>

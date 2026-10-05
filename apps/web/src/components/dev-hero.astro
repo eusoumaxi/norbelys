@@ -1,0 +1,96 @@
+---
+import ArrowButton from "./arrow-button.astro";
+import DevCommand from "./dev-command.astro";
+import Marked from "./marked.astro";
+import { APP } from "../links";
+
+/**
+ * The developers page's opening: Norbelys as a closed box, drawn as one thick line. Three cables
+ * come in on the left (your app, your assistant, your terminal) and two go out on the right (your
+ * inboxes, your prospects). The pink point is an email: it comes in on one of the cables, rides
+ * the box's edge out along the top, leaves for your inboxes, and comes back from a prospect along
+ * the bottom as a reply. What happens inside is the next section.
+ *
+ * On a phone the box stands on end around the words, the cables in on top and out underneath,
+ * and the point rides its edge (styles/developers.css).
+ */
+
+// The wide drawing, on a 1200 × 580 grid.
+const L = 230;
+const R = 970;
+const TOP = 16;
+const BOTTOM = 564;
+const RADIUS = 140;
+const box = `M${L + RADIUS} ${TOP}H${R - RADIUS}A${RADIUS} ${RADIUS} 0 0 1 ${R} ${TOP + RADIUS}V${BOTTOM - RADIUS}A${RADIUS} ${RADIUS} 0 0 1 ${R - RADIUS} ${BOTTOM}H${L + RADIUS}A${RADIUS} ${RADIUS} 0 0 1 ${L} ${BOTTOM - RADIUS}V${TOP + RADIUS}A${RADIUS} ${RADIUS} 0 0 1 ${L + RADIUS} ${TOP}Z`;
+
+/** The ways in, on the left, and where their cables meet the box. */
+const ins = [
+  { id: "app", name: "Your app", y: 196 },
+  { id: "assistant", name: "Your assistant", y: 290 },
+  { id: "terminal", name: "Your terminal", y: 384 },
+] as const;
+/** Where the email goes, on the right. */
+const outs = [
+  { id: "inboxes", name: "Your inboxes", y: 243 },
+  { id: "prospects", name: "Your prospects", y: 337 },
+] as const;
+const EDGE = 20;
+const FAR = 1180;
+const [inboxes, prospects] = outs;
+const [app] = ins;
+
+/** In on a cable, up and over the top of the box, out to your inboxes. */
+const outbound = (y: number): string =>
+  `M${EDGE} ${y}H${L}V${TOP + RADIUS}A${RADIUS} ${RADIUS} 0 0 1 ${L + RADIUS} ${TOP}H${R - RADIUS}A${RADIUS} ${RADIUS} 0 0 1 ${R} ${TOP + RADIUS}V${inboxes.y}H${FAR}`;
+/** Back from a prospect, down and along the bottom of the box, out to your app. */
+const inbound = `M${FAR} ${prospects.y}H${R}V${BOTTOM - RADIUS}A${RADIUS} ${RADIUS} 0 0 1 ${R - RADIUS} ${BOTTOM}H${L + RADIUS}A${RADIUS} ${RADIUS} 0 0 1 ${L} ${BOTTOM - RADIUS}V${app.y}H${EDGE}`;
+---
+
+<section class="dev-hero" aria-labelledby="dev-title">
+  <div class="container dev-hero-stage">
+    <svg class="dev-hero-box" viewBox="0 0 1200 580" fill="none" aria-hidden="true">
+      {ins.map((cable) => <path class="hero-cable" d={`M${EDGE} ${cable.y}H${L}`} pathLength="1" />)}
+      {outs.map((cable) => <path class="hero-cable" d={`M${R} ${cable.y}H${FAR}`} pathLength="1" />)}
+      <path class="hero-frame" d={box} pathLength="1"></path>
+      {ins.map((cable) => <path class="hero-route" d={outbound(cable.y)} data-hero-out={cable.id} />)}
+      <path class="hero-route" d={inbound} data-hero-back></path>
+      {
+        [...ins.map((cable) => [L, cable.y] as const), ...outs.map((cable) => [R, cable.y] as const)].map(([x, y]) => (
+          <circle class="hero-port" cx={x} cy={y} r="12" data-port />
+        ))
+      }
+      {ins.map((cable) => <circle class="hero-end" cx={EDGE} cy={cable.y} r="6" />)}
+      {outs.map((cable) => <circle class="hero-end" cx={FAR} cy={cable.y} r="6" />)}
+      {ins.map((cable) => <text class="hero-label" x={EDGE - 4} y={cable.y - 18}>{cable.name}</text>)}
+      {
+        outs.map((cable) => (
+          <text class="hero-label" x={FAR + 4} y={cable.y - 18} text-anchor="end">
+            {cable.name}
+          </text>
+        ))
+      }
+      <circle class="hero-point" cx={EDGE} cy={app.y} r="11" data-hero-point></circle>
+    </svg>
+    <ul class="hero-cables hero-cables-in" aria-hidden="true">
+      {ins.map((cable) => <li>{cable.name}</li>)}
+    </ul>
+    <div class="dev-hero-copy">
+      <span class="hero-rider" aria-hidden="true"></span>
+      <h1 id="dev-title" class="page-title" data-inview>
+        <span class="line">Cold email,</span>
+        <span class="line">from <span class="dev-keep"><Marked>your code</Marked><span class="pink">.</span></span></span>
+      </h1>
+      <p class="lead page-lead">
+        An API, typed SDKs, signed webhooks, an MCP server and a CLI, built so a retry never
+        sends the same email twice.
+      </p>
+      <div class="page-actions dev-hero-actions">
+        <ArrowButton href={APP}>Get an API key</ArrowButton>
+        <DevCommand command="npm i @norbelys/sdk" />
+      </div>
+    </div>
+    <ul class="hero-cables hero-cables-out" aria-hidden="true">
+      {outs.map((cable) => <li>{cable.name}</li>)}
+    </ul>
+  </div>
+</section>

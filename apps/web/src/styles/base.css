@@ -1,0 +1,449 @@
+/* The page's foundations: reset, type, icons, buttons and the few motions every section shares. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-height) + 1rem);
+  scrollbar-color: var(--pink-blush) var(--white);
+  accent-color: var(--pink-deep);
+  caret-color: var(--pink-deep);
+}
+body {
+  margin: 0;
+  overflow-x: clip;
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: var(--text-body);
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0.005em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+::selection {
+  background: var(--pink-blush);
+  color: var(--ink);
+}
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+  text-underline-offset: 0.3em;
+}
+a,
+button,
+summary {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+summary {
+  cursor: pointer;
+  list-style: none;
+}
+summary::-webkit-details-marker {
+  display: none;
+}
+:focus-visible {
+  outline: 2.5px solid var(--pink-deep);
+  outline-offset: 3px;
+}
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+blockquote,
+dl,
+dd {
+  margin: 0;
+}
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+h1,
+h2,
+h3 {
+  font-weight: 600;
+  letter-spacing: var(--tracking-heading);
+  text-wrap: balance;
+}
+h2 {
+  font-size: var(--text-h2);
+  line-height: 0.98;
+}
+h3 {
+  font-size: var(--text-h3);
+  line-height: 1.08;
+}
+[hidden] {
+  display: none !important;
+}
+
+.container {
+  width: min(var(--page), 100% - var(--gutter) * 2);
+  margin-inline: auto;
+}
+.sr-only,
+.skip-link:not(:focus) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.skip-link:focus {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--white);
+}
+.line {
+  display: block;
+}
+.pink {
+  color: var(--pink-deep);
+}
+.lead {
+  color: var(--ink-2);
+  font-size: var(--text-lead);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+.numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The highlighted word: a thick pink stroke drawn under it, the logo's line at text size. */
+.marked {
+  position: relative;
+  display: inline-block;
+  color: var(--pink-deep);
+  white-space: nowrap;
+}
+.marked-line {
+  position: absolute;
+  left: -0.04em;
+  bottom: -0.1em;
+  width: calc(100% + 0.08em);
+  height: 0.26em;
+  overflow: visible;
+}
+.marked-line path {
+  fill: none;
+  stroke: var(--pink);
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+.motion [data-inview] .marked-line path {
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1100ms var(--ease-draw) 250ms;
+}
+.motion [data-inview].is-in .marked-line path {
+  stroke-dashoffset: 0;
+}
+
+/*
+ * Icons (src/glyphs.ts): an ink line, and one pink point where the action is. Hovering anything
+ * that holds an icon sets its point in motion: the message leaves the envelope, the reply drops
+ * into the tray, the needle climbs, the assistant types.
+ */
+.glyph {
+  width: 1.5em;
+  height: 1.5em;
+  flex: none;
+  overflow: visible;
+}
+.glyph-line {
+  stroke-width: 5;
+}
+.glyph-point {
+  fill: var(--pink-hot);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.glyph[data-glyph="arrow"] .glyph-line,
+.glyph[data-glyph="chevron"] .glyph-line,
+.glyph[data-glyph="down"] .glyph-line,
+.glyph[data-glyph="plus"] .glyph-line,
+.glyph[data-glyph="close"] .glyph-line,
+.glyph[data-glyph="external"] .glyph-line,
+.glyph[data-glyph="copy"] .glyph-line,
+.glyph[data-glyph="check"] .glyph-line {
+  stroke-width: 6.5;
+}
+.glyph[data-glyph="warmup"] .glyph-line:last-of-type,
+.glyph[data-glyph="warmup"] .glyph-point {
+  transform-box: view-box;
+  transform-origin: 32px 47px;
+}
+.motion .glyph-host:hover [data-glyph="campaigns"] .glyph-point {
+  animation: point-send 1100ms var(--ease-settle);
+}
+.motion .glyph-host:hover [data-glyph="inbox"] .glyph-point {
+  animation: point-drop 900ms var(--ease-settle);
+}
+.motion .glyph-host:hover [data-glyph="warmup"] .glyph-line:last-of-type,
+.motion .glyph-host:hover [data-glyph="warmup"] .glyph-point {
+  animation: needle-climb 1100ms var(--ease-settle);
+}
+.motion .glyph-host:hover [data-glyph="ai"] .glyph-point {
+  animation: point-type 900ms var(--ease-out) calc(var(--n) * 110ms);
+}
+.motion .glyph-host:hover [data-glyph="broadcasts"] .glyph-point {
+  animation: point-shout 900ms var(--ease-settle);
+}
+.motion .glyph-host:hover [data-glyph="connect"] .glyph-point {
+  animation: point-plug 900ms var(--ease-settle);
+}
+.motion .glyph-host:hover [data-glyph="tracking"] .glyph-point,
+.motion .glyph-host:hover [data-glyph="mail"] .glyph-point,
+.motion .glyph-host:hover [data-glyph="meetings"] .glyph-point,
+.motion .glyph-host:hover [data-glyph="frame"] .glyph-point {
+  animation: point-pulse 800ms var(--ease-settle);
+}
+/* The teams' objects: the bell rings, the report's reading climbs, the winning fader rises. */
+[data-glyph="bell"] {
+  transform-origin: 50% 12%;
+}
+.motion .glyph-host:hover [data-glyph="bell"] {
+  animation: bell-ring 900ms var(--ease-out);
+}
+.motion .glyph-host:hover [data-glyph="report"] .glyph-point {
+  animation: point-plug 800ms var(--ease-settle);
+}
+.motion .glyph-host:hover [data-glyph="badge"] .glyph-point,
+.motion .glyph-host:hover [data-glyph="pawn"] .glyph-point {
+  animation: point-type 700ms var(--ease-out);
+}
+.motion .glyph-host:hover [data-glyph="fader"] .glyph-point {
+  animation: point-rise 900ms var(--ease-settle);
+}
+
+/* Buttons: pills, like everything the mark touches. */
+.button {
+  --button-bg: var(--pink-deep);
+  --button-fg: var(--white);
+  --button-hover: var(--ink);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  min-height: 3.5rem;
+  padding: 0 0.45rem 0 1.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--button-bg);
+  color: var(--button-fg);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  isolation: isolate;
+  overflow: hidden;
+  transition:
+    transform 500ms var(--ease-settle),
+    translate 600ms var(--ease-settle),
+    box-shadow var(--duration-ui) var(--ease-out);
+}
+.button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--button-hover);
+  transform: translateY(101%);
+  transition: transform 460ms var(--ease-out);
+}
+.button-arrow {
+  display: grid;
+  place-items: center;
+  width: 2.65rem;
+  height: 2.65rem;
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--pink-deep);
+  overflow: hidden;
+  transition: color 460ms var(--ease-out);
+}
+.button-arrow-track {
+  display: flex;
+  gap: 1.5rem;
+  width: 1.1rem;
+  transition: transform 460ms var(--ease-out);
+}
+.button-arrow-track .glyph {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+.button:hover {
+  box-shadow: var(--shadow-pink);
+}
+.button:hover::before {
+  transform: none;
+}
+.button:hover .button-arrow {
+  color: var(--ink);
+}
+.button:hover .button-arrow-track {
+  transform: translateX(calc(-1.1rem - 1.5rem));
+}
+.button:active {
+  transform: scale(0.97);
+}
+.button-ghost {
+  --button-bg: transparent;
+  --button-fg: var(--ink);
+  --button-hover: var(--pink-mist);
+  padding: 0 1.5rem;
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+}
+.button-ghost:hover {
+  box-shadow: inset 0 0 0 1.5px var(--pink);
+}
+.button-small {
+  min-height: 2.75rem;
+  padding: 0 0.3rem 0 1.15rem;
+  gap: 0.65rem;
+  font-size: 0.9375rem;
+}
+.button-small .button-arrow {
+  width: 2.15rem;
+  height: 2.15rem;
+}
+.text-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+.text-link::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -0.1em;
+  height: 2px;
+  border-radius: 1px;
+  background: currentcolor;
+  scale: 0 1;
+  transform-origin: left;
+  transition: scale 420ms var(--ease-out);
+}
+.text-link .glyph {
+  width: 0.9em;
+  height: 0.9em;
+}
+.text-link:hover::after {
+  scale: 1 1;
+}
+
+@keyframes point-send {
+  45% {
+    opacity: 0;
+    translate: 7px 7px;
+  }
+  46% {
+    opacity: 0;
+    translate: -4px -4px;
+  }
+}
+@keyframes point-drop {
+  from {
+    opacity: 0;
+    translate: 0 -16px;
+  }
+}
+@keyframes needle-climb {
+  from {
+    rotate: -64deg;
+  }
+}
+@keyframes point-type {
+  35% {
+    translate: 0 -5px;
+  }
+}
+@keyframes point-shout {
+  50% {
+    translate: 5px 0;
+    scale: 1.35;
+  }
+}
+@keyframes point-plug {
+  from {
+    translate: 0 8px;
+    opacity: 0;
+  }
+}
+@keyframes point-pulse {
+  40% {
+    scale: 1.55;
+  }
+}
+@keyframes point-rise {
+  from {
+    translate: 0 22px;
+  }
+}
+@keyframes bell-ring {
+  20% {
+    rotate: 16deg;
+  }
+  45% {
+    rotate: -12deg;
+  }
+  68% {
+    rotate: 7deg;
+  }
+  86% {
+    rotate: -3deg;
+  }
+}
+@keyframes ping {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3);
+  }
+}
+@keyframes float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -10px;
+  }
+}

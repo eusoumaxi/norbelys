@@ -1,0 +1,192 @@
+---
+import ArrowButton from "../../components/arrow-button.astro";
+import Closing from "../../components/closing.astro";
+import Faq from "../../components/faq.astro";
+import Glyph from "../../components/glyph.astro";
+import Page from "../../layouts/page.astro";
+import { COMPETITORS } from "../../comparisons";
+import type { Comparison } from "../../comparisons";
+import { START } from "../../links";
+import { formatDate } from "../../posts";
+import "../../styles/compare.css";
+
+/**
+ * Norbelys against one competitor, from that competitor's entry in `comparisons.ts`: what each
+ * is built for, who should pick which, the table, where each is stronger, how to move over and
+ * where every fact comes from. Adding a competitor means adding data, never another page.
+ */
+export const getStaticPaths = () =>
+  COMPETITORS.map((comparison) => ({ params: { competitor: comparison.slug }, props: { comparison } }));
+
+interface Props {
+  comparison: Comparison;
+}
+const { comparison: c } = Astro.props;
+const checked = formatDate(new Date(c.checked));
+---
+
+<Page title={`Norbelys vs ${c.name}: an honest comparison`} description={c.description} class="compare">
+  <section class="page-hero container compare-hero" aria-labelledby="compare-title">
+    <div class="compare-hero-copy">
+      <h1 id="compare-title" class="page-title">
+        <span class="line">Norbelys</span>
+        <span class="line"><span class="compare-vs">vs</span> {c.name}</span>
+      </h1>
+      <p class="lead page-lead">{c.focus.them} {c.focus.us}</p>
+      <div class="page-actions">
+        <ArrowButton href={START}>Start for $20/mo</ArrowButton>
+        <a class="button button-ghost" href="#table">See the full table</a>
+      </div>
+      <p class="compare-checked">
+        Facts about {c.name} checked on {checked}, from their own pages. <a href="#sources">See the sources</a>
+      </p>
+    </div>
+
+    <figure class="overlap" data-scene="enter">
+      <svg class="overlap-art" viewBox="0 0 640 440" aria-hidden="true">
+        <defs>
+          <clipPath id="overlap-us">
+            <circle cx="410" cy="220" r="210"></circle>
+          </clipPath>
+        </defs>
+        <circle class="overlap-lens" cx="230" cy="220" r="210" clip-path="url(#overlap-us)"></circle>
+        <circle class="overlap-ring overlap-ring-them" cx="230" cy="220" r="210" pathLength="1"></circle>
+        <circle class="overlap-ring overlap-ring-us" cx="410" cy="220" r="210" pathLength="1"></circle>
+      </svg>
+      <div class="overlap-side overlap-them">
+        <p class="overlap-name">Only {c.name}</p>
+        <ul>{c.overlap.them.map((item) => <li>{item}</li>)}</ul>
+      </div>
+      <div class="overlap-side overlap-both">
+        <p class="overlap-name">Both</p>
+        <ul>{c.overlap.both.map((item) => <li>{item}</li>)}</ul>
+      </div>
+      <div class="overlap-side overlap-us">
+        <p class="overlap-name">Only Norbelys</p>
+        <ul>{c.overlap.us.map((item) => <li>{item}</li>)}</ul>
+      </div>
+      <figcaption class="sr-only">What only {c.name} does, what both do and what only Norbelys does.</figcaption>
+    </figure>
+  </section>
+
+  <section class="page-section container" aria-labelledby="choose-title">
+    <div class="split-head">
+      <h2 id="choose-title">The short version.</h2>
+      <p class="lead">Both are good tools, built for different jobs. Here’s who each one is for.</p>
+    </div>
+    <div class="choose">
+      <div class="choose-side">
+        <h3>Choose {c.name} if</h3>
+        <ul>{c.choose.them.map((item) => <li>{item}</li>)}</ul>
+      </div>
+      <div class="choose-side choose-us">
+        <h3>Choose Norbelys if</h3>
+        <ul>{c.choose.us.map((item) => <li>{item}</li>)}</ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="table" class="page-section container" aria-labelledby="table-title">
+    <div class="split-head">
+      <h2 id="table-title">Side by side.</h2>
+      <p class="lead">{c.price.us} {c.price.them}</p>
+    </div>
+    <div class="compare-table-wrap">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th scope="col"><span class="sr-only">Feature</span></th>
+            <th scope="col" class="compare-us">Norbelys</th>
+            <th scope="col">{c.name}</th>
+          </tr>
+        </thead>
+        {
+          c.table.map((group) => (
+            <tbody>
+              <tr class="compare-group">
+                <th scope="colgroup" colspan="3">{group.group}</th>
+              </tr>
+              {group.rows.map((row) => (
+                <tr>
+                  <th scope="row">{row.label}</th>
+                  {[row.us, row.them].map((answer, index) => (
+                    <td class:list={{ "compare-us": index === 0 }}>
+                      <span class="cell-label">{index === 0 ? "Norbelys" : c.name}</span>
+                      {answer === true ? (
+                        <span class="answer answer-yes"><Glyph name="check" /><span class="sr-only">Yes</span></span>
+                      ) : answer === false ? (
+                        <span class="answer answer-no"><span aria-hidden="true">–</span><span class="sr-only">No</span></span>
+                      ) : (
+                        <span class="answer">{answer}</span>
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          ))
+        }
+      </table>
+    </div>
+  </section>
+
+  <section class="page-section container" aria-labelledby="strengths-title">
+    <div class="split-head">
+      <h2 id="strengths-title">Where each one wins.</h2>
+      <p class="lead">No tool is best at everything. This is where we’d point you to {c.name}, and where we wouldn’t.</p>
+    </div>
+    <div class="choose strengths">
+      <div class="choose-side">
+        <h3>{c.name} is stronger at</h3>
+        <ul>{c.strengths.them.map((item) => <li>{item}</li>)}</ul>
+      </div>
+      <div class="choose-side choose-us">
+        <h3>Norbelys is stronger at</h3>
+        <ul>{c.strengths.us.map((item) => <li>{item}</li>)}</ul>
+      </div>
+    </div>
+    {
+      c.together && (
+        <div class="together glyph-host">
+          <Glyph name="connect" class="together-glyph" />
+          <div>
+            <h3>Use them together</h3>
+            <p>{c.together}</p>
+          </div>
+        </div>
+      )
+    }
+  </section>
+
+  <section class="page-section container" aria-labelledby="switch-title">
+    <div class="split-head">
+      <h2 id="switch-title">Moving over takes an afternoon.</h2>
+      <p class="lead">Bring your list and your sequences. Your inboxes and your domain stay yours.</p>
+    </div>
+    <ol class="switch-steps">
+      {c.switching.map((step) => <li>{step}</li>)}
+    </ol>
+  </section>
+
+  <Faq questions={c.faq} />
+
+  <section id="sources" class="container compare-sources" aria-labelledby="sources-title">
+    <h2 id="sources-title" class="compare-sources-title">Sources</h2>
+    <p class="fine-print">
+      Facts about {c.name} were checked on {checked} on the pages below. Prices and plans change; if
+      something here is out of date, email us and we’ll correct it. {c.name} is a trademark of its
+      owner, and Norbelys is not affiliated with it.
+    </p>
+    <ul class="fine-print compare-source-list">
+      {
+        c.sources.map(([label, href]) => (
+          <li>
+            <a href={href} rel="noopener" target="_blank">{label}</a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <Closing />
+</Page>

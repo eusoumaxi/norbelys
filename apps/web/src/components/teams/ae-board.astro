@@ -1,0 +1,288 @@
+---
+import ArrowButton from "../arrow-button.astro";
+import Marked from "../marked.astro";
+import AePiece from "./ae-piece.astro";
+import { START } from "../../links";
+
+/**
+ * The account executive's opening: the whole deal as a chess board, drawn the way a game box
+ * draws it, turned on its corner and laid flat. Everyone at the account with a say stands on it
+ * as a piece, their title at their feet; the AE is the black pawn at the near side. On load the
+ * board draws itself, the pieces rise, and the AE's emails travel to each of them as pink dotted
+ * moves, one after another; then the Head of RevOps answers, gets the pink ring and a speech
+ * bubble, and everyone else at the company is paused. The pieces are buttons: pick any one and
+ * they are the one who answers (scripts/chessboard.ts). Without the script the board shows that
+ * answer. Northwind, its people and their replies are illustrative.
+ */
+type Kind = "king" | "queen" | "rook" | "bishop" | "knight";
+interface Stakeholder {
+  readonly id: string;
+  readonly title: string;
+  readonly kind: Kind;
+  /** The square it stands on: its column along the far right edge, its row along the far left. */
+  readonly square: readonly [number, number];
+  readonly reply: string;
+  /** Which side of the piece its speech bubble opens on, to keep clear of its neighbours. */
+  readonly bubble: "left" | "right";
+}
+const committee: readonly Stakeholder[] = [
+  { bubble: "left", id: "cfo", kind: "king", reply: "Send me the numbers.", square: [1, 0], title: "CFO" },
+  { bubble: "right", id: "vp-sales", kind: "queen", reply: "Good timing. This week?", square: [3, 0], title: "VP Sales" },
+  { bubble: "left", id: "revops", kind: "knight", reply: "Let’s talk Thursday.", square: [0, 2], title: "Head of RevOps" },
+  { bubble: "left", id: "legal", kind: "bishop", reply: "Send over your terms.", square: [3, 3], title: "Legal" },
+  { bubble: "right", id: "it", kind: "rook", reply: "What do you need from IT?", square: [6, 2], title: "IT" },
+];
+/** The one who answers before anyone touches the board. */
+const CHAMPION = "revops";
+const champion = committee.find((person) => person.id === CHAMPION);
+const paused = committee.length - 1;
+
+// The drawing's frame, and the board laid in it: a square is 160 wide and 92 tall on screen.
+const STAGE = { height: 980, width: 1200 } as const;
+const HALF = 80;
+const RISE = 46;
+const FAR = { x: 740, y: 360 } as const;
+const SIZE = 8;
+const MARGIN = 0.34;
+const DEPTH = 30;
+/** Where the board starts fading into the page, below the fold. */
+const FADE = { from: 700, to: 960 } as const;
+const SCALE = 0.85;
+const round = (value: number): number => Math.round(value * 10) / 10;
+interface Point {
+  readonly x: number;
+  readonly y: number;
+}
+/** A point of the board, counted in squares from its far corner, on screen. */
+const at = (u: number, v: number): Point => ({
+  x: FAR.x + (u - v) * HALF,
+  y: FAR.y + (u + v) * RISE,
+});
+const pointsOf = (corners: readonly Point[]): string => corners.map((point) => `${round(point.x)},${round(point.y)}`).join(" ");
+const polygon = (corners: readonly (readonly [number, number])[]): string => pointsOf(corners.map(([u, v]) => at(u, v)));
+const NEAR = -MARGIN;
+const OFF = SIZE + MARGIN;
+const frame = polygon([
+  [NEAR, NEAR],
+  [OFF, NEAR],
+  [OFF, OFF],
+  [NEAR, OFF],
+]);
+const grid = polygon([
+  [0, 0],
+  [SIZE, 0],
+  [SIZE, SIZE],
+  [0, SIZE],
+]);
+/** One of the two sides that face us: an edge of the frame, dropped by the board's depth. */
+const side = (a: Point, b: Point): string => pointsOf([a, b, { x: b.x, y: b.y + DEPTH }, { x: a.x, y: a.y + DEPTH }]);
+const leftSide = side(at(NEAR, OFF), at(OFF, OFF));
+const rightSide = side(at(OFF, OFF), at(OFF, NEAR));
+const squares = Array.from({ length: SIZE * SIZE }, (_, index) => {
+  const u = index % SIZE;
+  const v = Math.floor(index / SIZE);
+  return {
+    d: polygon([
+      [u, v],
+      [u + 1, v],
+      [u + 1, v + 1],
+      [u, v + 1],
+    ]),
+    dark: (u + v) % 2 === 1,
+    wave: u + v,
+  };
+}).filter((square) => square.dark);
+const lines = Array.from({ length: SIZE - 1 }, (_, index) => {
+  const step = index + 1;
+  const ends = [
+    [at(step, 0), at(step, SIZE)],
+    [at(0, step), at(SIZE, step)],
+  ] as const;
+  return ends.map(([a, b]) => `M${round(a.x)} ${round(a.y)}L${round(b.x)} ${round(b.y)}`);
+}).flat();
+
+/** Where a piece stands: the middle of its square. */
+const standing = (square: readonly [number, number]): Point => at(square[0] + 0.5, square[1] + 0.5);
+/** The rings round a piece's feet: a circle on the board, seen at the board's angle. */
+const RING = { rx: 60, ry: round(60 * (RISE / HALF)) } as const;
+/** How tall each piece stands, to size its button and lift its bubble above it. */
+const HEIGHT: Record<Kind | "pawn", number> = { bishop: 194, king: 232, knight: 192, pawn: 126, queen: 196, rook: 144 };
+
+const YOU = { scale: 0.72, square: [1, 5] as const };
+const you = standing(YOU.square);
+
+/** How long a move takes to travel, in milliseconds, however far it goes. */
+const TRAVEL = 420;
+/** A move: a dotted arc from the pawn to the near side of a piece's ring, a dot every 16. */
+const moveTo = (to: Point): Point[] => {
+  const from = { x: you.x + 20, y: you.y - 10 };
+  const end = { x: to.x - RING.rx * 0.9, y: to.y + RING.ry * 0.42 };
+  const distance = Math.hypot(end.x - from.x, end.y - from.y);
+  const control = { x: (from.x + end.x) / 2, y: Math.min(from.y, end.y) - distance * 0.3 - 24 };
+  const point = (t: number): Point => ({
+    x: (1 - t) ** 2 * from.x + 2 * (1 - t) * t * control.x + t ** 2 * end.x,
+    y: (1 - t) ** 2 * from.y + 2 * (1 - t) * t * control.y + t ** 2 * end.y,
+  });
+  const samples = Array.from({ length: 241 }, (_, index) => point(index / 240));
+  const dots: Point[] = [];
+  let travelled = 0;
+  let next = 20;
+  for (const [index, sample] of samples.entries()) {
+    const previous = samples[index - 1];
+    if (!previous) {
+      continue;
+    }
+    travelled += Math.hypot(sample.x - previous.x, sample.y - previous.y);
+    if (travelled >= next) {
+      dots.push({ x: round(sample.x), y: round(sample.y) });
+      next += 16;
+    }
+  }
+  return dots;
+};
+
+const people = committee
+  .map((person, order) => {
+    const spot = standing(person.square);
+    const state = person.id === CHAMPION ? "replied" : "paused";
+    return { ...person, dots: moveTo(spot), order, spot, state, tall: HEIGHT[person.kind] * SCALE };
+  })
+  .toSorted((a, b) => a.spot.y - b.spot.y || a.spot.x - b.spot.x);
+/** The moves go out in the committee's order, one after another. */
+const moves = committee.map((person) => people.find((placed) => placed.id === person.id)).filter((person) => person !== undefined);
+/** The pieces from the back of the board to the front, the AE's pawn among them. */
+const ranks = [...people.map((person) => ({ person, y: person.spot.y })), { person: undefined, y: you.y }].toSorted((a, b) => a.y - b.y);
+
+/** Where the HTML laid over the drawing sits, in the drawing's own units (the stylesheet scales them). */
+const place = (x: number, y: number): string => `--px: ${round(x)}; --py: ${round(y)}`;
+---
+
+<section class="page-hero board-hero" aria-labelledby="ae-title" data-board>
+  <div class="container board-grid">
+    <div class="board-copy">
+      <h1 id="ae-title" class="page-title" data-inview>
+        <span class="line">Play the</span>
+        <span class="line"><Marked d="M2 8C30 4 70 3.5 98 6.5">whole board</Marked><span class="pink">.</span></span>
+      </h1>
+      <p class="lead page-lead">
+        Write to everyone with a say in the deal, from your own inbox. The moment one of them
+        answers, Norbelys can pause the rest of their company, so nobody gets chased twice.
+      </p>
+      <div class="page-actions">
+        <ArrowButton href={START}>Start for $20/mo</ArrowButton>
+        <a class="button button-ghost" href="#board">Make a move</a>
+      </div>
+      <p class="fine-print board-fine">
+        Pausing colleagues at the same company domain is optional, per campaign. Northwind and
+        its people are an example.
+      </p>
+    </div>
+
+    <div class="board-stage" data-board-stage>
+      <svg class="board-art" viewBox={`0 0 ${STAGE.width} ${STAGE.height}`} fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="board-fade" gradientUnits="userSpaceOnUse" x1="0" y1={FADE.from} x2="0" y2={FADE.to}>
+            <stop offset="0" stop-color="#fff" />
+            <stop offset="1" stop-color="#fff" stop-opacity="0" />
+          </linearGradient>
+          <mask id="board-fade-mask" maskUnits="userSpaceOnUse" x="0" y="0" width={STAGE.width} height={STAGE.height}>
+            <rect width={STAGE.width} height={STAGE.height} fill="url(#board-fade)" />
+          </mask>
+        </defs>
+        <g class="board-table" mask="url(#board-fade-mask)">
+          <polygon class="board-side board-side-left" points={leftSide} />
+          <polygon class="board-side board-side-right" points={rightSide} />
+          <polygon class="board-frame" points={frame} pathLength="1" />
+          <g class="board-squares">
+            {squares.map((square) => <polygon class="board-square" points={square.d} style={`--w: ${square.wave}`} />)}
+          </g>
+          <g class="board-lines">
+            {lines.map((d) => <path class="board-line" d={d} pathLength="1" />)}
+          </g>
+          <polygon class="board-edge" points={grid} pathLength="1" />
+        </g>
+        <g class="board-rings">
+          {
+            people.map((person) => (
+              <g class="board-ring" data-piece={person.id} data-state={person.state}>
+                <ellipse class="board-ring-line" cx={person.spot.x} cy={person.spot.y} rx={RING.rx} ry={RING.ry} pathLength="1" />
+              </g>
+            ))
+          }
+        </g>
+        <g class="board-moves">
+          {
+            moves.map((person, index) => (
+              <g class="board-move" data-piece={person.id} data-state={person.state} style={`--m: ${index}`}>
+                {person.dots.map((dot, step) => (
+                  <circle class="board-dot" cx={dot.x} cy={dot.y} r="4.6" style={`--t: ${Math.round((step / person.dots.length) * TRAVEL)}`} />
+                ))}
+              </g>
+            ))
+          }
+        </g>
+        <g class="board-pieces">
+          {
+            ranks.map(({ person }) =>
+              person ? (
+                <g class="board-piece" data-piece={person.id} data-state={person.state} style={`--k: ${person.order}`}>
+                  <AePiece kind={person.kind} x={person.spot.x} y={person.spot.y} scale={SCALE} />
+                </g>
+              ) : (
+                <g class="board-piece board-you" style={`--k: ${committee.length}`}>
+                  <AePiece kind="pawn" x={you.x} y={you.y} scale={YOU.scale} black />
+                </g>
+              )
+            )
+          }
+        </g>
+      </svg>
+
+      <div class="board-labels" role="group" aria-label="Northwind’s buying committee. Pick who replies.">
+        <span class="board-tag board-tag-you" style={place(you.x, you.y)} aria-hidden="true">You</span>
+        {
+          people.map((person) => (
+            <button
+              class="board-pick"
+              type="button"
+              data-piece={person.id}
+              data-state={person.state}
+              data-title={person.title}
+              aria-pressed={person.state === "replied" ? "true" : "false"}
+              style={`${place(person.spot.x, person.spot.y)}; --tall: ${round(person.tall)}`}
+            >
+              <span class="board-tag">
+                <span class="board-tag-title">{person.title}</span>
+                <span class="board-tag-state" data-board-tag-state>{person.state === "replied" ? "Replied" : "Paused"}</span>
+              </span>
+            </button>
+          ))
+        }
+      </div>
+
+      <ul class="board-bubbles" aria-hidden="true">
+        {
+          people.map((person) => (
+            <li
+              class={`board-bubble board-bubble-${person.bubble}`}
+              data-piece={person.id}
+              data-state={person.state}
+              style={place(person.spot.x, person.spot.y - person.tall - 14)}
+            >
+              <span class="board-bubble-who">{person.title}</span>
+              <span class="board-bubble-text">{person.reply}</span>
+            </li>
+          ))
+        }
+      </ul>
+
+      <div class="board-panel">
+        <p class="board-status" role="status" data-board-status>
+          {champion ? `${champion.title} replied. ${paused} colleagues paused.` : ""}
+        </p>
+        <p class="board-hint">Tap any piece to choose who replies.</p>
+        <button class="board-reset" type="button" data-board-reset>Reset the board</button>
+      </div>
+    </div>
+  </div>
+</section>

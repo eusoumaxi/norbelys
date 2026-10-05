@@ -1,0 +1,1154 @@
+/*
+ * The legal binder: the tabs of every document on one rail, then the document itself. The
+ * contents follow the reader on the left, the clauses keep a calm reading measure, and each
+ * clause's plain words stay beside it on the right while it is read. It prints as a plain
+ * document.
+ */
+
+.legal {
+  --legal-rail: 12.5rem;
+  --legal-gap: clamp(2.5rem, 4vw, 4rem);
+  --legal-measure: 41rem;
+  --legal-note: 15.5rem;
+}
+
+/* ——— The tabs: one rail, the page being read raised in ink. ——— */
+.binder {
+  display: flex;
+  margin: 0 calc(var(--gutter) * -1) clamp(1.75rem, 3.5vw, 2.5rem);
+  padding: 0 var(--gutter);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.binder::-webkit-scrollbar {
+  display: none;
+}
+.binder ul {
+  display: flex;
+  flex: none;
+  gap: 0.2rem;
+  padding: 0.3rem;
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+}
+.binder a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0 1.05rem;
+  border-radius: var(--radius-pill);
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    color var(--duration-ui) var(--ease-out),
+    background-color var(--duration-ui) var(--ease-out);
+}
+.binder a:hover {
+  background: var(--white);
+  color: var(--ink);
+}
+.binder a[aria-current="page"] {
+  background: var(--ink);
+  color: var(--white);
+}
+
+/* ——— The page under the tabs. ——— */
+.legal-sheet {
+  position: relative;
+}
+.legal-title {
+  font-size: clamp(2.5rem, 4.9vw, 4.375rem);
+  letter-spacing: var(--tracking-display);
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+/* ——— A document's head: title, plain summary, the facts a reader quotes. ——— */
+.legal-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 1.5rem clamp(2rem, 5vw, 4rem);
+  padding-bottom: clamp(1.75rem, 3vw, 2.25rem);
+  border-bottom: 1px solid var(--line);
+}
+.legal-head-text {
+  display: grid;
+  justify-items: start;
+  gap: 0.9rem;
+}
+.legal-summary {
+  max-width: 36rem;
+}
+.legal-meta {
+  display: grid;
+  justify-items: end;
+  gap: 1rem;
+}
+.legal-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem clamp(1.75rem, 3.5vw, 3rem);
+}
+.legal-facts div {
+  display: grid;
+  gap: 0.15rem;
+}
+.legal-facts dt {
+  color: var(--ink-3);
+  font-size: var(--text-micro);
+}
+.legal-facts dd {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.legal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.legal-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0 1.05rem 0 0.9rem;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition:
+    background-color var(--duration-ui) var(--ease-out),
+    box-shadow var(--duration-ui) var(--ease-out);
+}
+.legal-action .glyph {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+.legal-action:hover {
+  background: var(--pink-mist);
+  box-shadow: inset 0 0 0 1.5px var(--pink);
+}
+
+/* ——— The body: contents on the left, the clauses beside them. ——— */
+.legal-body {
+  display: grid;
+  grid-template-columns: var(--legal-rail) minmax(0, 1fr);
+  gap: 0 var(--legal-gap);
+  padding-top: clamp(2rem, 3.5vw, 2.75rem);
+}
+.legal-contents {
+  position: sticky;
+  top: calc(var(--header-height) + 1.5rem);
+  align-self: start;
+  display: grid;
+  gap: 0.85rem;
+  max-height: calc(100vh - var(--header-height) - 3rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.legal-contents-title {
+  font-size: var(--text-micro);
+  font-weight: 600;
+}
+.legal-contents ol,
+.legal-contents-compact ol {
+  display: grid;
+  gap: 0.05rem;
+}
+.legal-contents a,
+.legal-contents-compact a {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  padding: 0.32rem 0;
+  color: var(--ink-3);
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  transition: color var(--duration-ui) var(--ease-out);
+}
+.legal-contents-number {
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  transition: color var(--duration-ui) var(--ease-out);
+}
+/* Folded, the contents sit on mist, where small text steps up to ink 2. */
+.legal-contents-compact a,
+.legal-contents-compact .legal-contents-number {
+  color: var(--ink-2);
+}
+.legal-contents a:hover,
+.legal-contents-compact a:hover {
+  color: var(--ink);
+}
+.legal-contents a[aria-current] {
+  color: var(--ink);
+  font-weight: 500;
+}
+.legal-contents a[aria-current] .legal-contents-number {
+  color: var(--pink-deep);
+}
+/* Contents for a narrow screen, folded until asked for. */
+.legal-contents-compact {
+  display: none;
+  border-radius: var(--radius-l);
+  background: var(--mist);
+}
+.legal-contents-compact summary {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 3.25rem;
+  padding: 0 1.25rem;
+  font-weight: 600;
+}
+.legal-contents-count {
+  color: var(--ink-2);
+  font-size: var(--text-micro);
+  font-weight: 500;
+}
+.legal-contents-compact summary .glyph {
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-left: auto;
+  transition: rotate 300ms var(--ease-out);
+}
+.legal-contents-compact[open] summary .glyph {
+  rotate: 180deg;
+}
+.legal-contents-compact ol {
+  padding: 0 1.25rem 1rem;
+}
+.legal-text {
+  min-width: 0;
+}
+
+/* ——— The clauses (laid out by src/clauses.ts). ——— */
+.clause-intro {
+  max-width: var(--legal-measure);
+  padding-bottom: clamp(1.75rem, 3vw, 2.25rem);
+  font-size: 1.1875rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+/* The note column runs to the page's right edge, so the clauses and the rules share one margin. */
+.clause {
+  display: grid;
+  grid-template-columns: minmax(0, var(--legal-measure)) minmax(
+      var(--legal-note),
+      1fr
+    );
+  grid-template-rows: auto 1fr;
+  column-gap: clamp(2rem, 3.5vw, 3.5rem);
+  padding-block: clamp(2rem, 3.5vw, 2.75rem);
+  border-top: 1px solid var(--line);
+}
+.legal-text > .clause:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+.clause > h2 {
+  grid-column: 1;
+  grid-row: 1;
+  margin-bottom: 1.1rem;
+  font-size: clamp(1.5rem, 2.3vw, 2rem);
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  scroll-margin-top: calc(var(--header-height) + 1.5rem);
+}
+.clause-number {
+  margin-right: 0.3em;
+  color: var(--pink-deep);
+  font-variant-numeric: tabular-nums;
+}
+.clause-note {
+  position: sticky;
+  top: calc(var(--header-height) + 1.5rem);
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: start;
+  display: grid;
+  gap: 0.55rem;
+  padding: 1.1rem 1.25rem 1.25rem;
+  border-radius: var(--radius-l);
+  background: var(--pink-mist);
+  font-size: 1rem;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+.clause-note-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--pink-ink);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.clause-note-label::before {
+  /* The icons' pink point, where the plain words are. */
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--pink-hot);
+}
+.clause-note strong {
+  font-weight: 600;
+}
+.clause-body {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+}
+
+/* The words themselves: one calm column at a reading measure. */
+.clause-body,
+.clause-intro {
+  color: var(--ink);
+}
+.clause-body {
+  font-size: 1.125rem;
+  line-height: 1.7;
+}
+.clause-body > * + * {
+  margin-top: 1.1em;
+}
+.clause-body > :first-child {
+  margin-top: 0;
+}
+.clause-body h3 {
+  margin-top: 1.9em;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  scroll-margin-top: calc(var(--header-height) + 1.5rem);
+}
+.clause-body h3 + * {
+  margin-top: 0.55em;
+}
+.clause-body h3 .clause-number {
+  margin-right: 0.4em;
+}
+.clause-body strong {
+  font-weight: 600;
+}
+.clause-body a,
+.clause-intro a,
+.clause-note a,
+.legal-ask a {
+  color: var(--pink-deep);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: var(--pink-blush);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--duration-ui) var(--ease-out);
+}
+.clause-body a:hover,
+.clause-intro a:hover,
+.clause-note a:hover,
+.legal-ask a:hover {
+  text-decoration-color: currentcolor;
+}
+/* On the note's pink tint, a link is pink ink: deep pink is too light there for small text. */
+.clause-note a {
+  color: var(--pink-ink);
+}
+.clause-body ul,
+.clause-body ol {
+  display: grid;
+  gap: 0.55em;
+  padding-left: 1.35em;
+}
+.clause-body ul {
+  list-style: disc;
+}
+.clause-body ol {
+  list-style: lower-alpha;
+}
+.clause-body li {
+  padding-left: 0.3em;
+}
+.clause-body li::marker {
+  color: var(--pink-hot);
+}
+.clause-body ol > li::marker {
+  color: var(--pink-deep);
+  font-weight: 600;
+}
+.clause-body blockquote {
+  padding: 1.1em 1.35em;
+  border-radius: var(--radius-l);
+  background: var(--mist);
+  font-size: 1.0625rem;
+}
+.clause-body :not(pre) > code {
+  padding: 0.12em 0.4em;
+  border-radius: 0.45em;
+  background: var(--mist);
+  font-family: var(--font-code);
+  font-size: 0.84em;
+}
+.clause-body hr {
+  width: 4.5rem;
+  height: 0.5rem;
+  margin: 2.5em 0;
+  border: 0;
+  background: radial-gradient(
+      circle,
+      var(--pink-hot) 0.22rem,
+      transparent 0.24rem
+    )
+    center / 1.5rem 0.5rem repeat-x;
+}
+
+/* A clause heading's link, added by the script: it copies the clause's address. */
+.clause-link {
+  display: inline-grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  margin-left: 0.35rem;
+  border-radius: 50%;
+  color: var(--ink-3);
+  vertical-align: 0.1em;
+  opacity: 0;
+  transition:
+    opacity var(--duration-ui) var(--ease-out),
+    color var(--duration-ui) var(--ease-out),
+    background-color var(--duration-ui) var(--ease-out);
+}
+.clause-link .glyph {
+  width: 1rem;
+  height: 1rem;
+}
+.clause > h2:hover .clause-link,
+.clause-link:focus-visible,
+.clause-link[data-copied] {
+  opacity: 1;
+}
+.clause-link:hover,
+.clause-link[data-copied] {
+  background: var(--pink-mist);
+  color: var(--pink-deep);
+}
+@media (hover: none) {
+  .clause-link {
+    opacity: 1;
+  }
+}
+
+/* Tables: ruled, quiet, numbers aligned; each scrolls on its own. */
+.legal-table {
+  overflow-x: auto;
+  margin-top: 1.4em;
+}
+.legal-table table {
+  width: 100%;
+  min-width: 34rem;
+  border-collapse: collapse;
+  font-size: 1rem;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+.legal-table th {
+  padding: 0 1.25rem 0.7rem 0;
+  border-bottom: 2px solid var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-align: left;
+  vertical-align: bottom;
+}
+.legal-table td {
+  padding: 0.85rem 1.25rem 0.85rem 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-2);
+  vertical-align: top;
+}
+.legal-table td:first-child {
+  color: var(--ink);
+  font-weight: 500;
+}
+.legal-table tr:last-child td {
+  border-bottom: 0;
+}
+/* A cookie's or a field's name is one word: it never breaks. */
+.legal-table code {
+  white-space: nowrap;
+}
+
+/* ——— The end of a document: its record, the signature, the way on. ——— */
+.legal-end {
+  display: grid;
+  gap: clamp(3rem, 6vw, 4.5rem);
+  margin-top: clamp(1rem, 3vw, 2rem);
+  margin-left: calc(var(--legal-rail) + var(--legal-gap));
+  padding-top: clamp(2.5rem, 5vw, 3.5rem);
+  border-top: 1px solid var(--line);
+}
+.legal-record {
+  display: grid;
+  gap: 1.5rem;
+  max-width: var(--legal-measure);
+}
+.legal-record h2 {
+  font-size: var(--text-h3);
+  letter-spacing: -0.03em;
+}
+.record-list {
+  display: grid;
+  gap: 0.75rem;
+}
+.record-entry {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1.25rem;
+  padding: 1.15rem 1.35rem;
+  border-radius: var(--radius-l);
+  background: var(--mist);
+}
+.record-entry.is-current {
+  background: var(--pink-mist);
+}
+.record-version {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 600;
+}
+.record-state {
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--pink-deep);
+  color: var(--white);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.record-date {
+  justify-self: end;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.record-summary {
+  grid-column: 1 / -1;
+  color: var(--ink-2);
+}
+.record-changes {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+.record-changes li {
+  display: grid;
+  gap: 0.3rem;
+}
+.record-section {
+  color: var(--ink-2);
+  font-size: var(--text-micro);
+  font-weight: 600;
+}
+/* Removed words struck with the mark's pink line; new words on blush. */
+.record-changes del {
+  color: var(--ink-2);
+  text-decoration-line: line-through;
+  text-decoration-color: var(--pink-hot);
+  text-decoration-thickness: 0.18em;
+}
+.record-changes ins {
+  justify-self: start;
+  padding: 0.05em 0.3em;
+  border-radius: 0.35em;
+  background: var(--pink-blush);
+  color: var(--ink);
+  text-decoration: none;
+}
+.legal-sign {
+  display: grid;
+  grid-template-columns: minmax(0, 19rem) minmax(0, 1fr);
+  align-items: end;
+  gap: 2rem clamp(2rem, 5vw, 4.5rem);
+}
+.legal-ask {
+  max-width: 24rem;
+  padding-bottom: 0.35rem;
+  color: var(--ink-2);
+}
+
+/* Previous and next: the binder's own pages, turned. */
+.legal-pager {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.legal-pager-link {
+  display: grid;
+  gap: 0.3rem;
+  padding: 1.15rem 1.4rem 1.25rem;
+  border-radius: var(--radius-l);
+  background: var(--mist);
+  transition: background-color var(--duration-ui) var(--ease-out);
+}
+.legal-pager-link:hover {
+  background: var(--pink-mist);
+}
+.legal-pager-next {
+  grid-column: 2;
+  justify-items: end;
+  text-align: right;
+}
+.legal-pager-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--ink-2);
+  font-size: var(--text-micro);
+  font-weight: 500;
+}
+.legal-pager-label .glyph {
+  width: 0.95rem;
+  height: 0.95rem;
+  transition: translate 500ms var(--ease-settle);
+}
+.legal-pager-back {
+  rotate: 180deg;
+}
+.legal-pager-link:hover .legal-pager-label .glyph {
+  translate: 0.25rem 0;
+}
+.legal-pager-link:hover .legal-pager-back {
+  translate: -0.25rem 0;
+}
+.legal-pager-title {
+  font-size: 1.1875rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* ——— The front page. ——— */
+.legal-cover {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 2.5rem clamp(2.5rem, 5vw, 5rem);
+}
+.legal-cover-copy {
+  display: grid;
+  justify-items: start;
+  gap: 1.5rem;
+}
+.legal-cover .legal-title {
+  max-width: none;
+}
+.legal-cover .lead {
+  max-width: 33rem;
+}
+
+/*
+ * The usual clause, struck through piece by piece with the mark's pink line, then ours written in
+ * its place: the binder's one authored moment, played once when the page opens.
+ */
+.plain {
+  display: grid;
+  justify-items: start;
+  gap: clamp(1.5rem, 3vw, 2rem);
+  padding: clamp(1.5rem, 3.5vw, 2.75rem);
+  border-radius: var(--radius-xl);
+  background: var(--pink-mist);
+}
+/* The usual clause, typeset as one, each line struck through with the brand's round line. */
+.plain-before {
+  max-width: 100%;
+  color: var(--ink-2);
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  line-height: 1.75;
+}
+.plain-before del {
+  text-decoration: none;
+}
+.plain-line {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  white-space: nowrap;
+}
+.plain-strike {
+  position: absolute;
+  top: 50%;
+  left: -0.2em;
+  width: calc(100% + 0.4em);
+  height: 0.9em;
+  overflow: visible;
+  translate: 0 -45%;
+}
+.plain-strike path {
+  fill: none;
+  stroke: var(--pink-hot);
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+/* Ours: added words on blush, as the record of changes marks them. */
+.plain-after {
+  max-width: 24ch;
+  font-size: clamp(1.6rem, 2.8vw, 2.35rem);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.32;
+  text-wrap: balance;
+}
+.plain-after ins {
+  padding: 0 0.12em;
+  border-radius: 0.2em;
+  background: linear-gradient(var(--pink-blush), var(--pink-blush)) no-repeat 0
+    0 / 100% 100%;
+  color: var(--ink);
+  text-decoration: none;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.plain figcaption {
+  color: var(--pink-ink);
+  font-size: var(--text-micro);
+}
+.motion .plain[data-inview] .plain-strike path {
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 620ms var(--ease-draw)
+    calc(450ms + var(--k) * 300ms);
+}
+.motion .plain[data-inview] .plain-after {
+  opacity: 0;
+  transition: opacity 500ms var(--ease-out) 1850ms;
+}
+.motion .plain[data-inview] .plain-after ins {
+  background-size: 0% 100%;
+  transition: background-size 900ms var(--ease-draw) 2050ms;
+}
+.motion .plain.is-in .plain-strike path {
+  stroke-dashoffset: 0;
+}
+.motion .plain.is-in .plain-after {
+  opacity: 1;
+}
+.motion .plain.is-in .plain-after ins {
+  background-size: 100% 100%;
+}
+
+/* The front page's parts: the documents, the promises, the company. */
+.legal-part {
+  display: grid;
+  gap: clamp(1.75rem, 3vw, 2.5rem);
+  margin-top: clamp(3.5rem, 7vw, 5.5rem);
+  padding-top: clamp(2.5rem, 5vw, 3.5rem);
+  border-top: 1px solid var(--line);
+}
+.legal-part-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 2rem;
+}
+.legal-part-head h2 {
+  font-size: clamp(1.9rem, 3.4vw, 2.75rem);
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+.legal-part-head p {
+  color: var(--ink-3);
+}
+
+.legal-index {
+  display: grid;
+}
+.legal-index-link {
+  display: grid;
+  grid-template-areas:
+    "name summary go"
+    "name meta go";
+  grid-template-columns: minmax(0, 17rem) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.3rem clamp(1.5rem, 4vw, 3.5rem);
+  margin-inline: -1.25rem;
+  padding: 1.4rem 1.25rem;
+  border-radius: var(--radius-l);
+  transition: background-color var(--duration-ui) var(--ease-out);
+}
+.legal-index li + li {
+  border-top: 1px solid var(--line);
+}
+.legal-index-name {
+  grid-area: name;
+  font-size: clamp(1.3rem, 2vw, 1.65rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+.legal-index-summary {
+  grid-area: summary;
+  align-self: end;
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+.legal-index-meta {
+  grid-area: meta;
+  align-self: start;
+  color: var(--ink-3);
+  font-size: var(--text-micro);
+  font-variant-numeric: tabular-nums;
+}
+.legal-index-go {
+  grid-area: go;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: var(--mist);
+  transition:
+    background-color var(--duration-ui) var(--ease-out),
+    color var(--duration-ui) var(--ease-out);
+}
+.legal-index-go .glyph {
+  width: 1.1rem;
+  height: 1.1rem;
+  transition: translate 500ms var(--ease-settle);
+}
+.legal-index-link:hover {
+  background: var(--pink-mist);
+}
+.legal-index-link:hover .legal-index-go {
+  background: var(--pink-deep);
+  color: var(--white);
+}
+.legal-index-link:hover .legal-index-go .glyph {
+  translate: 0.15rem 0;
+}
+
+.legal-promises {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 clamp(2rem, 5vw, 4.5rem);
+}
+.legal-promises li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: start;
+  gap: 0.45rem 0.9rem;
+  padding: 1.35rem 0 1.5rem;
+  border-top: 1px solid var(--line);
+}
+.legal-promises > li > .glyph {
+  grid-row: span 2;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-top: 0.1rem;
+  color: var(--pink-deep);
+}
+.legal-promises p {
+  font-size: 1.1875rem;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+.legal-promise-clause {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--pink-deep);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.legal-promise-clause .glyph {
+  width: 0.9rem;
+  height: 0.9rem;
+  transition: translate 500ms var(--ease-settle);
+}
+.legal-promise-clause:hover .glyph {
+  translate: 0.2rem 0;
+}
+
+.legal-company {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 2rem clamp(2rem, 5vw, 4.5rem);
+}
+.legal-company-facts div {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  gap: 1rem;
+  padding: 0.95rem 0;
+  border-top: 1px solid var(--line);
+}
+.legal-company-facts div:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.legal-company-facts dt {
+  color: var(--ink-3);
+}
+.legal-company-facts dd {
+  display: grid;
+  gap: 0.15rem;
+  font-weight: 500;
+}
+.legal-company-facts a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--pink-deep);
+  font-weight: 600;
+}
+.legal-company-facts a .glyph {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+.legal-company-note {
+  color: var(--ink-3);
+  font-size: var(--text-micro);
+  font-weight: 400;
+}
+/* Where to write: a ruled ledger, like the company's facts beside it. */
+.legal-desks {
+  display: grid;
+}
+.legal-desks li {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  gap: 0.15rem 1rem;
+  padding: 0.95rem 0;
+  border-top: 1px solid var(--line);
+}
+.legal-desks li:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+.legal-desk-team {
+  grid-row: span 2;
+  color: var(--ink-3);
+}
+.legal-desks a {
+  grid-column: 2;
+  justify-self: start;
+  color: var(--pink-deep);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.legal-desks a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+.legal-desk-for {
+  grid-column: 2;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+.legal-cover-sign {
+  margin-top: clamp(1rem, 3vw, 2rem);
+}
+
+@media (max-width: 1240px) {
+  .legal {
+    --legal-note: 14rem;
+    --legal-rail: 11rem;
+  }
+}
+@media (max-width: 1100px) {
+  .legal-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .legal-contents {
+    display: none;
+  }
+  .legal-contents-compact {
+    display: block;
+    margin-bottom: clamp(2rem, 5vw, 3rem);
+  }
+  .legal-end {
+    margin-left: 0;
+  }
+}
+@media (max-width: 1000px) {
+  .legal-cover,
+  .legal-company,
+  .legal-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .legal-meta {
+    justify-items: start;
+  }
+  .legal-index-link {
+    grid-template-areas:
+      "name go"
+      "summary go"
+      "meta go";
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .legal-index-summary,
+  .legal-index-meta {
+    align-self: auto;
+  }
+}
+@media (max-width: 860px) {
+  .legal-promises {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .clause {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+  }
+  .clause > h2,
+  .clause-note,
+  .clause-body {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .clause-note {
+    position: static;
+    margin-bottom: 1.25rem;
+  }
+  .legal-sign {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .binder {
+    /* The rail runs off the edge: fade it there, so it reads as more to scroll. */
+    mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent);
+  }
+  .legal-facts {
+    gap: 0.75rem 1.5rem;
+  }
+  .legal-action {
+    gap: 0.4rem;
+    padding: 0 0.85rem 0 0.75rem;
+    font-size: 0.875rem;
+  }
+  .clause-intro {
+    font-size: 1.125rem;
+  }
+  .clause-body {
+    font-size: 1.0625rem;
+  }
+  /* Rows stack on a phone, each cell under its column's name. */
+  .legal-table table {
+    min-width: 0;
+  }
+  .legal-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .legal-table tr {
+    display: grid;
+    gap: 0.45rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .legal-table tr:last-child {
+    border-bottom: 0;
+  }
+  .legal-table td {
+    display: grid;
+    gap: 0.1rem;
+    padding: 0;
+    border: 0;
+  }
+  .legal-table td::before {
+    content: attr(data-label);
+    color: var(--ink-3);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .legal-pager {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .legal-pager-next {
+    grid-column: 1;
+  }
+  .legal-company-facts div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.2rem;
+  }
+  .legal-index-link {
+    margin-inline: -0.75rem;
+    padding-inline: 0.75rem;
+  }
+  .plain-before {
+    font-size: 0.9375rem;
+  }
+  .record-entry {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .record-date {
+    justify-self: start;
+  }
+}
+
+/* On paper: the document alone, its plain words boxed under each heading. */
+/* A printed document keeps a paper margin, whatever the browser's own default. */
+@page {
+  margin: 18mm 16mm;
+}
+@media print {
+  .skip-link,
+  .site-header,
+  .site-footer,
+  .binder,
+  .read-progress,
+  .legal-contents,
+  .legal-contents-compact,
+  .legal-actions,
+  .clause-link,
+  .legal-pager {
+    display: none !important;
+  }
+  body {
+    font-size: 10.5pt;
+  }
+  /* The header isn't printed, so neither is the room the page keeps for it. */
+  .company-page.legal {
+    padding: 0;
+  }
+  .legal-sheet {
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .legal-body,
+  .clause {
+    display: block;
+  }
+  .legal-end {
+    margin-left: 0;
+  }
+  .clause-note {
+    position: static;
+    margin: 0 0 0.9rem;
+    border: 1px solid var(--line-strong);
+    background: none;
+    break-inside: avoid;
+  }
+  .clause > h2,
+  .clause-body h3 {
+    break-after: avoid;
+  }
+  .clause-body a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    color: var(--ink-3);
+    font-weight: 400;
+  }
+}

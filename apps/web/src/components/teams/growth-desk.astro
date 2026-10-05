@@ -1,0 +1,227 @@
+---
+import ArrowButton from "../arrow-button.astro";
+import Marked from "../marked.astro";
+import { DEVELOPERS, START } from "../../links";
+
+/**
+ * The growth page's opening: the outbound mixing desk. Each channel strip is one version of a
+ * step, its fader the version's weight and its meter the replies it earned; the master section
+ * holds how the step splits its people (evenly, by weight, or a test that picks a winner), what
+ * the winner is picked by, and each inbox's daily cap and gap.
+ *
+ * Before anyone touches it the desk shows the last round: an even test, then the winner pushed
+ * all the way up while the others rest at the bottom. Play (scripts/mixer.ts) runs a new round
+ * with the product's own rules: people go to the version furthest below its share, a test stays
+ * even until it ends, and the best rate per email sent wins, a tie going to the version listed
+ * first. The subject lines are examples and every number is simulated, a new draw each round.
+ */
+interface Version {
+  readonly letter: "A" | "B" | "C" | "D";
+  /** The subject line, a merge field in braces. */
+  readonly subject: readonly (readonly ["text" | "field", string])[];
+  /** Its weight when the step sends by weight, 1 to 100. */
+  readonly weight: number;
+  /** The last round: an even test of 250 each, then the rest of the step to the winner. */
+  readonly sent: number;
+  readonly replies: number;
+}
+
+const versions: readonly Version[] = [
+  { letter: "A", replies: 6, sent: 250, subject: [["text", "Quick idea for "], ["field", "{company}"]], weight: 40 },
+  { letter: "B", replies: 9, sent: 250, subject: [["field", "{first_name}"], ["text", ", a question"]], weight: 30 },
+  { letter: "C", replies: 13, sent: 1250, subject: [["text", "Saw the Lisbon news"]], weight: 20 },
+  { letter: "D", replies: 4, sent: 250, subject: [["text", "Worth 15 minutes?"]], weight: 10 },
+];
+/** The last round's winner, the people in its test and the rate one meter segment stands for. */
+const WINNER = "C";
+const TEST = 250;
+const SEGMENTS = 12;
+const UNIT = 0.005;
+const segmentsOf = (version: Version): number =>
+  Math.min(SEGMENTS, Math.round(version.replies / TEST / UNIT));
+/** A pot's pointer: -135° for nothing, +135° for everything. */
+const turn = (share: number): string => `--turn: ${Math.round(-135 + share * 270)}deg`;
+/** The pot's scale: eleven dots round three quarters of a circle. */
+const scale = Array.from({ length: 11 }, (_, index) => {
+  const angle = ((-225 + index * 27) * Math.PI) / 180;
+  return { cx: Math.round((24 + Math.cos(angle) * 21) * 10) / 10, cy: Math.round((24 + Math.sin(angle) * 21) * 10) / 10 };
+});
+const splits = [
+  { checked: false, label: "Evenly", value: "balanced" },
+  { checked: false, label: "By weight", value: "weighted" },
+  { checked: true, label: "Pick a winner", value: "automatic" },
+] as const;
+const objectives = [
+  { checked: true, label: "Replies", value: "replies" },
+  { checked: false, label: "Clicks", value: "clicks" },
+  { checked: false, label: "Opens", value: "opens" },
+] as const;
+const format = (value: number): string => value.toLocaleString("en-US");
+---
+
+<section class="page-hero mix-hero" aria-labelledby="growth-title">
+  <div class="container mix-head">
+    <h1 id="growth-title" class="page-title" data-inview>
+      <span class="line">Turn up what</span>
+      <span class="line">gets <Marked>replies</Marked><span class="pink">.</span></span>
+    </h1>
+    <p class="lead page-lead">
+      Test up to 50 versions of every step: split them evenly, by weight, or let replies pick the
+      winner. Then pipe every send, reply and bounce into your own stack.
+    </p>
+    <div class="page-actions">
+      <ArrowButton href={START}>Start for $20/mo</ArrowButton>
+      <a class="button button-ghost" href={DEVELOPERS}>Read the API reference</a>
+    </div>
+  </div>
+
+  <div id="desk" class="container mix-stage">
+    <div class="desk" data-mixer data-split="automatic" data-objective="replies" data-phase="done">
+      <div class="desk-strips" role="group" aria-label="Four versions of step 1, the first email">
+        {
+          versions.map((version) => {
+            const winner = version.letter === WINNER;
+            const lit = segmentsOf(version);
+            const id = `growth-${version.letter.toLowerCase()}`;
+            return (
+              <div class:list={["strip", { "is-winner": winner }]} data-strip data-letter={version.letter} data-weight={version.weight}>
+                <div class="strip-top">
+                  <span class="strip-tag" aria-hidden="true">{version.letter}</span>
+                  <span class="strip-lamp" aria-hidden="true" />
+                </div>
+                <p class="strip-subject" id={`${id}-subject`}>
+                  <span class="sr-only">Version {version.letter}: </span>
+                  {version.subject.map(([kind, text]) => (kind === "field" ? <span class="strip-field">{text}</span> : text))}
+                </p>
+                <div class="strip-share">
+                  <svg class="strip-pot" viewBox="0 0 48 48" aria-hidden="true" style={turn(winner ? 1 : 0)} data-strip-pot>
+                    {scale.map((dot) => <circle class="strip-pot-dot" cx={dot.cx} cy={dot.cy} r="1.6" />)}
+                    <circle class="strip-pot-body" cx="24" cy="24" r="14" />
+                    <path class="strip-pot-pointer" d="M24 24V13" />
+                  </svg>
+                  <p class="strip-share-text">
+                    <strong class="numeric" data-strip-share>{winner ? "100%" : "0%"}</strong>
+                    <span data-strip-note>{winner ? "winner" : "tested"}</span>
+                  </p>
+                </div>
+                <div class="strip-channel">
+                  <span class="strip-meter" aria-hidden="true">
+                    {Array.from({ length: SEGMENTS }, (_, index) => <i class:list={{ "is-lit": index < lit, "is-peak": index === lit - 1 }} />)}
+                  </span>
+                  <span class="strip-scale" aria-hidden="true" />
+                  <label class="sr-only" for={`${id}-fader`}>Weight of version {version.letter}</label>
+                  <input
+                    class="strip-fader"
+                    id={`${id}-fader`}
+                    type="range"
+                    min="1"
+                    max="100"
+                    step="1"
+                    value={winner ? 100 : 1}
+                    aria-describedby={`${id}-subject`}
+                    data-strip-fader
+                  />
+                </div>
+                <dl class="strip-counts">
+                  <div>
+                    <dt>Sent</dt>
+                    <dd class="numeric" data-strip-sent>{format(version.sent)}</dd>
+                  </div>
+                  <div>
+                    <dt data-strip-metric>Replies</dt>
+                    <dd class="numeric" data-strip-hits>{format(version.replies)}</dd>
+                  </div>
+                </dl>
+              </div>
+            );
+          })
+        }
+      </div>
+
+      <div class="desk-master">
+        <div class="desk-lcd">
+          <p class="desk-lcd-top">
+            <span>Step 1 · First email</span>
+            <span class="numeric" data-desk-clock>2,000 people</span>
+          </p>
+          <p class="desk-lcd-status" role="status" data-desk-status>
+            C won on replies, 13 from {TEST}. The 1,000 people left get C.
+          </p>
+          <span class="desk-lcd-bar" aria-hidden="true"><i data-desk-progress></i></span>
+        </div>
+
+        <fieldset class="desk-split">
+          <legend class="desk-label">Split</legend>
+          <div class="desk-dial">
+            <svg class="desk-dial-knob" viewBox="0 0 80 80" aria-hidden="true">
+              <circle class="desk-dial-body" cx="40" cy="40" r="27" />
+              <g class="desk-dial-turn">
+                <path class="desk-dial-pointer" d="M40 40H58" />
+                <circle class="desk-dial-tip" cx="58" cy="40" r="3.5" />
+              </g>
+            </svg>
+            <div class="desk-dial-options">
+              {
+                splits.map((split) => (
+                  <label class:list={["desk-option", `desk-option-${split.value}`]}>
+                    <input type="radio" name="growth-split" value={split.value} checked={split.checked} />
+                    <span class="desk-led" aria-hidden="true" />
+                    <span>{split.label}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="desk-objective">
+          <legend class="desk-label">Winner by</legend>
+          <div class="desk-keys">
+            {
+              objectives.map((objective) => (
+                <label class="desk-key">
+                  <input type="radio" name="growth-objective" value={objective.value} checked={objective.checked} />
+                  <span class="desk-led" aria-hidden="true" />
+                  <span>{objective.label}</span>
+                </label>
+              ))
+            }
+          </div>
+        </fieldset>
+
+        <div class="desk-trims">
+          <div class="desk-trim">
+            <svg class="desk-trim-knob" viewBox="0 0 48 48" aria-hidden="true" style="--turn: 0deg">
+              {scale.map((dot) => <circle class="strip-pot-dot" cx={dot.cx} cy={dot.cy} r="1.6" />)}
+              <circle class="strip-pot-body" cx="24" cy="24" r="14" />
+              <path class="strip-pot-pointer" d="M24 24V13" />
+            </svg>
+            <p><span class="desk-label">Daily cap</span> <span class="desk-trim-value"><strong class="numeric">50</strong> per inbox</span></p>
+          </div>
+          <div class="desk-trim">
+            <svg class="desk-trim-knob" viewBox="0 0 48 48" aria-hidden="true" style="--turn: -108deg">
+              {scale.map((dot) => <circle class="strip-pot-dot" cx={dot.cx} cy={dot.cy} r="1.6" />)}
+              <circle class="strip-pot-body" cx="24" cy="24" r="14" />
+              <path class="strip-pot-pointer" d="M24 24V13" />
+            </svg>
+            <p><span class="desk-label">Gap</span> <span class="desk-trim-value"><strong class="numeric">10</strong> minutes</span></p>
+          </div>
+        </div>
+
+        <button class="desk-play" type="button" data-desk-play>
+          <span class="desk-play-button" aria-hidden="true">
+            <svg viewBox="0 0 40 40">
+              <path class="desk-play-icon" d="M15 11.5V28.5L29 20Z" />
+              <path class="desk-skip-icon" d="M13 12V28M21 12L31 20L21 28Z" />
+            </svg>
+          </span>
+          <span class="desk-play-label" data-desk-play-label>Play a round</span>
+        </button>
+      </div>
+    </div>
+    <p class="fine-print mix-note">
+      A simulated round with example subject lines: every number here is made up, and a new draw
+      each time. Your real reply rates are yours to find.
+    </p>
+  </div>
+</section>

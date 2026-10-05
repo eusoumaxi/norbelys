@@ -1,0 +1,1862 @@
+/*
+ * The developers page: Norbelys opened up, drawn in the site's own line. White ground, ink lines
+ * with round caps, one pink point that is always the email, Outfit for words and Martian Mono
+ * only where something is code, a header or a process's name. Code is set light, in ink and
+ * pink, like the drawings around it.
+ */
+
+@font-face {
+  font-family: "Martian Mono";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 800;
+  font-stretch: 75% 112.5%;
+  src: url("@fontsource-variable/martian-mono/files/martian-mono-latin-standard-normal.woff2")
+    format("woff2-variations");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+.dev {
+  --font-code:
+    "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  /* Code a little narrower than the face's default, so a line of a sample fits its column. */
+  --code-stretch: 87.5%;
+  padding-bottom: clamp(2rem, 5vw, 4rem);
+}
+.dev code,
+.dev pre {
+  font-family: var(--font-code);
+  font-stretch: var(--code-stretch);
+}
+.dev :not(pre) > code {
+  font-size: 0.84em;
+  letter-spacing: -0.01em;
+}
+.dev .astro-code {
+  --astro-code-background: transparent;
+  --astro-code-foreground: var(--ink);
+  --astro-code-token-comment: var(--ink-3);
+  --astro-code-token-keyword: var(--pink-deep);
+  --astro-code-token-string: var(--pink-ink);
+  --astro-code-token-string-expression: var(--pink-ink);
+  --astro-code-token-constant: var(--pink-ink);
+  --astro-code-token-function: var(--ink);
+  --astro-code-token-parameter: var(--ink-2);
+  --astro-code-token-punctuation: var(--ink-3);
+  --astro-code-token-link: var(--pink-deep);
+}
+.dev-keep {
+  white-space: nowrap;
+}
+.dev h2 {
+  letter-spacing: -0.03em;
+}
+
+/* ——— Copying: a button that turns into a check that draws itself. ——— */
+.copy-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.25rem;
+  padding: 0 0.8rem;
+  border-radius: var(--radius-pill);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition:
+    background-color var(--duration-ui) var(--ease-out),
+    color var(--duration-ui) var(--ease-out);
+}
+.copy-button:hover {
+  background: var(--mist);
+  color: var(--ink);
+}
+.copy-icons {
+  position: relative;
+  display: block;
+  width: 1rem;
+  height: 1rem;
+}
+.copy-icons .glyph {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition:
+    opacity 160ms var(--ease-out),
+    scale 260ms var(--ease-settle);
+}
+.copy-icons [data-glyph="check"],
+.copy-button[data-state="copied"] [data-glyph="copy"] {
+  opacity: 0;
+  scale: 0.6;
+}
+.copy-button[data-state="copied"] [data-glyph="check"] {
+  opacity: 1;
+  scale: 1;
+  color: var(--pink-deep);
+}
+.motion .copy-button[data-state="copied"] [data-glyph="check"] .glyph-line {
+  stroke-dasharray: 1;
+  animation: dev-draw 320ms var(--ease-out) both;
+}
+.copy-done,
+.copy-button[data-state="copied"] .copy-word {
+  display: none;
+}
+.copy-button[data-state="copied"] .copy-done {
+  display: inline;
+  color: var(--pink-deep);
+}
+.copy-button-icon {
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border-radius: 50%;
+}
+
+/* One command to paste: the line, then the button that copies it. */
+.dev-command {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+  min-height: 3.5rem;
+  padding: 0.35rem 0.4rem 0.35rem 1.15rem;
+  border-radius: var(--radius-m);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+}
+.dev-command code {
+  min-width: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+/* A word never breaks at a hyphen; a path may break after one of its slashes (a <wbr>). */
+.dev-word:not(.dev-path) {
+  white-space: nowrap;
+}
+.dev-prompt {
+  color: var(--ink-quiet);
+  user-select: none;
+}
+
+/* ——— Code: a white sheet with its tabs on top. ——— */
+.dev-code {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--radius-l);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+}
+.dev-code-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 3.25rem;
+  padding: 0 0.55rem 0 0.6rem;
+  border-bottom: 1.5px solid var(--line);
+}
+.dev-code-tabs {
+  display: flex;
+  gap: 0.1rem;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.dev-code-tabs button {
+  position: relative;
+  flex: none;
+  min-height: 3.25rem;
+  padding: 0 0.75rem;
+  color: var(--ink-3);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition: color var(--duration-ui) var(--ease-out);
+}
+.dev-code-tabs button:hover,
+.dev-code-tabs button[aria-selected="true"] {
+  color: var(--ink);
+}
+.dev-code-tabs button::after {
+  content: "";
+  position: absolute;
+  inset: auto 0.75rem -1.5px;
+  height: 2.5px;
+  border-radius: 2px;
+  background: var(--ink);
+  scale: 0 1;
+  transition: scale 380ms var(--ease-out);
+}
+.dev-code-tabs button[aria-selected="true"]::after {
+  scale: 1 1;
+}
+.dev-code-name {
+  padding-left: 0.65rem;
+  color: var(--ink-3);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+.dev-code-panel pre {
+  margin: 0;
+  overflow-x: auto;
+  padding: 1.35rem 1.5rem 1.6rem;
+  font-size: 0.875rem;
+  line-height: 1.75;
+  tab-size: 2;
+}
+.dev-code-panel pre:focus-visible {
+  outline-offset: -3px;
+}
+
+/* ——— The opening: a closed box between your app and Alex. ——— */
+.dev-hero {
+  padding-top: calc(var(--header-height) + clamp(0.5rem, 2vw, 1.5rem));
+}
+.dev-hero-stage {
+  position: relative;
+  width: min(
+    var(--page),
+    100% - var(--gutter) * 2,
+    (100svh - var(--header-height) - 3rem) * 2.07
+  );
+  container-type: inline-size;
+}
+.dev-hero-box {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.hero-cable {
+  stroke: var(--ink);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.hero-end {
+  fill: var(--ink);
+}
+.hero-route {
+  stroke: none;
+}
+.hero-frame {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.hero-port {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 5;
+  transition: fill 500ms var(--ease-out);
+}
+/* A port lights for a moment as the email passes through it. */
+.hero-port.is-lit {
+  fill: var(--pink-hot);
+  transition-duration: 80ms;
+}
+.hero-point {
+  fill: var(--pink-hot);
+}
+.hero-label {
+  fill: var(--ink);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.dev-hero-copy {
+  position: absolute;
+  inset: 5% 22.5%;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: clamp(1rem, 2.3cqi, 2rem);
+  text-align: center;
+}
+.dev-hero .page-title {
+  font-size: clamp(2.75rem, 6.5cqi, 5.75rem);
+}
+.dev-hero .page-lead {
+  max-width: 28em;
+  font-size: clamp(1rem, 1.55cqi, 1.3125rem);
+}
+.dev-hero-actions {
+  justify-content: center;
+}
+.hero-cables,
+.hero-rider {
+  display: none;
+}
+.hero-point.is-hidden {
+  opacity: 0;
+}
+.motion .hero-frame,
+.motion .hero-cable {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: dev-draw 1500ms var(--ease-draw) 100ms forwards;
+}
+.motion .hero-cable {
+  animation-delay: 900ms;
+  animation-duration: 900ms;
+}
+.motion .hero-port,
+.motion .hero-end,
+.motion .hero-label,
+.motion .hero-point {
+  opacity: 0;
+  animation: dev-fade 500ms var(--ease-out) 1500ms forwards;
+}
+.motion .hero-point.is-hidden {
+  animation: none;
+  transition: opacity 180ms var(--ease-out);
+}
+
+/* ——— The box, opened: the map of one email's round trip. ——— */
+.map {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+}
+.map-stage {
+  --p: 1;
+  position: relative;
+}
+.map-drawing {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.map-tall {
+  display: none;
+}
+.map-box {
+  stroke: var(--ink);
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.map-wordmark {
+  --brand-mark: var(--ink);
+  color: var(--ink);
+  overflow: visible;
+}
+.map-wordmark .brand {
+  width: 100%;
+  height: 100%;
+}
+.map-hop,
+.map-branch {
+  stroke: var(--ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 500ms var(--ease-out);
+}
+.map-hop {
+  stroke-width: 5;
+}
+.map-branch {
+  stroke-width: 3.5;
+}
+.map-crossing,
+.map-port {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+.map-edge {
+  fill: var(--ink-3);
+  font-size: 15px;
+  font-weight: 500;
+  paint-order: stroke;
+  stroke: var(--white);
+  stroke-linejoin: round;
+  stroke-width: 8px;
+}
+/* Every name is a way into the page: it takes the pink, as links do, when pointed at. */
+.map-link {
+  cursor: pointer;
+}
+.map-link :is(.map-word, .map-name) {
+  transition: fill var(--duration-ui) var(--ease-out);
+}
+.map-link:hover :is(.map-word, .map-name),
+.map-link:focus-visible :is(.map-word, .map-name) {
+  fill: var(--pink-deep);
+}
+.map-link:focus-visible {
+  outline: 2.5px solid var(--pink-deep);
+  outline-offset: 6px;
+  border-radius: 6px;
+}
+.map-word,
+.map-caption,
+.map-name,
+.map-way,
+.map-tag-text {
+  paint-order: stroke;
+  stroke: var(--white);
+  stroke-linejoin: round;
+}
+.map-word {
+  fill: var(--ink);
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  stroke-width: 16px;
+}
+.map-caption {
+  fill: var(--ink-3);
+  font-size: 16px;
+  font-weight: 500;
+  stroke-width: 8px;
+}
+.map-name {
+  fill: var(--ink);
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  stroke-width: 10px;
+}
+.map-way {
+  fill: var(--ink-3);
+  font-size: 15px;
+  font-weight: 500;
+  stroke-width: 8px;
+}
+.map-point {
+  fill: var(--pink-hot);
+  transition:
+    opacity 200ms var(--ease-out),
+    r 200ms var(--ease-out);
+}
+.map-point.is-hidden {
+  opacity: 0;
+}
+.map-point.is-refused {
+  animation: dev-refuse 420ms var(--ease-out);
+}
+.map-tag {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms var(--ease-out);
+}
+.map-tag.is-on {
+  opacity: 1;
+}
+.map-tag-plate {
+  fill: var(--ink);
+}
+.map-tag-text {
+  fill: var(--white);
+  font-family: var(--font-code);
+  font-size: 14px;
+  font-stretch: var(--code-stretch);
+  font-weight: 500;
+  stroke: none;
+}
+.box-ping {
+  fill: none;
+  stroke: var(--pink-hot);
+  stroke-width: 3;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dev-ping 900ms var(--ease-out) forwards;
+}
+/* A story darkens the hops it uses and lets the rest step back. */
+.map-drawing[data-story] .map-hop:not(.is-used),
+.map-drawing[data-story] .map-branch:not(.is-used) {
+  stroke: var(--line-strong);
+}
+/* Arriving, the box draws itself, then the loop, hop by hop. */
+.motion .map-stage .map-box {
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - clamp(0, var(--p) * 2.6, 1));
+}
+.motion .map-stage .map-hop {
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - clamp(0, var(--p) * 10 - var(--i) - 1.6, 1));
+}
+.motion .map-stage .map-branch {
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - clamp(0, var(--p) * 3 - 1.4, 1));
+}
+.motion .map-stage .map-node,
+.motion .map-stage .map-person,
+.motion .map-stage .map-crossing,
+.motion .map-stage .map-port,
+.motion .map-stage .map-edge,
+.motion .map-stage .map-wordmark {
+  opacity: clamp(0, var(--p) * 4 - 2.6, 1);
+}
+/* Once a story plays, the whole map is there, wherever the scroll has got to: the point never
+   rides a line that isn't drawn yet. */
+.motion
+  .map-stage
+  .map-drawing[data-story]
+  :is(.map-box, .map-hop, .map-branch) {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 600ms var(--ease-draw);
+}
+.motion
+  .map-stage
+  .map-drawing[data-story]
+  :is(
+    .map-node,
+    .map-person,
+    .map-crossing,
+    .map-port,
+    .map-edge,
+    .map-wordmark
+  ) {
+  opacity: 1;
+  transition: opacity 400ms var(--ease-out);
+}
+
+.map-story {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  align-items: start;
+  gap: 1rem clamp(2rem, 5vw, 4rem);
+}
+.map-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.map-choices button {
+  min-height: 2.75rem;
+  padding: 0 1.15rem;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition:
+    background-color var(--duration-ui) var(--ease-out),
+    box-shadow var(--duration-ui) var(--ease-out),
+    color var(--duration-ui) var(--ease-out);
+}
+.map-choices button:hover {
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+  color: var(--ink);
+}
+.map-choices button[aria-selected="true"] {
+  background: var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+  color: var(--white);
+}
+.map-steps {
+  display: grid;
+  gap: 0.6rem;
+  counter-reset: step;
+}
+.map-steps li {
+  position: relative;
+  padding-left: 2.25rem;
+  color: var(--ink-2);
+  line-height: 1.5;
+  counter-increment: step;
+  transition: color 300ms var(--ease-out);
+}
+.map-steps li::before {
+  content: counter(step);
+  position: absolute;
+  top: 0.05rem;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition:
+    background-color 300ms var(--ease-out),
+    box-shadow 300ms var(--ease-out),
+    color 300ms var(--ease-out);
+}
+.map-steps li[aria-current="step"] {
+  color: var(--ink);
+}
+.map-steps li[aria-current="step"]::before {
+  background: var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+  color: var(--white);
+}
+.map-steps code {
+  color: var(--ink);
+}
+.map-replay {
+  grid-column: 2;
+  justify-self: start;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 0.25em;
+}
+.map-replay:hover {
+  color: var(--pink-deep);
+  text-decoration-color: currentcolor;
+}
+
+/* ——— The first request, in three steps. ——— */
+.dev-steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(3rem, 5vw, 4.5rem) clamp(2rem, 5vw, 5rem);
+}
+.dev-step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: start;
+  gap: 0.9rem 1.15rem;
+}
+.dev-step > :not(.dev-step-number) {
+  grid-column: 2;
+  min-width: 0;
+}
+.dev-step-number {
+  display: grid;
+  grid-row: span 2;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--ink);
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+.dev-step h3 {
+  padding-top: 0.35rem;
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+  letter-spacing: -0.035em;
+}
+.dev-step p {
+  max-width: 34rem;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.dev-step-send {
+  grid-column: 1 / -1;
+}
+/* The request and what it gets back, side by side. */
+.dev-send {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(1rem, 2vw, 1.5rem);
+  margin-top: 0.4rem;
+}
+.test-addresses {
+  width: 100%;
+  max-width: 30rem;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+.test-addresses th,
+.test-addresses td {
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: baseline;
+}
+.test-addresses thead th {
+  padding-top: 0;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+.test-addresses tbody th {
+  width: 9.5rem;
+  padding-right: 1rem;
+  font-weight: 400;
+}
+.test-addresses td {
+  color: var(--ink-2);
+}
+.test-code {
+  margin-left: 0.35rem;
+  color: var(--ink-3);
+  font-family: var(--font-code);
+  font-size: 0.8em;
+  font-stretch: var(--code-stretch);
+  white-space: nowrap;
+}
+.dev-installs,
+.dev-installs li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.dev-installs {
+  gap: 0.75rem;
+}
+.dev-installs li {
+  gap: 0.35rem;
+}
+.dev-install-label {
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.dev-installs .dev-command {
+  justify-self: stretch;
+  justify-content: space-between;
+}
+.dev-note {
+  color: var(--ink-3) !important;
+  font-size: var(--text-micro);
+}
+.dev-answer {
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius-l);
+  background: var(--cloud);
+}
+/* The answer's tint costs the deep pink its contrast; its keys take the darker ink pink. */
+.dev .dev-answer .astro-code {
+  --astro-code-token-keyword: var(--pink-ink);
+}
+.dev-answer-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3.25rem;
+  padding: 0 1.5rem;
+  border-bottom: 1.5px solid var(--line);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.dev-answer-code {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--white);
+  font-family: var(--font-code);
+  font-size: 0.8125rem;
+  font-stretch: var(--code-stretch);
+}
+.dev-answer pre {
+  margin: 0;
+  padding: 1.35rem 1.5rem 1.6rem;
+  overflow-x: auto;
+  font-size: 0.8125rem;
+  line-height: 1.7;
+}
+
+/* ——— The API's habits, read off real HTTP: a line from each header to what it's for. ——— */
+.dev-band {
+  margin-top: var(--section-space);
+  background: var(--mist);
+}
+.dev-band .page-section {
+  padding-block: var(--section-space);
+}
+.dev-exchanges {
+  display: grid;
+  gap: clamp(2rem, 4vw, 3rem);
+}
+.exchange {
+  display: grid;
+  gap: 0.85rem;
+  margin: 0;
+}
+.exchange-label {
+  color: var(--ink-2);
+  font-size: var(--text-micro);
+  font-weight: 600;
+}
+.exchange-lines {
+  display: grid;
+  gap: 0.2rem;
+}
+.exchange-line {
+  display: grid;
+  grid-template-columns: max-content minmax(3rem, 1fr) minmax(0, 23rem);
+  align-items: start;
+  column-gap: 0.85rem;
+}
+.exchange-line > code {
+  grid-column: 1 / -1;
+  min-width: 0;
+  color: var(--ink-2);
+  font-size: clamp(0.875rem, 1.05vw, 1rem);
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+.exchange-start > code {
+  color: var(--ink);
+  font-weight: 600;
+}
+.exchange-line.has-note > code {
+  grid-column: 1;
+  color: var(--ink);
+}
+.exchange-leader {
+  position: relative;
+  align-self: start;
+  height: 1.85em;
+  font-size: clamp(0.875rem, 1.05vw, 1rem);
+}
+.exchange-leader::before,
+.exchange-leader::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+}
+.exchange-leader::before {
+  inset-inline: 0.15rem 0.4rem;
+  height: 2px;
+  margin-top: -1px;
+  border-radius: 1px;
+  background: var(--ink);
+}
+.exchange-leader::after {
+  left: 0;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: -0.275rem;
+  border-radius: 50%;
+  background: var(--ink);
+}
+.exchange-note {
+  padding: 0.2rem 0 0.9rem;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+.exchange-note strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.dev-pages {
+  max-width: 40rem;
+  margin-top: clamp(2.5rem, 4vw, 3.5rem);
+  color: var(--ink-2);
+}
+.dev-pages a {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--ink-quiet);
+  text-underline-offset: 0.2em;
+}
+.dev-pages a:hover {
+  color: var(--pink-deep);
+  text-decoration-color: currentcolor;
+}
+.motion .exchange-leader::before {
+  scale: 0 1;
+  transform-origin: left;
+  transition: scale 900ms var(--ease-draw) 200ms;
+}
+.motion .exchange.is-in .exchange-leader::before {
+  scale: 1 1;
+}
+
+/* ——— Webhooks: the ten attempts on one line across the page, a point walking it. ——— */
+.retries {
+  --p: 1;
+  /* How far the point has walked: 0 at the first attempt, 1 at the one that gets through. */
+  --travel: clamp(0, (var(--p) - 0.2) / 0.6, 1);
+  --top: 1rem;
+  --row: 5.9rem;
+  --dot: 1rem;
+  margin: 0;
+}
+.retries-band {
+  /* The container's width, so the line can be measured from the page's edge. */
+  --frame: min(var(--page), 100% - var(--gutter) * 2);
+  position: relative;
+  border-top: 1.5px solid var(--ink);
+  border-bottom: 1px solid var(--line-strong);
+}
+/* The line runs the width of the page: ink as far as the point has walked, quiet after. */
+.retries-band::before,
+.retries-band::after {
+  content: "";
+  position: absolute;
+  top: calc(var(--top) + var(--row) + var(--dot) / 2 - 1px);
+  left: 0;
+  height: 2px;
+}
+.retries-band::before {
+  right: 0;
+  background: var(--line-strong);
+}
+.retries-band::after {
+  width: calc(
+    (100% - var(--frame)) / 2 + var(--travel) *
+      (var(--frame) * var(--through) / 10 + 1px + 0.75rem + var(--dot) / 2)
+  );
+  background: var(--ink);
+}
+.retries-frame {
+  position: relative;
+}
+.retries-strip {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+}
+.retry {
+  --lit: clamp(0, (var(--travel) * var(--through) - var(--i)) * 4 + 1, 1);
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 1.3rem 2.6rem 2rem var(--dot) auto auto;
+  align-content: start;
+  padding: var(--top) 0.75rem 1.25rem 0;
+}
+.retry > * {
+  grid-column: 1;
+}
+.retry + .retry {
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--line);
+}
+.retry-number {
+  grid-row: 1;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+/* The wait, set large; "later" under it, so every wait sits on the same line. */
+.retry-wait {
+  position: relative;
+  grid-row: 2;
+  align-self: end;
+  font-size: clamp(1.25rem, 2.2vw, 2rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.retry-later {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  padding-top: 0.45rem;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+.retry-point {
+  position: relative;
+  z-index: 1;
+  grid-row: 4;
+  width: var(--dot);
+  height: var(--dot);
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: inset 0 0 0 2.5px var(--ink);
+}
+.retry-elapsed {
+  grid-row: 5;
+  padding-top: 0.75rem;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.retry-answer {
+  grid-row: 6;
+  justify-self: start;
+  padding-top: 0.55rem;
+  color: var(--ink);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.retry-answer code {
+  display: inline-block;
+  margin-right: 0.2rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  color: var(--ink-2);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.retry.is-delivered .retry-answer code {
+  background: var(--ink);
+  box-shadow: none;
+  color: var(--white);
+}
+/* The ones after it are never sent: still on the schedule, quiet. */
+.retry.is-unsent .retry-number,
+.retry.is-unsent .retry-wait,
+.retry.is-unsent .retry-later,
+.retry.is-unsent .retry-answer {
+  color: var(--ink-3);
+}
+.retry.is-unsent .retry-answer {
+  font-weight: 500;
+}
+.retry.is-unsent .retry-point {
+  background: var(--white);
+  box-shadow: inset 0 0 0 2px var(--line-strong);
+}
+.retries figcaption {
+  margin-top: 1.1rem;
+  color: var(--ink-3);
+  font-size: var(--text-micro);
+}
+.retries-note {
+  display: block;
+  max-width: 47rem;
+  text-wrap: pretty;
+}
+.retries figcaption code {
+  color: var(--ink-2);
+}
+/* The email: it rests on the attempt that gets through, and walks there as the strip comes in. */
+.retries-traveler {
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--top) + var(--row) + var(--dot) / 2);
+  left: calc(
+    var(--travel) * (100% * var(--through) / 10 + 1px + 0.75rem) + var(--dot) /
+      2
+  );
+  display: block;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: var(--pink-hot);
+  box-shadow: 0 0 0 5px var(--white);
+  translate: -50% -50%;
+}
+/* Each attempt's point fills, and its answer shows, as the point reaches it. */
+.motion .retry:not(.is-unsent) .retry-point {
+  background: color-mix(
+    in srgb,
+    var(--ink) calc(var(--lit) * 100%),
+    var(--white)
+  );
+}
+.motion .retry:not(.is-unsent) .retry-answer {
+  opacity: var(--lit);
+  translate: 0 calc((1 - var(--lit)) * 0.4rem);
+}
+.motion .retry.is-unsent .retry-answer {
+  opacity: clamp(0, (var(--travel) - 0.96) * 25, 1);
+}
+.dev-hooks-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 3rem clamp(2rem, 5vw, 5rem);
+  margin-top: clamp(3rem, 6vw, 5rem);
+}
+.dev-facts {
+  display: grid;
+  gap: 0.85rem;
+}
+.dev-facts li {
+  position: relative;
+  max-width: 36rem;
+  padding-left: 1.5rem;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.dev-facts li::before {
+  content: "";
+  position: absolute;
+  top: 0.6em;
+  left: 0.15rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--ink);
+}
+.dev-facts code {
+  color: var(--ink);
+}
+.dev-events {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.75rem clamp(1.5rem, 3vw, 3rem);
+  margin-top: clamp(3rem, 5vw, 4.5rem);
+  padding-top: 1.75rem;
+  border-top: 1.5px solid var(--ink);
+}
+.dev-events-title {
+  grid-column: 1 / -1;
+  font-size: clamp(1.4rem, 2vw, 1.75rem);
+  letter-spacing: -0.03em;
+}
+.dev-event-name {
+  margin-bottom: 0.45rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.dev-event-group ul {
+  display: grid;
+  gap: 0.2rem;
+}
+.dev-event-group code {
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+}
+.dev-event-group:nth-of-type(1) {
+  grid-row: span 2;
+}
+
+/* ——— AI: where an assistant connects, and a conversation drawn as a line. ——— */
+.dev-ai-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  align-items: start;
+  gap: 3rem clamp(2rem, 5vw, 5rem);
+}
+.dev-ai-connect {
+  display: grid;
+  gap: 2rem;
+}
+.transcript {
+  --p: 1;
+  position: relative;
+  margin: 0;
+  padding-left: 2.25rem;
+}
+.transcript::before {
+  content: "";
+  position: absolute;
+  top: 0.5rem;
+  bottom: 2.75rem;
+  left: 0.55rem;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--ink);
+}
+.transcript-turns {
+  display: grid;
+  gap: 1.35rem;
+}
+.turn {
+  position: relative;
+  max-width: 32rem;
+  line-height: 1.5;
+}
+.turn::before {
+  content: "";
+  position: absolute;
+  top: 0.45rem;
+  left: -1.98rem;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: inset 0 0 0 2.5px var(--ink);
+}
+.turn-who {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.turn-you {
+  font-size: 1.1875rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.turn-ai {
+  color: var(--ink-2);
+}
+.turn-tool::before {
+  display: none;
+}
+.turn-tool code {
+  display: inline-block;
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--white);
+  font-size: 0.8125rem;
+}
+/* A tool call branches off the conversation's line, the way the map's tags sit on its hops. */
+.turn-tool::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -1.7rem;
+  width: 1.7rem;
+  height: 2px;
+  margin-top: -1px;
+  background: var(--ink);
+}
+.transcript figcaption {
+  margin-top: 1.5rem;
+  color: var(--ink-3);
+  font-size: var(--text-micro);
+}
+.transcript-point {
+  display: none;
+}
+.motion .transcript-point {
+  position: absolute;
+  z-index: 1;
+  top: calc(0.5rem + clamp(0, var(--p) * 1.15 - 0.1, 1) * (100% - 3.25rem));
+  left: 0.55rem;
+  display: block;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: -0.575rem 0 0 -0.575rem;
+  border-radius: 50%;
+  background: var(--pink-hot);
+  box-shadow: 0 0 0 5px var(--white);
+}
+.motion .transcript .turn {
+  opacity: clamp(0, var(--p) * 7 - var(--i) * 0.9 - 0.5, 1);
+  translate: 0
+    calc((1 - clamp(0, var(--p) * 7 - var(--i) * 0.9 - 0.5, 1)) * 0.75rem);
+}
+/* For coding agents: a ruled block, like the list of events. */
+.dev-agent {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  align-items: start;
+  gap: 1.5rem clamp(2rem, 5vw, 4rem);
+  margin-top: clamp(4rem, 7vw, 6rem);
+  padding-top: clamp(1.75rem, 3vw, 2.5rem);
+  border-top: 1.5px solid var(--ink);
+}
+.dev-agent-copy {
+  display: grid;
+  gap: 0.75rem;
+}
+.dev-agent h3 {
+  font-size: clamp(1.6rem, 2.4vw, 2.25rem);
+  letter-spacing: -0.035em;
+}
+.dev-agent p {
+  max-width: 34rem;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.dev-agent-actions {
+  display: grid;
+  justify-items: start;
+  gap: 1.5rem;
+}
+.dev-agent-links {
+  display: grid;
+  gap: 0.75rem;
+}
+.dev-agent-links div {
+  display: grid;
+  gap: 0.1rem;
+}
+.dev-agent-links dt {
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.dev-agent-links a {
+  color: var(--ink);
+  font-size: 0.9375rem;
+  text-decoration: underline;
+  text-decoration-color: var(--ink-quiet);
+  text-underline-offset: 0.25em;
+}
+.dev-agent-links a:hover {
+  color: var(--pink-deep);
+  text-decoration-color: currentcolor;
+}
+.dev-copy-prompt.button {
+  --button-bg: var(--ink);
+  --button-hover: var(--pink-deep);
+  gap: 0.6rem;
+  min-height: 3.5rem;
+  padding: 0 1.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--button-bg);
+  color: var(--white);
+  font-size: 1rem;
+}
+.dev-copy-prompt.button:hover {
+  background: var(--button-bg);
+  color: var(--white);
+  box-shadow: var(--shadow-pink);
+}
+.dev-copy-prompt[data-state="copied"] [data-glyph="check"],
+.dev-copy-prompt[data-state="copied"] .copy-done {
+  color: var(--white);
+}
+.dev-agent-prompt {
+  margin-top: 0.5rem;
+}
+.dev-agent-prompt summary {
+  display: inline-flex;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--ink-quiet);
+  text-underline-offset: 0.25em;
+}
+.dev-agent-prompt summary:hover {
+  color: var(--ink);
+}
+.dev-agent-prompt pre {
+  margin: 1rem 0 0;
+  padding: 1.25rem 1.4rem;
+  overflow-x: auto;
+  border-radius: var(--radius-l);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ——— The terminal, and the box on your own machine. ——— */
+.dev-tools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  column-gap: clamp(2rem, 5vw, 5rem);
+}
+.dev-tool {
+  display: grid;
+  align-content: start;
+  gap: 1.5rem;
+}
+.dev-tool h2 {
+  font-size: clamp(2.2rem, 3.8vw, 3.75rem);
+}
+.dev-tool .lead {
+  max-width: 32rem;
+}
+.dev-selfhost {
+  display: grid;
+  gap: 1.1rem;
+  counter-reset: run;
+}
+.dev-selfhost li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.45rem;
+}
+.dev-selfhost .dev-command {
+  justify-self: stretch;
+  justify-content: space-between;
+}
+.dev-selfhost p {
+  padding-left: 0.25rem;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+/* The box again, small: what runs on your machine, and what each part talks to. */
+.dev-machine {
+  --p: 1;
+  display: grid;
+  gap: 0.9rem;
+  margin: 0;
+}
+.machine-box {
+  position: relative;
+  padding: 2rem clamp(0.5rem, 1.6vw, 1.25rem) 1.5rem;
+  border: 5px solid var(--ink);
+  border-radius: clamp(1.5rem, 3vw, 2.25rem);
+}
+.machine-name {
+  position: absolute;
+  top: 0;
+  left: clamp(1.25rem, 2.6vw, 2rem);
+  padding: 0 0.6rem;
+  background: var(--white);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1;
+  translate: 0 calc(-50% - 2.5px);
+}
+.machine-plan {
+  position: relative;
+}
+.machine-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.machine-lines path {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.machine-services {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, 5.75rem);
+}
+/* Each name on a white ground, so the lines stop at its edge. */
+.machine-service {
+  display: grid;
+  place-self: center;
+  justify-items: center;
+  gap: 0.15rem;
+  padding: 0.3rem 0.65rem;
+  background: var(--white);
+}
+.machine-service-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.machine-service.is-database .machine-service-name {
+  font-size: 1.5rem;
+  letter-spacing: -0.03em;
+}
+.machine-port {
+  color: var(--ink-3);
+  font-size: 0.75rem;
+  font-stretch: 75%;
+}
+.dev-machine figcaption {
+  max-width: 34rem;
+  color: var(--ink-3);
+  font-size: var(--text-micro);
+}
+.motion .machine-lines path {
+  opacity: clamp(0, var(--p) * 4 - 2 - var(--i) * 0.3, 1);
+}
+.motion .machine-service {
+  opacity: clamp(0, var(--p) * 4 - 1, 1);
+}
+.dev-tool .text-link {
+  justify-self: start;
+  color: var(--ink);
+}
+
+/* ——— The close: the box becomes the mark, and the email leaves by its opening. ——— */
+.dev-close {
+  padding-top: var(--section-space);
+}
+.dev-close-panel {
+  --p: 1;
+  --draw: clamp(0, (var(--p) - 0.05) / 0.8, 1);
+  display: grid;
+  justify-items: center;
+  gap: clamp(2rem, 4vw, 3rem);
+  text-align: center;
+}
+.dev-close-mark {
+  width: clamp(7rem, 13vw, 11rem);
+  height: auto;
+  overflow: visible;
+}
+.dev-close-mark path {
+  stroke: var(--ink);
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--draw));
+}
+.dev-close-point {
+  fill: var(--pink-hot);
+}
+.motion .dev-close-point {
+  opacity: clamp(0, (var(--draw) - 0.94) * 16, 1);
+  translate: calc(clamp(0, (var(--p) - 0.88) * 8.4, 1) * 9px) 0;
+}
+.dev-close-copy {
+  display: grid;
+  justify-items: center;
+  gap: 2rem;
+}
+.dev-close-copy h2 {
+  font-size: clamp(2.6rem, 6vw, 5.5rem);
+  letter-spacing: var(--tracking-display);
+}
+.dev-close .page-actions {
+  justify-content: center;
+}
+
+/* On a phone the email rides the edge of the box drawn around the words, where offset paths can
+   follow a box's own outline. */
+@supports (offset-path: border-box) {
+  @media (max-width: 899px) {
+    .motion .hero-rider {
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: block;
+      width: 0.9rem;
+      height: 0.9rem;
+      border-radius: 50%;
+      background: var(--pink-hot);
+      offset-path: border-box;
+      offset-anchor: center;
+      offset-rotate: 0deg;
+      animation: dev-ride 14s linear infinite;
+    }
+  }
+}
+
+@keyframes dev-ride {
+  to {
+    offset-distance: 100%;
+  }
+}
+@keyframes dev-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes dev-fade {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes dev-ping {
+  from {
+    opacity: 0.9;
+    scale: 1;
+  }
+  to {
+    opacity: 0;
+    scale: 3.2;
+  }
+}
+@keyframes dev-refuse {
+  20%,
+  60% {
+    translate: -6px 0;
+  }
+  40%,
+  80% {
+    translate: 6px 0;
+  }
+}
+.dev-terms {
+  max-width: 30rem;
+}
+
+@media (max-width: 1099px) {
+  .map-wide {
+    display: none;
+  }
+  .map-tall {
+    display: block;
+    width: min(100%, 26rem);
+    margin-inline: auto;
+  }
+  .map-word {
+    font-size: 25px;
+  }
+  .map-caption,
+  .map-way {
+    font-size: 14px;
+  }
+  .map-name {
+    font-size: 21px;
+  }
+  /* The story buttons come first, so the drawing they play sits right under the thumb. */
+  .map-story {
+    display: contents;
+  }
+  .map-choices {
+    order: -1;
+  }
+  /* In the page's one column, not a second one of its own. */
+  .map-replay {
+    grid-column: 1;
+    justify-self: start;
+  }
+  .dev-steps,
+  .dev-hooks-grid,
+  .dev-ai-grid,
+  .dev-agent {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dev-step-send {
+    grid-column: 1;
+  }
+  .dev-send {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .exchange-line {
+    grid-template-columns: max-content minmax(2rem, 1fr) minmax(0, 18rem);
+  }
+}
+@media (max-width: 899px) {
+  .dev-hero-stage {
+    width: min(var(--page), 100% - var(--gutter) * 2);
+  }
+  .dev-hero-box {
+    display: none;
+  }
+  .dev-hero-copy {
+    justify-items: start;
+    text-align: left;
+  }
+  .dev-hero .page-title {
+    font-size: clamp(2.1rem, 9.6vw, 3.25rem);
+  }
+  .dev-hero .page-lead {
+    font-size: var(--text-lead);
+  }
+  .dev-hero-actions {
+    justify-content: start;
+  }
+  /* The box on end around the words: the ways in on top, the email's way out underneath. */
+  .hero-cables {
+    display: grid;
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    text-align: center;
+  }
+  .hero-cables-in {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: clamp(1rem, 4vw, 1.75rem);
+  }
+  .hero-cables-out {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding-inline: 14%;
+  }
+  .hero-cables li {
+    position: relative;
+    display: grid;
+    justify-items: center;
+  }
+  .hero-cables-in li {
+    padding-bottom: 1.9rem;
+  }
+  .hero-cables-out li {
+    padding-top: 1.9rem;
+  }
+  .hero-cables li::before,
+  .hero-cables li::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+  }
+  .hero-cables li::before {
+    width: 3px;
+    height: 1.5rem;
+    margin-left: -1.5px;
+    border-radius: 2px;
+    background: var(--ink);
+  }
+  .hero-cables li::after {
+    z-index: 2;
+    width: 0.95rem;
+    height: 0.95rem;
+    margin-left: -0.475rem;
+    border-radius: 50%;
+    background: var(--white);
+    box-shadow: inset 0 0 0 3px var(--ink);
+  }
+  .hero-cables-in li::before {
+    bottom: 0;
+  }
+  .hero-cables-in li::after {
+    bottom: calc(-0.475rem - 2.5px);
+  }
+  .hero-cables-out li::before {
+    top: 0;
+  }
+  .hero-cables-out li::after {
+    top: calc(-0.475rem - 2.5px);
+  }
+  .dev-hero-copy {
+    position: relative;
+    inset: auto;
+    padding: clamp(2rem, 7vw, 3rem) clamp(1.25rem, 5vw, 2.25rem);
+    border: 5px solid var(--ink);
+    border-radius: clamp(1.75rem, 7vw, 2.5rem);
+    background: var(--white);
+  }
+  .dev-tools {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dev-events {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .exchange-line,
+  .exchange-line.has-note {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .exchange-line > code,
+  .exchange-line.has-note > code {
+    grid-column: 1;
+  }
+  .exchange-leader {
+    display: none;
+  }
+  /* The leader, shortened: a dot and a short line into the note under its header. */
+  .exchange-note {
+    position: relative;
+    margin: 0.2rem 0 0.5rem;
+    padding: 0 0 0.25rem 1.6rem;
+  }
+  .exchange-note::before,
+  .exchange-note::after {
+    content: "";
+    position: absolute;
+    top: 0.75em;
+    background: var(--ink);
+  }
+  .exchange-note::before {
+    left: 0.2rem;
+    width: 0.95rem;
+    height: 1.5px;
+  }
+  .exchange-note::after {
+    left: 0;
+    width: 0.45rem;
+    height: 0.45rem;
+    margin-top: -0.2rem;
+    border-radius: 50%;
+  }
+  /* The ten attempts down one line, each beside its point. */
+  .retries-band {
+    border-bottom: 0;
+  }
+  .retries-band::before,
+  .retries-band::after,
+  .retries-traveler {
+    display: none !important;
+  }
+  .retries-strip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Each point's line runs on to the next one's: ink while the server is down, quiet after. */
+  .retry:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: calc(var(--dot) / 2 - 1px);
+    width: 2px;
+    height: 100%;
+    background: var(--ink);
+  }
+  .retry.is-delivered::before,
+  .retry.is-unsent::before {
+    background: var(--line-strong);
+  }
+  .retry,
+  .retry + .retry {
+    grid-template-columns: var(--dot) minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 1.1rem;
+    padding: 0.6rem 0;
+    border: 0;
+  }
+  .retry > * {
+    grid-column: auto;
+  }
+  .retry-point {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+  .retry-number {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .retry-wait {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    font-size: 1.25rem;
+  }
+  .retry-later {
+    position: static;
+    margin-left: 0.3rem;
+    padding-top: 0;
+    font-size: 0.875rem;
+  }
+  .retry-elapsed {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    padding-top: 0;
+  }
+  .retry-answer {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: end;
+    padding-top: 0.3rem;
+  }
+}
+@media (max-width: 640px) {
+  /* A step's words and code run the full width under its number and heading. */
+  .dev-step > :not(.dev-step-number, h3) {
+    grid-column: 1 / -1;
+  }
+  .dev-step-number {
+    grid-row: auto;
+  }
+  .dev-code-bar .copy-word,
+  .dev-code-bar .copy-done {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .dev-code-bar .copy-button {
+    width: 2.5rem;
+    padding: 0;
+    justify-content: center;
+  }
+  .dev-code-tabs {
+    mask-image: linear-gradient(90deg, #000 calc(100% - 1.75rem), transparent);
+  }
+  .dev-code-tabs button {
+    padding: 0 0.6rem;
+    font-size: 0.875rem;
+  }
+  .dev-code-tabs button:last-child {
+    margin-right: 1.25rem;
+  }
+  .dev-command code {
+    font-size: 0.8125rem;
+  }
+  .dev-code-panel pre {
+    padding: 1.1rem 1.15rem 1.3rem;
+    font-size: 0.8125rem;
+  }
+
+  .dev-events {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dev-event-group:nth-of-type(1) {
+    grid-row: auto;
+  }
+  .test-addresses tbody th {
+    width: 7.5rem;
+  }
+}

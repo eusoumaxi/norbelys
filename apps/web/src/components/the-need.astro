@@ -1,0 +1,79 @@
+---
+import Glyph from "./glyph.astro";
+import Marked from "./marked.astro";
+import type { GlyphName } from "../glyphs";
+
+/**
+ * Why a salesperson is here: the cold email they're tired of, struck through with the mark's
+ * pink line as it scrolls past, and what replaces it.
+ */
+interface Row {
+  readonly cliche: string;
+  readonly fix: string;
+  readonly detail: string;
+  readonly glyph: GlyphName;
+}
+const rows: readonly Row[] = [
+  {
+    cliche: "Hi {FirstName}, hope you’re well!",
+    detail: "Write it once. Merge fields and an AI first line make every email read like you wrote it just for them.",
+    fix: "Personal to every prospect.",
+    glyph: "ai",
+  },
+  {
+    cliche: "Just bumping this up… (4)",
+    detail: "Follow-ups go out on schedule and stop the second someone replies. No awkward fourth email.",
+    fix: "Follow-ups that know when to quit.",
+    glyph: "meetings",
+  },
+  {
+    cliche: "Why is it all landing in spam?",
+    detail: "Daily limits, business hours and a gentle warm-up keep your sender reputation clean.",
+    fix: "Built to protect your domain.",
+    glyph: "warmup",
+  },
+  {
+    cliche: "Wait, who replied? Which inbox?",
+    detail: "Replies from every mailbox land in one place, with the hot ones on top.",
+    fix: "Every reply in one inbox.",
+    glyph: "inbox",
+  },
+];
+---
+
+<section id="the-need" class="need section" aria-labelledby="need-title">
+  <div class="container">
+    <div class="need-head">
+      <h2 id="need-title" data-inview>
+        <span class="line">Cold email works.</span>
+        <span class="line">When it doesn’t</span>
+        <span class="line">feel <Marked d="M3 8C30 4 68 3.5 97 6">cold</Marked><span class="pink">.</span></span>
+      </h2>
+      <p class="lead need-lead">
+        Your prospects can spot a mass blast from the subject line. The teams that win don’t send
+        more email. They send better email, at a human pace, and they never miss a reply.
+      </p>
+    </div>
+    <ol class="need-rows">
+      {
+        rows.map((row, index) => (
+          <li class="need-row" data-scene="enter" style={`--k: ${index}`}>
+            <p class="need-cliche">
+              <span class="need-cliche-card">
+                <s>{row.cliche}</s>
+                <svg class="need-strike" viewBox="0 0 400 40" preserveAspectRatio="none" aria-hidden="true">
+                  <path d="M6 24C90 14 210 26 394 12" pathLength="1" />
+                </svg>
+              </span>
+            </p>
+            <div class="need-fix">
+              <Glyph name={row.glyph} class="need-glyph" />
+              <h3>{row.fix}</h3>
+              <p>{row.detail}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>

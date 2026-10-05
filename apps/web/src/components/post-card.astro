@@ -1,0 +1,21 @@
+---
+import PostCover from "./post-cover.astro";
+import PostMeta from "./post-meta.astro";
+import { postUrl } from "../posts";
+import type { Post } from "../posts";
+
+/** A post in a list: its cover, then what it's about. The title is the link; the card is its target. */
+interface Props {
+  post: Post;
+}
+const { post } = Astro.props;
+---
+
+<article class="post-card glyph-host">
+  <PostCover cover={post.data.cover} />
+  <div class="post-card-text">
+    <PostMeta post={post} />
+    <h3 class="post-card-title"><a href={postUrl(post)}>{post.data.title}</a></h3>
+    <p class="post-card-summary">{post.data.description}</p>
+  </div>
+</article>

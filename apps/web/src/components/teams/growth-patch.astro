@@ -1,0 +1,255 @@
+---
+import CodeWindow from "../code-window.astro";
+import Glyph from "../glyph.astro";
+import { PAGES } from "../../links";
+
+/**
+ * The desk turned round: its back panel, one output jack for each of the 19 webhook events
+ * Norbelys signs and sends, each labelled with the event's real name, the way gear prints its
+ * legends. Pink patch cables run from a few of them to the places a growth team keeps its own
+ * data: a warehouse, a CRM and its alerts, drawn as plain objects with nobody's logo. Which event
+ * goes where is an example (any endpoint can take any of the 19), and a CRM gets them through the
+ * team's own endpoint, since there is no built-in CRM sync. Beside the panel, the rest of the
+ * stack: the REST API, the SDKs, the CLI and the MCP server, with the developers page's first call.
+ *
+ * The cables are one stretched SVG under the panel: a jack's x is the centre of its column (the
+ * panel's 19 equal columns) and a destination's the centre of its third, so they meet at any width,
+ * and `vector-effect` keeps the line weight. On a phone the panel stands on end, its jacks in a
+ * column, and a second SVG, measured in the rems below, loops the cables down its left side.
+ */
+type End = "warehouse" | "crm" | "alerts";
+interface Output {
+  readonly event: string;
+  /** Where its cable runs, in this example patch. */
+  readonly to?: End;
+}
+
+/** The 19 events, in the API's own order. */
+const outputs: readonly Output[] = [
+  { event: "message.queued" },
+  { event: "message.sent", to: "warehouse" },
+  { event: "message.failed" },
+  { event: "message.uncertain" },
+  { event: "message.cancelled" },
+  { event: "message.snippets_fallback" },
+  { event: "delivery_event.recorded", to: "warehouse" },
+  { event: "inbound_message.received", to: "crm" },
+  { event: "enrollment.stopped", to: "crm" },
+  { event: "enrollment.completed" },
+  { event: "campaign.status_changed", to: "alerts" },
+  { event: "connection.health_changed", to: "alerts" },
+  { event: "import.completed" },
+  { event: "export.completed" },
+  { event: "suppression.created", to: "crm" },
+  { event: "ai.budget_warning" },
+  { event: "ai.budget_exceeded" },
+  { event: "endpoint.test" },
+  { event: "webhook_endpoint.disabled" },
+];
+/** The reply's cable carries a pulse now and then. */
+const REPLY = "inbound_message.received";
+
+const ends: readonly { readonly id: End; readonly name: string; readonly gets: string }[] = [
+  { gets: "Sends, deliveries, bounces", id: "warehouse", name: "Your warehouse" },
+  { gets: "Replies, stops, unsubscribes", id: "crm", name: "Your CRM" },
+  { gets: "Campaign status, inbox health", id: "alerts", name: "Your alerts" },
+];
+/** How far each drawn thing's jack stands above its top edge. */
+const necks: Record<End, number> = { alerts: 16, crm: 15, warehouse: 11 };
+
+const facts = [
+  {
+    lead: "19 signed events,",
+    text: "retried while your server is down. Replay an endpoint’s history or rotate its secret from the API.",
+  },
+  { lead: "A REST API", text: "with idempotency keys and cursor pagination, at 6,000 requests a minute per workspace." },
+  { lead: "TypeScript and Python SDKs", text: "that walk every page for you." },
+  { lead: "A CLI,", text: "with every resource as a command." },
+  { lead: "An MCP server,", text: "so Claude and other assistants work with only the scopes you grant." },
+] as const;
+
+/** The developers page's first call, with the list given a name so it fits the column. */
+const samples = [
+  {
+    code: `import { Norbelys } from "@norbelys/sdk";
+
+const norbelys = new Norbelys(); // reads NORBELYS_API_KEY
+const campaigns = norbelys.campaigns.list({ limit: 20 });
+
+for await (const campaign of campaigns) {
+  console.log(campaign.name, campaign.status);
+}`,
+    label: "TypeScript",
+    lang: "typescript",
+  },
+  {
+    code: `from norbelys import Norbelys
+
+with Norbelys() as norbelys:  # reads NORBELYS_API_KEY
+    campaigns = norbelys.campaigns.iter(query={"limit": 20})
+    for campaign in campaigns:
+        print(campaign["name"], campaign["status"])`,
+    label: "Python",
+    lang: "python",
+  },
+  {
+    code: `norbelys login
+norbelys campaigns list --limit 20 --json`,
+    label: "CLI",
+    lang: "bash",
+  },
+] as const;
+
+const patched = outputs.flatMap((output, index) => (output.to ? [{ ...output, end: ends.findIndex((end) => end.id === output.to), index }] : []));
+
+/** Wide: 100 units a jack across, 0 at the jacks' centres and 1000 at the destinations'. */
+const WIDE = outputs.length * 100;
+const wide = patched.map(({ end, event, index }) => {
+  const from = index * 100 + 50;
+  const to = (WIDE * (2 * end + 1)) / (2 * ends.length);
+  return { d: `M${from} 0C${from} 560 ${Math.round(to)} 420 ${Math.round(to)} 1000`, event };
+});
+
+/**
+ * Tall (phones), in rems: the lane the cables hang in, the panel's border, inner edge and jack, a
+ * jack row, the space above the first row and below the last, the fall to the destinations and a
+ * destination row. The stylesheet reads the same numbers from the figure's style.
+ */
+const TALL = { edge: 0.3125, end: 4, endGap: 0.5, fall: 2.5, foot: 1, head: 2.75, lane: 3.25, pad: 0.75, row: 1.625, socket: 1.25 } as const;
+const REM = 16;
+const tallX = (TALL.lane + TALL.edge + TALL.pad + TALL.socket / 2) * REM;
+const panelRems = TALL.head + outputs.length * TALL.row + TALL.foot;
+const jackY = (index: number): number => (TALL.head + (index + 0.5) * TALL.row) * REM;
+const endY = (end: number): number => (panelRems + TALL.fall + end * (TALL.end + TALL.endGap) + TALL.end / 2) * REM;
+const tallWidth = tallX + REM;
+const tallHeight = endY(ends.length - 1) + REM;
+/** Each cable bows into the lane, the longer ones deeper, so the loops nest. */
+const tall = patched.map(({ end, event, index }) => {
+  const from = jackY(index);
+  const to = endY(end);
+  const bow = Math.min(tallX - 8, 34 + (to - from) * 0.075);
+  return { d: `M${tallX} ${from}C${tallX - bow} ${from} ${tallX - bow} ${to} ${tallX} ${to}`, event };
+});
+const tallStyle = [
+  `--lane: ${TALL.lane}rem`,
+  `--tall-edge: ${TALL.edge}rem`,
+  `--tall-pad: ${TALL.pad}rem`,
+  `--tall-socket: ${TALL.socket}rem`,
+  `--head: ${TALL.head}rem`,
+  `--row: ${TALL.row}rem`,
+  `--foot: ${TALL.foot}rem`,
+  `--fall: ${TALL.fall}rem`,
+  `--end: ${TALL.end}rem`,
+  `--end-gap: ${TALL.endGap}rem`,
+  `--tall-w: ${tallWidth / REM}rem`,
+  `--tall-h: ${tallHeight / REM}rem`,
+].join("; ");
+
+const routes = ends
+  .map((end) => `${patched.filter((output) => output.to === end.id).map((output) => output.event).join(", ")} to ${end.name.replace("Your", "your")}`)
+  .join("; ");
+---
+
+<section id="stack" class="page-section container patch-section" aria-labelledby="stack-title">
+  <div class="split-head">
+    <h2 id="stack-title">Patch it into your stack<span class="pink">.</span></h2>
+    <p class="lead">
+      Every send, reply, bounce and stop leaves the back of the desk as a signed event. Plug in
+      the tools you already run, or drive the whole thing from code.
+    </p>
+  </div>
+
+  <div class="patch-layout">
+    <figure class="patch" style={tallStyle} data-inview>
+      <div class="patch-panel">
+        <p class="patch-plate" aria-hidden="true"><span>Outputs</span><span>Signed</span></p>
+        <ol class="patch-jacks" aria-label="The 19 webhook events">
+          {
+            outputs.map((output, index) => (
+              <li class:list={["patch-jack", { "is-patched": output.to }]} style={`--i: ${index}`}>
+                <span class="patch-name">{output.event}</span>
+                <span class="patch-socket" aria-hidden="true" />
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+
+      <div class="patch-run" aria-hidden="true">
+        <svg class="patch-cables patch-wide" viewBox={`0 0 ${WIDE} 1000`} preserveAspectRatio="none">
+          {wide.map((cable, order) => <path class="patch-halo" d={cable.d} pathLength="1" style={`--c: ${order}`} />)}
+          {wide.map((cable, order) => <path class="patch-cable" d={cable.d} pathLength="1" style={`--c: ${order}`} />)}
+          {wide.filter((cable) => cable.event === REPLY).map((cable) => <path class="patch-pulse" d={cable.d} pathLength="1" />)}
+        </svg>
+      </div>
+      <svg class="patch-cables patch-tall" viewBox={`0 0 ${tallWidth} ${tallHeight}`} aria-hidden="true">
+        {tall.map((cable, order) => <path class="patch-halo" d={cable.d} pathLength="1" style={`--c: ${order}`} />)}
+        {tall.map((cable, order) => <path class="patch-cable" d={cable.d} pathLength="1" style={`--c: ${order}`} />)}
+        {tall.filter((cable) => cable.event === REPLY).map((cable) => <path class="patch-pulse" d={cable.d} pathLength="1" />)}
+      </svg>
+
+      <ul class="patch-ends">
+        {
+          ends.map((end, order) => (
+            <li class="patch-end" style={`--c: ${order}`}>
+              <span class="patch-socket" aria-hidden="true" />
+              <svg class="patch-thing" viewBox="0 0 64 60" aria-hidden="true">
+                <path class="patch-neck" d={`M32 0V${necks[end.id]}`} />
+                {end.id === "warehouse" && (
+                  <>
+                    <path d="M10 18V46C10 50.4 19.8 54 32 54S54 50.4 54 46V18" />
+                    <path d="M10 32C10 36.4 19.8 40 32 40S54 36.4 54 32" />
+                    <ellipse cx="32" cy="18" rx="22" ry="7" />
+                  </>
+                )}
+                {end.id === "crm" && (
+                  <>
+                    <rect x="6" y="15" width="52" height="38" rx="7" />
+                    <circle cx="22" cy="30" r="5.5" />
+                    <path d="M13 44C14.5 39.5 18 37.5 22 37.5S29.5 39.5 31 44" />
+                    <path d="M38 28H50M38 37H46" />
+                  </>
+                )}
+                {end.id === "alerts" && (
+                  <>
+                    <rect x="10" y="44" width="44" height="10" rx="4" />
+                    <path d="M18 44V30A14 14 0 0 1 46 30V44" />
+                    <path d="M27 30A5 5 0 0 1 32 25" />
+                    <path d="M8 22L12 25M56 22L52 25M14 10L17 14M50 10L47 14" />
+                  </>
+                )}
+              </svg>
+              <span class="patch-end-name">{end.name}</span>
+              <span class="patch-end-gets">{end.gets}</span>
+            </li>
+          ))
+        }
+      </ul>
+      <figcaption class="sr-only">
+        The back of the desk: an output for each of the 19 webhook events. In this example patch,
+        {routes}.
+      </figcaption>
+    </figure>
+
+    <div class="patch-side">
+      <ul class="patch-facts">
+        {
+          facts.map((fact) => (
+            <li class="patch-fact">
+              <strong>{fact.lead}</strong> {fact.text}
+            </li>
+          ))
+        }
+      </ul>
+      <CodeWindow id="growth-code" samples={samples} class="patch-code" />
+      <p class="patch-more">
+        <a class="text-link" href={PAGES.developers}>Everything for developers <Glyph name="arrow" /></a>
+      </p>
+    </div>
+  </div>
+
+  <p class="fine-print patch-note">
+    An example patch: any endpoint can take any of the 19 events. There’s no built-in CRM sync, so
+    your CRM gets them through an endpoint of your own.
+  </p>
+</section>

@@ -1,0 +1,213 @@
+---
+import Glyph from "./glyph.astro";
+
+/**
+ * The rules of the road: every control a campaign has, each as a card with a small piece of the
+ * product drawn in it, instead of a table. Wide and narrow cards alternate, and each drawing plays
+ * as its card arrives. Every default is the product's own; people, messages and numbers are
+ * examples.
+ */
+const days = ["M", "T", "W", "T", "F", "S", "S"] as const;
+/** The sending window drawn as a week: twelve hours a day, 7 AM to 7 PM, open Mon–Fri 9 to 5. */
+const hours = Array.from({ length: 12 }, (_, index) => index + 7);
+const sends = ["9:00", "9:10", "9:20", "9:30"] as const;
+/** A new inbox's ramp: 10% of a 50-a-day cap on day 1, the whole cap on day 8. */
+const ramp = Array.from({ length: 8 }, (_, index) => 0.1 + (index * 0.9) / 7);
+const triage = [
+  { by: "Rules", from: "Mail Delivery Subsystem", tag: "Bounce", text: "Address not found.", tone: "quiet" },
+  { by: "Rules", from: "Chen Li", tag: "Out of office", text: "I’m out of the office until the 14th.", tone: "quiet" },
+  { by: "AI", from: "Jonas Weber", tag: "Person · neutral", text: "Not this quarter. Try me in January.", tone: "pink" },
+  { by: "AI, unsure", from: "Priya Shah", tag: "Needs review", text: "Received, thanks.", tone: "ink" },
+] as const;
+const campaigns = ["Q4 partners", "Webinar follow-up", "Product launch"] as const;
+const addresses = [
+  ["alex@northwind.co", true],
+  ["sam@northwnd.co", false],
+  ["jo@acme.com", true],
+] as const;
+---
+
+<section id="rules" class="page-section container" aria-labelledby="rules-title">
+  <div class="split-head">
+    <h2 id="rules-title">The rules of the road.</h2>
+    <p class="lead">Every control a campaign has, drawn. People, messages and numbers here are examples.</p>
+  </div>
+  <div class="tiles tiles-three">
+    <article class="tile tile-wide" data-scene="enter">
+      <h3>Sends while they’re at their desk.</h3>
+      <p>Pick the days and hours, for the campaign and for each inbox, in one time zone. Off until you set one; the app suggests Mon–Fri, 9 to 5.</p>
+      <div class="tile-scene scene-window">
+        <div class="window-grid" role="img" aria-label="A week from Monday to Sunday, 7 AM to 7 PM: sending is open Monday to Friday, 9 AM to 5 PM.">
+          {days.map((day) => <span class="window-day">{day}</span>)}
+          {
+            hours.map((hour) =>
+              days.map((_, day) => (
+                <i
+                  class:list={{ "is-open": day < 5 && hour >= 9 && hour < 17, "is-weekend": day > 4 }}
+                  style={`--k: ${day}`}
+                />
+              ))
+            )
+          }
+        </div>
+        <div class="window-legend">
+          <p class="window-hours"><strong>Mon–Fri</strong> 9 AM – 5 PM</p>
+          <p class="tile-chip glyph-host"><Glyph name="meetings" /> New York time</p>
+          <p class="window-note">The campaign’s window and the inbox’s must both be open before anything goes out.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="tile" data-scene="enter">
+      <h3>Fifty a day, ten minutes apart.</h3>
+      <p>Each inbox sends at most 50 cold emails a day, 10 minutes apart, and stays under Google’s and Microsoft’s limits.</p>
+      <div class="tile-scene scene-cap">
+        <div class="cap-inbox">
+          <span class="tile-face" aria-hidden="true">A</span>
+          <span class="cap-address">alex@yourco.com</span>
+          <span class="cap-count"><strong>32</strong> / 50 today</span>
+        </div>
+        <span class="cap-meter" aria-hidden="true"><i></i></span>
+        <ol class="cap-line" aria-label="Sends at 9:00, 9:10, 9:20 and 9:30">
+          {sends.map((time, index) => <li style={`--k: ${index}`}>{time}</li>)}
+        </ol>
+      </div>
+    </article>
+
+    <article class="tile" data-scene="enter">
+      <h3>Let the replies pick the winner.</h3>
+      <p>Give a step up to 50 versions. Split them evenly, by weight, or let Norbelys pick the winner by replies, clicks or opens.</p>
+      <div class="tile-scene scene-ab">
+        <div class="ab-row">
+          <span class="ab-tag" aria-hidden="true">A</span>
+          <span class="ab-subject">Quick idea for Northwind</span>
+          <span class="ab-count">12 replies</span>
+          <span class="ab-bar" aria-hidden="true"><i style="--w: 0.46"></i></span>
+        </div>
+        <div class="ab-row is-winner">
+          <span class="ab-tag" aria-hidden="true">B</span>
+          <span class="ab-subject">Alex, a quick question</span>
+          <span class="ab-count">21 replies</span>
+          <span class="ab-bar" aria-hidden="true"><i style="--w: 0.82"></i></span>
+        </div>
+        <p class="tile-chip tile-chip-pink"><Glyph name="check" /> Version B wins on replies</p>
+      </div>
+    </article>
+
+    <article class="tile tile-wide" data-scene="enter">
+      <h3>Rules first, then AI, then you.</h3>
+      <p>Rules catch bounces, unsubscribes and most auto-replies. AI only weighs in where a person may have written, and whatever it isn’t sure about waits for you in Needs review.</p>
+      <div class="tile-scene scene-triage">
+        <ul class="triage-list">
+          {
+            triage.map((reply, index) => (
+              <li style={`--k: ${index}`}>
+                <span class="triage-from">{reply.from}</span>
+                <span class="triage-text">{reply.text}</span>
+                <span class:list={["triage-by", { "triage-by-ai": reply.by !== "Rules" }]}>{reply.by}</span>
+                <span class:list={["triage-tag", `triage-tag-${reply.tone}`]}>{reply.tag}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <p class="tile-chip glyph-host"><Glyph name="ai" /> Sorting with AI is off until you turn it on</p>
+      </div>
+    </article>
+
+    <article class="tile tile-wide" data-scene="enter">
+      <h3>One reply, and they’re out of everything.</h3>
+      <p>By default a reply from a person stops them in every campaign. Stop their colleagues at the same company domain too, if you like.</p>
+      <div class="tile-scene scene-stop">
+        <div class="stop-reply">
+          <span class="tile-face tile-face-pink" aria-hidden="true">A</span>
+          <div>
+            <strong>Alex Morgan</strong>
+            <p>Sounds good. Tuesday at 10?</p>
+          </div>
+        </div>
+        <Glyph name="arrow" class="stop-arrow" />
+        <ul class="stop-campaigns">
+          {
+            campaigns.map((campaign, index) => (
+              <li style={`--k: ${index}`}>
+                <span>{campaign}</span>
+                <span class="tile-chip tile-chip-pink">Stopped</span>
+              </li>
+            ))
+          }
+          <li class="stop-colleagues">
+            <span>Colleagues at northwind.com</span>
+            <span class="tile-switch">Off</span>
+          </li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="tile" data-scene="enter">
+      <h3>New inboxes start slow.</h3>
+      <p>Turn the ramp on and a new inbox starts at 10% of its cap, then grows to the full cap over 8 clean days.</p>
+      <div class="tile-scene scene-ramp">
+        <div class="ramp-bars" role="img" aria-label="Eight days of sending, from 5 emails on day 1 to 50 on day 8.">
+          {ramp.map((share, index) => <i style={`--h: ${share.toFixed(3)}; --k: ${index}`} />)}
+        </div>
+        <div class="ramp-axis" aria-hidden="true">
+          <span>Day 1 · 5</span>
+          <span>Day 8 · 50</span>
+        </div>
+        <p class="tile-chip">Off until you turn it on</p>
+      </div>
+    </article>
+
+    <article class="tile" data-scene="enter">
+      <h3>Out of office isn’t a no.</h3>
+      <p>Auto-replies and out-of-office notes are recognized and set aside, so the sequence just carries on.</p>
+      <div class="tile-scene scene-away">
+        <div class="away-bubble">
+          <strong>Chen Li</strong>
+          <p>I’m out until the 14th. Back with answers then.</p>
+        </div>
+        <p class="away-result">
+          <span class="tile-chip">Set aside</span>
+          <Glyph name="arrow" />
+          Next step goes out on schedule
+        </p>
+      </div>
+    </article>
+
+    <article class="tile" data-scene="enter">
+      <h3>A first line for every person.</h3>
+      <p>Switch on Personalize with AI for a step and it writes the opening from the fields you allow. If anything goes wrong, your own text goes out.</p>
+      <div class="tile-scene scene-line">
+        <ul class="line-fields">
+          <li>Company · Northwind</li>
+          <li>News · Opened in Lisbon</li>
+        </ul>
+        <div class="line-out">
+          <span class="line-tag glyph-host"><Glyph name="ai" /> AI first line</span>
+          <p><mark>Congrats on the Lisbon launch, Alex.</mark></p>
+        </div>
+      </div>
+    </article>
+
+    <article class="tile" data-scene="enter">
+      <h3>Checked before it sends.</h3>
+      <p>Every address gets a syntax and mail-server check right before each send, and every email carries a one-click unsubscribe that never expires.</p>
+      <div class="tile-scene scene-check">
+        <ul class="check-list">
+          {
+            addresses.map(([address, ok], index) => (
+              <li style={`--k: ${index}`}>
+                <span>{address}</span>
+                <span class:list={["check-result", { "is-bad": !ok }]}>
+                  <Glyph name={ok ? "check" : "close"} />
+                  {ok ? "Sent" : "No mail server"}
+                </span>
+              </li>
+            ))
+          }
+        </ul>
+        <p class="check-unsubscribe"><span class="check-link">Unsubscribe</span> One click, never expires</p>
+      </div>
+    </article>
+  </div>
+</section>

@@ -1,0 +1,257 @@
+---
+import ArrowButton from "../arrow-button.astro";
+import Glyph from "../glyph.astro";
+import Marked from "../marked.astro";
+import { START } from "../../links";
+
+/**
+ * The agency page's opening: Friday's stack of client reports, one sheet per client, each one a
+ * client's workspace. The sheets are fanned behind each other, a file tab per client along the
+ * top edge. The front report shows the client's week: replies by week as a thick ink line with
+ * the latest week a pink point, a note in pink pen, three figures and the inboxes that sent it.
+ * The script (scripts/stack.ts) deals the top sheet to the back on a tap, twice by itself while
+ * the stack is in view, and a tab brings its client to the front. Without it, Northwind's report
+ * sits on top. The agency, its clients and every number are examples.
+ */
+interface Report {
+  readonly client: string;
+  readonly inboxes: number;
+  /** New inboxes still on the optional ramp. */
+  readonly ramping: number;
+  readonly sent: number;
+  readonly replies: number;
+  readonly interested: number;
+  /** Human replies in weeks 34 to 41; `null` before the client started. */
+  readonly weeks: readonly (number | null)[];
+  /** The chart's top line, a round number above the best week. */
+  readonly ceiling: number;
+  /** The note in pink pen, and what it rings: the latest week's point or one of the figures. */
+  readonly note: string;
+  readonly ring: "week" | "replies" | "interested";
+}
+
+const reports: readonly Report[] = [
+  {
+    ceiling: 40,
+    client: "Northwind",
+    inboxes: 6,
+    interested: 11,
+    note: "best week yet",
+    ramping: 0,
+    replies: 38,
+    ring: "week",
+    sent: 1240,
+    weeks: [19, 22, 21, 26, 24, 29, 33, 38],
+  },
+  {
+    ceiling: 30,
+    client: "Lumen Labs",
+    inboxes: 4,
+    interested: 9,
+    note: "most so far",
+    ramping: 0,
+    replies: 24,
+    ring: "interested",
+    sent: 905,
+    weeks: [11, 15, 14, 18, 17, 20, 19, 24],
+  },
+  {
+    ceiling: 30,
+    client: "Kraftwerk",
+    inboxes: 8,
+    interested: 6,
+    note: "up every week",
+    ramping: 3,
+    replies: 21,
+    ring: "week",
+    sent: 1310,
+    weeks: [null, null, 4, 9, 12, 15, 17, 21],
+  },
+  {
+    ceiling: 40,
+    client: "Solano Foods",
+    inboxes: 5,
+    interested: 12,
+    note: "short week",
+    ramping: 0,
+    replies: 30,
+    ring: "week",
+    sent: 960,
+    weeks: [31, 27, 34, 22, 29, 26, 33, 30],
+  },
+  {
+    ceiling: 20,
+    client: "Brightline",
+    inboxes: 3,
+    interested: 5,
+    note: "best so far",
+    ramping: 0,
+    replies: 17,
+    ring: "replies",
+    sent: 700,
+    weeks: [9, 12, 10, 13, 11, 14, 15, 17],
+  },
+];
+
+const WEEKS = [34, 35, 36, 37, 38, 39, 40, 41] as const;
+
+/** The chart's frame, in its drawing's units: the weeks run left to right, replies upwards. */
+const CHART = { base: 214, height: 230, left: 14, right: 530, top: 26, width: 560 } as const;
+const round = (value: number): number => Math.round(value * 10) / 10;
+const xOf = (week: number): number => round(CHART.left + (week * (CHART.right - CHART.left)) / (WEEKS.length - 1));
+const yOf = (value: number, ceiling: number): number => round(CHART.base - (value / ceiling) * (CHART.base - CHART.top));
+
+/** A loop drawn round a point by hand: a little more than once round, never quite closed. */
+const loop = (cx: number, cy: number, rx: number, ry: number): string => {
+  const at = (degrees: number, grow: number): string => {
+    const angle = (degrees * Math.PI) / 180;
+    return `${round(cx + (rx + grow) * Math.cos(angle))} ${round(cy + (ry + grow * 0.8) * Math.sin(angle))}`;
+  };
+  return `M${at(-34, 4)}A${rx} ${ry} 0 0 1 ${at(140, 0)}A${rx} ${ry} 0 0 1 ${at(318, -1)}A${rx + 3} ${ry + 3} 0 0 1 ${at(14, 6)}`;
+};
+
+/** The same loop, wider, round a figure the note is about. */
+const FIGURE_RING = loop(60, 36, 50, 27);
+const number = new Intl.NumberFormat("en-US");
+
+const sheets = reports.map((report, index) => {
+  const points = report.weeks.flatMap((value, week) =>
+    value === null ? [] : [{ x: xOf(week), y: yOf(value, report.ceiling) }]
+  );
+  const line = points.map((point, step) => `${step === 0 ? "M" : "L"}${point.x} ${point.y}`).join("");
+  const last = points.at(-1) ?? { x: CHART.right, y: CHART.base };
+  // The note hangs under the week it rings, where a rising line leaves the paper clear.
+  return {
+    ...report,
+    figures: [
+      { label: "Sent", ringed: false, value: number.format(report.sent) },
+      { label: "Replies", ringed: report.ring === "replies", value: String(report.replies) },
+      { label: "Interested", ringed: report.ring === "interested", value: String(report.interested) },
+    ],
+    index,
+    last,
+    line,
+    noteAt: {
+      right: round(((CHART.width - last.x - 8) / CHART.width) * 100),
+      top: round(((last.y + 66) / CHART.height) * 100),
+    },
+    ringPath: loop(last.x, last.y, 25, 21),
+  };
+});
+---
+
+<section class="page-hero stack-hero" aria-labelledby="agencies-title" data-stack>
+  <div class="container stack-grid">
+    <div class="stack-copy">
+      <h1 id="agencies-title" class="page-title" data-inview>
+        <span class="line">Every client</span>
+        <span class="line">in their <Marked>own</Marked></span>
+        <span class="line">workspace<span class="pink">.</span></span>
+      </h1>
+      <p class="lead page-lead">
+        Run outreach for every client from one login. Each workspace keeps its own mailboxes,
+        people, campaigns and keys, so nothing crosses between brands and Friday’s numbers hold
+        up.
+      </p>
+      <div class="page-actions">
+        <ArrowButton href={START}>Start for $20/mo</ArrowButton>
+        <a class="button button-ghost" href="#apart">See how they’re kept apart</a>
+      </div>
+      <p class="fine-print">The agency, its clients and the numbers on these reports are examples.</p>
+    </div>
+
+    <div class="stack-stage">
+      <div class="stack" role="group" aria-label="This week’s client reports, one per workspace">
+        {
+          sheets.map((sheet) => (
+            <article
+              class:list={["stack-sheet", { "is-front": sheet.index === 0 }]}
+              style={`--slot: ${sheet.index}; --tab: ${sheet.index}`}
+              aria-label={`${sheet.client}, week 41`}
+              data-stack-sheet
+            >
+              <button class="stack-tab" type="button" aria-pressed={sheet.index === 0 ? "true" : "false"} data-stack-tab>
+                <span class="stack-tab-mark" aria-hidden="true">
+                  {sheet.client.charAt(0)}
+                </span>
+                <span class="stack-tab-name">{sheet.client}</span>
+              </button>
+              <div class="report-page" aria-hidden={sheet.index === 0 ? undefined : "true"}>
+                <header class="report-head">
+                  <div class="report-title">
+                    <p class="report-client">{sheet.client}</p>
+                    <p class="report-week">Outbound report · Week 41</p>
+                  </div>
+                  <p class="report-by">
+                    <span>Prepared by</span> Acme Growth
+                  </p>
+                </header>
+                <figure class="report-chart">
+                  <figcaption class="report-chart-title">Human replies by week</figcaption>
+                  <div class="report-plot">
+                    <svg viewBox={`0 0 ${CHART.width} ${CHART.height}`} fill="none" aria-hidden="true">
+                      <path class="report-grid" d={`M${CHART.left} ${CHART.top}H${CHART.right}`} />
+                      <path class="report-grid" d={`M${CHART.left} ${(CHART.top + CHART.base) / 2}H${CHART.right}`} />
+                      <path class="report-base" d={`M${CHART.left} ${CHART.base}H${CHART.right}`} />
+                      <path class="report-line" d={sheet.line} pathLength="1" />
+                      <circle class="report-point" cx={sheet.last.x} cy={sheet.last.y} r="10" />
+                      {sheet.ring === "week" && <path class="report-ring" d={sheet.ringPath} pathLength="1" />}
+                    </svg>
+                    <span class="report-scale" style={`--y: ${(CHART.top / CHART.height) * 100}%`} aria-hidden="true">
+                      {sheet.ceiling}
+                    </span>
+                    {sheet.ring === "week" && (
+                      <p class="report-note" style={`--right: ${sheet.noteAt.right}%; --top: ${sheet.noteAt.top}%`}>
+                        <svg class="report-arrow" viewBox="0 0 40 48" fill="none" aria-hidden="true">
+                          <path d="M8 44C10 30 18 16 30 6M19 7L30 5L31 16" pathLength="1" />
+                        </svg>
+                        {sheet.note}
+                      </p>
+                    )}
+                  </div>
+                  <ol class="report-weeks" aria-hidden="true">
+                    {WEEKS.map((week) => (
+                      <li>{week === 34 ? `Wk ${week}` : week}</li>
+                    ))}
+                  </ol>
+                </figure>
+                <dl class="report-figures">
+                  {sheet.figures.map((figure) => (
+                    <div class:list={["report-figure", { "is-ringed": figure.ringed }]}>
+                      <dt>{figure.label}</dt>
+                      <dd>
+                        <span class="report-figure-value numeric">
+                          {figure.value}
+                          {figure.ringed && (
+                            <svg class="report-figure-ring" viewBox="0 0 120 72" fill="none" aria-hidden="true">
+                              <path d={FIGURE_RING} pathLength="1" />
+                            </svg>
+                          )}
+                        </span>
+                        {figure.ringed && <span class="report-figure-note">{sheet.note}</span>}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                <p class="report-inboxes">
+                  <span class="report-dots" aria-hidden="true">
+                    {Array.from({ length: sheet.inboxes }, (_, inbox) => (
+                      <span class:list={["report-dot", { "is-ramping": inbox >= sheet.inboxes - sheet.ramping }]} />
+                    ))}
+                  </span>
+                  {sheet.inboxes} inboxes · {sheet.ramping > 0 ? `${sheet.ramping} still on the ramp` : "all working"}
+                </p>
+              </div>
+            </article>
+          ))
+        }
+        <button class="stack-deal" type="button" tabindex="-1" aria-hidden="true" data-stack-deal></button>
+      </div>
+      <button class="stack-next" type="button" data-stack-next>
+        Next client
+        <Glyph name="arrow" />
+      </button>
+      <p class="sr-only" aria-live="polite" data-stack-status></p>
+    </div>
+  </div>
+</section>

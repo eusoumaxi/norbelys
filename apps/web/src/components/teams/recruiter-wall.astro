@@ -1,0 +1,107 @@
+---
+/**
+ * The hiring team as badges on a wall: one rail, a peg for each person, a lanyard and a
+ * conference badge with their name big and their role in the strip at its foot. Four roles over
+ * one workspace: the owner who can hand it over, the head of talent who keeps the keys, the
+ * recruiters who run the campaigns, and the hiring managers who read every reply and change
+ * nothing. The one reading a reply right now wears the pink strip. The badges swing in as the
+ * wall arrives and sway when pointed at. Names and titles are illustrative.
+ */
+type Role = "Owner" | "Admin" | "Member" | "Viewer";
+interface Badge {
+  readonly name: string;
+  readonly title: string;
+  readonly role: Role;
+  /** What the role lets them do, in their words. */
+  readonly can: string;
+  /** How far below the rail the badge hangs (rem), and the angle it settled at. */
+  readonly drop: number;
+  readonly tilt: number;
+  /** What they're reading right now, if anything. */
+  readonly reading?: string;
+}
+const badges: readonly Badge[] = [
+  {
+    can: "Everything, including handing the workspace over or deleting it.",
+    drop: 2.25,
+    name: "Nadia",
+    role: "Owner",
+    tilt: -2,
+    title: "VP of People",
+  },
+  {
+    can: "Manages members, keys and settings.",
+    drop: 4.25,
+    name: "Kim",
+    role: "Admin",
+    tilt: 1.5,
+    title: "Head of talent",
+  },
+  {
+    can: "Runs campaigns and works the inbox.",
+    drop: 3,
+    name: "Sam",
+    role: "Member",
+    tilt: -1,
+    title: "Recruiter",
+  },
+  {
+    can: "Runs campaigns, limited to her own inboxes.",
+    drop: 5,
+    name: "Ana",
+    role: "Member",
+    tilt: 2,
+    title: "Recruiter",
+  },
+  {
+    can: "Reads every reply. Changes nothing.",
+    drop: 3.25,
+    name: "Dana",
+    reading: "Priya’s reply",
+    role: "Viewer",
+    tilt: -1.5,
+    title: "Engineering manager",
+  },
+  {
+    can: "Looks in on every campaign. Can’t press a thing.",
+    drop: 1.75,
+    name: "Leo",
+    role: "Viewer",
+    tilt: 2.5,
+    title: "Design lead",
+  },
+];
+---
+
+<section id="team" class="page-section container tag-team" aria-labelledby="team-title">
+  <div class="split-head">
+    <h2 id="team-title">The whole hiring team, on one badge wall.</h2>
+    <p class="lead">
+      One workspace for everyone who hires. Recruiters run the campaigns, the head of talent
+      holds the keys, and hiring managers read every reply without touching a thing.
+    </p>
+  </div>
+  <ul class="tag-wall" data-inview aria-label="An example hiring team and what each role can do">
+    {
+      badges.map((badge, index) => (
+        <li
+          class={`tag-hang tag-hang-${badge.role.toLowerCase()}`}
+          style={`--drop: ${badge.drop}rem; --tilt: ${badge.tilt}deg; --k: ${index}`}
+        >
+          <div class="tag-swing">
+            <span class="tag-lanyard" aria-hidden="true" />
+            <div class:list={["tag-badge", { "is-active": badge.reading !== undefined }]}>
+              <span class="tag-badge-slot" aria-hidden="true" />
+              <p class="tag-badge-org">Northwind · Hiring</p>
+              <p class="tag-badge-name">{badge.name}</p>
+              <p class="tag-badge-title">{badge.title}</p>
+              <p class="tag-badge-can">{badge.can}</p>
+              <p class="tag-badge-role">{badge.role}</p>
+            </div>
+            {badge.reading && <p class="tag-badge-reading">Reading {badge.reading}</p>}
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+</section>

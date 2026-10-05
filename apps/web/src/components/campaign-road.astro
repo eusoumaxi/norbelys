@@ -1,0 +1,271 @@
+---
+import ArrowButton from "./arrow-button.astro";
+import Glyph from "./glyph.astro";
+import Marked from "./marked.astro";
+import { START } from "../links";
+import { SPRITES, STEPS, STOPS, frame } from "../road";
+import type { GlyphName } from "../glyphs";
+
+/**
+ * The campaigns page's opening: the pitch beside a framed road, which opens to the whole screen
+ * as the visitor scrolls and drives them through an example campaign, one step at a time. The
+ * first frame is drawn here, so the road is complete without the script; scripts/road.ts drives
+ * it. Without motion the stops are simply cards under the picture.
+ */
+
+/** What happens at each stop, in the words a sales lead would use. */
+const CARDS: readonly { glyph: GlyphName; title: string; day: string; lead: string; text: string; chip: string }[] = [
+  {
+    chip: "Tue 9:14 AM · 1 of 50 today",
+    day: "Day 1",
+    glyph: "campaigns",
+    lead: "Sent from your own inboxes, on your schedule.",
+    text: "Up to 50 a day from each inbox, 10 minutes apart, inside the hours you choose.",
+    title: "First email",
+  },
+  {
+    chip: "Re: Quick idea · Fri 10:02 AM",
+    day: "Day 4",
+    glyph: "mail",
+    lead: "Same thread, its own timing.",
+    text: "Each person’s follow-up waits its own delay, and the weekend stays quiet.",
+    title: "Follow-up",
+  },
+  {
+    chip: "Version B · picked by replies",
+    day: "Day 10",
+    glyph: "tracking",
+    lead: "Test what works.",
+    text: "Split versions evenly, by weight, or let Norbelys pick the winner by replies.",
+    title: "New angle",
+  },
+  {
+    chip: "Next campaign · 72 h at the earliest",
+    day: "Day 16",
+    glyph: "meetings",
+    lead: "Then it lets them be.",
+    text: "After the last step they leave the sequence, and other campaigns wait 72 hours to write.",
+    title: "Last touch",
+  },
+  {
+    chip: "Alex replied · stopped everywhere",
+    day: "Any day",
+    glyph: "inbox",
+    lead: "A reply stops everything.",
+    text: "By default they leave every campaign at once. Out-of-office notes don’t count as replies.",
+    title: "Replied",
+  },
+];
+
+// The first frame, for a 1000 by 640 stage: the camera at the start of the road.
+const BOX = { height: 640, width: 1000 } as const;
+const first = frame(
+  { x: 0, z: 0 },
+  { cx: BOX.width / 2, cy: BOX.height * 0.44, f: Math.min(BOX.height * 0.98, BOX.width * 1.02) }
+);
+const sprites = SPRITES.map((sprite, index) => ({ ...sprite, ...first.sprites[index] }));
+/** The stop sign's two octagons. */
+const octagon = (r: number, cy: number): string =>
+  `M${Array.from({ length: 8 }, (_, index) => {
+    const angle = Math.PI / 8 + (index * Math.PI) / 4;
+    return `${Math.round(Math.cos(angle) * r * 10) / 10} ${Math.round((cy + Math.sin(angle) * r) * 10) / 10}`;
+  }).join("L")}Z`;
+---
+
+<section class="road" data-road aria-labelledby="campaigns-title">
+  <div class="road-head container" data-road-head>
+    <div class="road-copy">
+      <h1 id="campaigns-title" class="page-title" data-inview>
+        <span class="line">Plan the route once.</span>
+        <span class="line">Norbelys <Marked>drives it</Marked><span class="pink">.</span></span>
+      </h1>
+      <p class="lead">
+        Campaigns send every step on schedule, from your own inboxes, and stop when someone
+        replies.
+      </p>
+      <div class="page-actions">
+        <ArrowButton href={START}>Start for $20/mo</ArrowButton>
+        <a class="button button-ghost" href="#road-stops" data-road-to="1">Take the drive</a>
+      </div>
+    </div>
+    <div class="road-slot" data-road-slot aria-hidden="true"></div>
+    <p class="road-hint" aria-hidden="true">Scroll to take the drive <Glyph name="down" /></p>
+  </div>
+
+  <div id="drive" class="road-track" data-road-track style={`--stops: ${STOPS.length}`}>
+    <div class="road-stage" data-road-stage>
+      <div class="road-view" data-road-view>
+        <svg
+          class="road-svg"
+          viewBox={`0 0 ${BOX.width} ${BOX.height}`}
+          preserveAspectRatio="xMidYMid slice"
+          role="img"
+          aria-label="An example campaign drawn as a road: overhead signs for the first email on day 1, the follow-up on day 4, a new angle on day 10 and the last touch on day 16; roadside signs for the daily cap, the gap between emails, the sending days and the quiet weekend; mailboxes along both sides; and a pink exit, behind a stop sign, for everyone who replies."
+        >
+          <defs>
+            <linearGradient id="road-fog" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stop-color="#fff" stop-opacity="0"></stop>
+              <stop offset="0.55" stop-color="#fff" stop-opacity="0.94"></stop>
+              <stop offset="1" stop-color="#fff" stop-opacity="0"></stop>
+            </linearGradient>
+          </defs>
+          <path class="road-surface" d={first.road} data-road="road"></path>
+          <path class="road-ramp" d={first.ramp} data-road="ramp"></path>
+          <path class="road-edge" d={first.edges} data-road="edges"></path>
+          <path class="road-ramp-edge" d={first.rampEdges} data-road="rampEdges"></path>
+          <path class="road-dash" d={first.dashes} data-road="dashes"></path>
+          <path class="road-reflector" d={first.reflectors} data-road="reflectors"></path>
+          <line class="road-horizon" x1="-4000" x2="8000" y1={first.horizon} y2={first.horizon} data-road="horizon"></line>
+          <rect class="road-fog" x="-4000" width="12000" y={first.horizon - 150} height="250" fill="url(#road-fog)" data-road="fog"></rect>
+
+          {
+            sprites.map((sprite) => (
+              <g
+                class:list={["road-sprite", `road-${sprite.kind}`, { "is-up": sprite.up }]}
+                transform={sprite.transform}
+                opacity={sprite.opacity}
+                data-sprite
+              >
+                {sprite.kind === "gantry" && (
+                  <>
+                    <path class="road-steel" d="M-310 0V-372M310 0V-372" />
+                    <path class="road-beam" d="M-326 -372H326M-326 -350H326" />
+                    <path class="road-truss" d="M-246 -372V-350M-166 -372V-350M-86 -372V-350M-6 -372V-350M74 -372V-350M154 -372V-350M234 -372V-350" />
+                    <path class="road-steel" d="M-120 -350V-336M120 -350V-336" />
+                    <rect class="road-board" x="-196" y="-338" width="392" height="72" rx="18" />
+                    <Glyph name={STEPS[sprite.step]?.glyph ?? "campaigns"} class="road-board-glyph" x={-180} y={-322} size={40} />
+                    <text class="road-board-title" x="-128" y="-292">
+                      {STEPS[sprite.step]?.name}
+                    </text>
+                    <text class="road-board-day" x="176" y="-293" text-anchor="end">
+                      Day {STEPS[sprite.step]?.day}
+                    </text>
+                  </>
+                )}
+                {sprite.kind === "exit" && (
+                  <>
+                    <path class="road-steel" d="M160 0V-372" />
+                    <path class="road-beam" d="M-160 -372H172M-160 -350H160" />
+                    <path class="road-truss" d="M-100 -372V-350M-40 -372V-350M20 -372V-350M80 -372V-350" />
+                    <path class="road-steel" d="M-100 -350V-336M100 -350V-336" />
+                    <rect class="road-board road-board-pink" x="-150" y="-338" width="300" height="72" rx="18" />
+                    <Glyph name="inbox" class="road-board-glyph road-board-glyph-white" x={-136} y={-322} size={40} />
+                    <text class="road-board-title" x="-86" y="-292">
+                      Replied
+                    </text>
+                    <Glyph name="external" class="road-board-glyph road-board-glyph-white" x={100} y={-318} size={32} />
+                  </>
+                )}
+                {sprite.kind === "mailbox" && (
+                  <g transform={sprite.x < 0 ? "scale(-1 1)" : undefined}>
+                    <path class="road-post" d="M0 0V-92" />
+                    <path class="road-box" d="M-32 -92H32V-118A16 16 0 0 0 16 -134H-16A16 16 0 0 0 -32 -118Z" />
+                    <path class="road-box-door" d="M-22 -96V-121" />
+                    <rect class="road-flag" x="30" y="-120" width="24" height="9" rx="2" />
+                  </g>
+                )}
+                {(sprite.kind === "cap" || sprite.kind === "gap") && (
+                  <>
+                    <path class="road-post" d="M0 0V-150" />
+                    <rect class="road-plate" x="-50" y="-266" width="100" height="116" rx="14" />
+                    <text class="road-plate-small" y="-236" text-anchor="middle">
+                      {sprite.kind === "cap" ? "DAILY CAP" : "MIN GAP"}
+                    </text>
+                    <text class="road-plate-big" y="-188" text-anchor="middle">
+                      {sprite.kind === "cap" ? "50" : "10"}
+                    </text>
+                    <text class="road-plate-small road-plate-quiet" y="-164" text-anchor="middle">
+                      {sprite.kind === "cap" ? "PER INBOX" : "MINUTES"}
+                    </text>
+                  </>
+                )}
+                {sprite.kind === "hours" && (
+                  <>
+                    <path class="road-post" d="M0 0V-150" />
+                    <rect class="road-plate" x="-66" y="-262" width="132" height="112" rx="14" />
+                    <text class="road-plate-small" y="-232" text-anchor="middle">
+                      SENDS
+                    </text>
+                    <text class="road-plate-mid" y="-196" text-anchor="middle">
+                      Mon–Fri
+                    </text>
+                    <text class="road-plate-small road-plate-quiet" y="-168" text-anchor="middle">
+                      9 AM – 5 PM
+                    </text>
+                  </>
+                )}
+                {sprite.kind === "weekend" && (
+                  <>
+                    <path class="road-post" d="M0 0V-150" />
+                    <rect class="road-plate road-plate-dark" x="-66" y="-246" width="132" height="96" rx="14" />
+                    <text class="road-plate-small road-plate-blush" y="-216" text-anchor="middle">
+                      SAT · SUN
+                    </text>
+                    <text class="road-plate-mid road-plate-white" y="-178" text-anchor="middle">
+                      No sends
+                    </text>
+                  </>
+                )}
+                {sprite.kind === "start" && (
+                  <>
+                    <path class="road-post" d="M0 0V-152" />
+                    <rect class="road-plate road-plate-dark" x="-84" y="-258" width="168" height="106" rx="16" />
+                    <text class="road-plate-small road-plate-blush" y="-226" text-anchor="middle">
+                      CAMPAIGN
+                    </text>
+                    <text class="road-plate-mid road-plate-white" y="-192" text-anchor="middle">
+                      Partners
+                    </text>
+                    <text class="road-plate-small road-plate-white" y="-166" text-anchor="middle">
+                      1,200 PEOPLE
+                    </text>
+                  </>
+                )}
+                {sprite.kind === "stop" && (
+                  <>
+                    <path class="road-post" d="M0 0V-160" />
+                    <rect class="road-plate" x="-52" y="-164" width="104" height="30" rx="8" />
+                    <text class="road-plate-small" y="-143" text-anchor="middle">
+                      ON REPLY
+                    </text>
+                    <path class="road-octagon" d={octagon(58, -222)} />
+                    <path class="road-octagon-rim" d={octagon(50, -222)} />
+                    <text class="road-stop-word" y="-209" text-anchor="middle">
+                      STOP
+                    </text>
+                  </>
+                )}
+              </g>
+            ))
+          }
+        </svg>
+      </div>
+
+      <p class="road-note">Campaign, people and times are examples.</p>
+
+      <div class="road-cards" id="road-stops">
+        <h2 class="sr-only">The drive, stop by stop</h2>
+        {
+          CARDS.map((card, index) => (
+            <article class="road-card" data-road-card={index + 1}>
+              <div class="road-card-head glyph-host">
+                <span class="road-card-icon">
+                  <Glyph name={card.glyph} />
+                </span>
+                <h3 class="road-card-title">{card.title}</h3>
+                <span class="road-card-day">{card.day}</span>
+              </div>
+              <p class="road-card-text">
+                <strong>{card.lead}</strong> {card.text}
+              </p>
+              <p class="road-card-chip">
+                <Glyph name="check" />
+                {card.chip}
+              </p>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>

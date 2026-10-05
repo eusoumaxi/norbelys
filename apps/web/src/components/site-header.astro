@@ -1,0 +1,199 @@
+---
+import ArrowButton from "./arrow-button.astro";
+import Brand from "./brand.astro";
+import Glyph from "./glyph.astro";
+import { APP, BLOG, DOCS, PAGES, START } from "../links";
+import { PRODUCTS } from "../products";
+import { TEAMS } from "../solutions";
+
+/**
+ * The site's header: the logo, the product and solutions menus, pricing, the blog and the docs,
+ * and the way in. Its links lead to the homepage's sections from any page, and the blog's link
+ * and a team's own entry say when the visitor is on them.
+ */
+interface Props {
+  /** The way in the header offers; a page can name its own (the developers page: an API key). */
+  cta?: { readonly label: string; readonly href: string };
+}
+const { cta = { href: START, label: "Start for $20" } } = Astro.props;
+const live = PRODUCTS.filter((product) => !product.soon);
+const soon = PRODUCTS.filter((product) => product.soon);
+const path = Astro.url.pathname.replace(/\/$/u, "");
+const onBlog = path.startsWith(BLOG) ? "page" : undefined;
+const here = (href: string): "page" | undefined => (path === href ? "page" : undefined);
+---
+
+<header class="site-header" data-header>
+  <div class="header-bar container">
+    <a href="/" class="header-brand" aria-label="Norbelys home"><Brand /></a>
+    <nav class="header-nav" aria-label="Main">
+      <ul>
+        <li>
+          <button
+            class="nav-link nav-trigger"
+            type="button"
+            popovertarget="menu-product"
+            aria-expanded="false"
+            data-menu-trigger
+            data-menu-hover
+          >
+            Product <Glyph name="down" />
+          </button>
+        </li>
+        <li>
+          <button
+            class="nav-link nav-trigger"
+            type="button"
+            popovertarget="menu-solutions"
+            aria-expanded="false"
+            data-menu-trigger
+            data-menu-hover
+          >
+            Solutions <Glyph name="down" />
+          </button>
+        </li>
+        <li><a class="nav-link" href="/#pricing">Pricing</a></li>
+        <li><a class="nav-link" href={BLOG} aria-current={onBlog}>Blog</a></li>
+        <li><a class="nav-link" href={DOCS}>Docs</a></li>
+      </ul>
+    </nav>
+    <div class="header-actions">
+      <a class="nav-link header-sign-in" href={APP}>Sign in</a>
+      <ArrowButton class="button-small header-start" href={cta.href}>{cta.label}</ArrowButton>
+      <button
+        class="header-menu-button"
+        type="button"
+        popovertarget="menu-mobile"
+        aria-expanded="false"
+        aria-label="Menu"
+        data-menu-trigger
+      >
+        <span class="burger" aria-hidden="true"><span></span><span></span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div id="menu-product" class="mega-menu" popover>
+  <div class="mega-grid">
+    <div class="mega-column">
+      <p class="mega-heading">Platform</p>
+      <ul class="mega-list">
+        {
+          live.map((product) => (
+            <li>
+              <a class="mega-item glyph-host" href={product.href}>
+                <Glyph name={product.glyph} />
+                <span class="mega-text">
+                  <span class="mega-name">{product.name}</span>
+                  <span class="mega-summary">{product.summary}</span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+    <div class="mega-column mega-column-soon">
+      <p class="mega-heading">On the way</p>
+      <ul class="mega-list">
+        {
+          soon.map((product) => (
+            <li class="mega-item mega-item-soon">
+              <Glyph name={product.glyph} />
+              <span class="mega-text">
+                <span class="mega-name">
+                  {product.name}
+                  <span class="soon-label">Soon</span>
+                </span>
+                <span class="mega-summary">{product.summary}</span>
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+      <a class="mega-developers" href={PAGES.developers}>
+        <span>Building on Norbelys?</span>
+        <span class="text-link">API, webhooks and MCP <Glyph name="arrow" /></span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div id="menu-solutions" class="mega-menu mega-menu-teams" popover>
+  <div class="mega-column">
+    <p class="mega-heading">Made for people who sell</p>
+    <ul class="mega-list mega-teams">
+      {
+        TEAMS.map((team) => (
+          <li>
+            <a class="mega-item glyph-host" href={team.href} aria-current={here(team.href)}>
+              <Glyph name={team.glyph} />
+              <span class="mega-text">
+                <span class="mega-name">{team.label}</span>
+                <span class="mega-summary">{team.summary}</span>
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+  <a class="mega-all" href={PAGES.solutions} aria-current={here(PAGES.solutions)}>
+    <span>One plan for every team: $20 a month, everything included.</span>
+    <span class="text-link">See every team <Glyph name="arrow" /></span>
+  </a>
+</div>
+
+<div id="menu-mobile" class="mobile-menu" popover>
+  <div class="mobile-menu-top container">
+    <a href="/" class="header-brand" aria-label="Norbelys home"><Brand /></a>
+    <button class="mobile-close" type="button" popovertarget="menu-mobile" popovertargetaction="hide" aria-label="Close menu">
+      <Glyph name="close" />
+    </button>
+  </div>
+  <nav class="mobile-nav container" aria-label="Mobile">
+    <ul class="mobile-products">
+      {
+        PRODUCTS.map((product) =>
+          product.soon ? (
+            <li class="mobile-product is-soon">
+              <Glyph name={product.glyph} />
+              {product.name}
+              <span class="soon-label">Soon</span>
+            </li>
+          ) : (
+            <li>
+              <a class="mobile-product glyph-host" href={product.href}>
+                <Glyph name={product.glyph} />
+                {product.name}
+              </a>
+            </li>
+          )
+        )
+      }
+    </ul>
+    <div class="mobile-teams">
+      <p class="mobile-heading"><a href={PAGES.solutions}>Solutions</a></p>
+      <ul>
+        {
+          TEAMS.map((team) => (
+            <li>
+              <a class="mobile-team glyph-host" href={team.href} aria-current={here(team.href)}>
+                <Glyph name={team.glyph} />
+                {team.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+    <ul class="mobile-links">
+      <li><a href="/#pricing">Pricing</a></li>
+      <li><a href={BLOG} aria-current={onBlog}>Blog</a></li>
+      <li><a href={DOCS}>Docs</a></li>
+      <li><a href={APP}>Sign in</a></li>
+    </ul>
+    <ArrowButton class="mobile-start" href={cta.href}>{cta.label}</ArrowButton>
+  </nav>
+</div>

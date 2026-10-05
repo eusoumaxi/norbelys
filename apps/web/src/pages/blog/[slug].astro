@@ -1,0 +1,147 @@
+---
+import { render } from "astro:content";
+import ArrowButton from "../../components/arrow-button.astro";
+import Brand from "../../components/brand.astro";
+import Glyph from "../../components/glyph.astro";
+import PostCard from "../../components/post-card.astro";
+import PostCover from "../../components/post-cover.astro";
+import PostMeta from "../../components/post-meta.astro";
+import Page from "../../layouts/page.astro";
+import { START } from "../../links";
+import { formatDate, getPosts, postUrl } from "../../posts";
+import type { Post } from "../../posts";
+import "../../styles/blog.css";
+
+/**
+ * One post: what it's about, its cover, then the Markdown itself, set for reading, with its
+ * sections listed beside it on a wide screen. It ends with the way in and two more posts.
+ */
+export const getStaticPaths = async () => {
+  const posts = await getPosts();
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post, related: posts.filter((other) => other.id !== post.id).slice(0, 2) },
+  }));
+};
+
+interface Props {
+  post: Post;
+  related: Post[];
+}
+const { post, related } = Astro.props;
+const { Content, headings } = await render(post);
+const sections = headings.filter((heading) => heading.depth === 2);
+const url = new URL(postUrl(post), Astro.site);
+const share = {
+  linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url.href)}`,
+  x: `https://x.com/intent/post?url=${encodeURIComponent(url.href)}&text=${encodeURIComponent(post.data.title)}`,
+};
+const structured = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  author: { "@type": "Organization", name: post.data.author },
+  dateModified: (post.data.updated ?? post.data.date).toISOString(),
+  datePublished: post.data.date.toISOString(),
+  description: post.data.description,
+  headline: post.data.title,
+  mainEntityOfPage: url.href,
+  publisher: { "@type": "Organization", name: "Norbelys", url: "https://norbelys.com" },
+});
+---
+
+<Page title={`${post.data.title} — Norbelys`} description={post.data.description} type="article" class="post">
+  <Fragment slot="head">
+    <link rel="alternate" type="application/rss+xml" title="Norbelys blog" href="/blog/rss.xml" />
+    <meta property="article:published_time" content={post.data.date.toISOString()} />
+    <meta property="article:section" content={post.data.tag} />
+    <script is:inline type="application/ld+json" set:html={structured} />
+  </Fragment>
+  <div class="read-progress" aria-hidden="true"></div>
+  <article>
+    <header class="post-head container">
+      <a class="post-back" href="/blog/"><Glyph name="arrow" class="post-back-arrow" /> All posts</a>
+      <PostMeta post={post} />
+      <h1 class="post-title">{post.data.title}</h1>
+      <p class="lead post-lead">{post.data.description}</p>
+      <p class="post-byline">
+        <span class="post-avatar"><Brand mark /></span>
+        <span>
+          <strong>{post.data.author}</strong>
+          {
+            post.data.updated && (
+              <span class="post-updated">
+                Updated <time datetime={post.data.updated.toISOString()}>{formatDate(post.data.updated)}</time>
+              </span>
+            )
+          }
+        </span>
+      </p>
+    </header>
+
+    <div class="container">
+      <PostCover cover={post.data.cover} size="wide" />
+    </div>
+
+    <div class="container post-body">
+      {
+        sections.length > 1 && (
+          <nav class="post-contents" aria-labelledby="contents-title" data-contents>
+            <p id="contents-title" class="post-contents-title">
+              On this page
+            </p>
+            <ol>
+              {sections.map((section) => (
+                <li>
+                  <a href={`#${section.slug}`}>{section.text}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )
+      }
+      <div class="prose" data-prose>
+        <Content />
+      </div>
+    </div>
+
+    <footer class="container post-end">
+      <div class="post-share">
+        <p>Share this post</p>
+        <ul>
+          <li><a href={share.linkedin} rel="noopener" target="_blank">LinkedIn</a></li>
+          <li><a href={share.x} rel="noopener" target="_blank">X</a></li>
+          <li>
+            <button type="button" data-copy-link data-copied="Link copied">Copy link</button>
+          </li>
+        </ul>
+      </div>
+      <aside class="post-cta" aria-labelledby="cta-title">
+        <div>
+          <h2 id="cta-title" class="post-cta-title">Put it to work in Norbelys.</h2>
+          <p>
+            Send from your own inboxes, follow up on autopilot and stop the second someone replies.
+            $20 a month, everything included.
+          </p>
+        </div>
+        <ArrowButton href={START}>Start for $20/mo</ArrowButton>
+      </aside>
+    </footer>
+  </article>
+
+  {
+    related.length > 0 && (
+      <section class="container post-related" aria-labelledby="related-title">
+        <h2 id="related-title" class="blog-section-title">
+          Keep reading
+        </h2>
+        <ul class="post-grid post-grid-two">
+          {related.map((other) => (
+            <li>
+              <PostCard post={other} />
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</Page>

@@ -34,8 +34,12 @@ const SignInLink = () => {
         subtitle="This link is incomplete. Open it again from the email, or ask for a new code."
         title="Link not valid"
       >
-        <Button render={<Link to="/sign-in" />} variant="secondary">
-          Back to log in
+        <Button
+          className="h-12 w-full text-[15px]"
+          render={<Link to="/sign-in" />}
+          variant="secondary"
+        >
+          Back to sign in
         </Button>
       </AuthLayout>
     );
@@ -45,15 +49,16 @@ const SignInLink = () => {
     <AuthLayout
       subtitle={
         <>
-          Sign in as <span className="text-fg">{link.email}</span>?
+          Sign in as <span className="text-fg font-semibold">{link.email}</span>
+          ?
         </>
       }
-      title="Log in to Norbelys"
+      title="Sign in to Norbelys"
     >
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3">
         {problem ? <ProblemAlert>{problem}</ProblemAlert> : null}
         <Button
-          className="w-full"
+          className="h-12 w-full text-[15px]"
           disabled={busy}
           onClick={async () => {
             setBusy(true);
@@ -73,7 +78,11 @@ const SignInLink = () => {
           {busy ? <Spinner /> : null}
           Continue as {link.email}
         </Button>
-        <Button render={<Link to="/sign-in" />} variant="tertiary">
+        <Button
+          className="h-12 w-full text-[15px]"
+          render={<Link to="/sign-in" />}
+          variant="tertiary"
+        >
           Use another account
         </Button>
       </div>
@@ -82,6 +91,6 @@ const SignInLink = () => {
 };
 
 export const Route = createFileRoute("/sign-in/link")({
-  head: () => ({ meta: [{ title: "Log in · Norbelys" }] }),
+  head: () => ({ meta: [{ title: "Sign in · Norbelys" }] }),
   component: SignInLink,
 });

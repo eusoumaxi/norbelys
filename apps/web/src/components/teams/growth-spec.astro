@@ -1,0 +1,87 @@
+---
+/**
+ * The desk's spec sheet, typeset like the specifications at the back of a studio manual: ruled
+ * rows, each with what is measured, its value and the condition that goes with it. First the
+ * metering (what a send, a reply, an open or a bounce counts as, and what is left out of each),
+ * then the capacity of a sequence, then what goes in and out. Every value is the product's own
+ * definition, default or limit; there are no benchmarks here.
+ */
+interface Spec {
+  readonly name: string;
+  readonly value: string;
+  readonly detail: string;
+}
+interface Group {
+  readonly name: string;
+  readonly specs: readonly Spec[];
+}
+
+const groups: readonly Group[] = [
+  {
+    name: "Metering",
+    specs: [
+      { detail: "by the receiving mail server", name: "Sent", value: "Accepted" },
+      { detail: "auto-replies and out-of-office notes left out", name: "Replies", value: "People only" },
+      { detail: "on your own tracking domain, bots left out", name: "Opens & clicks", value: "Off by default" },
+      { detail: "across every campaign", name: "Bounces & unsubscribes", value: "Suppressed" },
+    ],
+  },
+  {
+    name: "Capacity",
+    specs: [
+      { detail: "a step, split evenly, by weight or by a winner", name: "Versions", value: "Up to 50" },
+      { detail: "a sequence, each with its own delay", name: "Steps", value: "Up to 50" },
+    ],
+  },
+  {
+    name: "In and out",
+    specs: [
+      { detail: "requests a minute, per workspace", name: "Rate limit", value: "6,000" },
+      { detail: "people and their history, any time", name: "Exports", value: "CSV or JSONL" },
+    ],
+  },
+];
+/** Where each group starts in the sheet, counting its head row, for the rows' staggered entrance. */
+const starts = groups.map((_, index) => groups.slice(0, index).reduce((sum, group) => sum + group.specs.length + 1, 0));
+---
+
+<section id="spec" class="page-section container spec-section" aria-labelledby="spec-title">
+  <div class="split-head">
+    <h2 id="spec-title">Clean signal<span class="pink">.</span></h2>
+    <p class="lead">
+      A test is only as good as what it counts. Each number means one thing, and the noise stays out
+      of it.
+    </p>
+  </div>
+
+  <table class="spec" data-inview>
+    <caption class="sr-only">Specifications: what each number counts, and the limits</caption>
+    <thead class="sr-only">
+      <tr>
+        <th scope="col">Measure</th>
+        <th scope="col">Value</th>
+        <th scope="col">Condition</th>
+      </tr>
+    </thead>
+    {
+      groups.map((group, index) => (
+        <tbody class="spec-group">
+          <tr class="spec-head" style={`--i: ${starts[index] ?? 0}`}>
+            <th scope="rowgroup" colspan="3">{group.name}</th>
+          </tr>
+          {group.specs.map((spec, place) => (
+            <tr class="spec-row" style={`--i: ${(starts[index] ?? 0) + place + 1}`}>
+              <th scope="row">{spec.name}</th>
+              <td class="spec-value">{spec.value}</td>
+              <td class="spec-detail">{spec.detail}</td>
+            </tr>
+          ))}
+        </tbody>
+      ))
+    }
+  </table>
+  <p class="fine-print spec-note">
+    The desk at the top of this page plays made-up numbers. These are the rules your real ones
+    follow.
+  </p>
+</section>

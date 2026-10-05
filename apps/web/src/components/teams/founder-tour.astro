@@ -1,0 +1,129 @@
+---
+import Glyph from "../glyph.astro";
+import FounderFrame from "./founder-frame.astro";
+
+/**
+ * The gallery's main room: one email from the founder's own inbox, framed and hung on its own,
+ * with an audio tour. Numbered stops sit in the email's margin, and a leader line runs from each
+ * to its note beside the frame (scripts/gallery.ts draws them): the inbox it's sent from, the
+ * fields from the founder's list, the AI first line, the follow-up that stops itself and the
+ * unsubscribe link. Pointing at a note (or focusing it) lights its part of the email. Without the
+ * script, the numbers still pair each stop with its note. The email, people and companies are
+ * illustrative; every rule in the notes is the product's own.
+ */
+interface Stop {
+  readonly title: string;
+  readonly text: string;
+}
+const stops: readonly Stop[] = [
+  {
+    text: "It goes out from sam@acme.co, not a no-reply address, so the answer comes back to you. Google Workspace, Microsoft 365 or any SMTP inbox: up to 50 emails a day each, 10 minutes apart, by default.",
+    title: "Your own inbox",
+  },
+  {
+    text: "{first_name} and {company} come from the list you imported. Every column in your CSV becomes a field you can write with.",
+    title: "Fields from your list",
+  },
+  {
+    text: "Switch on AI for a step and it writes one line per person, only from the facts you allow: the company’s website, news, job posts and your list’s columns. Nothing worth saying? Your own opening goes out.",
+    title: "A first line only you’d write",
+  },
+  {
+    text: "Each step waits the delay you set and goes out in the same thread. Once Alex replies, nothing more goes out to him, from any campaign. Out-of-office notes don’t count.",
+    title: "A follow-up that stops itself",
+  },
+  {
+    text: "Every email carries a one-click unsubscribe. Whoever uses it never hears from any of your campaigns again.",
+    title: "One click to leave",
+  },
+];
+---
+
+<section id="gallery" class="page-section container gallery-tour" aria-labelledby="gallery-title" data-tour>
+  <div class="split-head">
+    <h2 id="gallery-title">Your voice, not a template.</h2>
+    <p class="lead">
+      Every email goes out from your own address, in your words, with the detail you’d look up
+      yourself if you had the time. Here’s one, with the audio tour on.
+    </p>
+  </div>
+  <div class="gallery-room" data-inview>
+    <figure class="gallery-piece gallery-tour-piece">
+      <FounderFrame class="frame-tour">
+        <div class="frame-art gallery-email">
+          <div class="gallery-email-head">
+            <p class="gallery-line" data-target="1">
+              <span class="gallery-key">From</span>
+              <span class="gallery-value">Sam Rivera &lt;sam@acme.co&gt;</span>
+              <span class="gallery-stop" data-stop="1" aria-hidden="true">1</span>
+            </p>
+            <p class="gallery-line">
+              <span class="gallery-key">To</span>
+              <span class="gallery-value">Alex Morgan &lt;alex@northwind.co&gt;</span>
+            </p>
+            <p class="gallery-line">
+              <span class="gallery-key">Subject</span>
+              <span class="gallery-value gallery-subject">Quick idea for Northwind</span>
+            </p>
+          </div>
+          <div class="gallery-email-body">
+            <p class="gallery-line" data-target="2">
+              <span class="gallery-text">Hi <span class="gallery-field" data-field="{first_name}">Alex</span>,</span>
+              <span class="gallery-stop" data-stop="2" aria-hidden="true">2</span>
+            </p>
+            <p class="gallery-line" data-target="3">
+              <span class="gallery-text">
+                <span class="gallery-ai-tag"><Glyph name="ai" /> AI first line</span>
+                <span class="gallery-ai">Congrats on opening the Lisbon office. A new market usually means a lot of new partners to find.</span>
+              </span>
+              <span class="gallery-stop" data-stop="3" aria-hidden="true">3</span>
+            </p>
+            <p class="gallery-line">
+              <span class="gallery-text">
+                We help teams like <span class="gallery-field" data-field="{company}">Northwind</span> meet the right partners
+                without months of cold calls. Worth 15 minutes next week?
+              </span>
+            </p>
+            <p class="gallery-line">
+              <span class="gallery-text">Sam</span>
+            </p>
+          </div>
+          <div class="gallery-email-foot">
+            <p class="gallery-line" data-target="4">
+              <span class="gallery-followup">
+                <Glyph name="campaigns" />
+                Follow-up in 3 days, in this thread. Skipped if Alex replies.
+              </span>
+              <span class="gallery-stop" data-stop="4" aria-hidden="true">4</span>
+            </p>
+            <p class="gallery-line" data-target="5">
+              <span class="gallery-unsubscribe">Unsubscribe</span>
+              <span class="gallery-stop" data-stop="5" aria-hidden="true">5</span>
+            </p>
+          </div>
+        </div>
+      </FounderFrame>
+      <figcaption class="frame-label">
+        <span class="frame-label-title">Quick idea for Northwind</span>
+        <span class="frame-label-line">Email, step 1 of 3, from the founder’s own inbox</span>
+        <span class="frame-label-line">People, companies and lines here are examples.</span>
+      </figcaption>
+    </figure>
+    <ol class="gallery-notes" aria-label="Audio tour">
+      {
+        stops.map((stop, index) => (
+          <li class="gallery-note" data-note={index + 1} tabindex="0" style={`--k: ${index}`}>
+            <span class="gallery-number" aria-hidden="true">
+              {index + 1}
+            </span>
+            <span class="gallery-note-text">
+              <span class="gallery-note-title">{stop.title}</span>
+              <span class="gallery-note-body">{stop.text}</span>
+            </span>
+          </li>
+        ))
+      }
+    </ol>
+    <svg class="gallery-leaders" aria-hidden="true" data-leaders></svg>
+  </div>
+</section>

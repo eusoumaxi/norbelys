@@ -1,0 +1,152 @@
+---
+import ArrowButton from "../arrow-button.astro";
+import RecruiterTag from "./recruiter-tag.astro";
+import { START } from "../../links";
+
+/**
+ * The recruiter page's opening: "Hello, {first_name}." The merge field in the headline resolves
+ * into the names on the name tags stuck around it, one after another, and each tag's band turns
+ * pink while it's being read. Jonas answers on his turn, and his next follow-up is struck. Then
+ * the field comes home to the tag under the headline, the one the visitor can write on: the name
+ * they type fills every {first_name} on the page, the headline's included (scripts/nametag.ts).
+ * Without the script the headline keeps its field, Jonas has already answered and typing does
+ * nothing. The candidates, their first lines and Jonas's reply are illustrative.
+ */
+interface Candidate {
+  readonly name: string;
+  /** The first line Norbelys wrote for them, and where the fact in it came from. */
+  readonly line: string;
+  readonly source: string;
+  /** Which spot around the headline the tag is stuck on. */
+  readonly spot: "priya" | "jonas" | "maria" | "tom";
+  /** A reply, and the follow-up it stopped. */
+  readonly reply?: { readonly initials: string; readonly message: string; readonly next: string };
+}
+const crowd: readonly Candidate[] = [
+  {
+    line: "Your talk on async Rust at a meetup last spring…",
+    name: "Priya",
+    source: "From your CSV · notes",
+    spot: "priya",
+  },
+  {
+    line: "Saw Lumen Labs just opened a Lisbon office…",
+    name: "Jonas",
+    reply: { initials: "JW", message: "Happy to chat. Tuesday?", next: "Follow-up 2 · Thu" },
+    source: "From the news",
+    spot: "jonas",
+  },
+  {
+    line: "Your write-up on cutting build times in half…",
+    name: "María",
+    source: "From a public post",
+    spot: "maria",
+  },
+  {
+    line: "Congrats on shipping the new Solano app…",
+    name: "Tom",
+    source: "From the company website",
+    spot: "tom",
+  },
+];
+/** The merge field, as the editor writes it. */
+const FIELD = "{first_name}";
+---
+
+<section class="page-hero tag-hero" aria-labelledby="recruiters-title" data-nametag>
+  <div class="container tag-stage">
+    <div class="tag-copy">
+      <h1 id="recruiters-title" class="page-title tag-title" data-inview>
+        <span class="sr-only">Hello to every candidate, by name.</span>
+        <span class="tag-say" aria-hidden="true">
+          <span class="tag-say-hello">Hello,</span>{" "}<span class="tag-say-name"><span class="tag-slot" data-nametag-slot><span class="tag-face tag-face-field is-shown" data-nametag-face="field"><span class="tag-pill">{FIELD}</span></span>{crowd.map((candidate) => <span class="tag-face" data-nametag-face={candidate.name}>{candidate.name}</span>)}<span class="tag-face" data-nametag-face="typed"></span><svg class="tag-slot-line" viewBox="0 0 100 12" preserveAspectRatio="none"><path d="M3 8.5C28 3.5 70 3 97 6.5" pathLength="1"></path></svg></span><span class="pink">.</span></span>
+        </span>
+      </h1>
+      <p class="lead page-lead tag-lead">
+        Write to every candidate like they’re the only one. Norbelys sends from your own inbox,
+        opens with a line about their work, follows up politely and stops the moment they answer.
+      </p>
+      <div class="page-actions tag-actions">
+        <ArrowButton href={START}>Start for $20/mo</ArrowButton>
+        <a class="button button-ghost" href="#tag" data-nametag-go>Write a name tag</a>
+      </div>
+      <p class="fine-print tag-fine">Every feature included, AI too. The candidates on this page are examples.</p>
+    </div>
+
+    <ul class="tag-crowd" aria-label="Example candidates, each with the first line written for them">
+      {
+        crowd.map((candidate, index) => (
+          <li
+            class={`tag-spot tag-spot-${candidate.spot}`}
+            data-nametag-tag={candidate.name}
+            data-nametag-replies={candidate.reply ? "" : undefined}
+            style={`--i: ${index}`}
+          >
+            <RecruiterTag foot={candidate.source}>
+              <p class="tag-name">{candidate.name}</p>
+              <p class="tag-line">{candidate.line}</p>
+              {candidate.reply && (
+                <p class="tag-next">
+                  <span class="tag-next-step">
+                    {candidate.reply.next}
+                    <svg class="tag-strike" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+                      <path d="M2 7C30 4.5 70 8.5 98 5" pathLength="1" />
+                    </svg>
+                  </span>
+                  <span class="tag-next-state">Stopped</span>
+                </p>
+              )}
+            </RecruiterTag>
+            {candidate.reply && (
+              <p class="tag-reply">
+                <span class="tag-reply-face" aria-hidden="true">
+                  {candidate.reply.initials}
+                </span>
+                <span class="tag-reply-text">
+                  <span class="tag-reply-name">
+                    {candidate.name} <span>replied</span>
+                  </span>
+                  <span class="tag-reply-message">{candidate.reply.message}</span>
+                </span>
+              </p>
+            )}
+          </li>
+        ))
+      }
+    </ul>
+
+    <div id="tag" class="tag-spot tag-spot-main is-active" data-nametag-tag="field" style={`--i: ${crowd.length}`}>
+      <label class="tag-ask" for="tag-name">
+        <span class="tag-ask-text">Type a candidate’s first name</span>
+        <span id="tag-name-hint" class="tag-ask-hint">It fills every <span class="tag-pill">{FIELD}</span> on this page.</span>
+        <svg class="tag-ask-arrow" viewBox="0 0 120 90" fill="none" aria-hidden="true">
+          <path d="M8 10C52 4 92 22 104 70" pathLength="1"></path>
+          <path d="M88 60L104 74L114 54" pathLength="1"></path>
+        </svg>
+      </label>
+      <RecruiterTag class="tag-main" foot="From a public post">
+        <div class="tag-write">
+          <input
+            id="tag-name"
+            class="tag-input"
+            type="text"
+            name="candidate-first-name"
+            maxlength="20"
+            autocomplete="off"
+            autocapitalize="words"
+            spellcheck="false"
+            placeholder=" "
+            aria-describedby="tag-name-hint"
+            data-nametag-input
+          />
+          <span class="tag-pill tag-write-field" aria-hidden="true">{FIELD}</span>
+          <span class="tag-write-measure" aria-hidden="true" data-nametag-measure></span>
+        </div>
+        <p class="tag-line">
+          Hi <span class="tag-fill is-field" data-nametag-name>{FIELD}</span>, your piece on design reviews got
+          passed around our whole team.
+        </p>
+      </RecruiterTag>
+    </div>
+  </div>
+</section>

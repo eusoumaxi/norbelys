@@ -1,0 +1,1424 @@
+/*
+ * Norbelys for agencies: Friday's stack of client reports. Paper sheets with rounded corners and
+ * soft shadows on the white page, a file tab per client, charts drawn as thick ink lines with one
+ * pink point at the latest week and notes in pink pen. Below the stack, the clients' folders, the
+ * roster that paces their inboxes and a report marked up line by line.
+ */
+
+/* ——— Hero: the stack of reports, one sheet per client, dealt one at a time. ——— */
+.stack-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.06fr);
+  align-items: start;
+  gap: 2.5rem clamp(2rem, 4vw, 4rem);
+}
+.stack-copy {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 1.5rem;
+  max-width: 36rem;
+  padding-top: clamp(0.5rem, 2.5vw, 2.25rem);
+}
+.stack-copy .page-actions {
+  margin-top: 0.5rem;
+}
+.stack-copy .fine-print {
+  margin-top: 0.25rem;
+}
+.stack-stage {
+  position: relative;
+  container-type: inline-size;
+  margin-top: calc(-1 * clamp(1.5rem, 4vw, 3.5rem));
+}
+.stack {
+  position: relative;
+  width: 86%;
+  aspect-ratio: 74 / 100;
+  margin-top: clamp(5rem, 15cqi, 6.5rem);
+  rotate: 1.4deg;
+  isolation: isolate;
+  font-size: clamp(0.75rem, 2.45cqi, 1rem);
+}
+
+/* A sheet: the paper and its tab as one shape, so they share one soft shadow. */
+.stack-sheet {
+  --slot: 0;
+  position: absolute;
+  inset: 0;
+  z-index: calc(10 - var(--slot));
+  transform-origin: 0 0;
+  transform: translate(calc(var(--slot) * 0.8%), calc(var(--slot) * -0.8%))
+    rotate(calc(var(--slot) * -1.6deg));
+  filter: drop-shadow(0 1px 1.5px rgb(24 4 14 / 7%))
+    drop-shadow(0 6px 12px rgb(24 4 14 / 5%))
+    drop-shadow(0 18px 30px rgb(24 4 14 / 6%));
+  will-change: transform;
+}
+.report-page {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto auto auto auto 1fr;
+  align-content: start;
+  gap: 1.55em;
+  padding: 1.75em 1.9em;
+  border-radius: 1.35em;
+  background: var(--white);
+}
+
+/* The tab: a rounded ear on the sheet's top edge, its feet curving into the paper. */
+.stack-tab {
+  position: absolute;
+  bottom: calc(100% - 0.85em);
+  left: calc(2.2% + var(--tab) * 19.6%);
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  height: 3.35em;
+  padding: 0 0.8em 0.85em;
+  border-radius: 0.95em 0.95em 0 0;
+  background: var(--white);
+  color: var(--ink-2);
+  font-size: max(0.75rem, 0.78em);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  transition:
+    color var(--duration-ui) var(--ease-out),
+    translate 420ms var(--ease-settle);
+}
+.stack-tab::before,
+.stack-tab::after {
+  content: "";
+  position: absolute;
+  bottom: 0.85em;
+  width: 0.75em;
+  height: 0.75em;
+}
+.stack-tab::before {
+  right: calc(100% - 1px);
+  background: radial-gradient(
+    circle at 0 0,
+    transparent 0.75em,
+    var(--white) calc(0.75em + 0.5px)
+  );
+}
+.stack-tab::after {
+  left: calc(100% - 1px);
+  background: radial-gradient(
+    circle at 100% 0,
+    transparent 0.75em,
+    var(--white) calc(0.75em + 0.5px)
+  );
+}
+.stack-tab-mark {
+  display: none;
+  place-items: center;
+  width: 1.75em;
+  height: 1.75em;
+  border-radius: 0.45em;
+  background: var(--mist);
+  color: var(--ink-2);
+  font-size: 0.95em;
+}
+.stack-tab:hover,
+.stack-sheet.is-front .stack-tab {
+  color: var(--ink);
+}
+.stack-tab[aria-pressed="true"] .stack-tab-mark {
+  background: var(--ink);
+  color: var(--white);
+}
+.stack-tab:focus-visible {
+  outline-offset: -0.35em;
+  border-radius: 0.95em 0.95em 0 0;
+}
+/* A tab lifts its sheet under the pointer, the way a finger finds the one it wants. */
+.stack-sheet:not(.is-front):has(.stack-tab:hover) {
+  translate: 0 -0.55em;
+}
+.stack-sheet {
+  transition: translate 420ms var(--ease-settle);
+}
+
+/* The report: who it's for, the week's line, three figures and the inboxes that sent them. */
+.report-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1em;
+  padding-bottom: 1.1em;
+  border-bottom: 1px solid var(--line);
+}
+.report-title {
+  display: grid;
+  gap: 0.2em;
+}
+.report-client {
+  font-size: 1.95em;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+.report-week {
+  color: var(--ink-2);
+  font-size: 0.875em;
+}
+.report-by {
+  display: grid;
+  justify-items: end;
+  padding-top: 0.2em;
+  font-size: 0.875em;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: right;
+}
+.report-by span {
+  color: var(--ink-3);
+  font-size: max(0.75rem, 0.86em);
+  font-weight: 500;
+}
+.report-chart {
+  display: grid;
+  gap: 0.6em;
+  margin: 0;
+}
+.report-chart-title {
+  font-size: 0.875em;
+  font-weight: 600;
+}
+.report-plot {
+  position: relative;
+}
+.report-plot > svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.report-grid {
+  stroke: var(--line-strong);
+  stroke-width: 2;
+  stroke-dasharray: 2 9;
+  stroke-linecap: round;
+}
+.report-base {
+  stroke: var(--line-strong);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+.report-line {
+  stroke: var(--ink);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.report-point {
+  fill: var(--pink-hot);
+  stroke: var(--white);
+  stroke-width: 5;
+  paint-order: stroke;
+}
+.report-ring,
+.report-figure-ring path,
+.report-arrow path {
+  fill: none;
+  stroke: var(--pink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.report-ring {
+  stroke-width: 4;
+}
+.report-note {
+  position: absolute;
+  top: var(--top);
+  right: var(--right);
+  color: var(--pink-deep);
+  font-size: 1.02em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+  rotate: -3deg;
+}
+.report-arrow {
+  position: absolute;
+  right: -0.35em;
+  bottom: calc(100% + 0.1em);
+  width: 1.7em;
+  max-width: none;
+  height: auto;
+  overflow: visible;
+}
+.report-arrow path {
+  stroke-width: 3.6;
+}
+.report-scale {
+  position: absolute;
+  top: var(--y);
+  left: 0.1em;
+  color: var(--ink-3);
+  font-size: max(0.75rem, 0.75em);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  translate: 0 calc(-100% - 0.45em);
+}
+.report-weeks {
+  display: flex;
+  justify-content: space-between;
+  padding-inline: 0.1em;
+  color: var(--ink-3);
+  font-size: max(0.75rem, 0.78em);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.report-weeks li:last-child {
+  color: var(--ink);
+  font-weight: 600;
+}
+.report-figures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-block: 1px solid var(--line);
+}
+.report-figure {
+  display: grid;
+  gap: 0.35em;
+  padding: 0.95em 0 1em 1em;
+}
+.report-figure:first-child {
+  padding-left: 0;
+}
+.report-figure + .report-figure {
+  border-left: 1px solid var(--line);
+}
+.report-figure dt {
+  color: var(--ink-2);
+  font-size: max(0.75rem, 0.8125em);
+  font-weight: 500;
+}
+.report-figure dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15em 0.6em;
+}
+.report-figure-value {
+  position: relative;
+  font-size: 1.85em;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.report-figure-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(2.6em, 160%);
+  max-width: none;
+  height: auto;
+  overflow: visible;
+  translate: -50% -52%;
+}
+.report-figure-ring path {
+  stroke-width: 3.6;
+}
+.report-figure-note {
+  color: var(--pink-deep);
+  font-size: 0.9em;
+  font-weight: 600;
+  white-space: nowrap;
+  rotate: -4deg;
+}
+.report-inboxes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4em 0.75em;
+  color: var(--ink-2);
+  font-size: 0.875em;
+}
+.report-dots {
+  display: flex;
+  gap: 0.3em;
+}
+.report-dot {
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 0.2em;
+  background: var(--ink);
+}
+.report-dot.is-ramping {
+  background: var(--white);
+  box-shadow: inset 0 0 0 0.16em var(--ink);
+}
+
+/* The ways to deal: the top sheet itself, and the button beside the stack. */
+.stack-deal {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  border-radius: 1.35em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.stack-stage:has(.stack-deal:hover, .stack-next:hover) .stack-sheet.is-front {
+  translate: 0 -0.5em;
+}
+.stack-next {
+  position: absolute;
+  top: calc(clamp(5rem, 15cqi, 6.5rem) + 87cqi);
+  right: calc(14% + 1.9rem);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.75rem;
+  padding: 0 0.95rem 0 1.1rem;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--white);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  box-shadow: var(--shadow-card);
+  transition:
+    background-color var(--duration-ui) var(--ease-out),
+    translate 420ms var(--ease-settle);
+}
+.stack-next .glyph {
+  width: 1rem;
+  height: 1rem;
+  transition: translate 420ms var(--ease-settle);
+}
+.stack-next:hover {
+  background: var(--pink-deep);
+}
+.stack-next:hover .glyph {
+  translate: 0.2rem 0;
+}
+.stack-next:active {
+  translate: 0 1px;
+}
+
+/*
+ * Motion: the stack fans open, then the front report draws its week: the line, the pink point,
+ * the ring and the note in pink pen. A dealt sheet flies (scripts/stack.ts) and falls back in
+ * behind; the others step forward one place each.
+ */
+.motion .stack {
+  animation: stack-arrive 900ms var(--ease-settle) 80ms backwards;
+}
+.motion .stack-sheet {
+  transition:
+    transform 680ms var(--ease-settle) calc(var(--slot) * 40ms),
+    translate 420ms var(--ease-settle);
+  animation: stack-fan 1100ms var(--ease-settle)
+    calc(300ms + var(--slot) * 80ms) backwards;
+}
+.motion .stack-sheet.is-flying {
+  z-index: 20;
+  transition: none;
+  filter: drop-shadow(0 2px 3px rgb(24 4 14 / 7%))
+    drop-shadow(0 18px 28px rgb(24 4 14 / 9%))
+    drop-shadow(0 40px 60px rgb(157 23 77 / 10%));
+}
+.motion .stack-sheet.is-returning {
+  transition:
+    transform 900ms var(--ease-settle),
+    translate 420ms var(--ease-settle);
+}
+.motion .stack-sheet.is-front .report-line {
+  stroke-dasharray: 1;
+  animation: stack-draw 1100ms var(--ease-draw) 1000ms backwards;
+}
+.motion .stack-sheet.is-front .report-point {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: stack-point 600ms var(--ease-settle) 1900ms backwards;
+}
+.motion .stack-sheet.is-front .report-ring,
+.motion .stack-sheet.is-front .report-figure-ring path,
+.motion .stack-sheet.is-front .report-arrow path {
+  stroke-dasharray: 1;
+  animation: stack-draw 700ms var(--ease-draw) 2150ms backwards;
+}
+.motion .stack-sheet.is-front .report-note,
+.motion .stack-sheet.is-front .report-figure-note {
+  animation: stack-rise 600ms var(--ease-out) 2350ms backwards;
+}
+/* After the first deal the stack is open, so a report comes up and draws at once. */
+.motion .stack.is-dealt .stack-sheet.is-front .report-line {
+  animation-delay: 240ms;
+}
+.motion .stack.is-dealt .stack-sheet.is-front .report-point {
+  animation-delay: 1050ms;
+}
+.motion
+  .stack.is-dealt
+  .stack-sheet.is-front
+  :is(.report-ring, .report-figure-ring path, .report-arrow path) {
+  animation-delay: 1250ms;
+}
+.motion
+  .stack.is-dealt
+  .stack-sheet.is-front
+  :is(.report-note, .report-figure-note) {
+  animation-delay: 1400ms;
+}
+.motion .stack-next {
+  animation: stack-rise 600ms var(--ease-out) 1600ms backwards;
+}
+@keyframes stack-arrive {
+  from {
+    opacity: 0;
+    translate: 0 2rem;
+  }
+}
+@keyframes stack-fan {
+  from {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+@keyframes stack-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+@keyframes stack-point {
+  from {
+    scale: 0;
+  }
+}
+@keyframes stack-rise {
+  from {
+    opacity: 0;
+    translate: 0 0.4em;
+  }
+}
+
+/* ——— Kept apart: a folder per client in a row, and the menu that moves between them. ——— */
+.apart {
+  /* The hero's link lands on the heading rather than the section's top padding. */
+  scroll-margin-top: calc(1rem - var(--section-space));
+}
+.folders {
+  --folder-gap: clamp(1rem, 2.2vw, 2rem);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2.25rem var(--folder-gap);
+}
+.folder {
+  --shut: 1;
+  --fs: clamp(0.75rem, 6.1cqi, 1rem);
+  position: relative;
+  flex: 0 0 calc((100% - 4 * var(--folder-gap)) / 5);
+  aspect-ratio: 240 / 276;
+  container-type: inline-size;
+  border-radius: 1rem;
+  rotate: var(--tilt);
+  outline-offset: 0.6rem;
+}
+/* The open folder: the one under the pointer or focus, and Northwind's while none is. */
+.folder:is(:hover, :focus-within),
+:where(.folders:not(:has(.folder:is(:hover, :focus-within))))
+  .folder:first-child {
+  --shut: 0;
+}
+.folder:is(:hover, :focus-within) {
+  translate: 0 -0.45rem;
+}
+.folder-back {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.folder-back path {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 5.5;
+  stroke-linejoin: round;
+}
+.folder-name {
+  position: absolute;
+  top: 0;
+  left: var(--tab-left);
+  display: grid;
+  place-items: center;
+  width: var(--tab-width);
+  height: calc(30 / 276 * 100%);
+  padding-top: 0.1em;
+  font-size: calc(var(--fs) * 0.94);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1;
+  white-space: nowrap;
+}
+/* The papers inside: a loose sheet behind, and the sheet that lists the workspace. */
+.folder-under,
+.folder-sheet {
+  position: absolute;
+  border: max(2px, 1cqi) solid var(--ink);
+  border-radius: 4cqi;
+  background: var(--white);
+}
+.folder-under {
+  inset: 15% 9% 8% 10%;
+  rotate: 3.5deg;
+  translate: 0 calc(var(--shut) * 3cqi);
+}
+.folder-sheet {
+  inset: 19% 7% 7%;
+  display: grid;
+  align-content: start;
+  padding: 2cqi 5cqi;
+  font-size: var(--fs);
+  translate: 0 calc(var(--shut) * 4.5cqi);
+  rotate: calc((1 - var(--shut)) * -1deg);
+}
+.folder-item {
+  display: grid;
+  gap: 0.1em;
+  padding: 0.3em 0 0.36em;
+}
+.folder-item + .folder-item {
+  border-top: 1px solid var(--line);
+}
+.folder-item dt {
+  color: var(--ink-2);
+  font-size: max(0.75rem, 0.74em);
+  line-height: 1.15;
+}
+.folder-item dd {
+  display: flex;
+  align-items: center;
+  gap: 0.45em;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.folder-item .report-dots {
+  gap: 0.2em;
+}
+.folder-item .report-dot {
+  width: 0.58em;
+  height: 0.58em;
+}
+/* The front: most of the way up while the folder is shut, folded down to a strip once open. */
+.folder-front {
+  position: absolute;
+  top: calc(88% - var(--shut) * 45%);
+  right: -1.15cqi;
+  bottom: -1.15cqi;
+  left: -1.15cqi;
+  border: 2.3cqi solid var(--ink);
+  border-radius: 2.5cqi 2.5cqi 7.8cqi 7.8cqi;
+  background: var(--white);
+}
+.motion .folder {
+  transition: translate 420ms var(--ease-settle);
+}
+.motion .folder-front {
+  transition: top 560ms var(--ease-settle);
+}
+.motion .folder-under,
+.motion .folder-sheet {
+  transition:
+    translate 620ms var(--ease-settle),
+    rotate 620ms var(--ease-settle);
+}
+/* Every folder arrives shut; Northwind's opens once the row is in view. */
+.motion .folders:not(.is-in) .folder {
+  --shut: 1;
+}
+.motion .folders.is-in .folder:first-child .folder-front {
+  transition-delay: 350ms;
+}
+.motion .folders.is-in:has(.folder:is(:hover, :focus-within)) .folder-front {
+  transition-delay: 0ms;
+}
+
+/* The workspace menu as a paper cut-out: its check follows the open folder. */
+.apart-foot {
+  display: grid;
+  grid-template-columns: minmax(16rem, 19rem) minmax(0, 1fr);
+  align-items: start;
+  gap: 2.5rem clamp(2.5rem, 6vw, 6rem);
+  margin-top: clamp(3rem, 6vw, 4.75rem);
+}
+.folder-switch {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.55rem;
+  border-radius: var(--radius-l);
+  background: var(--white);
+  box-shadow: var(--shadow-float);
+  rotate: -1.6deg;
+}
+.folder-switch-title {
+  padding: 0.55rem 0.7rem 0.3rem;
+  color: var(--ink-3);
+  font-size: var(--text-micro);
+  font-weight: 500;
+}
+.folder-switch-item {
+  --on: 0;
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) 1.15rem;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.42rem 0.7rem;
+  border-radius: var(--radius-s);
+  background: color-mix(
+    in srgb,
+    var(--mist) calc(var(--on) * 100%),
+    transparent
+  );
+}
+.apart:not(:has(.folder:is(:hover, :focus-within)))
+  .folder-switch-item:first-child,
+.apart:has(.folder:nth-child(1):is(:hover, :focus-within))
+  .folder-switch-item:nth-child(1),
+.apart:has(.folder:nth-child(2):is(:hover, :focus-within))
+  .folder-switch-item:nth-child(2),
+.apart:has(.folder:nth-child(3):is(:hover, :focus-within))
+  .folder-switch-item:nth-child(3),
+.apart:has(.folder:nth-child(4):is(:hover, :focus-within))
+  .folder-switch-item:nth-child(4),
+.apart:has(.folder:nth-child(5):is(:hover, :focus-within))
+  .folder-switch-item:nth-child(5) {
+  --on: 1;
+}
+.folder-switch-mark {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.55rem;
+  background: color-mix(
+    in srgb,
+    var(--ink) calc(var(--on) * 100%),
+    var(--mist)
+  );
+  color: color-mix(in srgb, var(--white) calc(var(--on) * 100%), var(--ink-2));
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.folder-switch-name {
+  display: grid;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+.folder-switch-name span {
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+.folder-switch-check.glyph {
+  width: 1.15rem;
+  height: 1.15rem;
+  color: var(--pink-deep);
+  opacity: var(--on);
+}
+.folder-switch-new {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 0.3rem;
+  padding: 0.75rem 0.7rem 0.5rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+.folder-switch-new .glyph {
+  width: 1rem;
+  height: 1rem;
+  margin-inline: 0.5rem;
+  color: var(--ink-2);
+}
+.motion .folder-switch-item,
+.motion .folder-switch-mark,
+.motion .folder-switch-check {
+  transition:
+    background-color 300ms var(--ease-out),
+    color 300ms var(--ease-out),
+    opacity 300ms var(--ease-out);
+}
+.folder-ways {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 clamp(2rem, 4vw, 3.5rem);
+}
+.folder-ways li,
+.report-after li {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  max-width: 30rem;
+  padding: 1.35rem 0 1.5rem;
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: var(--text-small);
+  line-height: 1.55;
+}
+.folder-ways strong,
+.report-after strong {
+  color: var(--ink);
+  font-size: 1.1875rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+/* ——— The pace: a sending roster pinned up, a row per inbox and a dot per email. ——— */
+.pace {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.42fr);
+  align-items: start;
+  gap: 2.5rem clamp(2rem, 5vw, 5rem);
+}
+.pace-side {
+  position: sticky;
+  top: calc(var(--header-height) + 2.5rem);
+  display: grid;
+  gap: 1.5rem;
+}
+.pace-side h2 {
+  font-size: clamp(2.4rem, 4.4vw, 4.25rem);
+}
+.roster-key {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 0.25rem;
+}
+.roster-key li {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.9rem;
+  max-width: 28rem;
+  color: var(--ink-2);
+  font-size: var(--text-small);
+  line-height: 1.5;
+}
+.roster-swatch {
+  width: 2.75rem;
+  height: 1rem;
+  margin-top: 0.2rem;
+  border-radius: var(--radius-pill);
+}
+.roster-swatch-dots {
+  background:
+    radial-gradient(circle, var(--ink) 2.1px, transparent 2.7px) 0.15rem 50% /
+      0.5rem 100% repeat-x,
+    var(--mist);
+}
+.roster-swatch-window {
+  background: var(--mist);
+}
+.roster-swatch-quiet {
+  border-radius: 0.35rem;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--line-strong) 0 1.5px,
+    transparent 1.5px 5px
+  );
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+}
+.roster-swatch-ramp {
+  height: 1.3rem;
+  margin-top: 0.05rem;
+  border-radius: 0;
+  overflow: visible;
+}
+.roster-swatch-ramp path {
+  stroke: var(--ink);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.pace-side .fine-print {
+  margin-top: 0.25rem;
+}
+
+/* The sheet: a pin at the top, the day across, the clients' inboxes down the side. */
+.roster {
+  position: relative;
+  margin: 0;
+}
+.roster-pin {
+  position: absolute;
+  top: 0.45rem;
+  left: 50%;
+  z-index: 3;
+  width: 1.65rem;
+  height: 1.65rem;
+  border: 5px solid var(--ink);
+  border-radius: 50%;
+  background: var(--white);
+  translate: -50% 0;
+  box-shadow: 0 5px 9px rgb(24 4 14 / 14%);
+}
+.roster-paper {
+  --name: 5.75rem;
+  --count: 3.25rem;
+  --col-gap: 1rem;
+  padding: clamp(1.25rem, 2.6vw, 2.25rem);
+  border-radius: 1.35rem;
+  background: var(--white);
+  box-shadow: var(--shadow-float);
+  rotate: 0.5deg;
+}
+.roster-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--line);
+}
+.roster-title {
+  display: grid;
+  gap: 0.3rem;
+}
+.roster-name {
+  font-size: clamp(1.4rem, 2vw, 1.85rem);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+.roster-when {
+  color: var(--ink-2);
+  font-size: var(--text-micro);
+}
+.roster-week {
+  display: flex;
+  gap: 0.3rem;
+}
+.roster-day {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.5rem;
+  background: var(--mist);
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.roster-day.is-today {
+  background: var(--ink);
+  color: var(--white);
+}
+.roster-day.is-quiet {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--line-strong) 0 1.5px,
+    var(--white) 1.5px 5px
+  );
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+  color: var(--ink-3);
+}
+.roster-body {
+  position: relative;
+  display: grid;
+  gap: 0.5rem;
+  padding-top: 3.4rem;
+}
+/* The day's frame, laid over the rows: hour labels, hour rules and the pink line for now. */
+.roster-hours,
+.roster-rules,
+.roster-now {
+  position: absolute;
+  right: calc(var(--count) + var(--col-gap));
+  left: calc(var(--name) + var(--col-gap));
+}
+.roster-hours {
+  top: 0.95rem;
+  height: 1rem;
+}
+.roster-hour {
+  position: absolute;
+  left: var(--at);
+  color: var(--ink-3);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  translate: -50% 0;
+}
+.roster-rules {
+  top: 2.4rem;
+  bottom: 0;
+  border-right: 1px solid var(--line);
+  background: repeating-linear-gradient(
+    90deg,
+    var(--line) 0 1px,
+    transparent 1px 6.25%
+  );
+}
+.roster-now {
+  z-index: 2;
+  top: 3.1rem;
+  bottom: -0.45rem;
+  pointer-events: none;
+}
+.roster-now::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--now);
+  width: 3px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: var(--pink-hot);
+  transform-origin: top;
+}
+.roster-now-label {
+  position: absolute;
+  bottom: 100%;
+  left: var(--now);
+  padding: 0.18rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background: var(--pink-deep);
+  color: var(--white);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  translate: -50% 0;
+}
+.roster-crew {
+  display: grid;
+}
+.roster-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--name) minmax(0, 1fr) var(--count);
+  align-items: center;
+  column-gap: var(--col-gap);
+  min-height: 1.6rem;
+}
+.roster-crew-head {
+  align-items: end;
+  min-height: 2rem;
+  padding-bottom: 0.2rem;
+}
+.roster-client {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
+.roster-inbox {
+  overflow: hidden;
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.roster-count {
+  justify-self: end;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.roster-track {
+  position: relative;
+  align-self: stretch;
+}
+.roster-window,
+.roster-sent,
+.roster-due {
+  position: absolute;
+  top: 50%;
+  left: var(--left);
+  width: var(--width);
+  height: 0.95rem;
+  translate: 0 -50%;
+}
+.roster-window {
+  border-radius: var(--radius-pill);
+  background: var(--mist);
+}
+/* One dot per email, one every ten minutes: ink once it's sent, grey while it waits. */
+.roster-sent,
+.roster-due {
+  background: radial-gradient(
+      circle,
+      var(--dot-color) var(--dot),
+      transparent calc(var(--dot) + 0.6px)
+    )
+    0 50% / calc(100% / var(--n)) 100% repeat-x;
+}
+.roster-sent {
+  --dot: 2.1px;
+  --dot-color: var(--ink);
+}
+.roster-due {
+  --dot: 1.5px;
+  --dot-color: var(--ink-quiet);
+}
+.roster-hours-note,
+.roster-ramp {
+  position: absolute;
+  left: var(--left);
+  color: var(--ink-2);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.roster-hours-note {
+  bottom: 0.2rem;
+}
+.roster-ramp {
+  top: 50%;
+  margin-left: 0.6rem;
+  translate: 0 -50%;
+}
+.motion .roster .roster-sent {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 1500ms var(--ease-out) calc(250ms + var(--g) * 260ms);
+}
+.motion .roster .roster-due,
+.motion .roster .roster-now-label {
+  opacity: 0;
+  transition: opacity 600ms var(--ease-out) 1500ms;
+}
+.motion .roster .roster-now::before {
+  scale: 1 0;
+  transition: scale 900ms var(--ease-draw) 1100ms;
+}
+.motion .roster.is-in .roster-sent {
+  clip-path: inset(0);
+}
+.motion .roster.is-in :is(.roster-due, .roster-now-label) {
+  opacity: 1;
+}
+.motion .roster.is-in .roster-now::before {
+  scale: 1 1;
+}
+
+/* ——— The numbers: one report page up close, each figure defined in pink in the margin. ——— */
+.proof-head {
+  display: grid;
+  justify-items: center;
+  gap: 1.25rem;
+  max-width: 50rem;
+  margin: 0 auto clamp(3rem, 6vw, 4.5rem);
+  text-align: center;
+}
+.proof-head .lead {
+  max-width: 34rem;
+}
+.report-proof {
+  display: grid;
+  justify-items: center;
+  margin: 0;
+}
+.report-sheet {
+  --pad: clamp(1.5rem, 3vw, 2.5rem);
+  display: grid;
+  gap: 1.4rem;
+  width: min(100%, 35rem);
+  padding: calc(var(--pad) * 0.95) var(--pad);
+  border-radius: 1.35rem;
+  background: var(--white);
+  box-shadow: var(--shadow-float);
+  rotate: -0.5deg;
+}
+.report-lines {
+  display: grid;
+}
+.report-group {
+  position: relative;
+  padding: 0.95rem 0;
+}
+.report-group + .report-group {
+  border-top: 1px solid var(--line);
+}
+.report-rows {
+  display: grid;
+  gap: 0.3rem;
+}
+.report-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+.report-row dt {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  color: var(--ink-2);
+  font-size: 1.0625rem;
+  font-weight: 500;
+}
+/* A dotted leader from each label to its figure, as on a printed report. */
+.report-row dt::after {
+  content: "";
+  flex: 1;
+  min-width: 1rem;
+  margin-left: 0.75rem;
+  border-bottom: 2px dotted var(--line-strong);
+}
+.report-row dd {
+  font-size: clamp(1.5rem, 2.2vw, 1.875rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+/* A note in pink pen in the margin, with the arrow or brace that ties it to its figures. */
+.report-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 16.5rem;
+  color: var(--pink-deep);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+.is-right .report-mark {
+  left: calc(100% + var(--pad) - 1.1rem);
+}
+.is-left .report-mark {
+  right: calc(100% + var(--pad) - 1.1rem);
+  flex-direction: row-reverse;
+  text-align: right;
+}
+.is-right.is-pair .report-mark {
+  left: calc(100% + var(--pad) + 0.4rem);
+}
+.is-left.is-pair .report-mark {
+  right: calc(100% + var(--pad) + 0.4rem);
+}
+.report-mark-text {
+  rotate: -2deg;
+  text-wrap: pretty;
+}
+.report-mark svg {
+  flex: none;
+  overflow: visible;
+}
+.report-mark path {
+  stroke: var(--pink);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.report-mark-arrow {
+  width: 3.4rem;
+  height: auto;
+}
+.report-mark-brace {
+  width: 1.25rem;
+  height: calc(100% - 0.7rem);
+}
+.is-left .report-mark svg {
+  scale: -1 1;
+}
+.motion .report-proof .report-mark path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 750ms var(--ease-draw)
+    calc(350ms + var(--g) * 420ms);
+}
+.motion .report-proof .report-mark-text {
+  opacity: 0;
+  translate: 0 0.35rem;
+  transition:
+    opacity 500ms var(--ease-out) calc(650ms + var(--g) * 420ms),
+    translate 700ms var(--ease-settle) calc(650ms + var(--g) * 420ms);
+}
+.motion .report-proof.is-in .report-mark path {
+  stroke-dashoffset: 0;
+}
+.motion .report-proof.is-in .report-mark-text {
+  opacity: 1;
+  translate: 0 0;
+}
+/* Where the numbers go from here. */
+.report-after {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 clamp(2rem, 4vw, 3.5rem);
+  margin-top: clamp(3.5rem, 7vw, 5.5rem);
+}
+.proof > .fine-print {
+  margin-top: 1.5rem;
+}
+
+/* ——— Smaller screens. ——— */
+@media (max-width: 999px) {
+  .stack-hero {
+    overflow-x: clip;
+  }
+  .stack-grid {
+    grid-template-columns: 1fr;
+  }
+  .stack-copy {
+    max-width: 38rem;
+  }
+  .stack-stage {
+    width: min(100%, 34rem);
+    margin: 0 auto;
+  }
+}
+@media (max-width: 1179px) {
+  .report-proof {
+    justify-items: start;
+  }
+  .is-left .report-mark,
+  .is-left.is-pair .report-mark {
+    right: auto;
+    flex-direction: row;
+    text-align: left;
+  }
+  .is-left .report-mark {
+    left: calc(100% + var(--pad) - 1.1rem);
+  }
+  .is-left.is-pair .report-mark {
+    left: calc(100% + var(--pad) + 0.4rem);
+  }
+  .is-left .report-mark svg {
+    scale: 1 1;
+  }
+}
+@media (max-width: 1120px) {
+  .folder {
+    flex-basis: calc((100% - 2 * var(--folder-gap)) / 3);
+  }
+  .pace {
+    grid-template-columns: 1fr;
+  }
+  .pace-side {
+    position: static;
+    max-width: 40rem;
+  }
+}
+@media (max-width: 900px) {
+  .apart-foot {
+    grid-template-columns: 1fr;
+  }
+  .folder-switch {
+    width: min(100%, 19rem);
+  }
+}
+@media (max-width: 860px) {
+  .report-proof {
+    justify-items: center;
+  }
+  .report-mark,
+  .is-left .report-mark,
+  .is-left.is-pair .report-mark,
+  .is-right.is-pair .report-mark {
+    position: static;
+    display: block;
+    width: auto;
+    margin-top: 0.5rem;
+    font-size: 0.9375rem;
+    text-align: left;
+  }
+  .report-mark svg {
+    display: none;
+  }
+  .report-mark-text {
+    display: block;
+    rotate: -1deg;
+  }
+  .report-after {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 640px) {
+  .stack {
+    width: 82%;
+  }
+  /* On a phone the button waits under the stack, clear of the front report's figures. */
+  .stack-next {
+    position: relative;
+    top: auto;
+    right: auto;
+    display: flex;
+    width: max-content;
+    margin: 2.25rem auto 0;
+  }
+  .stack-tab {
+    padding-inline: 0.55em;
+  }
+  .stack-tab-name {
+    display: none;
+  }
+  .stack-tab-mark {
+    display: grid;
+  }
+  .folders {
+    gap: 1.75rem var(--folder-gap);
+  }
+  .folder {
+    --shut: 0;
+    flex-basis: calc((100% - var(--folder-gap)) / 2);
+    aspect-ratio: 240 / 330;
+  }
+  .folder:is(:hover, :focus-within) {
+    translate: none;
+  }
+  .folder-ways {
+    grid-template-columns: 1fr;
+  }
+  .roster-pin {
+    top: -0.8rem;
+  }
+  .roster-paper {
+    --name: 3.6rem;
+    --count: 2.6rem;
+    --col-gap: 0.5rem;
+    rotate: 0deg;
+  }
+  .roster-week {
+    gap: 0.2rem;
+  }
+  .roster-day {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  .roster-hour.is-minor {
+    display: none;
+  }
+  /* The client's hours go under its name, clear of the line for now. */
+  .roster-crew-head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+  }
+  .roster-crew-head .roster-track,
+  .roster-hours-note {
+    position: static;
+  }
+  .roster-inbox,
+  .roster-count {
+    font-size: 0.75rem;
+  }
+  /* Too fine for dots at this size: the sends become a bar. */
+  .roster-sent,
+  .roster-due {
+    height: 0.3rem;
+    border-radius: var(--radius-pill);
+    background: var(--dot-color);
+  }
+  .roster-ramp {
+    margin-left: 0.35rem;
+    font-size: 0.6875rem;
+  }
+}

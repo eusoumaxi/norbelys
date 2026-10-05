@@ -1,0 +1,77 @@
+---
+import ArrowButton from "../arrow-button.astro";
+import { START } from "../../links";
+
+/**
+ * The gallery's price list, the printed sheet that hangs by the door: every work on the wall is
+ * a feature, numbered the way a list of works is, each with a line on how it behaves and, where a
+ * price would be, "Included". At the foot, one total, with the sold dot beside it. The figures
+ * are the product's own defaults and limits; there is no other price.
+ */
+interface Work {
+  readonly name: string;
+  readonly detail: string;
+}
+const works: readonly Work[] = [
+  { detail: "Up to 50 steps, each with its own delay, in one thread", name: "Campaigns & multi-step sequences" },
+  { detail: "Up to 50 versions a step; replies, clicks or opens pick the winner", name: "A/B tests on every step" },
+  { detail: "Every reply from every inbox, threaded with the email that started it", name: "Unified inbox" },
+  { detail: "From the facts you allow, with a monthly limit per workspace", name: "AI first lines & reply sorting" },
+  { detail: "A new inbox ramps from 10% of its cap to all of it over 8 days", name: "Warm-up ramp, daily limits & business hours" },
+  { detail: "Off by default, on your own tracking domain, bots left out", name: "Open & click tracking" },
+  { detail: "Every address checked before it sends, suppressed everywhere after", name: "Bounce & unsubscribe protection" },
+  { detail: "19 signed webhook events, 6,000 requests a minute", name: "Webhooks, API & MCP server" },
+];
+---
+
+<section class="page-section container gallery-prices" aria-labelledby="prices-title">
+  <div class="gallery-prices-head">
+    <h2 id="prices-title">
+      <span class="line">One price.</span>
+      <span class="line">Everything on the wall.</span>
+    </h2>
+    <p class="lead">
+      No tiers to compare and nothing to unlock later. Every feature hangs in the same room, at
+      launch pricing, and AI is part of it.
+    </p>
+    <div class="page-actions">
+      <ArrowButton href={START}>Start for $20/mo</ArrowButton>
+    </div>
+  </div>
+  <div class="gallery-sheet-hang">
+    <svg class="gallery-clip" viewBox="0 0 120 96" fill="none" aria-hidden="true">
+      <circle class="gallery-clip-nail" cx="60" cy="10" r="7"></circle>
+      <path class="gallery-clip-loop" d="M40 58L53 19A7.5 7.5 0 0 1 67 19L80 58" pathLength="1"></path>
+      <rect class="gallery-clip-body" x="24" y="54" width="72" height="32" rx="9" pathLength="1"></rect>
+    </svg>
+    <div class="gallery-sheet">
+      <div class="gallery-sheet-top">
+        <p class="gallery-sheet-title">List of works</p>
+        <p>Launch pricing</p>
+      </div>
+      <ol class="gallery-works">
+        {
+          works.map((work, index) => (
+            <li class="gallery-work">
+              <span class="gallery-work-number numeric" aria-hidden="true">
+                {index + 1}
+              </span>
+              <span class="gallery-work-name">{work.name}</span>
+              <span class="gallery-work-leader" aria-hidden="true" />
+              <span class="gallery-work-price">Included</span>
+              <span class="gallery-work-detail">{work.detail}</span>
+            </li>
+          ))
+        }
+      </ol>
+      <div class="gallery-total">
+        <p class="gallery-total-name">Everything on this list</p>
+        <p class="gallery-total-price">
+          <span class="frame-sold" aria-hidden="true"></span>
+          <strong class="numeric">$20</strong> a month
+        </p>
+        <p class="gallery-total-note">No credits, no add-ons. AI included.</p>
+      </div>
+    </div>
+  </div>
+</section>

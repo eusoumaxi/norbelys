@@ -1,0 +1,120 @@
+---
+/**
+ * The numbers an agency can defend, as one client's report page up close, the same paper as the
+ * stack at the top of the page, marked up in pink pen the way a careful account manager reads it
+ * before it goes out. Each note in the margin says what its number counts: sent means accepted,
+ * replies means people, opens and clicks only exist when tracking is on, and bounces and
+ * unsubscribes are suppressed across the client's workspace. Under the page, the three ways the
+ * numbers leave it. Northwind, the agency and every number are examples.
+ */
+interface Group {
+  readonly rows: readonly (readonly [label: string, value: string])[];
+  readonly note: string;
+  /** The margin the note is written in. */
+  readonly side: "left" | "right";
+}
+
+const groups: readonly Group[] = [
+  { note: "Counted once the receiving server accepts it.", rows: [["Sent", "1,240"]], side: "left" },
+  {
+    note: "People only. Auto-replies and out-of-office notes are left out.",
+    rows: [["Replies", "38"]],
+    side: "right",
+  },
+  {
+    note: "Only if you switch tracking on. It’s off by default, and bots are left out.",
+    rows: [
+      ["Opens", "412"],
+      ["Clicks", "57"],
+    ],
+    side: "left",
+  },
+  {
+    note: "Suppressed: no campaign in Northwind’s workspace writes to them again.",
+    rows: [
+      ["Bounces", "9"],
+      ["Unsubscribes", "4"],
+    ],
+    side: "right",
+  },
+];
+
+const after = [
+  { text: "Export people and their history as CSV or JSONL.", title: "Take it with you." },
+  { text: "Send any of 19 signed webhook events into your own reporting stack.", title: "Feed your own reports." },
+  {
+    text: "Invite them by email to their own workspace as a viewer. A viewer reads everything and changes nothing.",
+    title: "Let the client look.",
+  },
+] as const;
+---
+
+<section class="page-section container proof" aria-labelledby="proof-title">
+  <div class="proof-head">
+    <h2 id="proof-title">Numbers you can put in front of a client.</h2>
+    <p class="lead">
+      Norbelys counts each number one plain way, so it holds up on your report when a client asks
+      what it means.
+    </p>
+  </div>
+
+  <figure class="report-proof" data-inview>
+    <div class="report-sheet">
+      <header class="report-head">
+        <div class="report-title">
+          <p class="report-client">Northwind</p>
+          <p class="report-week">Outbound report · Week 41</p>
+        </div>
+        <p class="report-by">
+          <span>Prepared by</span> Acme Growth
+        </p>
+      </header>
+      <div class="report-lines">
+        {
+          groups.map((group, index) => (
+            <div class:list={["report-group", `is-${group.side}`, { "is-pair": group.rows.length > 1 }]} style={`--g: ${index}`}>
+              <dl class="report-rows">
+                {group.rows.map(([label, value]) => (
+                  <div class="report-row">
+                    <dt>{label}</dt>
+                    <dd class="numeric">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p class="report-mark">
+                {group.rows.length > 1 ? (
+                  <svg class="report-mark-brace" viewBox="0 0 24 100" preserveAspectRatio="none" fill="none" aria-hidden="true">
+                    <path d="M4 4C12 4 13 8 13 16V40C13 46 15 50 21 50C15 50 13 54 13 60V84C13 92 12 96 4 96" pathLength="1" />
+                  </svg>
+                ) : (
+                  <svg class="report-mark-arrow" viewBox="0 0 64 28" fill="none" aria-hidden="true">
+                    <path d="M60 20C44 26 22 22 8 11M19 11.6L8 11L11.2 21.6" pathLength="1" />
+                  </svg>
+                )}
+                <span class="report-mark-text">{group.note}</span>
+              </p>
+            </div>
+          ))
+        }
+      </div>
+      <p class="report-inboxes">
+        <span class="report-dots" aria-hidden="true">
+          {Array.from({ length: 6 }, () => <span class="report-dot" />)}
+        </span>
+        6 inboxes · all working
+      </p>
+    </div>
+  </figure>
+
+  <ul class="report-after">
+    {
+      after.map((item) => (
+        <li>
+          <strong>{item.title}</strong>
+          {item.text}
+        </li>
+      ))
+    }
+  </ul>
+  <p class="fine-print">Northwind, Acme Growth and the numbers on this report are examples.</p>
+</section>

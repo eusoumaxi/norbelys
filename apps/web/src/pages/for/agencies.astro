@@ -1,0 +1,98 @@
+---
+import Closing from "../../components/closing.astro";
+import Faq from "../../components/faq.astro";
+import Marked from "../../components/marked.astro";
+import AgencyFolders from "../../components/teams/agency-folders.astro";
+import AgencyReport from "../../components/teams/agency-report.astro";
+import AgencyRoster from "../../components/teams/agency-roster.astro";
+import AgencyStack from "../../components/teams/agency-stack.astro";
+import FirstHour from "../../components/teams/first-hour.astro";
+import OtherTeams from "../../components/teams/other-teams.astro";
+import Page from "../../layouts/page.astro";
+import "../../styles/teams.css";
+import "../../styles/team-agencies.css";
+
+/**
+ * Norbelys for agencies, built on Friday's stack of client reports: one sheet per client, each its
+ * own workspace. Then the client folders that never mix, the roster that keeps dozens of inboxes
+ * at a careful pace, the numbers an agency can defend in front of a client, and the afternoon it
+ * takes to bring a new client on. Every number about the product is a default from PRODUCT.md;
+ * the agency, its clients, people and results are illustrative.
+ */
+const steps = [
+  {
+    text: "Name it for the client and pick their time zone. It starts empty, with nothing from your other clients in it.",
+    time: "1:00",
+    title: "New workspace",
+  },
+  {
+    text: "Google Workspace, Microsoft 365 or SMTP, on the client’s own domain. Switch on the ramp for any inbox that’s new.",
+    time: "1:10",
+    title: "Connect their inboxes",
+  },
+  {
+    text: "Drop in the client’s CSV, where every column becomes a field. Then write the steps, or paste the copy they signed off.",
+    time: "1:30",
+    title: "Import and write",
+  },
+  {
+    text: "A last check first: who gets it, the first email, the inboxes and the hours. Then invite the client to look in.",
+    time: "2:00",
+    title: "Start it",
+  },
+] as const;
+
+const questions = [
+  [
+    "Can my clients see their own results?",
+    "Yes. Invite them by email to their workspace as viewers. A viewer reads everything in that workspace, from campaigns to replies and numbers, and changes nothing. They never see your other clients.",
+  ],
+  [
+    "Are client lists and data kept apart?",
+    "Yes. Each workspace has its own mailboxes, people, campaigns, keys and webhooks, and the database keeps every workspace’s rows to itself. Switching between clients never mixes them.",
+  ],
+  [
+    "Can each client send from their own domain and inboxes?",
+    "Yes. Connect the client’s Google Workspace, Microsoft 365 or SMTP inboxes to their workspace. Each inbox keeps its own daily cap, gap and hours, and each campaign picks the inboxes it sends from.",
+  ],
+  [
+    "How do I move between clients?",
+    "One login holds every workspace you belong to. The workspace menu in the top bar switches to another client or starts a new workspace, and each opens on its own overview.",
+  ],
+  [
+    "Can I automate the weekly report?",
+    "Yes. Export people and history as CSV or JSONL, send any of 19 signed webhook events to your own reporting stack, or pull the numbers through the API, at up to 6,000 requests a minute per workspace.",
+  ],
+  [
+    "What if a prospect is on two clients’ lists?",
+    "Each workspace keeps its own people and its own suppressions, so they’re handled separately. A reply, a bounce or an unsubscribe stops that person across the campaigns of the workspace it happened in, not in your other clients’. If they should hear from no one, add them to the other workspace’s suppressions too.",
+  ],
+  [
+    "Can some of my team work on only some clients?",
+    "Yes. People are invited workspace by workspace, with a role in each: owner, admin, member or viewer. A teammate can run Kraftwerk’s campaigns without ever seeing Northwind.",
+  ],
+] as const;
+---
+
+<Page
+  title="Cold email for agencies — Norbelys"
+  description="Run cold email for every client from one login. Each client gets a workspace of its own, with its own inboxes, people, campaigns and keys, and numbers you can show them. From $20 a month, AI included."
+  class="team team-agencies"
+>
+  <AgencyStack />
+  <AgencyFolders />
+  <AgencyRoster />
+  <AgencyReport />
+  <FirstHour lead="Bringing a client on is mostly connecting what they already have. The rest is the sequence you’d write for them anyway." steps={steps}>
+    A new client, live by <Marked>two</Marked><span class="pink">.</span>
+  </FirstHour>
+  <Faq questions={questions} />
+  <OtherTeams slug="agencies" />
+  <Closing />
+</Page>
+
+<script>
+  import { startStack } from "../../scripts/stack";
+
+  startStack();
+</script>

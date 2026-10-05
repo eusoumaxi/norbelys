@@ -1,0 +1,134 @@
+---
+import ArrowButton from "../arrow-button.astro";
+import Marked from "../marked.astro";
+import { START } from "../../links";
+
+/**
+ * The SDR page's opening: the sales-floor bell, rung by replies. It hangs from a rod that fades
+ * into the ceiling, its lanyard dropping beside the headline, the week's tally on the whiteboard
+ * behind it. Every
+ * ring sends a reply out of the bell's mouth and draws a mark on the tally. The script
+ * (scripts/bell.ts) rings it on its own a few times, then whenever the visitor taps the bell or
+ * swings the lanyard. Without it the bell hangs still with this week's replies under it. The
+ * people and messages are illustrative.
+ */
+const replies = [
+  { initials: "AM", message: "Love this. Are you free Tuesday at 10?", name: "Alex Morgan", tag: "Interested", tone: "hot" },
+  { initials: "ML", message: "Looping in our Head of Sales. She owns this.", name: "María López", tag: "Referral", tone: "warm" },
+  { initials: "PS", message: "Send over the deck. Timing is good for Q3.", name: "Priya Shah", tag: "Interested", tone: "hot" },
+  { initials: "TB", message: "Yes! Let’s find 20 minutes this week.", name: "Tom Becker", tag: "Interested", tone: "hot" },
+  { initials: "DK", message: "What would this look like for 12 reps?", name: "Dana Kim", tag: "Question", tone: "warm" },
+  { initials: "JW", message: "Not this quarter. Try me again in January?", name: "Jonas Weber", tag: "Not now", tone: "calm" },
+  { initials: "RS", message: "Funny timing, we were just talking about this.", name: "Rafa Silva", tag: "Interested", tone: "hot" },
+] as const;
+
+/** The sound: three arcs either side of the lip, around the bell's mouth. */
+const MOUTH = { x: 360, y: 452 } as const;
+const arc = (radius: number, side: -1 | 1): string => {
+  const spread = 0.42;
+  const point = (angle: number): string => {
+    const x = MOUTH.x + side * radius * Math.cos(angle);
+    const y = MOUTH.y + radius * Math.sin(angle);
+    return `${Math.round(x * 10) / 10} ${Math.round(y * 10) / 10}`;
+  };
+  return `M${point(-spread)}A${radius} ${radius} 0 0 ${side === 1 ? 1 : 0} ${point(spread)}`;
+};
+const waves = [190, 236, 282].flatMap((radius, index) => [
+  { d: arc(radius, -1), index },
+  { d: arc(radius, 1), index },
+]);
+
+/** The week so far: seven marks, the fifth of each group struck through in pink. */
+const TALLY = 7;
+---
+
+<section class="page-hero bell-hero" aria-labelledby="sdrs-title" data-bell>
+  <div class="container bell-grid">
+    <div class="bell-copy">
+      <h1 id="sdrs-title" class="page-title" data-inview>
+        <span class="line">More reasons</span>
+        <span class="line">to ring</span>
+        <span class="line">the <Marked>bell</Marked><span class="pink">.</span></span>
+      </h1>
+      <p class="lead page-lead">
+        Norbelys sends every step of your sequences from your own inboxes, follows up on schedule
+        and stops the second someone replies. Your day goes back to the conversations.
+      </p>
+      <div class="page-actions">
+        <ArrowButton href={START}>Start for $20/mo</ArrowButton>
+        <a class="button button-ghost" href="#todo">See your to-do list</a>
+      </div>
+    </div>
+
+    <div class="bell-stage">
+      <svg class="bell-art" viewBox="0 0 640 760" fill="none" aria-hidden="true">
+        <g class="bell-waves">
+          {waves.map((wave) => <path class="bell-wave" d={wave.d} style={`--w: ${wave.index}`} />)}
+        </g>
+        <defs>
+          <linearGradient id="bell-rod" gradientUnits="userSpaceOnUse" x1="0" x2="0" y1="52" y2="98">
+            <stop offset="0" stop-color="var(--ink)" stop-opacity="0"></stop>
+            <stop offset="1" stop-color="var(--ink)"></stop>
+          </linearGradient>
+        </defs>
+        <g class="bell-mount">
+          <path class="bell-ink bell-rod" d="M360 52V100" pathLength="1"></path>
+          <path class="bell-ink" d="M344 96V120A16 16 0 0 0 376 120V96" pathLength="1"></path>
+        </g>
+        <g class="bell-swing" data-bell-swing>
+          <g class="bell-clapper" data-bell-clapper>
+            <path class="bell-ink bell-lanyard" d="M360 492V560C360 600 352 640 352 676" pathLength="1"></path>
+            <path class="bell-ink bell-handle" d="M352 676C334 686 332 728 352 734C372 728 370 686 352 676Z" pathLength="1"></path>
+            <circle class="bell-ball" cx="360" cy="512" r="22"></circle>
+          </g>
+          <path
+            class="bell-ink bell-body"
+            d="M226 452C264 420 280 372 282 300L284 228C286 186 318 160 360 160C402 160 434 186 436 228L438 300C440 372 456 420 494 452Z"
+            pathLength="1"></path>
+          <path class="bell-ink bell-canon" d="M342 162V146A18 18 0 0 1 378 146V162" pathLength="1"></path>
+          <path class="bell-detail" d="M286 236C326 228 394 228 434 236" pathLength="1"></path>
+          <path class="bell-detail" d="M262 404C320 414 400 414 458 404" pathLength="1"></path>
+          <rect class="bell-ink bell-lip" x="204" y="450" width="312" height="36" rx="18" pathLength="1"></rect>
+        </g>
+        <g class="bell-board">
+          <rect class="bell-ink bell-board-frame" x="424" y="560" width="180" height="118" rx="20" pathLength="1"></rect>
+          <path class="bell-detail" d="M452 698H576" pathLength="1"></path>
+          <text class="bell-board-label" x="446" y="594">This week</text>
+          <g class="bell-tally" data-bell-tally data-count={TALLY}>
+            {
+              Array.from({ length: TALLY }, (_, index) => {
+                const group = Math.floor(index / 5);
+                const place = index % 5;
+                const x = 450 + group * 52 + place * 9;
+                return place === 4 ? (
+                  <path class="bell-mark bell-mark-strike" d={`M${x - 41} 656L${x - 4} 622`} pathLength="1" />
+                ) : (
+                  <path class="bell-mark" d={`M${x} 618V658`} pathLength="1" />
+                );
+              })
+            }
+          </g>
+        </g>
+      </svg>
+      <button class="bell-hit" type="button" data-bell-hit aria-label="Ring the bell"></button>
+      <button class="bell-pull" type="button" data-bell-pull aria-label="Swing the lanyard to ring the bell"></button>
+      <ol class="bell-replies" aria-hidden="true" data-bell-replies>
+        {
+          replies.map((reply, index) => (
+            <li class={`bell-reply bell-reply-${reply.tone}`} data-bell-reply data-slot={index < 3 ? 2 - index : "out"}>
+              <span class="bell-reply-avatar">{reply.initials}</span>
+              <span class="bell-reply-text">
+                <span class="bell-reply-name">
+                  {reply.name} <span>replied</span>
+                </span>
+                <span class="bell-reply-message">{reply.message}</span>
+              </span>
+              <span class="bell-reply-tag">{reply.tag}</span>
+            </li>
+          ))
+        }
+      </ol>
+      <p class="bell-hint" aria-hidden="true">Tap the bell</p>
+    </div>
+  </div>
+</section>

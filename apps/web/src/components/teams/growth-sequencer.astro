@@ -1,0 +1,151 @@
+---
+/**
+ * Every step is a channel: one lead's sequence drawn as a step sequencer, a row per step and a
+ * column per day, Tuesday to the Friday of the week after next. A step's pad lights on the day it
+ * sends. The playhead walks the days as the drawing scrolls past (scripts/motion.ts gives it
+ * `--p`, and each pad knows the moment the playhead reaches it): a step due on a Saturday waits
+ * for Monday, inside the sender's hours, and the reply on day 16 stops the playhead, so the last
+ * step never goes out.
+ * Beside each row, the step's own little mix: how many versions it tests and how it splits them.
+ * Without motion the drawing shows where the sequence ends. The lead and the days are examples.
+ * On narrow screens the grid turns on its side, like a tracker: the days run down and the steps
+ * across, the playhead falls instead of walking, and each mix gets its short name.
+ */
+interface Step {
+  readonly name: string;
+  /** How long it waits after the step before it sent. */
+  readonly wait: string;
+  /** The day it sends, and the day it was due when that fell outside the sender's hours. */
+  readonly day: number;
+  readonly due?: number;
+  /** Whether it ever sends: a reply can come first. */
+  readonly sends: boolean;
+  /** Its versions' fader levels, 0 to 1, and the winner's place when one was picked. */
+  readonly mix: readonly number[];
+  readonly winner?: number;
+  readonly split: string;
+  /** The split in a word or two, for the tracker's narrow columns. */
+  readonly short: string;
+}
+
+const DAYS = 18;
+/** Day 1 is a Tuesday, so a day's weekday is its number modulo 7 from Monday. */
+const WEEKDAYS = ["M", "T", "W", "T", "F", "S", "S"] as const;
+const days = Array.from({ length: DAYS }, (_, index) => {
+  const day = index + 1;
+  const weekday = day % 7;
+  return { day, letter: WEEKDAYS[weekday] ?? "", weekend: weekday === 5 || weekday === 6 };
+});
+const REPLY = 16;
+const steps: readonly Step[] = [
+  { day: 1, mix: [0.12, 0.12, 1, 0.12], name: "First email", short: "Winner", split: "4 versions, winner by replies", sends: true, wait: "Day 1", winner: 2 },
+  { day: 4, mix: [0.7, 0.3], name: "Follow-up", short: "70 / 30", split: "2 versions, by weight 70 / 30", sends: true, wait: "3 days later" },
+  { day: 14, due: 12, mix: [0.55, 0.55, 0.55], name: "New angle", short: "Evenly", split: "3 versions, evenly", sends: true, wait: "8 days later" },
+  { day: 18, mix: [0.55], name: "Last touch", short: "1 version", split: "1 version", sends: false, wait: "4 days later" },
+];
+/**
+ * Where in the drawing's scroll progress the playhead starts and how much of it the walk takes;
+ * `at` is the moment it reaches a day, which is when that day's pad lights.
+ */
+const P0 = 0.24;
+const SPAN = 0.32;
+const at = (day: number): string => (P0 + ((day - 1) / (REPLY - 1)) * SPAN).toFixed(3);
+/** A step's mix, drawn as that many little faders. */
+const mixWidth = (count: number): number => count * 16 + 4;
+---
+
+<section id="sequence" class="page-section container seq-section" aria-labelledby="sequence-title">
+  <div class="split-head">
+    <h2 id="sequence-title">Every step is a channel<span class="pink">.</span></h2>
+    <p class="lead">
+      A sequence runs up to 50 steps, each waiting its own delay and sending only inside your
+      hours. Every step brings its own versions, up to 50, split evenly, by weight, or by a winner
+      picked on replies, clicks or opens.
+    </p>
+  </div>
+
+  <figure class="seq" data-scene style={`--p0: ${P0}; --span: ${SPAN}; --days: ${DAYS}; --stop: ${REPLY - 1}; --reply-at: ${at(REPLY)}`}>
+    <div class="seq-top">
+      <p class="seq-person"><span class="seq-face" aria-hidden="true">AM</span> Alex Morgan, Northwind</p>
+      <p class="seq-count">4 steps of a possible 50</p>
+    </div>
+
+    <div class="seq-grid" role="img" aria-labelledby="sequence-caption">
+      <span class="seq-corner" aria-hidden="true"></span>
+      {
+        days.map((day) => (
+          <span class:list={["seq-day", { "is-weekend": day.weekend }]} aria-hidden="true">
+            <span>{day.letter}</span>
+            <strong>{day.day}</strong>
+          </span>
+        ))
+      }
+      <span class="seq-mix-head" aria-hidden="true">Versions</span>
+
+      {
+        steps.map((step) => (
+          <>
+            <div class="seq-step" aria-hidden="true">
+              <strong>{step.name}</strong>
+              <span>{step.wait}</span>
+            </div>
+            {days.map((day) => (
+              <span
+                class:list={[
+                  "seq-pad",
+                  {
+                    "is-due": day.day === step.due,
+                    "is-send": day.day === step.day && step.sends,
+                    "is-skipped": day.day === step.day && !step.sends,
+                    "is-weekend": day.weekend,
+                  },
+                ]}
+                style={day.day === step.day || day.day === step.due ? `--at: ${at(Math.min(day.day, REPLY))}` : undefined}
+                aria-hidden="true"
+              />
+            ))}
+            <div class="seq-mix" aria-hidden="true">
+              <svg viewBox={`0 0 ${mixWidth(step.mix.length)} 44`} style={`width: ${mixWidth(step.mix.length) / 16}rem`}>
+                {step.mix.map((level, index) => {
+                  const x = 10 + index * 16;
+                  const y = 36 - level * 28;
+                  return (
+                    <g class:list={{ "is-winner": index === step.winner }}>
+                      <path class="seq-mix-slot" d={`M${x} 6V38`} />
+                      <rect class="seq-mix-cap" x={x - 6} y={y - 3.5} width="12" height="7" rx="3.5" />
+                    </g>
+                  );
+                })}
+              </svg>
+              <span class="seq-mix-long">{step.split}</span>
+              <span class="seq-mix-short">{step.short}</span>
+            </div>
+          </>
+        ))
+      }
+
+      <span class="seq-playhead" aria-hidden="true">
+        <span class="seq-reply">
+          <strong>Alex replied</strong>
+          <span>“Tuesday works.”</span>
+        </span>
+      </span>
+      <span class="seq-wait" aria-hidden="true">Due Saturday, sent Monday</span>
+    </div>
+
+    <figcaption id="sequence-caption" class="seq-caption">
+      <span class="sr-only">
+        An example sequence for Alex Morgan at Northwind over 18 days, starting on a Tuesday. The
+        first email, with four versions and a winner picked by replies, sends on day 1. The
+        follow-up, two versions split 70 to 30 by weight, sends three days later. The new angle,
+        three versions split evenly, is due on Saturday, day 12, and waits for Monday, day 14.
+        Alex replies on day 16, so the last touch, due on day 18, never sends.
+      </span>
+      <span class="seq-legend" aria-hidden="true">
+        <span class="seq-key seq-key-send">Sent</span>
+        <span class="seq-key seq-key-weekend">Outside your hours</span>
+        <span class="seq-key seq-key-skipped">Never sent: they replied</span>
+      </span>
+    </figcaption>
+  </figure>
+</section>

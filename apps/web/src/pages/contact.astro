@@ -1,0 +1,173 @@
+---
+import ArrowButton from "../components/arrow-button.astro";
+import Glyph from "../components/glyph.astro";
+import Marked from "../components/marked.astro";
+import Page from "../layouts/page.astro";
+import { COMPANY, INBOXES, mailto } from "../company";
+import { DEVELOPERS, DOCS, PAGES, SOURCE } from "../links";
+import "../styles/contact.css";
+
+/**
+ * Contact: an envelope that addresses itself. Choose who you need and the envelope, drawn in the
+ * same line as the ones that bounce on the 404 page, takes that team's inbox; its postmark says
+ * how soon a person answers, and the way to write opens the visitor's own mail app with the
+ * subject ready. No form, no ticket.
+ *
+ * Without the script the page still works: every team's address and reply time are in the list,
+ * and the envelope stays addressed to the first team.
+ */
+const [first] = INBOXES;
+const help = [
+  { href: DOCS, text: "Guides for every part of Norbelys.", title: "Docs" },
+  { href: DEVELOPERS, text: "Every endpoint, with examples.", title: "API reference" },
+  { href: PAGES.legal, text: "Privacy, terms, the DPA and sub-processors.", title: "Legal binder" },
+  { href: `${SOURCE}/issues`, text: "Found a bug in the code? Open an issue.", title: "GitHub" },
+] as const;
+const external = (href: string): boolean => href.startsWith("https://");
+/** A reply time on the postmark, its number large the way a date stamp sets the day: `24 hours`. */
+const stampOf = (stamp: string): { count: string; unit: string } => {
+  const [count = stamp, unit = ""] = stamp.split(" ");
+  return { count, unit };
+};
+/** The postmark's wavy lines, where a stamp would sit, clear of the flap's corner. */
+const waves = [38, 51, 64].map((y) => `M494 ${y}Q503 ${y - 8} 512 ${y}T530 ${y}T548 ${y}T566 ${y}T584 ${y}T602 ${y}`);
+---
+
+<Page
+  title="Contact — Norbelys"
+  description="Write to a person at Norbelys: sales, support, security, privacy, legal, abuse or press. Pick the team and write from your own inbox."
+  class="company-page contact"
+>
+  <div class="container contact-desk" data-envelope>
+    <div class="contact-pick">
+      <h1 class="contact-title" data-inview>
+        <span class="line">Write to a</span>
+        <span class="line"><Marked d="M3 8.5C30 4 66 3.5 97 6.5">person</Marked><span class="pink">.</span></span>
+      </h1>
+      <p class="lead contact-lead">
+        Choose who you need and the envelope addresses itself. Then write from your own inbox: no form,
+        no ticket number, no bot.
+      </p>
+      <fieldset class="teams">
+        <legend class="teams-legend">Who do you need?</legend>
+        <ul>
+          {
+            INBOXES.map((inbox) => (
+              <li>
+                <label class="team">
+                  <input type="radio" name="to" value={inbox.id} checked={inbox.id === first?.id} />
+                  <span class="team-dot" aria-hidden="true" />
+                  <span class="team-text">
+                    <span class="team-name">{inbox.team}</span>
+                    <span class="team-for">{inbox.for}</span>
+                  </span>
+                  <span class="team-meta">
+                    <span class="team-address">{inbox.address}</span>
+                    <span class="team-reply">{inbox.reply}</span>
+                  </span>
+                </label>
+              </li>
+            ))
+          }
+        </ul>
+      </fieldset>
+    </div>
+
+    <div class="contact-write">
+      <div class="envelope" data-inview>
+        <svg class="envelope-art" viewBox="0 0 640 420" fill="none" aria-hidden="true">
+          <path
+            class="envelope-edge"
+            d="M66 6H574A60 60 0 0 1 634 66V354A60 60 0 0 1 574 414H66A60 60 0 0 1 6 354V66A60 60 0 0 1 66 6Z"
+            pathLength="1"></path>
+          <path class="envelope-flap" d="M70 84L320 244L570 84" pathLength="1"></path>
+          <g class="envelope-postmark">
+            <circle class="postmark-ring" cx="436" cy="76" r="50"></circle>
+            {waves.map((d) => <path class="postmark-wave" d={d} />)}
+          </g>
+          <circle class="envelope-seal" cx="320" cy="244" r="15"></circle>
+        </svg>
+        <p class="envelope-from"><span>From</span> your own inbox</p>
+        <p class="envelope-reply" aria-hidden="true">
+          <span class="postmark-small">Reply in</span>
+          {
+            INBOXES.map((inbox) => {
+              const { count, unit } = stampOf(inbox.stamp);
+              return (
+                <span class="postmark-time" data-to={inbox.id} hidden={inbox.id !== first?.id}>
+                  <span class="postmark-count">{count}</span>
+                  <span class="postmark-small">{unit}</span>
+                </span>
+              );
+            })
+          }
+        </p>
+        {
+          INBOXES.map((inbox) => (
+            <div class="envelope-to" data-to={inbox.id} hidden={inbox.id !== first?.id}>
+              <p class="envelope-team">{inbox.team}</p>
+              <p class="envelope-address">{inbox.address}</p>
+              <p class="envelope-company">{COMPANY.name} · Norbelys</p>
+            </div>
+          ))
+        }
+      </div>
+
+      {
+        INBOXES.map((inbox) => (
+          <div class="contact-note" data-to={inbox.id} hidden={inbox.id !== first?.id}>
+            <div class="contact-include">
+              <h2>What helps {inbox.team === "Everyone else" ? "us" : `the ${inbox.team.toLowerCase()} team`} answer in one go</h2>
+              <ul>
+                {inbox.include.map((item) => (
+                  <li>
+                    <Glyph name="check" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div class="contact-actions">
+              <ArrowButton href={mailto(inbox.address, inbox.subject)}>Write to {inbox.address}</ArrowButton>
+              <button class="contact-copy" type="button" data-copy-address={inbox.address} hidden>
+                <Glyph name="copy" />
+                <span>Copy address</span>
+              </button>
+            </div>
+            <p class="contact-reply">A person replies {inbox.reply.toLowerCase()}.</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+
+  <section class="container contact-more" aria-labelledby="more-title">
+    <div class="contact-help">
+      <h2 id="more-title">Before you write</h2>
+      <ul>
+        {
+          help.map((item) => (
+            <li>
+              <a href={item.href}>
+                <span class="contact-help-title">
+                  {item.title}
+                  <Glyph name={external(item.href) ? "external" : "arrow"} />
+                </span>
+                <span class="contact-help-text">{item.text}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+    <div class="contact-post">
+      <h2>By post</h2>
+      <address>
+        {COMPANY.name}
+        {COMPANY.address.map((line) => <span class="line">{line}</span>)}
+      </address>
+      <p class="contact-post-label">For formal notices only. Everything else is faster by email.</p>
+    </div>
+  </section>
+  <p class="sr-only" aria-live="polite" data-envelope-status></p>
+</Page>

@@ -1,0 +1,64 @@
+---
+import { Code } from "astro:components";
+import Glyph from "./glyph.astro";
+import type { Sample } from "../developers";
+
+/**
+ * Code on the developers page: set light, in the site's ink and pink, highlighted at build time.
+ * Several samples get a row of tabs (scripts/tabs.ts); one gets its name instead. The copy button
+ * takes whichever sample is on show (scripts/copy.ts).
+ */
+interface Props {
+  id: string;
+  samples: readonly Sample[];
+  /** What the tabs choose between, for screen readers. */
+  label?: string;
+  class?: string;
+}
+const { id, samples, label = "Language", class: className } = Astro.props;
+const tabbed = samples.length > 1;
+---
+
+<div class:list={["dev-code", className]} id={id}>
+  <div class="dev-code-bar">
+    {
+      tabbed ? (
+        <div class="dev-code-tabs" role="tablist" aria-label={label}>
+          {samples.map((sample, index) => (
+            <button
+              type="button"
+              role="tab"
+              id={`${id}-tab-${index}`}
+              aria-controls={`${id}-panel-${index}`}
+              aria-selected={index === 0 ? "true" : "false"}
+              tabindex={index === 0 ? undefined : "-1"}
+            >
+              {sample.label}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p class="dev-code-name">{samples[0]?.label}</p>
+      )
+    }
+    <button type="button" class="copy-button" data-copy-target={id} aria-label="Copy the code" hidden>
+      <span class="copy-icons" aria-hidden="true"><Glyph name="copy" /><Glyph name="check" /></span>
+      <span class="copy-word">Copy</span><span class="copy-done" aria-hidden="true">Copied</span>
+    </button>
+  </div>
+  {
+    samples.map((sample, index) => (
+      <div
+        class="dev-code-panel"
+        id={`${id}-panel-${index}`}
+        data-panel
+        role={tabbed ? "tabpanel" : undefined}
+        aria-labelledby={tabbed ? `${id}-tab-${index}` : undefined}
+        hidden={index > 0}
+      >
+        <Code code={sample.code} lang={sample.lang === "http" ? "bash" : sample.lang} theme="css-variables" />
+      </div>
+    ))
+  }
+  <slot />
+</div>

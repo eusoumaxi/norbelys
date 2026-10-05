@@ -1,0 +1,28 @@
+---
+import { MARK, markPath } from "../../../../brand/geometry";
+import ArrowButton from "./arrow-button.astro";
+import Marked from "./marked.astro";
+import { APP, START } from "../links";
+
+/** The last word: the mark draws itself, one line, while the way in waits beside it. */
+---
+
+<section class="closing" aria-labelledby="closing-title">
+  <div class="closing-panel" data-scene="enter">
+    <svg class="closing-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <path d={markPath()} pathLength="1" stroke-width={MARK.stroke} stroke-linecap="round" stroke-linejoin="round"></path>
+      <path class="mark-comet" d={markPath()} pathLength="1" stroke-width={MARK.stroke} stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+    <div class="closing-copy">
+      <h2 id="closing-title" data-inview>
+        <span class="line">Your next customer</span>
+        <span class="line">is one <Marked>reply</Marked> away<span class="pink">.</span></span>
+      </h2>
+      <p class="closing-lead">Connect an inbox, upload your list and launch your first campaign today. It’s $20 a month, everything included.</p>
+      <div class="closing-actions">
+        <ArrowButton href={START}>Start for $20/mo</ArrowButton>
+        <a class="closing-sign-in" href={APP}>I already have an account</a>
+      </div>
+    </div>
+  </div>
+</section>
