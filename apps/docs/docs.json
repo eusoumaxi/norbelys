@@ -40,7 +40,13 @@
     "tabs": [
       {
         "tab": "Docs",
-        "pages": ["index", "architecture", "development", "migrations", "observability"]
+        "pages": [
+          "index",
+          "architecture",
+          "development",
+          "migrations",
+          "observability"
+        ]
       },
       {
         "tab": "API reference",

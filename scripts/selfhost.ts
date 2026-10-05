@@ -281,8 +281,7 @@ if (import.meta.main) {
       !/^APP_IMAGE=.+@sha256:[0-9a-f]{64}$/mu.test(settings)
     ) {
       const server = pinImage(
-        process.env.NORBELYS_SERVER_IMAGE ??
-          "ghcr.io/eusoumaxi/server:latest"
+        process.env.NORBELYS_SERVER_IMAGE ?? "ghcr.io/eusoumaxi/server:latest"
       );
       const app = pinImage(
         process.env.NORBELYS_APP_IMAGE ?? "ghcr.io/eusoumaxi/app:latest"

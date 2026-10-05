@@ -9,7 +9,7 @@ test("braces bounds nested braces, parentheses and direct AST traversals", () =>
     ["{", "}"],
     ["(", ")"],
   ]) {
-    const pattern = open.repeat(4000) + "a" + close.repeat(4000);
+    const pattern = `${open.repeat(4000)}a${close.repeat(4000)}`;
     for (const operation of [
       braces,
       braces.parse,
