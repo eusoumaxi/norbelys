@@ -53,6 +53,11 @@ test("shared build inputs rebuild every image", () => {
   }
 });
 
+test("publication workflow and scope changes rebuild the dashboard image too", () => {
+  expect(scope([".github/workflows/images.yml"])).toEqual(IMAGES);
+  expect(scope([".github/scripts/successful-base.mjs"])).toEqual(IMAGES);
+});
+
 test("the CLI, the apps and private deployment templates rebuild nothing", () => {
   expect(scope(["crates/cli/src/main.rs", "deploy/compose/core.yml"])).toEqual(
     []

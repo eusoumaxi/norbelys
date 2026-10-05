@@ -13,6 +13,8 @@
 import { execFileSync } from "node:child_process";
 import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 
+import { successfulBase } from "./successful-base.mjs";
+
 export const IMAGES = [
   "server",
   "server-analytics",
@@ -28,6 +30,7 @@ const SHARED = new Set([
   "Dockerfile",
   ".dockerignore",
   ".github/scripts/release-scope.mjs",
+  ".github/scripts/successful-base.mjs",
   ".github/workflows/images.yml",
 ]);
 
@@ -63,7 +66,10 @@ export const scope = (paths) => {
   const selected = new Set();
   for (const path of paths) {
     if (SHARED.has(path)) {
-      for (const image of IMAGES.filter((candidate) => candidate !== "app")) {
+      const images = path.startsWith(".github/")
+        ? IMAGES
+        : IMAGES.filter((candidate) => candidate !== "app");
+      for (const image of images) {
         selected.add(image);
       }
     }
@@ -93,27 +99,18 @@ export const verifiedImages = (plan, sha) => {
   return IMAGES.filter((image) => plan.images.includes(image));
 };
 
-/** The paths changed by the push this workflow runs for; `null` when every image is due. */
+/** Include changes from failed or cancelled publications; no baseline builds everything. */
 const changedPaths = () => {
   if (process.env.GITHUB_EVENT_NAME !== "push") {
     return null;
   }
-  const event = JSON.parse(
-    readFileSync(process.env.GITHUB_EVENT_PATH, "utf-8")
-  );
-  if (!event.before || /^0+$/u.test(event.before)) {
+  const base = successfulBase("images.yml", process.env.GITHUB_SHA);
+  if (!base) {
     return null;
   }
   const output = execFileSync(
     "git",
-    [
-      "diff",
-      "--name-only",
-      "--no-renames",
-      "-z",
-      event.before,
-      process.env.GITHUB_SHA,
-    ],
+    ["diff", "--name-only", "--no-renames", "-z", base, process.env.GITHUB_SHA],
     { encoding: "utf-8" }
   );
   return output.split("\0").filter(Boolean);

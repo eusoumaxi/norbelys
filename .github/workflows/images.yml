@@ -10,6 +10,7 @@
 # repository_dispatch). Dispatch also requires AUTO_RELEASE_ENABLED=true; false or unset keeps
 # rollout manual. Without dispatch, images are still built and their digests summarised.
 name: Images
+run-name: Images ${{ github.event.workflow_run.head_sha || github.sha }}
 
 on:
   workflow_run:

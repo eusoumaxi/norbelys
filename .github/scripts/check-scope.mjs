@@ -2,6 +2,8 @@
 import { execFileSync } from "node:child_process";
 import { appendFileSync, readFileSync } from "node:fs";
 
+import { successfulBase } from "./successful-base.mjs";
+
 const affectsBackend = (path) =>
   ["crates/", "tools/xtask/", ".cargo/", ".sqlx/", "docker/"].some((prefix) =>
     path.startsWith(prefix)
@@ -114,8 +116,12 @@ if (import.meta.main) {
   const event = JSON.parse(
     readFileSync(process.env.GITHUB_EVENT_PATH, "utf-8")
   );
-  const base = event.pull_request?.base.sha ?? event.before;
   const head = event.pull_request?.head.sha ?? process.env.GITHUB_SHA;
+  const base =
+    event.pull_request?.base.sha ??
+    (process.env.GITHUB_EVENT_NAME === "push"
+      ? successfulBase("ci.yml", head)
+      : null);
   const selected = selectChecks(changedPaths(base, head));
   const output = Object.entries(selected)
     .map(([key, value]) => `${key}=${JSON.stringify(value)}\n`)
