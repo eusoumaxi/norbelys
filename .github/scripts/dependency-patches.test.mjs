@@ -23,7 +23,7 @@ test("braces bounds nested braces, parentheses and direct AST traversals", () =>
     }
   }
   let ast = { type: "text", value: "a" };
-  for (let depth = 0; depth < 4000; depth++) {
+  for (let depth = 0; depth < 4000; depth += 1) {
     ast = { type: "root", nodes: [ast] };
   }
   for (const operation of [braces.compile, braces.expand, braces.stringify]) {
