@@ -3061,7 +3061,7 @@ export interface components {
                 receiving: components["schemas"]["ReceivingObject"];
                 /**
                  * Format: int32
-                 * @description A paced sender's minutes between cold sends, whole 5-minute slots; null when rate-paced.
+                 * @description Minutes between campaign emails: exact whole minutes for Norbelys, 5-minute slots for mailboxes and SES; null when rate-paced.
                  */
                 send_interval_minutes?: number | null;
                 send_window?: components["schemas"]["SendWindow"] | null;

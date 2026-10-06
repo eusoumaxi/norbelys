@@ -5074,7 +5074,7 @@
                   "description": "The folders read, at most 10."
                 },
                 "send_interval_minutes": {
-                  "description": "A paced sender's minutes between cold sends, whole 5-minute slots; null when rate-paced.",
+                  "description": "Minutes between campaign emails: exact whole minutes for Norbelys, 5-minute slots for mailboxes and SES; null when rate-paced.",
                   "format": "int32",
                   "type": [
                     "integer",
