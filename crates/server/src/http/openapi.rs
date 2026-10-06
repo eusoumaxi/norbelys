@@ -326,6 +326,13 @@ mod tests {
         let expected = document(true).unwrap();
         let committed = std::fs::read_to_string(path).unwrap_or_default();
         if committed != expected {
+            if let Some(directory) = std::env::var_os("RUNNER_TEMP") {
+                std::fs::write(
+                    std::path::PathBuf::from(directory).join("declared-openapi.json"),
+                    &expected,
+                )
+                .unwrap();
+            }
             let line = committed
                 .lines()
                 .zip(expected.lines())

@@ -19,8 +19,9 @@
 //!    through the API is not held by them), a cold message's pacing clock, the breakers. A check
 //!    that fails returns the message to the queue unstarted (its reservation released once, the
 //!    connection's budget wait cleared), or ends it without a submission.
-//! 4. **The marker, last.** A cold message on a paced sender moves the clock once, to
-//!    `next_phase_at(max(scheduled + interval, started + interval − 30 s), phase)`; the message
+//! 4. **The marker, last.** A cold message on a paced managed sender moves the clock once, to
+//!    `max(scheduled + interval, started + interval)`. Other providers retain
+//!    `next_phase_at(max(scheduled + interval, started + interval − 30 s), phase)`. The message
 //!    becomes `in_flight`; and, as the transaction's last statement, the queue row's lease is
 //!    renewed against the statement's own clock (never the transaction's start) to that clock plus
 //!    the budget plus 30 seconds, fenced by owner, generation, state and an unexpired lease, with

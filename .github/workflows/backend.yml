@@ -72,6 +72,15 @@ jobs:
           git rev-parse --verify refs/remotes/origin/main
           bunx turbo run fmt lint doc purity clones openapi-check --filter=norbelys-rust
 
+      - name: Retain the declared public contract when it differs
+        if: failure() && inputs.mode != 'cli'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: declared-openapi
+          path: ${{ runner.temp }}/declared-openapi.json
+          retention-days: 2
+          if-no-files-found: ignore
+
       - name: Install coverage tooling
         if: inputs.mode == 'cli'
         run: cargo install --locked cargo-llvm-cov@0.9.1
