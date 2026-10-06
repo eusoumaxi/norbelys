@@ -52,6 +52,22 @@ Database tests require `TEST_DATABASE_URL` and `NORBELYS_TEST_DATABASE_DISPOSABL
 
 `bun run selfhost:setup` generates private settings in `.env.selfhost`, pins a compatible server/dashboard image pair and starts PostgreSQL with a loopback-only maintenance port. It does not apply migrations or restart existing runtime services.
 
-From a clean source checkout matching the recorded `SELFHOST_REVISION`, run `bun run selfhost:migrate` explicitly. This runs the maintenance tooling outside the containers, using the private local settings for provisioning and migration. Then run `bun run selfhost:start`; it verifies history with the API login before starting services. To select an upgrade, supply both image references and invoke `selfhost:setup --upgrade`, then repeat explicit maintenance and startup in that order.
+From a clean source checkout matching the recorded `SELFHOST_REVISION`, prepare and start the installation:
+
+```sh
+bun run selfhost:setup
+bun run selfhost:migrate
+bun run selfhost:start
+```
+
+`selfhost:migrate` runs external schema maintenance, then a one-off `admin keys ensure` process with the system database login. This creates the first workspace-token signing key and preserves an existing current key when preparation is repeated. Runtime services retain their separate database logins. `selfhost:start` checks migration history with the API login before starting services. To upgrade, supply both compatible image references and invoke `selfhost:setup --upgrade`, then repeat maintenance and startup in that order.
+
+### Passwordless sign-in needs transactional mail
+
+The schema, token-signing key and email sender are three separate requirements. Configure a verified transactional sender in the `system` workspace using your own mail provider and sending domain; a fresh schema alone cannot send a sign-in code. Keep its provider credentials private. Authenticate the visible From domain with DKIM and DMARC, and publish SPF for the actual SMTP envelope domain, including a separate bounce domain when your provider uses one. SPF is not inherited from a parent domain.
+
+If `/v1/auth/challenges` returns `503`, check the transactional sender and its connection. If sign-in succeeds but `/v1/auth/tokens` returns `503` with a missing-signing-key log, rerun preparation with the matching release. For a separately managed installation, run `norbelys-server admin keys ensure` through your maintenance tooling with the system login and the existing deployment sealing key. Use `admin keys rotate` deliberately for rotation; it is not a startup command. Never replace the deployment key to repair a missing token-signing key.
+
+Use the newest sign-in email within ten minutes. Its code works in the browser that requested it; its link works on another device and requires confirmation. Opening a link alone does not consume it.
 
 These commands are portable local examples. Hosted infrastructure and rollout belong to the installation's Terraform configuration; no private host or production credential is included here.

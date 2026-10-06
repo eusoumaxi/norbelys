@@ -529,6 +529,7 @@ pub async fn key_set(
 ///
 /// The random source failed or the database refused the rows.
 pub async fn rotate(tx: &mut Tx, keys: &Keys) -> Result<String, TokenError> {
+    lock_rotation(tx).await?;
     let pkcs8 =
         Ed25519KeyPair::generate_pkcs8(&SystemRandom::new()).map_err(|_| TokenError::Key)?;
     let pair = Ed25519KeyPair::from_pkcs8(pkcs8.as_ref()).map_err(|_| TokenError::Key)?;
@@ -558,6 +559,39 @@ pub async fn rotate(tx: &mut Tx, keys: &Keys) -> Result<String, TokenError> {
     .execute(&mut **tx)
     .await?;
     Ok(kid)
+}
+
+/// Initializes an empty installation's signing key without rotating an existing current key.
+/// Retired-only installations require the operator's explicit rotation instead.
+///
+/// # Errors
+///
+/// The database or random source failed, the sealing key is unavailable, or every key is retired.
+pub async fn ensure(tx: &mut Tx, keys: &Keys) -> Result<String, TokenError> {
+    lock_rotation(tx).await?;
+    let current: Option<String> = sqlx::query_scalar(
+        "SELECT kid FROM signing_keys WHERE retired_at IS NULL ORDER BY created_at DESC LIMIT 1",
+    )
+    .fetch_optional(&mut **tx)
+    .await?;
+    if let Some(kid) = current {
+        return Ok(kid);
+    }
+    let existing: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM signing_keys)")
+        .fetch_one(&mut **tx)
+        .await?;
+    if existing {
+        return Err(TokenError::NoKey);
+    }
+    rotate(tx, keys).await
+}
+
+/// Serializes first initialization with deliberate rotation in the same installation.
+async fn lock_rotation(tx: &mut Tx) -> Result<(), sqlx::Error> {
+    sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended('norbelys:signing-keys', 0))")
+        .execute(&mut **tx)
+        .await?;
+    Ok(())
 }
 
 #[cfg(test)]

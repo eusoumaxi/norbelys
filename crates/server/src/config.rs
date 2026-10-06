@@ -818,6 +818,8 @@ pub enum AnalyticsCommand {
 /// `admin keys`.
 #[derive(Debug, Subcommand)]
 pub enum KeysCommand {
+    /// Ensures a current signing key exists, preserving it on repeated installation runs.
+    Ensure,
     /// Adds a new signing key and retires the current ones in 24 hours: the monthly rotation,
     /// and the first key of a new deployment. Prints the new key's id.
     Rotate,

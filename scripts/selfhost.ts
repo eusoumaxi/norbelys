@@ -85,7 +85,11 @@ const pinImage = (reference: string) => {
   return imageIdentity(reference, metadata);
 };
 
-const run = (args: string[], input?: string) => {
+const run = (
+  args: string[],
+  input?: string,
+  environment: Record<string, string> = {}
+) => {
   const plugin = spawnSync("docker", ["compose", "version"], {
     stdio: "ignore",
   });
@@ -99,6 +103,7 @@ const run = (args: string[], input?: string) => {
   ];
   const result = spawnSync(executable, [...compose, ...args], {
     cwd: root,
+    env: { ...process.env, ...environment },
     input,
     stdio: input ? ["pipe", "inherit", "inherit"] : "inherit",
   });
@@ -181,8 +186,29 @@ const migrate = (values: Record<string, string>) => {
       );
     }
   }
+  // Installation keys are data, independent of versioned schema migrations. The one-off
+  // maintenance process uses the system login; the API keeps its restricted runtime login.
+  const system = new URL("postgres://norbelys_system@postgres:5432/norbelys");
+  system.password = values.SYSTEM_DATABASE_PASSWORD ?? "";
+  run(
+    [
+      "run",
+      "--rm",
+      "--no-deps",
+      "-T",
+      "--env",
+      "DATABASE_URL",
+      "api",
+      "/app/norbelys-server",
+      "admin",
+      "keys",
+      "ensure",
+    ],
+    undefined,
+    { DATABASE_URL: system.href }
+  );
   console.log(
-    "Schema prepared. Run bun run selfhost:start to verify and start the pinned images."
+    "Schema and signing key prepared. Run bun run selfhost:start to verify and start the pinned images."
   );
 };
 

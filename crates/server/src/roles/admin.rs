@@ -86,9 +86,7 @@ pub async fn run(args: AdminArgs) -> anyhow::Result<()> {
             )?;
             Ok(())
         }
-        AdminCommand::Keys {
-            command: KeysCommand::Rotate,
-        } => {
+        AdminCommand::Keys { command } => {
             let db = super::connect(
                 &args.common,
                 super::background_pool("norbelys-admin", 1, Duration::from_secs(30)),
@@ -96,7 +94,10 @@ pub async fn run(args: AdminArgs) -> anyhow::Result<()> {
             .await?;
             let keys = super::keys(&args.common)?;
             let mut tx = db.begin().await?;
-            let kid = crate::identity::tokens::rotate(&mut tx, &keys).await?;
+            let kid = match command {
+                KeysCommand::Ensure => crate::identity::tokens::ensure(&mut tx, &keys).await?,
+                KeysCommand::Rotate => crate::identity::tokens::rotate(&mut tx, &keys).await?,
+            };
             tx.commit().await?;
             writeln!(std::io::stdout(), "{kid}")?;
             Ok(())
