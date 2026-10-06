@@ -796,7 +796,8 @@ struct CreateMessage {
     #[garde(length(max = 10))]
     #[serde(default)]
     attachments: Vec<Id<crate::domain::ids::Attachment>>,
-    /// The sender: a sender identity's id (`sid_…`) or its address. It must be live and enabled.
+    /// The sender: a live, enabled identity or an address on a connected managed domain.
+    /// New addresses on a verified managed domain are registered automatically.
     #[garde(length(min = 1, max = 254))]
     from: String,
     /// 1 to 50 addresses.
@@ -1112,6 +1113,9 @@ async fn create_form(
     let from = Origin::parse(&body.from)?;
     check_variables(body.variables.as_ref())?;
     let mut tx = state.db.begin_in(ws).await?;
+    if let Origin::Address(address) = &from {
+        crate::senders::managed::ensure_sender(&mut tx, ws, address).await?;
+    }
     let accepted = accept::create(
         &mut tx,
         &state.keys,

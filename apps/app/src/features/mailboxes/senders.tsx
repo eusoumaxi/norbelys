@@ -521,7 +521,10 @@ const SenderEditor = ({
             id={id("email")}
             onChange={(event) => set({ email: event.target.value })}
             placeholder="ada@example.com"
-            readOnly={connection.provider === "norbelys"}
+            readOnly={
+              connection.provider === "norbelys" &&
+              connection.account.email.includes("@")
+            }
             ref={first}
             required
             type="email"
@@ -590,7 +593,9 @@ const SenderEditor = ({
             label="Use in campaigns"
             onChange={(enabled) => set({ enabled })}
           />
-          {sender?.verified ? null : (
+          {sender?.verified ||
+          (connection.provider === "norbelys" &&
+            !connection.account.email.includes("@")) ? null : (
             <Label className="text-fg gap-3 font-normal">
               <Checkbox
                 checked={draft.attested ?? false}
@@ -623,7 +628,9 @@ const SenderEditor = ({
         >
           Cancel
         </Button>
-        {sender && connection.provider !== "norbelys" ? (
+        {sender &&
+        (connection.provider !== "norbelys" ||
+          !connection.account.email.includes("@")) ? (
           <RemoveSender connection={connection} sender={sender} />
         ) : null}
       </div>
@@ -765,7 +772,9 @@ const senderDescription = (connection: ConnectionObject): string => {
     return "Your mailbox's sender is created automatically. Add an alias only if your mail provider allows it; aliases share the mailbox's limit and pace.";
   }
   if (connection.provider === "norbelys") {
-    return "Edit this address's name, reply-to and signature. Add another address from Norbelys mail.";
+    return connection.account.email.includes("@")
+      ? "This mailbox has its own sender and incoming mail. Manage domain senders from Norbelys mail."
+      : "Send from any address on this verified domain with your workspace API key. Add senders here to manage their names and signatures; sending from a new address through the API adds it automatically.";
   }
   return "The addresses authorized by this service, with their names and signatures. They share the account's sending limits.";
 };
@@ -789,7 +798,11 @@ export const Senders = ({ connection }: { connection: ConnectionObject }) => {
   const paced =
     connection.provider === "ses" && Boolean(connection.send_interval_minutes);
   const mailbox = ["google", "microsoft", "smtp"].includes(connection.provider);
-  const canAdd = editable && !paced && connection.provider !== "norbelys";
+  const canAdd =
+    editable &&
+    !paced &&
+    (connection.provider !== "norbelys" ||
+      !connection.account.email.includes("@"));
   const addLabel = mailbox ? "Add alias" : "Add sender";
   const editor = (
     <SenderEditor
@@ -833,6 +846,15 @@ export const Senders = ({ connection }: { connection: ConnectionObject }) => {
       title="Senders"
     >
       <p className="text-fg-2 mb-1 text-sm">{senderDescription(connection)}</p>
+      {connection.provider === "norbelys" &&
+      !connection.account.email.includes("@") ? (
+        <p className="text-fg-2 mb-3 text-sm">
+          SMTP: {connection.smtp?.host ?? "your installation's SMTP host"}, port
+          587 with STARTTLS. Username: {connection.account.email}. Password:
+          your existing live API key from Developers → API keys, with permission
+          to send messages. The same key works with the HTTP API.
+        </p>
+      ) : null}
       {identities.length > 0 ? (
         <div className="border-line rounded-sm border">
           <ul>

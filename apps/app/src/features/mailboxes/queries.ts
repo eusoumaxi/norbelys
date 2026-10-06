@@ -33,7 +33,11 @@ export const connectionListQuery = (workspace: Workspace, q: string) =>
 /** How often a connection whose check is running is read again, in milliseconds. */
 const CHECKING_POLL_MS = 4000;
 
-export type ConnectionGroup = "mailboxes" | "services" | "norbelys";
+export type ConnectionGroup =
+  | "mailboxes"
+  | "services"
+  | "norbelys"
+  | "managed-mailboxes";
 
 /** Provider groups retain the API cursor and skip pages containing only another group. */
 export const connectionGroupQuery = (
@@ -53,17 +57,35 @@ export const connectionGroupQuery = (
             {
               cursor: next,
               limit: 100,
-              provider: group === "norbelys" ? "norbelys" : undefined,
+              provider:
+                group === "norbelys" || group === "managed-mailboxes"
+                  ? "norbelys"
+                  : undefined,
               q: q || undefined,
             },
             { signal }
           );
           const data = page.data.filter((connection) => {
+            if (
+              (group === "norbelys" || group === "managed-mailboxes") &&
+              connection.status === "archived"
+            ) {
+              return false;
+            }
             const mailbox = ["google", "microsoft", "smtp"].includes(
               connection.provider
             );
             if (group === "norbelys") {
-              return connection.provider === "norbelys";
+              return (
+                connection.provider === "norbelys" &&
+                !connection.account.email.includes("@")
+              );
+            }
+            if (group === "managed-mailboxes") {
+              return (
+                connection.provider === "norbelys" &&
+                connection.account.email.includes("@")
+              );
             }
             return group === "mailboxes"
               ? mailbox

@@ -50,6 +50,7 @@ pub mod domains;
 pub mod health;
 pub mod http;
 pub mod identities;
+pub mod managed;
 pub mod oauth;
 pub mod provision;
 pub mod scopes;

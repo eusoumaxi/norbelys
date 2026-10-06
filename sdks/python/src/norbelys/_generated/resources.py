@@ -126,6 +126,15 @@ class Suppressions:
         "Remove a manual suppression."
         return cast("None", self._core.request("DELETE", "/v1/suppressions/{id}", [id], query=None, body=None, content_type=None, idempotent=False, options=options))
 
+class Smtp:
+    """Typed operations for smtp."""
+    def __init__(self, core: SyncCore) -> None:
+        self._core = core
+
+    def authenticate(self, *, query: schema.SmtpAuthenticateQuery | None = None, options: RequestOptions | None = None) -> schema.SmtpAuthorization:
+        "Authenticate SMTP submission using the same live API key as HTTP sending."
+        return cast("schema.SmtpAuthorization", self._core.request("GET", "/v1/smtp/auth", [], query=query, body=None, content_type=None, idempotent=False, options=options))
+
 class SendingDomains:
     """Typed operations for sending_domains."""
     def __init__(self, core: SyncCore) -> None:
@@ -646,6 +655,7 @@ class NorbelysResources:
         self.quota_scopes = QuotaScopes(core)
         self.segments = Segments(core)
         self.sending_domains = SendingDomains(core)
+        self.smtp = Smtp(core)
         self.suppressions = Suppressions(core)
         self.threads = Threads(core)
         self.webhook_deliveries = WebhookDeliveries(core)
@@ -770,6 +780,15 @@ class AsyncSuppressions:
     async def delete(self, id: str, *, options: RequestOptions | None = None) -> None:
         "Remove a manual suppression."
         return cast("None", await self._core.request("DELETE", "/v1/suppressions/{id}", [id], query=None, body=None, content_type=None, idempotent=False, options=options))
+
+class AsyncSmtp:
+    """Typed operations for smtp."""
+    def __init__(self, core: AsyncCore) -> None:
+        self._core = core
+
+    async def authenticate(self, *, query: schema.SmtpAuthenticateQuery | None = None, options: RequestOptions | None = None) -> schema.SmtpAuthorization:
+        "Authenticate SMTP submission using the same live API key as HTTP sending."
+        return cast("schema.SmtpAuthorization", await self._core.request("GET", "/v1/smtp/auth", [], query=query, body=None, content_type=None, idempotent=False, options=options))
 
 class AsyncSendingDomains:
     """Typed operations for sending_domains."""
@@ -1291,6 +1310,7 @@ class AsyncNorbelysResources:
         self.quota_scopes = AsyncQuotaScopes(core)
         self.segments = AsyncSegments(core)
         self.sending_domains = AsyncSendingDomains(core)
+        self.smtp = AsyncSmtp(core)
         self.suppressions = AsyncSuppressions(core)
         self.threads = AsyncThreads(core)
         self.webhook_deliveries = AsyncWebhookDeliveries(core)

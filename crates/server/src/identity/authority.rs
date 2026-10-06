@@ -527,6 +527,22 @@ impl Authority {
         Self::answer(state, client, verified)
     }
 
+    /// SMTP authentication never reuses cached key authority, even when HTTP caching is enabled.
+    async fn verify_smtp(
+        &self,
+        state: &AppState,
+        credential: &str,
+        client: ClientAddress,
+    ) -> Result<Principal, Problem> {
+        let verified = match api_keys::parse(credential) {
+            Some(mode) => read_key(&state.db, &api_keys::hash(credential), mode)
+                .await
+                .map(|(principal, _)| principal),
+            None => Err(Denied::Reason("token_not_accepted", "anonymous")),
+        };
+        Self::answer(state, client, verified)
+    }
+
     /// Answers a verification: the principal, or the denial, recorded as a security event.
     fn answer(
         state: &AppState,
@@ -963,7 +979,15 @@ pub async fn authenticate(
             state.limits.trust_forwarded_for(),
             state.limits.trusted_proxy_ips(),
         );
-        match state.authority.verify(&state, credential, client).await {
+        let verified = if request.uri().path() == "/v1/smtp/auth" {
+            state
+                .authority
+                .verify_smtp(&state, credential, client)
+                .await
+        } else {
+            state.authority.verify(&state, credential, client).await
+        };
+        match verified {
             Ok(principal) => {
                 request.extensions_mut().insert(principal);
             }
@@ -998,7 +1022,14 @@ impl FromRequestParts<AppState> for Principal {
             state.limits.trust_forwarded_for(),
             state.limits.trusted_proxy_ips(),
         );
-        let principal = state.authority.verify(state, credential, client).await?;
+        let principal = if parts.uri.path() == "/v1/smtp/auth" {
+            state
+                .authority
+                .verify_smtp(state, credential, client)
+                .await?
+        } else {
+            state.authority.verify(state, credential, client).await?
+        };
         parts.extensions.insert(principal);
         Ok(principal)
     }

@@ -311,6 +311,9 @@ pub struct DmsPatchArgs {
         default_value = "/usr/local/bin/helpers/accounts.sh"
     )]
     pub file: PathBuf,
+    /// HTTPS API origin enabling domain/API-key SMTP authentication in Dovecot 2.4.
+    #[arg(long, env = "NORBELYS_SMTP_AUTH_API_URL")]
+    pub smtp_auth_api_url: Option<url::Url>,
 }
 
 /// True for a lowercase DNS label of 1 to 63 characters that starts with a letter or digit:

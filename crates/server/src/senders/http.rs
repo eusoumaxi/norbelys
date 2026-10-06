@@ -71,6 +71,7 @@ impl From<Error> for Problem {
 /// The routes of the three resources.
 pub fn routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
+        .routes(routes!(authenticate_smtp))
         .routes(routes!(list_connections, create_connection))
         .routes(routes!(
             retrieve_connection,
@@ -91,6 +92,80 @@ pub fn routes() -> OpenApiRouter<AppState> {
             delete_sending_domain
         ))
         .routes(routes!(verify_sending_domain))
+}
+
+#[derive(Deserialize, garde::Validate)]
+struct SmtpAuthQuery {
+    #[garde(length(min = 1, max = 253))]
+    domain: String,
+}
+
+/// The private transport login selected after checking a live workspace API key.
+#[derive(Serialize, utoipa::ToSchema)]
+struct SmtpAuthorization {
+    username: String,
+}
+
+/// Authenticate SMTP submission using the same live API key as HTTP sending.
+#[utoipa::path(
+    get,
+    path = "/smtp/auth",
+    tag = "Sending",
+    operation_id = "smtp.authenticate",
+    params(("domain" = String, Query, description = "The connected sending domain used as the SMTP username.")),
+    responses(
+        (status = 200, description = "The tenant-scoped SMTP authorization.", body = SmtpAuthorization),
+        (status = 401, description = "No valid credential."),
+        (status = 403, description = "A live API key with messages:write is required."),
+        (status = 404, description = "No active sending service for this domain."),
+        (status = 409, description = "The domain is not enabled for sending."),
+        (status = 422, description = "The domain is invalid."),
+    ),
+    security(("bearer" = []))
+)]
+async fn authenticate_smtp(
+    principal: Principal,
+    State(state): State<AppState>,
+    Query(query): Query<SmtpAuthQuery>,
+) -> ApiResult<Response> {
+    principal.require(Scope::MessagesWrite)?;
+    if principal.credential != crate::identity::authority::Credential::ApiKey || principal.test_mode
+    {
+        return Err(Problem::forbidden(
+            "SMTP requires a live workspace API key.",
+        ));
+    }
+    let domain = domains::hostname(&query.domain).ok_or_else(|| {
+        Problem::invalid_field("/domain", "format", "Use a fully qualified domain.")
+    })?;
+    let mut tx = state.db.begin_in(principal.workspace).await?;
+    if !domains::mail_access(&mut tx, principal.workspace, &domain)
+        .await?
+        .sends()
+    {
+        return Err(Problem::invalid_state(
+            "Enable sending on this domain first.",
+        ));
+    }
+    let active: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM connections WHERE workspace_id = $1 AND provider = 'norbelys' AND account_email_key = $2 AND status = 'active' AND NOT paused AND (paused_until IS NULL OR paused_until <= now()))",
+    )
+    .bind(principal.workspace.uuid())
+    .bind(&domain)
+    .fetch_one(&mut *tx)
+    .await?;
+    if !active {
+        return Err(Problem::not_found("active sending service"));
+    }
+    tx.commit().await?;
+    let mut response = Json(SmtpAuthorization {
+        username: super::managed::username(principal.workspace, &domain),
+    })
+    .into_response();
+    response
+        .headers_mut()
+        .insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    Ok(response)
 }
 
 /// A field that may be given as `null` to clear it: absent is `None`, `null` is `Some(None)`.
@@ -394,8 +469,8 @@ struct CreateConnection {
     #[garde(skip)]
     provider: Provider,
     /// The account (not for Google and Microsoft, whose address the provider names): an SMTP
-    /// login, the From address of a paced SES connection or of the managed MTA, a name for a
-    /// relay account.
+    /// login, the From address of a paced SES connection, a managed domain or mailbox, or a
+    /// relay account name.
     #[garde(length(chars, min = 1, max = 254))]
     account_email: Option<String>,
     /// The SMTP endpoint and credential (SMTP logins and relays).
@@ -404,8 +479,9 @@ struct CreateConnection {
     /// The IMAP endpoint of an SMTP login that is read.
     #[garde(dive)]
     imap: Option<ImapInput>,
-    /// The From addresses, at most 50; by default the account's own address.
-    #[garde(length(max = 50), dive)]
+    /// The From addresses, at most 1,000; a domain service starts without senders.
+    #[garde(length(max = 1_000), dive)]
+    #[schema(max_items = 1_000)]
     identities: Option<Vec<IdentityInput>>,
     /// The folders to read (mailboxes); `INBOX` by default.
     #[garde(dive)]
@@ -416,9 +492,9 @@ struct CreateConnection {
     /// Submissions a UTC day.
     #[garde(range(min = 1, max = 1_000_000))]
     daily_limit: Option<i32>,
-    /// A paced sender's minutes between cold sends, 5 to 1,440, rounded up to whole 5-minute
-    /// slots; 10 for a mailbox when absent; on SES it makes the connection a paced sender of one
-    /// From address; refused for SendGrid, Mailgun and the managed MTA.
+    /// Minutes between campaign emails. Norbelys accepts exact whole minutes, 1 to 1,440.
+    /// Mailboxes and paced SES use 5-minute slots; mailboxes default to 10 minutes.
+    /// SendGrid and Mailgun refuse an interval.
     #[garde(skip)]
     send_interval_minutes: Option<i32>,
     /// When campaign mail may be submitted.
@@ -564,15 +640,30 @@ async fn create_connection(
     let address = EmailAddress::parse(&account_email).ok();
     // Domain intent is locked before the connection so an edit cannot race a new mailbox.
     let mut tx = state.db.begin_in(principal.workspace).await?;
-    let managed_purpose = if provider == Provider::Norbelys {
-        let address = address.as_ref().ok_or_else(|| {
+    let managed_domain = if provider == Provider::Norbelys {
+        Some(super::managed::domain(&account_email).ok_or_else(|| {
             Problem::invalid_field(
                 "/account_email",
                 "format",
-                "A managed mailbox needs an email address.",
+                "Give a domain or mailbox address.",
             )
-        })?;
-        Some(domains::mail_access(&mut tx, principal.workspace, &address.domain()).await?)
+        })?)
+    } else {
+        None
+    };
+    let domain_service = provider == Provider::Norbelys && address.is_none();
+    let managed_purpose = if let Some(domain) = &managed_domain {
+        let purpose = domains::mail_access(&mut tx, principal.workspace, domain).await?;
+        for identity in &identities {
+            if identity.email.domain() != *domain {
+                return Err(Problem::invalid_field(
+                    "/identities",
+                    "invalid",
+                    "Every sender must belong to this service's domain.",
+                ));
+            }
+        }
+        Some(purpose)
     } else {
         None
     };
@@ -585,18 +676,18 @@ async fn create_connection(
             ));
         }
         (Provider::Norbelys, None) => {
-            let Some(address) = &address else {
-                return Err(Problem::invalid_field(
-                    "/account_email",
-                    "format",
-                    "A managed MTA login is an address on your verified domain.",
-                ));
-            };
             let smtp = SmtpSettings {
                 host: settings(&state).mta_submission_host.clone(),
                 port: 587,
                 security: Security::Starttls,
-                username: address.key(),
+                username: super::managed::username(
+                    principal.workspace,
+                    if domain_service {
+                        managed_domain.as_deref().unwrap_or(&account_email)
+                    } else {
+                        &account_email
+                    },
+                ),
                 configuration_set: None,
             };
             (smtp, None)
@@ -725,10 +816,19 @@ async fn create_connection(
             identity.enabled = Some(false);
         }
     }
+    if domain_service {
+        for identity in &mut identities {
+            identity.verified = Some(true);
+        }
+    }
     connections::check_paced_relay_identities(provider, interval, &account_email, &identities)?;
     let new = NewConnection {
         provider,
-        account_email,
+        account_email: if domain_service {
+            managed_domain.clone().unwrap_or(account_email)
+        } else {
+            account_email
+        },
         subject: None,
         smtp: Some(smtp),
         imap,
@@ -818,8 +918,9 @@ struct UpdateConnection {
     paused: Option<bool>,
     #[garde(range(min = 1, max = 1_000_000))]
     daily_limit: Option<i32>,
-    /// A paced sender's new interval, rounded up to whole 5-minute slots; a rate-paced
-    /// connection takes none.
+    /// Minutes between campaign emails. Norbelys accepts exact whole minutes, 1 to 1,440,
+    /// including activation on an unpaced connection. Existing paced mailboxes and SES
+    /// round up to whole 5-minute slots.
     #[garde(skip)]
     send_interval_minutes: Option<i32>,
     #[garde(skip)]
@@ -834,7 +935,8 @@ struct UpdateConnection {
     warmup_stage: Option<Option<i16>>,
     /// The whole list of identities: one with its `id` is replaced, one without is added, one
     /// left out is removed (one with history is kept: disable it instead).
-    #[garde(length(max = 50), dive)]
+    #[garde(length(max = 1_000), dive)]
+    #[schema(max_items = 1_000)]
     identities: Option<Vec<IdentityInput>>,
     /// The whole list of folders to read.
     #[garde(dive)]
@@ -908,7 +1010,7 @@ async fn update_connection(
     Json(body): Json<UpdateConnection>,
 ) -> ApiResult<Tagged<ConnectionObject>> {
     principal.require(Scope::ConnectionsManage)?;
-    let changes = Changes {
+    let mut changes = Changes {
         paused: body.paused,
         daily_limit: body.daily_limit,
         send_interval_minutes: body.send_interval_minutes,
@@ -946,11 +1048,29 @@ async fn update_connection(
             .await?
             .ok_or_else(|| Problem::not_found("connection"))?;
         if connection.provider == Provider::Norbelys.as_str() {
-            let address = EmailAddress::parse(&connection.account.email).map_err(|_| {
-                Problem::invalid_state("The managed mailbox has an invalid address.")
+            let domain = super::managed::domain(&connection.account.email).ok_or_else(|| {
+                Problem::invalid_state("The managed service has an invalid domain.")
             })?;
-            let purpose =
-                domains::mail_access(&mut tx, principal.workspace, &address.domain()).await?;
+            let purpose = domains::mail_access(&mut tx, principal.workspace, &domain).await?;
+            if let Some(identities) = &changes.identities {
+                if identities
+                    .iter()
+                    .any(|identity| identity.email.domain() != domain)
+                {
+                    return Err(Problem::invalid_field(
+                        "/identities",
+                        "invalid",
+                        "Every sender must belong to this service's domain.",
+                    ));
+                }
+            }
+            if !connection.account.email.contains('@') {
+                if let Some(identities) = &mut changes.identities {
+                    for identity in identities {
+                        identity.verified = Some(true);
+                    }
+                }
+            }
             if !purpose.sends()
                 && changes.identities.as_ref().is_some_and(|identities| {
                     identities

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE connections SET next_send_at = greatest(next_send_at, CASE WHEN provider = 'norbelys' THEN $3 ELSE next_phase_at($3, send_phase_seconds) END)\n                  WHERE workspace_id = $1 AND id = $2 AND send_interval_minutes IS NOT NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "695a9f28fa9aae159f3744da61582c1eaf99018d1a3e869b52535441e99803f6"
+}

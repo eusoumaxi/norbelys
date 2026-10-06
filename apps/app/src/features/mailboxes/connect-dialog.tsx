@@ -37,7 +37,7 @@ import {
   useValues,
 } from "@/features/mailboxes/form";
 import type { SetValue, Values } from "@/features/mailboxes/form";
-import { ManagedSenderDialog } from "@/features/mailboxes/managed-mail";
+import { ManagedDomainDialog } from "@/features/mailboxes/managed-mail";
 import {
   NOT_WARMING,
   providerInfo,
@@ -499,9 +499,11 @@ const ScopeSection = ({ info, problems, set, values }: SectionProps) => {
 };
 
 const intervalText = (info: ProviderInfo) =>
-  info.pacing === "optional"
-    ? "Leave it empty to send as fast as its limits allow. With minutes, it sends one campaign email at a time, as one address: its account's."
-    : "It waits this long between two campaign emails, like a person writing them: 5 to 1,440, in steps of 5.";
+  info.id === "norbelys"
+    ? "Optional minimum time between campaign emails, in whole minutes. Leave empty to use only the sending limits."
+    : info.pacing === "optional"
+      ? "Leave it empty to send as fast as its limits allow. With minutes, it sends one campaign email at a time, as one address: its account's."
+      : "It waits this long between two campaign emails, like a person writing them: 5 to 1,440, in steps of 5.";
 
 /** The fields whose problems open the pace section by themselves. */
 const PACE_FIELDS = [
@@ -581,12 +583,12 @@ const PacingSection = (props: SectionProps) => {
               inputMode="numeric"
               label="Minutes between campaign emails"
               max={1440}
-              min={5}
+              min={info.id === "norbelys" ? 1 : 5}
               name="send_interval_minutes"
               optional={info.pacing === "optional"}
               problems={problems}
               set={set}
-              step={5}
+              step={info.id === "norbelys" ? 1 : 5}
               type="number"
               values={values}
             />
@@ -751,7 +753,7 @@ export const ConnectDialog = ({
       return null;
     }
     return (
-      <ManagedSenderDialog
+      <ManagedDomainDialog
         onOpenChange={onOpenChange}
         onSaved={() => {
           void navigate({

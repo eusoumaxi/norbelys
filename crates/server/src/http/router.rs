@@ -743,6 +743,7 @@ mod tests {
     /// invariants test refuses one that is not listed, as well as a listed one that nothing serves.
     const SURFACE: &[&str] = &[
         // Sending.
+        "smtp.authenticate",
         "connections.list",
         "connections.create",
         "connections.retrieve",

@@ -26,7 +26,8 @@ type WayIn = "oauth" | "login" | "relay" | "managed";
 /**
  * Whether a connection sends one cold message every few minutes like a person (`required`: the
  * mailboxes), may do so (`optional`: SES, as a paced sender of one address), or sends as fast as
- * its limits allow and refuses an interval (`refused`: the other relays and the hosted mail).
+ * its limits allow and refuses an interval (`refused`: SendGrid and Mailgun).
+ * Managed mail supports optional exact minute pacing.
  */
 type Pacing = "required" | "optional" | "refused";
 
@@ -160,10 +161,10 @@ export const PROVIDERS: Record<Provider, ProviderInfo> = {
     kind: "Norbelys mail",
     label: "Norbelys mail",
     name: "Norbelys mail",
-    pacing: "refused",
-    scopeKey: "The hosted account whose limits its logins share.",
+    pacing: "optional",
+    scopeKey: "The domain service whose senders share its sending limits.",
     summary:
-      "An address on a sending domain you verified, sent from Norbelys's own mail server.",
+      "Connect your domain and send from its addresses with your workspace API key.",
     way: "managed",
   },
   sendgrid: {

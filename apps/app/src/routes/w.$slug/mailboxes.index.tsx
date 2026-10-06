@@ -161,11 +161,11 @@ const MailboxesPage = () => {
             <span className="flex flex-col gap-1">
               <span className="font-semibold">Norbelys mail</span>
               <span className="text-fg-2 text-sm">
-                Your domains and senders. Add addresses directly; no separate
-                connection setup.
+                Connect your domain once and send from its addresses with your
+                workspace API key.
               </span>
             </span>
-            <span className="text-link shrink-0 text-sm">Manage senders</span>
+            <span className="text-link shrink-0 text-sm">Manage domains</span>
           </button>
           <ListTable<ConnectionObject>
             columns={columns}

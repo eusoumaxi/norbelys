@@ -75,6 +75,69 @@ fn identity_ids(connection: &Value) -> Vec<(String, String)> {
         .collect()
 }
 
+/// SMTP reuses a live HTTP key, but cannot borrow another tenant's domain or a paused service.
+#[tokio::test]
+async fn smtp_api_key_authentication_is_live_scoped_and_revocable() {
+    let test = TestDb::new().await;
+    let acme = test.workspace("acme").await;
+    let other = test.workspace("other").await;
+    let sandbox = test.test_workspace("sandbox").await;
+    let app = test.app();
+    verified_mail_domain(&test, &acme, "acme.example").await;
+    let created = connect(
+        &app,
+        &acme.key,
+        json!({
+            "provider": "norbelys", "account_email": "acme.example", "identities": []
+        }),
+    )
+    .await;
+    assert_eq!(created.status, StatusCode::CREATED, "{}", created.json);
+    let connection = created.json["id"]
+        .as_str()
+        .unwrap()
+        .parse::<Id<crate::domain::ids::Connection>>()
+        .unwrap();
+    let path = "/v1/smtp/auth?domain=acme.example";
+    let pending = app.get(path).bearer(&acme.key).send().await;
+    assert_eq!(pending.status, StatusCode::NOT_FOUND);
+    sqlx::query("UPDATE connections SET status = 'active' WHERE workspace_id = $1 AND id = $2")
+        .bind(acme.id.uuid())
+        .bind(connection.uuid())
+        .execute(test.system.pool())
+        .await
+        .unwrap();
+    let allowed = app.get(path).bearer(&acme.key).send().await;
+    assert_eq!(allowed.status, StatusCode::OK, "{}", allowed.json);
+    assert_eq!(
+        allowed.json["username"],
+        super::managed::username(acme.id, "acme.example")
+    );
+    assert_eq!(allowed.headers["cache-control"], "no-store");
+    let foreign = app.get(path).bearer(&other.key).send().await;
+    assert!(!foreign.status.is_success());
+    let test_key = app.get(path).bearer(&sandbox.key).send().await;
+    assert_eq!(test_key.status, StatusCode::FORBIDDEN);
+    let unscoped_key = test.api_key(&acme, ScopeSet::default()).await;
+    let unscoped = app.get(path).bearer(&unscoped_key).send().await;
+    assert_eq!(unscoped.status, StatusCode::FORBIDDEN);
+    sqlx::query("UPDATE connections SET paused = true WHERE workspace_id = $1 AND id = $2")
+        .bind(acme.id.uuid())
+        .bind(connection.uuid())
+        .execute(test.system.pool())
+        .await
+        .unwrap();
+    let paused = app.get(path).bearer(&acme.key).send().await;
+    assert_eq!(paused.status, StatusCode::NOT_FOUND);
+    sqlx::query("UPDATE api_keys SET revoked_at = now() WHERE workspace_id = $1")
+        .bind(acme.id.uuid())
+        .execute(test.system.pool())
+        .await
+        .unwrap();
+    let revoked = app.get(path).bearer(&acme.key).send().await;
+    assert_eq!(revoked.status, StatusCode::UNAUTHORIZED);
+}
+
 /// Domain intent is explicit, tracking uses a separate hostname, and mail ownership
 /// cannot be borrowed from another workspace to provision a managed mailbox.
 #[tokio::test]
@@ -1786,6 +1849,86 @@ async fn an_oauth_mailbox_connects_and_reconnects_only_as_the_same_account() {
 
 // ───────────────────────────── the managed MTA ─────────────────────────────
 
+/// One verified domain accepts many identities and new HTTP From addresses without creating
+/// per-address connections; another workspace cannot borrow that domain's authorization.
+#[tokio::test]
+async fn managed_domain_senders_share_a_connection_and_remain_workspace_scoped() {
+    let test = TestDb::new().await;
+    let acme = test.workspace("acme").await;
+    let stranger = test.workspace("stranger").await;
+    let app = test.app();
+    verified_mail_domain(&test, &acme, "acme.example").await;
+    let denied = connect(
+        &app,
+        &stranger.key,
+        json!({"provider":"norbelys", "account_email":"acme.example"}),
+    )
+    .await;
+    assert_eq!(denied.status, StatusCode::UNPROCESSABLE_ENTITY);
+    let foreign = connect(&app, &acme.key, json!({"provider":"norbelys", "account_email":"acme.example", "identities":[{"email":"sender@foreign.example"}]})).await;
+    assert_eq!(foreign.status, StatusCode::UNPROCESSABLE_ENTITY);
+    let senders: Vec<Value> = (0..100)
+        .map(|n| json!({"email":format!("sender{n}@acme.example")}))
+        .collect();
+    let connected = connect(
+        &app,
+        &acme.key,
+        json!({"provider":"norbelys", "account_email":"acme.example", "identities":senders}),
+    )
+    .await;
+    assert_eq!(connected.status, StatusCode::CREATED, "{}", connected.json);
+    assert_eq!(connected.json["identities"].as_array().unwrap().len(), 100);
+    assert!(
+        connected.json["identities"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|sender| sender["verified"] == true)
+    );
+    assert!(connected.json["imap"].is_null());
+    let connection_path = format!("/v1/connections/{}", connected.json["id"].as_str().unwrap());
+    for minutes in [3, 5, 6, 7, 8, 9] {
+        let paced = app
+            .patch(&connection_path)
+            .bearer(&acme.key)
+            .json(json!({"send_interval_minutes": minutes}))
+            .send()
+            .await;
+        assert_eq!(paced.status, StatusCode::OK, "{}", paced.json);
+        assert_eq!(paced.json["send_interval_minutes"], minutes);
+    }
+    let invalid = app
+        .patch(&connection_path)
+        .bearer(&acme.key)
+        .json(json!({"send_interval_minutes": 0}))
+        .send()
+        .await;
+    assert_eq!(invalid.status, StatusCode::UNPROCESSABLE_ENTITY);
+    let message = app.post("/v1/messages").bearer(&acme.key).idempotency(&key()).json(json!({
+        "from":"new@acme.example", "to":["recipient@example.com"], "subject":"Hello", "html":"<p>Hello</p>"
+    })).send().await;
+    assert_eq!(message.status, StatusCode::ACCEPTED, "{}", message.json);
+    let unauthorized = app.post("/v1/messages").bearer(&stranger.key).idempotency(&key()).json(json!({
+        "from":"new@acme.example", "to":["recipient@example.com"], "subject":"Hello", "html":"<p>Hello</p>"
+    })).send().await;
+    assert_eq!(unauthorized.status, StatusCode::NOT_FOUND);
+    let count: i64 = sqlx::query_scalar("SELECT count(*) FROM connections WHERE workspace_id = $1")
+        .bind(acme.id.uuid())
+        .fetch_one(test.system.pool())
+        .await
+        .unwrap();
+    assert_eq!(count, 1);
+    let saved = app
+        .get(&format!(
+            "/v1/connections/{}",
+            connected.json["id"].as_str().unwrap()
+        ))
+        .bearer(&acme.key)
+        .send()
+        .await;
+    assert_eq!(saved.json["identities"].as_array().unwrap().len(), 101);
+}
+
 /// What a fake control API received: method, path, headers and body.
 type Received = Arc<Mutex<Vec<(String, String, http::HeaderMap, Vec<u8>)>>>;
 
@@ -1820,7 +1963,7 @@ async fn fake_control(received: Received) -> String {
 /// Provisioning a managed MTA login: the job asks the control API whether the login exists,
 /// creates it, registers the connection's webhook as its evidence route with the generated
 /// secret, signs every request per Standard Webhooks with the installation's secret, seals the
-/// password it was answered once, and activates the connection. A login whose domain the MTA
+/// password it was answered once, and queues a real credential check before activation. A login whose domain the MTA
 /// has not verified fails the connection with the MTA's words.
 #[tokio::test]
 async fn the_managed_mta_provisions_a_login_and_its_evidence_route() {
@@ -1857,7 +2000,11 @@ async fn the_managed_mta_provisions_a_login_and_its_evidence_route() {
         .bearer(&acme.key)
         .send()
         .await;
-    assert_eq!(provisioned.json["status"], "active", "{}", provisioned.json);
+    assert_eq!(
+        provisioned.json["status"], "verifying",
+        "{}",
+        provisioned.json
+    );
     let uuid = Uuid::parse_str(id.trim_start_matches("con_")).unwrap();
     let sealed = sqlx::query_scalar!(
         r#"SELECT credential AS "credential!" FROM connections WHERE id = $1"#,

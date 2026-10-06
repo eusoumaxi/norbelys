@@ -117,8 +117,8 @@ impl Provider {
     pub fn pacing(self) -> Pacing {
         match self {
             Self::Smtp | Self::Google | Self::Microsoft => Pacing::Required,
-            Self::Ses => Pacing::Optional,
-            Self::Sendgrid | Self::Mailgun | Self::Norbelys => Pacing::Refused,
+            Self::Ses | Self::Norbelys => Pacing::Optional,
+            Self::Sendgrid | Self::Mailgun => Pacing::Refused,
         }
     }
 
@@ -259,8 +259,8 @@ pub enum WebhookKey {
 /// Why an interval was refused.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 pub enum IntervalError {
-    /// Outside 5 to 1,440 minutes.
-    #[error("the interval is between 5 and 1,440 minutes")]
+    /// Outside the provider's supported interval range.
+    #[error("the interval is outside the provider's supported range")]
     Range,
     /// The connection is rate-paced and never takes an interval.
     #[error("this connection is rate-paced and takes no interval")]
@@ -275,9 +275,8 @@ pub fn round_to_slots(minutes: i32) -> i32 {
 }
 
 /// The interval a new connection of `provider` gets for the `requested` one: a mailbox's is
-/// required and defaults to 10 minutes; an SES connection is paced only when given one; the
-/// other relays and the managed MTA refuse one. A given interval is checked and rounded up to
-/// whole slots.
+/// required and defaults to 10 minutes. SES can opt into the mailbox grid; managed delivery
+/// can opt into an exact interval. Other relays refuse pacing.
 ///
 /// # Errors
 ///
@@ -286,11 +285,23 @@ pub fn new_interval(
     provider: Provider,
     requested: Option<i32>,
 ) -> Result<Option<i32>, IntervalError> {
+    if provider == Provider::Norbelys {
+        return requested.map(managed_interval).transpose();
+    }
     match (provider.pacing(), requested) {
         (Pacing::Required, None) => Ok(Some(INTERVAL_DEFAULT)),
         (Pacing::Optional, None) | (Pacing::Refused, None) => Ok(None),
         (Pacing::Refused, Some(_)) => Err(IntervalError::NotPaced),
         (Pacing::Required | Pacing::Optional, Some(minutes)) => checked(minutes).map(Some),
+    }
+}
+
+/// Managed delivery keeps whole-minute intervals exactly, without the mailbox grid.
+pub fn managed_interval(minutes: i32) -> Result<i32, IntervalError> {
+    if (1..=INTERVAL_MAX).contains(&minutes) {
+        Ok(minutes)
+    } else {
+        Err(IntervalError::Range)
     }
 }
 
@@ -651,9 +662,9 @@ mod tests {
     };
 
     /// Every provider has its documented pacing: the three mailbox kinds are always paced, SES
-    /// may be, SendGrid, Mailgun and the managed MTA never are; and what that means for a new
-    /// connection's interval: a mailbox gets 10 minutes by default, an SES connection is paced
-    /// only when asked, the others refuse any interval.
+    /// and managed delivery may be, while SendGrid and Mailgun never are; and what that means for a new
+    /// connection's interval: mailboxes default to 10 minutes; SES rounds to slots, managed
+    /// delivery keeps requested minutes, and other relays refuse any interval.
     #[test]
     fn each_provider_has_its_pacing_and_default_interval() {
         for provider in Provider::iter() {
@@ -662,7 +673,8 @@ mod tests {
                     (Pacing::Required, Ok(Some(10)), Ok(Some(20)))
                 }
                 Provider::Ses => (Pacing::Optional, Ok(None), Ok(Some(20))),
-                Provider::Sendgrid | Provider::Mailgun | Provider::Norbelys => {
+                Provider::Norbelys => (Pacing::Optional, Ok(None), Ok(Some(17))),
+                Provider::Sendgrid | Provider::Mailgun => {
                     (Pacing::Refused, Ok(None), Err(IntervalError::NotPaced))
                 }
             };

@@ -21,7 +21,7 @@
 //! Gmail mailbox's send-as list, read by `connection.check`; the address an OAuth consent
 //! proved), and otherwise the person's attestation when adding the identity.
 //!
-//! A connection's identities come inside it, at most 50 (the request bodies bound the list); a write replaces the
+//! A connection's identities come inside it; explicit replacement requests bound the input list. A write replaces the
 //! list whole: an identity given with its `id` is replaced by what is given (an absent field is
 //! cleared, `enabled` defaults to true, and `verified` is kept while the address stays), one
 //! without an `id` is added, one left out is removed. An identity with history (messages, threads) cannot be removed, only disabled, since

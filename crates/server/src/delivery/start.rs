@@ -363,9 +363,12 @@ pub async fn start(db: &Database, request: &Start<'_>) -> Result<Started, sqlx::
     if cold {
         sqlx::query!(
             "UPDATE connections
-                SET next_send_at = next_phase_at(greatest(next_send_at + make_interval(mins => send_interval_minutes),
+                SET next_send_at = CASE WHEN provider = 'norbelys'
+                                       THEN greatest(next_send_at + make_interval(mins => send_interval_minutes),
+                                                     $3 + make_interval(mins => send_interval_minutes))
+                                       ELSE next_phase_at(greatest(next_send_at + make_interval(mins => send_interval_minutes),
                                                           $3 + make_interval(mins => send_interval_minutes) - interval '30 seconds'),
-                                                 send_phase_seconds)
+                                                 send_phase_seconds) END
               WHERE workspace_id = $1 AND id = $2 AND send_interval_minutes IS NOT NULL AND next_send_at <= $3",
             workspace.uuid(),
             request.connection.uuid(),

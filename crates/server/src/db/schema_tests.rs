@@ -697,7 +697,7 @@ async fn identity_rows_keep_their_chains_and_kinds() {
 }
 
 /// The rules of connections hold in the database. Every mailbox is paced, at an interval of at
-/// least five minutes that nothing defaults; the managed MTA and SendGrid are never paced, while
+/// least five minutes that nothing defaults; managed delivery supports exact minutes, SendGrid refuses pacing, while
 /// SES may be, one connection per From address. An SES connection names its account's quota scope
 /// and a valid configuration set, so the scope cannot be deleted under it. Within a workspace an
 /// address is one live paced sender whatever the way in, and an account one live connection, while
@@ -720,10 +720,10 @@ async fn connections_keep_their_pacing_scope_and_account_rules() {
          "INSERT INTO connections (workspace_id, provider, transport, account_email, status, daily_limit)
           VALUES ('00000000-0000-7000-8000-00000000a000', 'microsoft', 'api', 'omitted@acme.test', 'active', 100)",
          Err(CHECK)),
-        ("the managed MTA with an interval", As::System,
+        ("the managed MTA with an exact interval", As::System,
          "INSERT INTO connections (workspace_id, provider, transport, account_email, smtp, status, daily_limit, send_interval_minutes)
-          VALUES ('00000000-0000-7000-8000-00000000a000', 'norbelys', 'smtp', 'mta2@acme.test', '{}', 'active', 100000, 10)",
-         Err(CHECK)),
+          VALUES ('00000000-0000-7000-8000-00000000a000', 'norbelys', 'smtp', 'mta2@acme.test', '{}', 'active', 100000, 3)",
+         Ok(1)),
         ("a SendGrid connection with an interval", As::System,
          "INSERT INTO connections (workspace_id, provider, transport, account_email, smtp, status, daily_limit, send_interval_minutes)
           VALUES ('00000000-0000-7000-8000-00000000a000', 'sendgrid', 'smtp', 'carol@acme.test', '{}', 'active', 40, 10)",

@@ -233,8 +233,9 @@ const show = (value: number | null | undefined) =>
 const PacePanel = ({ connection, locked }: PanelProps) => {
   const workspace = useWorkspace();
   const paced =
-    connection.send_interval_minutes !== null &&
-    connection.send_interval_minutes !== undefined;
+    connection.provider === "norbelys" ||
+    (connection.send_interval_minutes !== null &&
+      connection.send_interval_minutes !== undefined);
   const panel = usePanel(
     connection,
     (c) => ({
@@ -280,15 +281,23 @@ const PacePanel = ({ connection, locked }: PanelProps) => {
         />
         {paced ? (
           <TextRow
-            description="It waits this long between two campaign emails, like a person writing them: 5 to 1,440, in steps of 5."
+            description={
+              connection.provider === "norbelys"
+                ? "Minimum time between campaign emails: 1 to 1,440 whole minutes."
+                : "Minimum time between campaign emails: 5 to 1,440 minutes, in steps of 5."
+            }
             inputMode="numeric"
             label="Minutes between campaign emails"
             max={1440}
-            min={5}
+            min={connection.provider === "norbelys" ? 1 : 5}
             name="send_interval_minutes"
+            optional={
+              connection.send_interval_minutes === null ||
+              connection.send_interval_minutes === undefined
+            }
             problems={panel.problems}
             set={panel.set}
-            step={5}
+            step={connection.provider === "norbelys" ? 1 : 5}
             type="number"
             values={panel.values}
           />

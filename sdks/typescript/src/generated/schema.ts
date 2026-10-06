@@ -1035,6 +1035,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/smtp/auth": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Authenticate SMTP submission using the same live API key as HTTP sending. */
+        get: operations["smtp.authenticate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/suppressions": {
         parameters: {
             query?: never;
@@ -1496,7 +1513,7 @@ export interface components {
              */
             daily_limit: number;
             id: components["schemas"]["Id_Connection"];
-            /** @description The From addresses, at most 50. */
+            /** @description The service's sender addresses. */
             identities: components["schemas"]["IdentityObject"][];
             imap?: components["schemas"]["ImapSettings"] | null;
             /** @description The person's pause: sending stops, conversations wait. */
@@ -1509,7 +1526,7 @@ export interface components {
             receiving: components["schemas"]["ReceivingObject"];
             /**
              * Format: int32
-             * @description A paced sender's minutes between cold sends, whole 5-minute slots; null when rate-paced.
+             * @description Minutes between campaign emails: exact whole minutes for Norbelys, 5-minute slots for mailboxes and SES; null when rate-paced.
              */
             send_interval_minutes?: number | null;
             send_window?: components["schemas"]["SendWindow"] | null;
@@ -1612,8 +1629,8 @@ export interface components {
         CreateConnection: {
             /**
              * @description The account (not for Google and Microsoft, whose address the provider names): an SMTP
-             *     login, the From address of a paced SES connection or of the managed MTA, a name for a
-             *     relay account.
+             *     login, the From address of a paced SES connection, a managed domain or mailbox, or a
+             *     relay account name.
              */
             account_email?: string | null;
             /**
@@ -1621,7 +1638,7 @@ export interface components {
              * @description Submissions a UTC day.
              */
             daily_limit?: number | null;
-            /** @description The From addresses, at most 50; by default the account's own address. */
+            /** @description The From addresses, at most 1,000; a domain service starts without senders. */
             identities?: components["schemas"]["IdentityInput"][] | null;
             imap?: components["schemas"]["ImapInput"] | null;
             /** @description `smtp`, `google`, `microsoft`, `ses`, `sendgrid`, `mailgun` or `norbelys`. */
@@ -1633,9 +1650,9 @@ export interface components {
             return_to?: string | null;
             /**
              * Format: int32
-             * @description A paced sender's minutes between cold sends, 5 to 1,440, rounded up to whole 5-minute
-             *     slots; 10 for a mailbox when absent; on SES it makes the connection a paced sender of one
-             *     From address; refused for SendGrid, Mailgun and the managed MTA.
+             * @description Minutes between campaign emails. Norbelys accepts exact whole minutes, 1 to 1,440.
+             *     Mailboxes and paced SES use 5-minute slots; mailboxes default to 10 minutes.
+             *     SendGrid and Mailgun refuse an interval.
              */
             send_interval_minutes?: number | null;
             send_window?: components["schemas"]["SendWindow"] | null;
@@ -1757,7 +1774,10 @@ export interface components {
             /** @description At most 150 recipients in all, `to`, `cc` and `bcc` together, none twice. */
             cc?: string[] | null;
             expires_at?: components["schemas"]["Timestamp"] | null;
-            /** @description The sender: a sender identity's id (`sid_…`) or its address. It must be live and enabled. */
+            /**
+             * @description The sender: a live, enabled identity or an address on a connected managed domain.
+             *     New addresses on a verified managed domain are registered automatically.
+             */
             from: string;
             /**
              * @description The one authored body, an HTML template; a plain-text alternative is derived from it.
@@ -3028,7 +3048,7 @@ export interface components {
                  */
                 daily_limit: number;
                 id: components["schemas"]["Id_Connection"];
-                /** @description The From addresses, at most 50. */
+                /** @description The service's sender addresses. */
                 identities: components["schemas"]["IdentityObject"][];
                 imap?: components["schemas"]["ImapSettings"] | null;
                 /** @description The person's pause: sending stops, conversations wait. */
@@ -3979,6 +3999,10 @@ export interface components {
             /** @description `not_found`, `suppressed` or `already_enrolled`. */
             reason: components["schemas"]["SkipReason"];
         };
+        /** @description The private transport login selected after checking a live workspace API key. */
+        SmtpAuthorization: {
+            username: string;
+        };
         /** @description An SMTP endpoint and its login, as a request gives it. */
         SmtpInput: {
             /** @description Amazon SES: the configuration set every message names. */
@@ -4351,8 +4375,9 @@ export interface components {
             receiving?: components["schemas"]["ReceivingInput"] | null;
             /**
              * Format: int32
-             * @description A paced sender's new interval, rounded up to whole 5-minute slots; a rate-paced
-             *     connection takes none.
+             * @description Minutes between campaign emails. Norbelys accepts exact whole minutes, 1 to 1,440,
+             *     including activation on an unpaced connection. Existing paced mailboxes and SES
+             *     round up to whole 5-minute slots.
              */
             send_interval_minutes?: number | null;
             send_window?: components["schemas"]["SendWindow"] | null;
@@ -4848,6 +4873,7 @@ export type SendingDomainStatus = components['schemas']['SendingDomainStatus'];
 export type Sentiment = components['schemas']['Sentiment'];
 export type SkipReason = components['schemas']['SkipReason'];
 export type Skipped = components['schemas']['Skipped'];
+export type SmtpAuthorization = components['schemas']['SmtpAuthorization'];
 export type SmtpInput = components['schemas']['SmtpInput'];
 export type SmtpPatch = components['schemas']['SmtpPatch'];
 export type SmtpSecurity = components['schemas']['SmtpSecurity'];
@@ -10617,6 +10643,74 @@ export interface operations {
             };
             /** @description Another workspace holds the hostname (`conflict`). */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    "smtp.authenticate": {
+        parameters: {
+            query: {
+                /** @description The connected sending domain used as the SMTP username. */
+                domain: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The tenant-scoped SMTP authorization. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SmtpAuthorization"];
+                };
+            };
+            /** @description No valid credential. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A live API key with messages:write is required. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description No active sending service for this domain. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The domain is not enabled for sending. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The domain is invalid. */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

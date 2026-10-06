@@ -780,7 +780,7 @@ pub async fn claim(
     if chosen.is_empty() {
         if let Some(at) = clock_to {
             sqlx::query!(
-                "UPDATE connections SET next_send_at = greatest(next_send_at, next_phase_at($3, send_phase_seconds))
+                "UPDATE connections SET next_send_at = greatest(next_send_at, CASE WHEN provider = 'norbelys' THEN $3 ELSE next_phase_at($3, send_phase_seconds) END)
                   WHERE workspace_id = $1 AND id = $2 AND send_interval_minutes IS NOT NULL",
                 workspace.uuid(),
                 connection.uuid(),

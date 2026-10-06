@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE connections\n                SET next_send_at = CASE WHEN provider = 'norbelys'\n                                       THEN greatest(next_send_at + make_interval(mins => send_interval_minutes),\n                                                     $3 + make_interval(mins => send_interval_minutes))\n                                       ELSE next_phase_at(greatest(next_send_at + make_interval(mins => send_interval_minutes),\n                                                          $3 + make_interval(mins => send_interval_minutes) - interval '30 seconds'),\n                                                 send_phase_seconds) END\n              WHERE workspace_id = $1 AND id = $2 AND send_interval_minutes IS NOT NULL AND next_send_at <= $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "630b298e09d2bbe8b21c258cf60d97e330474b91fd1550bf895acaba3a389974"
+}

@@ -36,6 +36,7 @@ mod health;
 mod provision;
 mod queue;
 mod serve;
+mod smtp_auth;
 mod tail;
 mod telemetry;
 #[cfg(test)]
@@ -54,7 +55,13 @@ fn main() -> anyhow::Result<()> {
     let result = match cli.command {
         Command::Serve(args) => serve_blocking(args),
         Command::ProvisionApply(args) => provision::apply(&args),
-        Command::DmsPatch(args) => dms_patch::run(&args.file).map_err(anyhow::Error::from),
+        Command::DmsPatch(args) => {
+            dms_patch::run(&args.file)?;
+            if let Some(origin) = args.smtp_auth_api_url {
+                smtp_auth::install(&origin)?;
+            }
+            Ok(())
+        }
     };
     if let Err(error) = &result {
         tracing::error!(error = %format_args!("{error:#}"), "stopped with an error");

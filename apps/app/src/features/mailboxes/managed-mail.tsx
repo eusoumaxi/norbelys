@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 import { ListTable } from "@/components/data-table";
 import { DialogActions, SubmitButton } from "@/components/dialog-actions";
-import { PageBody, PageHeader } from "@/components/page";
+import { PageBody, PageHeader, Section } from "@/components/page";
 import { Problem, SaveFailure } from "@/components/problem";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -20,9 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { DOMAIN_USES, DomainDialog } from "@/features/domains/domain-dialog";
+import { DomainDialog } from "@/features/domains/domain-dialog";
 import { DomainRecordsTable } from "@/features/domains/domain-records";
 import {
   domainOptionsQuery,
@@ -37,74 +36,21 @@ import {
   connectionsKey,
 } from "@/features/mailboxes/queries";
 import { FormField } from "@/lib/form";
-import { fieldProblems, problemAt } from "@/lib/problem";
 import { canWrite, useWorkspace } from "@/lib/workspace";
 import type { Workspace } from "@/lib/workspace";
 
-type MailUse = "send" | "send_receive" | "receive";
-
-/** A domain grants the directions available to its individual addresses. */
-const mailUses = (domain: DomainObject | undefined) => {
-  if (!domain) {
-    return [];
-  }
-  let uses: MailUse[];
-  switch (domain.purpose) {
-    case "send_receive": {
-      uses = ["send", "send_receive", "receive"];
-      break;
-    }
-    case "send": {
-      uses = ["send"];
-      break;
-    }
-    case "receive": {
-      uses = ["receive"];
-      break;
-    }
-    default: {
-      uses = [];
-    }
-  }
-  return uses.map((value) => ({ label: DOMAIN_USES[value], value }));
-};
-
-/** An address is created only after ownership and its selected direction are confirmed. */
-const canCreateAddress = (
-  domain: DomainObject | undefined,
-  localPart: string,
-  use: MailUse | null
-): boolean =>
-  Boolean(
-    domain &&
-    domainVerified(domain) &&
-    localPart.trim() &&
-    !localPart.includes("@") &&
-    use &&
-    mailUses(domain).some((option) => option.value === use)
-  );
-
-const createAddress = async (
+/** Connect a domain with its existing workspace authorization and explicit mail purpose. */
+const connectDomain = async (
   workspace: Workspace,
-  address: string,
-  name: string,
-  use: MailUse
+  domain: DomainObject
 ): Promise<ConnectionObject> => {
   const saved = await workspace.api.connections.create({
     provider: "norbelys",
-    account_email: address,
-    identities: [
-      {
-        email: address,
-        name: name.trim() || null,
-        enabled: use !== "receive",
-        verified: true,
-      },
-    ],
-    receiving: { folders: use === "send" ? [] : ["INBOX"] },
+    account_email: domain.hostname,
+    identities: [],
   });
   if (!("id" in saved)) {
-    throw new Error("The mail service did not return the new address.");
+    throw new Error("The mail service did not return the domain connection.");
   }
   return saved;
 };
@@ -122,20 +68,6 @@ const QueryProblem = ({
       }}
     />
   ) : null;
-
-const addressUse = (connection: ConnectionObject): string => {
-  const sends = connection.identities.some((identity) => identity.enabled);
-  const receives = connection.receiving.folders.some(
-    (folder) => folder.enabled
-  );
-  if (sends && receives) {
-    return "Send and receive";
-  }
-  if (sends) {
-    return "Send only";
-  }
-  return receives ? "Receive only" : "Disabled";
-};
 
 /** DNS setup remains beside the address draft until ownership is verified. */
 const DomainSetup = ({ domain }: { domain: DomainObject }) => {
@@ -177,7 +109,7 @@ const DomainSetup = ({ domain }: { domain: DomainObject }) => {
       </div>
       <p className="text-fg-2 text-sm">
         Publish these records with your DNS provider, then verify the domain.
-        Your address draft stays here while you complete setup.
+        Return here after publishing the records to connect your domain.
       </p>
       <DomainRecordsTable records={domain.records} />
       {domain.dns_preparation === "preparing" ? (
@@ -198,8 +130,8 @@ const DomainSetup = ({ domain }: { domain: DomainObject }) => {
   );
 };
 
-/** Add a managed address directly; its private login and default sender are created together. */
-export const ManagedSenderDialog = ({
+/** A domain service has one delivery connection and any number of sender identities. */
+export const ManagedDomainDialog = ({
   open,
   onOpenChange,
   onSaved,
@@ -212,9 +144,6 @@ export const ManagedSenderDialog = ({
   const queryClient = useQueryClient();
   const choices = useQuery({ ...domainOptionsQuery(workspace), enabled: open });
   const [domainId, setDomainId] = useState("");
-  const [localPart, setLocalPart] = useState("");
-  const [name, setName] = useState("");
-  const [use, setUse] = useState<MailUse | null>(null);
   const [domainEditor, setDomainEditor] = useState<"new" | "edit" | null>(null);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<unknown>(null);
@@ -223,39 +152,39 @@ export const ManagedSenderDialog = ({
     enabled: open && domainId !== "",
   });
   const domain = selected.data;
-  const options = mailUses(domain);
-  const address = domain ? `${localPart.trim()}@${domain.hostname}` : "";
-  const ready = canWrite(workspace) && canCreateAddress(domain, localPart, use);
-  const problems = fieldProblems(failure);
-  const close = (next: boolean) => {
-    if (!busy) {
-      onOpenChange(next);
-    }
-  };
+  const ready =
+    canWrite(workspace) &&
+    domain &&
+    domainVerified(domain) &&
+    domain.purpose !== "tracking";
   return (
     <>
-      <Dialog onOpenChange={close} open={open && domainEditor === null}>
+      <Dialog
+        open={open && domainEditor === null}
+        onOpenChange={(next) => {
+          if (!busy) {
+            onOpenChange(next);
+          }
+        }}
+      >
         <DialogContent className="max-w-[800px]">
           <form
             className="flex min-h-0 flex-col"
             onSubmit={async (event) => {
               event.preventDefault();
-              if (!ready || busy || use === null) {
+              if (!ready || busy || !domain) {
                 return;
               }
               setBusy(true);
               setFailure(null);
               try {
-                const saved = await createAddress(
-                  workspace,
-                  address,
-                  name,
-                  use
-                );
+                const saved = await connectDomain(workspace, domain);
                 void queryClient.invalidateQueries({
                   queryKey: connectionsKey(workspace),
                 });
-                toast.success("Address added. Norbelys is setting it up.");
+                toast.success(
+                  "Domain connected. Add senders or send with your API key."
+                );
                 onSaved?.(saved);
                 onOpenChange(false);
               } catch (error) {
@@ -265,21 +194,21 @@ export const ManagedSenderDialog = ({
             }}
           >
             <DialogHeader>
-              <DialogTitle>Add sender · Norbelys mail</DialogTitle>
+              <DialogTitle>Connect domain · Norbelys mail</DialogTitle>
               <DialogDescription>
-                Choose your domain and address. Norbelys configures the mail
-                connection for you.
+                Connect your domain once. Use your workspace API key to send
+                from its addresses.
               </DialogDescription>
             </DialogHeader>
             <DialogBody className="gap-4">
               <QueryProblem query={choices} />
               <FormField htmlFor="managed-domain" label="Domain">
                 <Select
-                  disabled={choices.isPending || busy}
                   id="managed-domain"
+                  disabled={choices.isPending || busy}
+                  value={domainId}
                   onChange={(id) => {
                     setDomainId(id);
-                    setUse(null);
                     setFailure(null);
                   }}
                   options={(choices.data?.data ?? [])
@@ -288,9 +217,8 @@ export const ManagedSenderDialog = ({
                   placeholder={
                     choices.isPending
                       ? "Loading domains…"
-                      : "Choose a mail domain"
+                      : "Choose your domain"
                   }
-                  value={domainId}
                 />
                 <div className="flex gap-2">
                   <Button
@@ -314,83 +242,27 @@ export const ManagedSenderDialog = ({
                 </div>
               </FormField>
               <QueryProblem query={selected} />
-              <FormField
-                htmlFor="managed-address"
-                label="Address"
-                problem={
-                  problemAt(problems, "account_email") ??
-                  problemAt(problems, "identities.0.email")
-                }
-              >
-                <div className="flex items-center gap-2">
-                  <Input
-                    autoComplete="off"
-                    disabled={busy}
-                    id="managed-address"
-                    maxLength={64}
-                    onChange={(event) => setLocalPart(event.target.value)}
-                    placeholder="sales"
-                    required
-                    value={localPart}
-                  />
-                  <span className="text-fg-2 shrink-0">
-                    @{domain?.hostname ?? "your-domain.com"}
-                  </span>
-                </div>
-              </FormField>
-              <FormField
-                htmlFor="managed-name"
-                label="Display name"
-                optional
-                problem={problemAt(problems, "identities.0.name")}
-              >
-                <Input
-                  disabled={busy}
-                  id="managed-name"
-                  maxLength={200}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="Your team"
-                  value={name}
-                />
-              </FormField>
-              <FormField
-                description="Choose which directions this address uses. Sending only stops inbox collection; it does not change the domain's MX records."
-                htmlFor="managed-use"
-                label="Use"
-                problem={problemAt(problems, "receiving")}
-              >
-                <Select
-                  disabled={!domain || busy}
-                  id="managed-use"
-                  onChange={(value) => {
-                    if (
-                      value === "send" ||
-                      value === "send_receive" ||
-                      value === "receive"
-                    ) {
-                      setUse(value);
-                    }
-                  }}
-                  options={options}
-                  placeholder="Choose how to use this address"
-                  value={use}
-                />
-              </FormField>
               {domain && !domainVerified(domain) ? (
                 <DomainSetup domain={domain} />
               ) : null}
+              <p className="text-fg-2 text-sm">
+                Sender addresses share the domain&apos;s sending connection.
+                Adding a sender does not create a mailbox or a password.
+                Incoming mail follows your selected domain use. Existing
+                mailboxes are kept.
+              </p>
               <SaveFailure failure={failure} />
             </DialogBody>
             <DialogActions
               disabled={busy}
               note={
-                !domain || domainVerified(domain)
-                  ? undefined
-                  : "Verify the domain to finish adding this address."
+                domain && !domainVerified(domain)
+                  ? "Verify your domain to connect it."
+                  : undefined
               }
             >
               <SubmitButton busy={busy} disabled={!ready}>
-                Add sender
+                Connect domain
               </SubmitButton>
             </DialogActions>
           </form>
@@ -399,6 +271,7 @@ export const ManagedSenderDialog = ({
       {domainEditor ? (
         <DomainDialog
           domain={domainEditor === "edit" ? domain : undefined}
+          open={open}
           onOpenChange={(next) => {
             if (!next) {
               setDomainEditor(null);
@@ -406,30 +279,37 @@ export const ManagedSenderDialog = ({
           }}
           onSaved={(saved) => {
             setDomainId(saved.id);
-            setUse(null);
           }}
-          open={open}
         />
       ) : null}
     </>
   );
 };
 
-/** The built-in service groups managed addresses without exposing their private connections. */
+/** Managed sending services are listed by domain; independently provisioned mailboxes stay visible. */
 export const ManagedMail = () => {
   const workspace = useWorkspace();
   const navigate = useNavigate();
   const [adding, setAdding] = useState(false);
-  const add = canWrite(workspace) ? (
-    <Button onClick={() => setAdding(true)} variant="primary">
-      <HugeiconsIcon icon={Add01Icon} />
-      Add sender
-    </Button>
-  ) : null;
+  const openConnection = (connection: ConnectionObject) => {
+    void navigate({
+      params: { slug: workspace.slug, connectionId: connection.id },
+      to: "/w/$slug/mailboxes/$connectionId",
+    });
+  };
   return (
     <PageBody>
       <PageHeader
-        actions={add}
+        title="Norbelys mail"
+        subtitle="Connect your domain once. Send from its addresses with your workspace API key."
+        actions={
+          canWrite(workspace) ? (
+            <Button onClick={() => setAdding(true)} variant="primary">
+              <HugeiconsIcon icon={Add01Icon} />
+              Connect domain
+            </Button>
+          ) : null
+        }
         back={{
           label: "Mailboxes",
           link: {
@@ -438,27 +318,20 @@ export const ManagedMail = () => {
             search: {},
           },
         }}
-        subtitle="Your addresses on your own domains. Manage each sender's name, signature, sending and incoming mail."
-        title="Norbelys mail"
       />
       <ListTable<ConnectionObject>
         columns={[
           {
-            id: "address",
-            header: "Address",
+            id: "domain",
+            header: "Domain",
             render: (connection) => (
               <span className="font-semibold">{connection.account.email}</span>
             ),
           },
           {
-            id: "name",
-            header: "Name",
-            render: (connection) => connection.identities[0]?.name ?? "—",
-          },
-          {
-            id: "use",
-            header: "Use",
-            render: (connection) => addressUse(connection),
+            id: "senders",
+            header: "Senders",
+            render: (connection) => connection.identities.length,
           },
           {
             id: "status",
@@ -469,33 +342,60 @@ export const ManagedMail = () => {
           },
         ]}
         empty={{
-          title: "Add your first sender",
+          title: "Connect your first domain",
           description:
-            "Use an address on your domain. We prepare its connection and sender together.",
+            "Verify your domain, then add senders or use new addresses directly through the API.",
           icon: Add01Icon,
         }}
-        onRowClick={(connection) => {
-          void navigate({
-            params: { slug: workspace.slug, connectionId: connection.id },
-            to: "/w/$slug/mailboxes/$connectionId",
-          });
-        }}
+        onRowClick={openConnection}
         query={connectionGroupQuery(workspace, "norbelys", "")}
         rowKey={(connection) => connection.id}
       />
+      <Section title="Existing mailboxes">
+        <p className="text-fg-2 text-sm">
+          These addresses have their own mailbox access. They are kept
+          separately from domain sending services.
+        </p>
+        <ListTable<ConnectionObject>
+          columns={[
+            {
+              id: "address",
+              header: "Address",
+              render: (connection) => connection.account.email,
+            },
+            {
+              id: "status",
+              header: "Status",
+              render: (connection) => (
+                <ConnectionHealth connection={connection} />
+              ),
+            },
+          ]}
+          empty={{
+            title: "No separate mailboxes",
+            description: "Sending addresses do not require mailbox logins.",
+            icon: Add01Icon,
+          }}
+          onRowClick={openConnection}
+          query={connectionGroupQuery(workspace, "managed-mailboxes", "")}
+          rowKey={(connection) => connection.id}
+        />
+      </Section>
       <p className="text-fg-3 mt-4 text-xs">
-        Need to change DNS or add a domain?{" "}
         <Link
           className="text-link"
           params={{ slug: workspace.slug }}
           to="/w/$slug/domains"
         >
-          Manage domains
+          Manage domains and DNS records
         </Link>
-        .
       </p>
       {adding ? (
-        <ManagedSenderDialog onOpenChange={setAdding} open={adding} />
+        <ManagedDomainDialog
+          open={adding}
+          onOpenChange={setAdding}
+          onSaved={openConnection}
+        />
       ) : null}
     </PageBody>
   );

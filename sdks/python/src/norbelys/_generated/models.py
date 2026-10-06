@@ -1163,6 +1163,10 @@ Skipped = TypedDict("Skipped", {
     "reason": Required["SkipReason"],
 })
 
+SmtpAuthorization = TypedDict("SmtpAuthorization", {
+    "username": Required[str],
+})
+
 SmtpInput = TypedDict("SmtpInput", {
     "configuration_set": NotRequired[Union[str, None]],
     "host": Required[str],
@@ -1727,6 +1731,10 @@ SendingDomainsListQuery = TypedDict("SendingDomainsListQuery", {
     "order": NotRequired["ListOrder"],
     "include": NotRequired["ListInclude"],
     "status": NotRequired["SendingDomainStatus"],
+})
+
+SmtpAuthenticateQuery = TypedDict("SmtpAuthenticateQuery", {
+    "domain": Required[str],
 })
 
 SuppressionsListQuery = TypedDict("SuppressionsListQuery", {

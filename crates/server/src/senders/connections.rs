@@ -195,8 +195,7 @@ pub struct ConnectionObject {
     pub smtp: Option<SmtpSettings>,
     /// The IMAP endpoint of an SMTP login.
     pub imap: Option<ImapSettings>,
-    /// The From addresses, at most 50.
-    #[schema(max_items = 50)]
+    /// The service's sender addresses.
     pub identities: Vec<IdentityObject>,
     /// The folders read, at most 10.
     pub receiving: ReceivingObject,
@@ -204,7 +203,7 @@ pub struct ConnectionObject {
     pub webhook: Option<WebhookObject>,
     /// Submissions a UTC day.
     pub daily_limit: i32,
-    /// A paced sender's minutes between cold sends, whole 5-minute slots; null when rate-paced.
+    /// Minutes between campaign emails: exact whole minutes for Norbelys, 5-minute slots for mailboxes and SES; null when rate-paced.
     pub send_interval_minutes: Option<i32>,
     /// When campaign mail may be submitted, in `timezone`.
     pub send_window: Option<SendWindow>,
@@ -1040,7 +1039,13 @@ pub async fn update(
     let provider = locked.provider;
     let interval = changes
         .send_interval_minutes
-        .map(|minutes| changed_interval(locked.send_interval_minutes, minutes))
+        .map(|minutes| {
+            if provider == Provider::Norbelys {
+                crate::domain::senders::managed_interval(minutes)
+            } else {
+                changed_interval(locked.send_interval_minutes, minutes)
+            }
+        })
         .transpose()
         .map_err(|error| Error::invalid("/send_interval_minutes", error.to_string()))?;
     if let Some(scope) = changes.quota_scope {
@@ -1339,6 +1344,17 @@ pub fn check_paced_relay_identities(
     account_email: &str,
     inputs: &[IdentityInput],
 ) -> Result<(), Error> {
+    let maximum = if provider == Provider::Norbelys {
+        1_000
+    } else {
+        50
+    };
+    if inputs.len() > maximum {
+        return Err(Error::invalid(
+            "/identities",
+            format!("Give at most {maximum} sender identities per request."),
+        ));
+    }
     if provider != Provider::Ses || interval.is_none() {
         return Ok(());
     }

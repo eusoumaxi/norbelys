@@ -146,6 +146,14 @@ impl Job for ConnectionCheck {
                 (None, _) => return Ok(Outcome::Done),
             }
         };
+        let verdict = match verdict {
+            Verdict::Lost(detail)
+                if loaded.provider == Provider::Norbelys && loaded.status == Status::Verifying =>
+            {
+                Verdict::Temporary(format!("The managed login is not ready yet: {detail}"))
+            }
+            other => other,
+        };
         let passed = matches!(verdict, Verdict::Passed { .. });
         let outcome = record(cx, &keys, workspace, self.connection, &loaded, verdict).await?;
         // Its last step, for a mailbox that passed: settle its uncertain messages by reading its
