@@ -8,11 +8,17 @@ import {
 } from "@/components/ui/card";
 
 /** Verifying a delivery with Node's own crypto: no library, and the raw body as it came. */
-const SAMPLE = `import { createHmac, timingSafeEqual } from "node:crypto";
+export const SAMPLE = `import { createHmac, timingSafeEqual } from "node:crypto";
 
-// The endpoint's signing secret: whsec_ then the base64 of the key.
+// The endpoint's signing secret: whsec_ then the base64 of 24 to 64 bytes.
 const secret = process.env.NORBELYS_WEBHOOK_SECRET ?? "";
 const key = Buffer.from(secret.replace(/^whsec_/, ""), "base64");
+// Fail closed before the empty string a missing env var becomes a public 0-byte HMAC key.
+if (key.length < 24 || key.length > 64) {
+  throw new Error(
+    "NORBELYS_WEBHOOK_SECRET must be whsec_ plus the base64 of 24 to 64 bytes"
+  );
+}
 
 /** True when Norbelys signed this raw body less than five minutes ago. */
 export function verify(headers: Headers, body: string): boolean {
