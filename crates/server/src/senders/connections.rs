@@ -196,6 +196,7 @@ pub struct ConnectionObject {
     /// The IMAP endpoint of an SMTP login.
     pub imap: Option<ImapSettings>,
     /// The service's sender addresses.
+    #[schema(max_items = 1000)]
     pub identities: Vec<IdentityObject>,
     /// The folders read, at most 10.
     pub receiving: ReceivingObject,

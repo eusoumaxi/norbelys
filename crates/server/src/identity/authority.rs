@@ -979,7 +979,7 @@ pub async fn authenticate(
             state.limits.trust_forwarded_for(),
             state.limits.trusted_proxy_ips(),
         );
-        let verified = if request.uri().path() == "/v1/smtp/auth" {
+        let verified = if request.uri().path() == "/v1/smtp_authorization" {
             state
                 .authority
                 .verify_smtp(&state, credential, client)
@@ -1022,7 +1022,7 @@ impl FromRequestParts<AppState> for Principal {
             state.limits.trust_forwarded_for(),
             state.limits.trusted_proxy_ips(),
         );
-        let principal = if parts.uri.path() == "/v1/smtp/auth" {
+        let principal = if parts.uri.path() == "/v1/smtp_authorization" {
             state
                 .authority
                 .verify_smtp(state, credential, client)

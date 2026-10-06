@@ -30,7 +30,7 @@ local function verify(request, password)
   end
   local lookup = client:request {
     method = "GET",
-    url = origin .. "v1/smtp/auth?domain=" .. domain,
+    url = origin .. "v1/smtp_authorization?domain=" .. domain,
   }
   lookup:add_header("Authorization", "Bearer " .. password)
   local response = lookup:submit()

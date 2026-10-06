@@ -209,6 +209,9 @@ pub fn scope_of(id: &str, method: &Method) -> Option<Scope> {
     if id == "preflight.create" {
         return Some(Scope::PeopleRead);
     }
+    if id == "smtp_authorization.retrieve" {
+        return Some(Scope::MessagesSend);
+    }
     let (resource, _) = id.split_once('.')?;
     let (read, write) = match resource {
         "connections" | "quota_scopes" | "sending_domains" => {

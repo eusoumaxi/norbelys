@@ -17,7 +17,7 @@ on:
       mode:
         description: Run only the selected backend checks
         type: choice
-        options: [workspace, gate, database, cli]
+        options: [workspace, gate, database, cli, contract]
         default: workspace
 
 permissions:
@@ -69,17 +69,21 @@ jobs:
         id: setup
 
       - name: Print the gate's resolved steps
-        if: inputs.mode != 'cli'
+        if: inputs.mode != 'cli' && inputs.mode != 'contract'
         run: bunx turbo run fmt lint doc purity clones openapi-check --filter=norbelys-rust --dry=json | jq -r '.tasks[] | "\(.taskId)\t\(.command)"' | sort
 
       - name: Run checks without a database
-        if: inputs.mode != 'cli'
+        if: inputs.mode != 'cli' && inputs.mode != 'contract'
         run: |
           git rev-parse --verify refs/remotes/origin/main
           bunx turbo run fmt lint doc purity clones openapi-check --filter=norbelys-rust
 
+      - name: Generate the public contract for review
+        if: inputs.mode == 'contract'
+        run: cargo run --locked -q -p norbelys-server -- admin openapi --public --out "$RUNNER_TEMP/declared-openapi.json"
+
       - name: Retain the declared public contract when it differs
-        if: failure() && inputs.mode != 'cli'
+        if: inputs.mode == 'contract' || (failure() && inputs.mode != 'cli')
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: declared-openapi
@@ -122,7 +126,7 @@ jobs:
 
   database:
     name: Database contracts
-    if: inputs.mode != 'cli' && inputs.mode != 'gate'
+    if: inputs.mode != 'cli' && inputs.mode != 'gate' && inputs.mode != 'contract'
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     services:

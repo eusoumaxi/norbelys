@@ -109,9 +109,9 @@ struct SmtpAuthorization {
 /// Authenticate SMTP submission using the same live API key as HTTP sending.
 #[utoipa::path(
     get,
-    path = "/smtp/auth",
+    path = "/smtp_authorization",
     tag = "Sending",
-    operation_id = "smtp.authenticate",
+    operation_id = "smtp_authorization.retrieve",
     params(("domain" = String, Query, description = "The connected sending domain used as the SMTP username.")),
     responses(
         (status = 200, description = "The tenant-scoped SMTP authorization.", body = SmtpAuthorization),

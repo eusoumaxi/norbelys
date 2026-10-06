@@ -98,7 +98,7 @@ async fn smtp_api_key_authentication_is_live_scoped_and_revocable() {
         .unwrap()
         .parse::<Id<crate::domain::ids::Connection>>()
         .unwrap();
-    let path = "/v1/smtp/auth?domain=acme.example";
+    let path = "/v1/smtp_authorization?domain=acme.example";
     let pending = app.get(path).bearer(&acme.key).send().await;
     assert_eq!(pending.status, StatusCode::NOT_FOUND);
     sqlx::query("UPDATE connections SET status = 'active' WHERE workspace_id = $1 AND id = $2")
