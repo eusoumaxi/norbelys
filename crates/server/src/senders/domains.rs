@@ -632,6 +632,17 @@ pub async fn delete(
     workspace: WorkspaceId,
     id: Id<SendingDomain>,
 ) -> Result<bool, sqlx::Error> {
+    let name: Option<String> = sqlx::query_scalar(
+        "SELECT hostname FROM sending_domains WHERE workspace_id = $1 AND id = $2 FOR UPDATE",
+    )
+    .bind(workspace.uuid())
+    .bind(id.uuid())
+    .fetch_optional(&mut **tx)
+    .await?;
+    let Some(name) = name else {
+        return Ok(false);
+    };
+    usage::suspend_mail(tx, workspace, &name).await?;
     let deleted = sqlx::query_scalar!(
         "DELETE FROM sending_domains WHERE workspace_id = $1 AND id = $2 RETURNING id",
         workspace.uuid(),
@@ -819,6 +830,9 @@ impl Job for DomainVerify {
         )
         .execute(&mut **chunk.tx())
         .await?.rows_affected();
+        if changed > 0 && status.as_str() == "suspended" {
+            usage::suspend_mail(chunk.tx(), workspace, &row.hostname).await?;
+        }
         if changed > 0 && status.as_str() == "pending_certificate" {
             jobs::enqueue(
                 chunk.tx(),
@@ -1137,6 +1151,17 @@ mod tests {
                 })
                 .collect()
         };
+        let mut incoming = row(json!({
+            "ownership": true, "mta_configured": true,
+            "dkim_record": {"name":"unused._domainkey.acme.example","value":"unused"}
+        }));
+        incoming.purpose = "receive".to_owned();
+        let incoming = incoming
+            .into_object(&Settings::for_tests())
+            .expect("valid receive-only domain");
+        assert_eq!(incoming.records.len(), 2);
+        assert_eq!(incoming.records[1].purpose, DnsRecordPurpose::Mx);
+        assert_eq!(incoming.records[1].priority, Some(10));
         assert_eq!(shown(json!({ "ownership": true })).len(), 1);
         assert_eq!(
             shown(json!({

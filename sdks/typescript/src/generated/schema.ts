@@ -10307,8 +10307,9 @@ export interface operations {
             content: {
                 /**
                  * @example {
-                 *       "hostname": "links.example.com",
-                 *       "tracking_enabled": true
+                 *       "hostname": "example.com",
+                 *       "purpose": "send_receive",
+                 *       "tracking_hostname": "links.example.com"
                  *     }
                  */
                 "application/json": components["schemas"]["CreateDomain"];
@@ -10486,7 +10487,8 @@ export interface operations {
             content: {
                 /**
                  * @example {
-                 *       "tracking_enabled": true
+                 *       "purpose": "send",
+                 *       "tracking_hostname": "links.example.com"
                  *     }
                  */
                 "application/json": components["schemas"]["UpdateDomain"];

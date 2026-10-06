@@ -189,3 +189,22 @@ pub async fn mail_access(
     }
     Ok(purpose)
 }
+
+/// Stop managed mail when its domain is removed or loses ownership. The domain row
+/// is locked first; connection locks serialize this revocation with delivery Starts.
+/// Existing identities, receive cursors and messages remain available for review.
+pub(super) async fn suspend_mail(
+    tx: &mut Tx,
+    workspace: WorkspaceId,
+    name: &str,
+) -> Result<(), sqlx::Error> {
+    let connections = sqlx::query("SELECT id FROM connections WHERE workspace_id = $1 AND provider = 'norbelys' AND split_part(account_email_key, '@', 2) = $2 AND status <> 'archived' ORDER BY id FOR UPDATE")
+        .bind(workspace.uuid()).bind(name).fetch_all(&mut **tx).await?;
+    for row in connections {
+        let connection = Id::from_uuid(row.try_get("id")?);
+        sqlx::query("UPDATE sender_identities SET enabled = false WHERE workspace_id = $1 AND connection_id = $2")
+            .bind(workspace.uuid()).bind(connection.uuid()).execute(&mut **tx).await?;
+        crate::senders::bindings::set(tx, workspace, connection, &[]).await?;
+    }
+    Ok(())
+}

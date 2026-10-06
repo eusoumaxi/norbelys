@@ -177,6 +177,31 @@ async fn domain_uses_and_managed_mailbox_access_are_workspace_scoped() {
         StatusCode::OK,
         "detaching tracking preserves its resource"
     );
+    // Domain deletion revokes an already provisioned identity and receive route,
+    // even when the managed MTA still retains its sealed account credential.
+    sqlx::query("UPDATE sender_identities SET enabled = true WHERE workspace_id = $1 AND connection_id = $2")
+        .bind(acme.id.uuid()).bind(mailbox.json["id"].as_str().unwrap().parse::<Id<crate::domain::ids::Connection>>().unwrap().uuid())
+        .execute(test.system.pool()).await.unwrap();
+    sqlx::query(
+        "UPDATE receive_bindings SET enabled = true WHERE workspace_id = $1 AND connection_id = $2",
+    )
+    .bind(acme.id.uuid())
+    .bind(
+        mailbox.json["id"]
+            .as_str()
+            .unwrap()
+            .parse::<Id<crate::domain::ids::Connection>>()
+            .unwrap()
+            .uuid(),
+    )
+    .execute(test.system.pool())
+    .await
+    .unwrap();
+    let removed = app.delete(&path).bearer(&acme.key).send().await;
+    assert_eq!(removed.status, StatusCode::NO_CONTENT);
+    let revoked = app.get(&mailbox_path).bearer(&acme.key).send().await;
+    assert_eq!(revoked.json["identities"][0]["enabled"], false);
+    assert_eq!(revoked.json["receiving"]["folders"][0]["enabled"], false);
 }
 
 /// Certificate permission needs fresh ownership and CNAME proof for a tracking use.

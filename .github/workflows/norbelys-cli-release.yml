@@ -97,11 +97,13 @@ jobs:
           [[ "${actual%% *}" == "$expected" ]] || { echo "dist checksum mismatch" >&2; exit 1; }
           if [[ "$extension" == zip ]]; then
             unzip -q "$directory/$archive" -d "$directory"
+            executable="$directory/$binary"
           else
             tar -xJf "$directory/$archive" -C "$directory"
+            executable="$directory/cargo-dist-$target/$binary"
           fi
           mkdir -p "$HOME/.cargo/bin"
-          cp "$directory/cargo-dist-$target/$binary" "$HOME/.cargo/bin/$binary"
+          cp "$executable" "$HOME/.cargo/bin/$binary"
           chmod +x "$HOME/.cargo/bin/$binary"
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
           "$HOME/.cargo/bin/$binary" --version | grep -Fx 'cargo-dist 0.33.0'

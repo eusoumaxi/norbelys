@@ -2150,6 +2150,7 @@
             "items": {
               "$ref": "#/components/schemas/MailExchange"
             },
+            "maxItems": 64,
             "type": "array"
           },
           "hostname": {
@@ -5451,6 +5452,7 @@
                   "items": {
                     "$ref": "#/components/schemas/MailExchange"
                   },
+                  "maxItems": 64,
                   "type": "array"
                 },
                 "hostname": {
@@ -8987,6 +8989,7 @@
             "items": {
               "$ref": "#/components/schemas/DnsRecord"
             },
+            "maxItems": 2,
             "type": "array"
           },
           "status": {
@@ -18192,8 +18195,9 @@
           "content": {
             "application/json": {
               "example": {
-                "hostname": "links.example.com",
-                "tracking_enabled": true
+                "hostname": "example.com",
+                "purpose": "send_receive",
+                "tracking_hostname": "links.example.com"
               },
               "schema": {
                 "$ref": "#/components/schemas/CreateDomain"
@@ -18444,7 +18448,8 @@
           "content": {
             "application/json": {
               "example": {
-                "tracking_enabled": true
+                "purpose": "send",
+                "tracking_hostname": "links.example.com"
               },
               "schema": {
                 "$ref": "#/components/schemas/UpdateDomain"
