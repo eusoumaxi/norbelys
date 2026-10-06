@@ -117,8 +117,7 @@ impl StreamReducer {
                                         .is_some_and(|kind| kind.eq_ignore_ascii_case("report"))
                                     && content
                                         .attribute("report-type")
-                                        .unwrap_or("delivery-status")
-                                        .eq_ignore_ascii_case("delivery-status")
+                                        .is_none_or(is_delivery_status_report)
                             })
                             .and_then(|content| content.attribute("boundary"))
                             .filter(|boundary| {
@@ -276,6 +275,15 @@ pub fn parse(raw: &[u8]) -> Option<Dsn> {
     from_message(&MessageParser::default().parse(raw)?)
 }
 
+/// Whether a `report-type` parameter (RFC 3464 `delivery-status` or RFC 6533
+/// `global-delivery-status`) names a delivery-status report. Callers treat an absent parameter as
+/// `delivery-status` — `from_message` via `unwrap_or`, the `StreamReducer` via `Option::is_none_or`
+/// — matching the RFC 3464 default.
+fn is_delivery_status_report(kind: &str) -> bool {
+    kind.eq_ignore_ascii_case("delivery-status")
+        || kind.eq_ignore_ascii_case("global-delivery-status")
+}
+
 /// The DSN in an already parsed message.
 pub(crate) fn from_message(message: &Message<'_>) -> Option<Dsn> {
     let report = message.content_type()?;
@@ -284,10 +292,7 @@ pub(crate) fn from_message(message: &Message<'_>) -> Option<Dsn> {
             .subtype()
             .is_some_and(|subtype| subtype.eq_ignore_ascii_case("report"));
     let kind = report.attribute("report-type").unwrap_or("delivery-status");
-    if !is_report
-        || !(kind.eq_ignore_ascii_case("delivery-status")
-            || kind.eq_ignore_ascii_case("global-delivery-status"))
-    {
+    if !is_report || !is_delivery_status_report(kind) {
         return None;
     }
     let status = message.parts.iter().find(|part| {

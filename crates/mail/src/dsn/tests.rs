@@ -245,6 +245,90 @@ fn streaming_discards_large_returned_bodies_and_preserves_evidence() {
     assert_eq!(report.recipients[0].action, Some(Action::Failed));
 }
 
+/// Internationalised reports (RFC 6533: `report-type=global-delivery-status` with
+/// `message/global-delivery-status` and a returned `message/global` body) compact under the
+/// `StreamReducer` like their ASCII counterparts: the human explanation and the large returned
+/// body are drained, the status part and the returned `Message-ID` are preserved, and the
+/// retained bytes fit the configured bound instead of overflowing to `Full` mode and being
+/// dropped. This mirrors `streaming_discards_large_returned_bodies_and_preserves_evidence` for
+/// the internationalised case, which the top-level multipart detection previously rejected.
+#[test]
+fn streaming_compacts_internationalised_reports_with_large_returned_bodies() {
+    let mut stream = StreamReducer::new(8192);
+    for line in [
+        b"Content-Type: multipart/report; boundary=report; report-type=global-delivery-status"
+            .as_slice(),
+        b"",
+        b"--report",
+        b"Content-Type: text/plain",
+        b"",
+    ] {
+        stream.line(line);
+    }
+    let large = vec![b'x'; 8192];
+    for _ in 0..1024 {
+        stream.line(&large);
+    }
+    for line in [
+        b"--report".as_slice(),
+        b"Content-Type: message/global-delivery-status",
+        b"",
+        b"Reporting-MTA: dns; example.test",
+        b"",
+        b"Final-Recipient: utf-8; test@example.test",
+        b"Action: failed",
+        b"Status: 5.1.1",
+        b"",
+        b"--report",
+        b"Content-Type: message/global",
+        b"",
+        b"Message-ID: <original@example.test>",
+        b"",
+    ] {
+        stream.line(line);
+    }
+    for _ in 0..1024 {
+        stream.line(&large);
+    }
+    stream.line(b"--report--");
+    let retained = stream
+        .finish()
+        .expect("internationalised report must compact, not overflow to Full and be dropped");
+    assert!(
+        retained.len() < 8192,
+        "compacted evidence must fit under the bound; got {}",
+        retained.len()
+    );
+    let retained = String::from_utf8_lossy(&retained);
+    assert!(
+        retained.contains("report-type=global-delivery-status"),
+        "the top-level report-type must be retained"
+    );
+    assert!(
+        retained.contains("message/global-delivery-status"),
+        "the status part must be preserved"
+    );
+    assert!(
+        retained.contains("Final-Recipient: utf-8; test@example.test"),
+        "the recipient group must be preserved"
+    );
+    assert!(
+        retained.contains("Message-ID: <original@example.test>"),
+        "the returned Message-ID must be preserved"
+    );
+    assert!(
+        !retained.contains("xxxxxxxx"),
+        "the large returned body must be drained, not retained"
+    );
+    let report = parse(retained.as_bytes()).expect("the compacted bytes still parse as a DSN");
+    assert_eq!(
+        report.original_message_id.as_deref(),
+        Some("original@example.test")
+    );
+    assert_eq!(report.recipients.len(), 1);
+    assert_eq!(report.recipients[0].action, Some(Action::Failed));
+}
+
 #[test]
 fn streaming_refuses_oversized_evidence_and_preserves_non_reports() {
     let mut stream = StreamReducer::new(100);
