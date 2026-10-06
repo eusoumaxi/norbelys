@@ -66,9 +66,10 @@ fn comparison(root: &Path) -> anyhow::Result<Vec<String>> {
     let stdout = String::from_utf8_lossy(&output.stdout);
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        let tail: Vec<&str> = stdout
+        // Test failures are on stdout; an unsuccessful compilation has only stderr.
+        let tail: Vec<&str> = stderr
             .lines()
-            .chain(stderr.lines())
+            .chain(stdout.lines())
             .filter(|line| !line.trim().is_empty())
             .collect();
         let tail = tail

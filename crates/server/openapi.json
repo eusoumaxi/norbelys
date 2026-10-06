@@ -198,7 +198,7 @@
         "description": "A relay's API credential, used besides its SMTP credential for the daily account checks\n(Amazon SES: the account's sending state and its identities' verification) and to reconcile\nits events (SendGrid's Email Activity, Mailgun's events). It is stored sealed and never shown.",
         "properties": {
           "id": {
-            "description": "Amazon SES: the AWS access key id (`AKIA\u2026`); absent for SendGrid and Mailgun.",
+            "description": "Amazon SES: the AWS access key id (`AKIA…`); absent for SendGrid and Mailgun.",
             "type": [
               "string",
               "null"
@@ -1128,7 +1128,7 @@
         "description": "The body of `POST /enrollments`: a campaign and exactly one source of people.",
         "properties": {
           "campaign_id": {
-            "description": "The campaign (`cmp_\u2026`).",
+            "description": "The campaign (`cmp_…`).",
             "type": "string"
           },
           "emails": {
@@ -1142,14 +1142,14 @@
             ]
           },
           "group_id": {
-            "description": "A group's members (`grp_\u2026`).",
+            "description": "A group's members (`grp_…`).",
             "type": [
               "string",
               "null"
             ]
           },
           "person_ids": {
-            "description": "People by id (`per_\u2026`), at most 1,000.",
+            "description": "People by id (`per_…`), at most 1,000.",
             "items": {
               "type": "string"
             },
@@ -1159,7 +1159,7 @@
             ]
           },
           "segment_id": {
-            "description": "The people a segment matches (`seg_\u2026`).",
+            "description": "The people a segment matches (`seg_…`).",
             "type": [
               "string",
               "null"
@@ -1364,7 +1364,7 @@
             ]
           },
           "subject": {
-            "description": "A template: `{{ variables.name }}`, `{{ sender.name }}`, `{{ person.given_name }}` (when a\n`to` address is a person of the workspace). Printing a value that does not exist is an\nerror; `| default(\"\u2026\")` or `{% if \u2026 %}` handle one that may be missing.",
+            "description": "A template: `{{ variables.name }}`, `{{ sender.name }}`, `{{ person.given_name }}` (when a\n`to` address is a person of the workspace). Printing a value that does not exist is an\nerror; `| default(\"…\")` or `{% if … %}` handle one that may be missing.",
             "type": "string"
           },
           "to": {
@@ -1580,7 +1580,7 @@
             ]
           },
           "thread_id": {
-            "description": "The thread (`thr_\u2026`).",
+            "description": "The thread (`thr_…`).",
             "type": "string"
           },
           "to": {
@@ -1631,14 +1631,14 @@
         "description": "The step-content form of `POST /messages` for one person who is not enrolled: the campaign\nstep's content in that person's version, or a preview of it at another address. Answers the\nmessage.",
         "properties": {
           "from": {
-            "description": "The sender: a sender identity's id (`sid_\u2026`) or its address; the campaign pool's next\nusable sender when absent.",
+            "description": "The sender: a sender identity's id (`sid_…`) or its address; the campaign pool's next\nusable sender when absent.",
             "type": [
               "string",
               "null"
             ]
           },
           "person_id": {
-            "description": "The person whose version is sent (`per_\u2026`).",
+            "description": "The person whose version is sent (`per_…`).",
             "type": "string"
           },
           "send_at": {
@@ -1653,7 +1653,7 @@
             ]
           },
           "step_id": {
-            "description": "The step (`stp_\u2026`): its winner's content, else its first variant's.",
+            "description": "The step (`stp_…`): its winner's content, else its first variant's.",
             "type": [
               "string",
               "null"
@@ -1674,7 +1674,7 @@
             ]
           },
           "variant_id": {
-            "description": "The variant (`var_\u2026`), at its latest version; with `step_id`, one of the step's.",
+            "description": "The variant (`var_…`), at its latest version; with `step_id`, one of the step's.",
             "type": [
               "string",
               "null"
@@ -1691,14 +1691,14 @@
         "description": "The step-content form of `POST /messages` for several people who are not enrolled: each is\nsent their version of the campaign step. Answers a result per person, the message or the\nproblem a single request would have answered.",
         "properties": {
           "from": {
-            "description": "The sender: a sender identity's id (`sid_\u2026`) or its address; the campaign pool's next\nusable sender when absent.",
+            "description": "The sender: a sender identity's id (`sid_…`) or its address; the campaign pool's next\nusable sender when absent.",
             "type": [
               "string",
               "null"
             ]
           },
           "person_ids": {
-            "description": "1 to 100 people (`per_\u2026`), each sent their version.",
+            "description": "1 to 100 people (`per_…`), each sent their version.",
             "items": {
               "type": "string"
             },
@@ -1716,7 +1716,7 @@
             ]
           },
           "step_id": {
-            "description": "The step (`stp_\u2026`): its winner's content, else its first variant's.",
+            "description": "The step (`stp_…`): its winner's content, else its first variant's.",
             "type": [
               "string",
               "null"
@@ -1730,7 +1730,7 @@
             ]
           },
           "variant_id": {
-            "description": "The variant (`var_\u2026`), at its latest version; with `step_id`, one of the step's.",
+            "description": "The variant (`var_…`), at its latest version; with `step_id`, one of the step's.",
             "type": [
               "string",
               "null"
@@ -2256,7 +2256,7 @@
         "x-open-enum": true
       },
       "DsnAction": {
-        "description": "What a delivery status notification says happened to a recipient (RFC 3464 \u00a72.3.3,\n<https://www.rfc-editor.org/rfc/rfc3464#section-2.3.3>), when the evidence is one.",
+        "description": "What a delivery status notification says happened to a recipient (RFC 3464 §2.3.3,\n<https://www.rfc-editor.org/rfc/rfc3464#section-2.3.3>), when the evidence is one.",
         "enum": [
           "failed",
           "delayed",
@@ -2810,7 +2810,7 @@
         "description": "One invalid field of a `validation_failed` problem.",
         "properties": {
           "code": {
-            "description": "What is wrong (`required`, `range`, `length`, `format`, `invalid`, \u2026).",
+            "description": "What is wrong (`required`, `range`, `length`, `format`, `invalid`, …).",
             "type": "string"
           },
           "detail": {
@@ -3446,7 +3446,7 @@
             ]
           },
           "id": {
-            "description": "The identity to update (`sid_\u2026`); absent for a new one.",
+            "description": "The identity to update (`sid_…`); absent for a new one.",
             "type": [
               "string",
               "null"
@@ -4204,7 +4204,7 @@
             "description": "When the job's row last changed: the moment of the error for a job that ended, and at\nor after it while the job is still waiting or running (the row keeps no separate time\nfor its error)."
           },
           "code": {
-            "description": "A short machine-readable code (`error`, `lease_expired`, `unknown_kind`, `cancelled`, \u2026).",
+            "description": "A short machine-readable code (`error`, `lease_expired`, `unknown_kind`, `cancelled`, …).",
             "type": "string"
           },
           "detail": {
@@ -7752,7 +7752,7 @@
         "description": "One problem of an import's row.",
         "properties": {
           "field": {
-            "description": "The column or attribute at fault (`email`, `fields.industry`, \u2026).",
+            "description": "The column or attribute at fault (`email`, `fields.industry`, …).",
             "type": "string"
           },
           "problem": {
@@ -7932,7 +7932,7 @@
         "description": "A campaign's pool in a create or an update; a field left out keeps its value.",
         "properties": {
           "identity_ids": {
-            "description": "The identities the campaign names (`sid_\u2026`), at most 500; replaces the list.",
+            "description": "The identities the campaign names (`sid_…`), at most 500; replaces the list.",
             "items": {
               "type": "string"
             },
@@ -7969,7 +7969,7 @@
         "description": "The campaign's pool of senders.",
         "properties": {
           "identity_ids": {
-            "description": "The identities the campaign names (`sid_\u2026`).",
+            "description": "The identities the campaign names (`sid_…`).",
             "items": {
               "$ref": "#/components/schemas/Id_SenderIdentity"
             },
@@ -8348,7 +8348,7 @@
             "oneOf": [
               {
                 "$ref": "#/components/schemas/Id_Step",
-                "description": "The step to keep or change (`stp_\u2026`); absent for a new step."
+                "description": "The step to keep or change (`stp_…`); absent for a new step."
               },
               {
                 "type": "null"
@@ -8398,7 +8398,7 @@
             ]
           },
           "winner_variant_id": {
-            "description": "The variant the step now sends to everyone (`var_\u2026`), one of its variants; `null` clears\nit.",
+            "description": "The variant the step now sends to everyone (`var_…`), one of its variants; `null` clears\nit.",
             "type": [
               "string",
               "null"
@@ -8761,7 +8761,7 @@
             ]
           },
           "id": {
-            "description": "A message id (`msg_\u2026`) for outbound mail, an inbound message id (`inb_\u2026`) for inbound.",
+            "description": "A message id (`msg_…`) for outbound mail, an inbound message id (`inb_…`) for inbound.",
             "type": "string"
           },
           "state": {
@@ -9036,7 +9036,7 @@
             ]
           },
           "domain_id": {
-            "description": "A sending domain whose tracking host the links use (`dom_\u2026`); `null`: the platform's.",
+            "description": "A sending domain whose tracking host the links use (`dom_…`); `null`: the platform's.",
             "type": [
               "string",
               "null"
@@ -9061,7 +9061,7 @@
             "oneOf": [
               {
                 "$ref": "#/components/schemas/Id_SendingDomain",
-                "description": "The sending domain whose tracking host the links use (`dom_\u2026`); `null`: the platform's."
+                "description": "The sending domain whose tracking host the links use (`dom_…`); `null`: the platform's."
               },
               {
                 "type": "null"
@@ -9685,7 +9685,7 @@
             "oneOf": [
               {
                 "$ref": "#/components/schemas/Id_Variant",
-                "description": "The variant to keep or change (`var_\u2026`); absent for a new variant."
+                "description": "The variant to keep or change (`var_…`); absent for a new variant."
               },
               {
                 "type": "null"
@@ -9846,7 +9846,7 @@
             "$ref": "#/components/schemas/Timestamp"
           },
           "selected_by": {
-            "description": "`automatic`, or the user who chose it (`usr_\u2026`).",
+            "description": "`automatic`, or the user who chose it (`usr_…`).",
             "type": "string"
           },
           "variant_id": {
@@ -10038,7 +10038,7 @@
     },
     "securitySchemes": {
       "bearer": {
-        "description": "An API key (`nb_live_\u2026`, `nb_test_\u2026`), a workspace token (`nbs_\u2026`) or a CLI token (`nbc_\u2026`).",
+        "description": "An API key (`nb_live_…`, `nb_test_…`), a workspace token (`nbs_…`) or a CLI token (`nbc_…`).",
         "scheme": "bearer",
         "type": "http"
       },
@@ -10323,7 +10323,7 @@
         "operationId": "attachments.retrieve",
         "parameters": [
           {
-            "description": "Attachment id (fil_\u2026).",
+            "description": "Attachment id (fil_…).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -10676,7 +10676,7 @@
         "operationId": "campaigns.delete",
         "parameters": [
           {
-            "description": "The campaign id (`cmp_\u2026`).",
+            "description": "The campaign id (`cmp_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -10753,7 +10753,7 @@
         "operationId": "campaigns.retrieve",
         "parameters": [
           {
-            "description": "The campaign id (`cmp_\u2026`).",
+            "description": "The campaign id (`cmp_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -10827,7 +10827,7 @@
         "operationId": "campaigns.update",
         "parameters": [
           {
-            "description": "The campaign id (`cmp_\u2026`).",
+            "description": "The campaign id (`cmp_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -11001,7 +11001,7 @@
         "operationId": "campaigns.pause",
         "parameters": [
           {
-            "description": "The campaign id (`cmp_\u2026`).",
+            "description": "The campaign id (`cmp_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -11099,7 +11099,7 @@
         "operationId": "campaigns.start",
         "parameters": [
           {
-            "description": "The campaign id (`cmp_\u2026`).",
+            "description": "The campaign id (`cmp_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -11481,7 +11481,7 @@
         "operationId": "connections.delete",
         "parameters": [
           {
-            "description": "The connection id (`con_\u2026`).",
+            "description": "The connection id (`con_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -11554,7 +11554,7 @@
         "operationId": "connections.retrieve",
         "parameters": [
           {
-            "description": "The connection id (`con_\u2026`).",
+            "description": "The connection id (`con_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -11628,7 +11628,7 @@
         "operationId": "connections.update",
         "parameters": [
           {
-            "description": "The connection id (`con_\u2026`).",
+            "description": "The connection id (`con_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -11779,7 +11779,7 @@
         "operationId": "connections.verify",
         "parameters": [
           {
-            "description": "The connection id (`con_\u2026`).",
+            "description": "The connection id (`con_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -12045,7 +12045,7 @@
         "operationId": "delivery_events.retrieve",
         "parameters": [
           {
-            "description": "The delivery event id (`dev_\u2026`).",
+            "description": "The delivery event id (`dev_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -12375,7 +12375,7 @@
         "operationId": "enrollments.retrieve",
         "parameters": [
           {
-            "description": "The enrollment id (`enr_\u2026`).",
+            "description": "The enrollment id (`enr_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -12442,7 +12442,7 @@
         "operationId": "enrollments.stop",
         "parameters": [
           {
-            "description": "The enrollment id (`enr_\u2026`).",
+            "description": "The enrollment id (`enr_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -12759,7 +12759,7 @@
         "operationId": "events.retrieve",
         "parameters": [
           {
-            "description": "The event id (`evt_\u2026`).",
+            "description": "The event id (`evt_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -13051,7 +13051,7 @@
         "operationId": "exports.retrieve",
         "parameters": [
           {
-            "description": "The export id (`exp_\u2026`).",
+            "description": "The export id (`exp_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -13329,7 +13329,7 @@
         "operationId": "fields.delete",
         "parameters": [
           {
-            "description": "The field id (`fld_\u2026`).",
+            "description": "The field id (`fld_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -13397,7 +13397,7 @@
         "operationId": "fields.update",
         "parameters": [
           {
-            "description": "The field id (`fld_\u2026`).",
+            "description": "The field id (`fld_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -13755,7 +13755,7 @@
         "operationId": "groups.delete",
         "parameters": [
           {
-            "description": "The group id (`grp_\u2026`).",
+            "description": "The group id (`grp_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -13813,7 +13813,7 @@
         "operationId": "groups.retrieve",
         "parameters": [
           {
-            "description": "The group id (`grp_\u2026`).",
+            "description": "The group id (`grp_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -13886,7 +13886,7 @@
         "operationId": "groups.update",
         "parameters": [
           {
-            "description": "The group id (`grp_\u2026`).",
+            "description": "The group id (`grp_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -14157,7 +14157,7 @@
         "operationId": "images.delete",
         "parameters": [
           {
-            "description": "The image id (`img_\u2026`).",
+            "description": "The image id (`img_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -14495,7 +14495,7 @@
         "operationId": "imports.retrieve",
         "parameters": [
           {
-            "description": "The import id (`imp_\u2026`).",
+            "description": "The import id (`imp_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -14712,7 +14712,7 @@
         "operationId": "inbound_messages.retrieve",
         "parameters": [
           {
-            "description": "The inbound message id (`inb_\u2026`).",
+            "description": "The inbound message id (`inb_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -14785,7 +14785,7 @@
         "operationId": "inbound_messages.update",
         "parameters": [
           {
-            "description": "The inbound message id (`inb_\u2026`).",
+            "description": "The inbound message id (`inb_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -14994,7 +14994,7 @@
         "operationId": "inbound_messages.review",
         "parameters": [
           {
-            "description": "The inbound message id (`inb_\u2026`).",
+            "description": "The inbound message id (`inb_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -15124,7 +15124,7 @@
         "operationId": "jobs.retrieve",
         "parameters": [
           {
-            "description": "The job id (`job_\u2026`).",
+            "description": "The job id (`job_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -15192,7 +15192,7 @@
         "operationId": "jobs.cancel",
         "parameters": [
           {
-            "description": "The job id (`job_\u2026`).",
+            "description": "The job id (`job_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -15819,7 +15819,7 @@
         "operationId": "messages.retrieve",
         "parameters": [
           {
-            "description": "The message id (`msg_\u2026`).",
+            "description": "The message id (`msg_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -15887,7 +15887,7 @@
         "operationId": "messages.cancel",
         "parameters": [
           {
-            "description": "The message id (`msg_\u2026`).",
+            "description": "The message id (`msg_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -16054,7 +16054,7 @@
         "operationId": "messages.release_holds",
         "parameters": [
           {
-            "description": "The message id (`msg_\u2026`).",
+            "description": "The message id (`msg_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -16167,7 +16167,7 @@
         "operationId": "messages.resolve",
         "parameters": [
           {
-            "description": "The message id (`msg_\u2026`).",
+            "description": "The message id (`msg_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -16714,7 +16714,7 @@
         "operationId": "people.delete",
         "parameters": [
           {
-            "description": "The person id (`per_\u2026`).",
+            "description": "The person id (`per_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -16782,7 +16782,7 @@
         "operationId": "people.retrieve",
         "parameters": [
           {
-            "description": "The person id (`per_\u2026`).",
+            "description": "The person id (`per_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -16855,7 +16855,7 @@
         "operationId": "people.update",
         "parameters": [
           {
-            "description": "The person id (`per_\u2026`).",
+            "description": "The person id (`per_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -17303,7 +17303,7 @@
         "operationId": "quota_scopes.delete",
         "parameters": [
           {
-            "description": "The quota scope id (`qsc_\u2026`).",
+            "description": "The quota scope id (`qsc_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -17371,7 +17371,7 @@
         "operationId": "quota_scopes.retrieve",
         "parameters": [
           {
-            "description": "The quota scope id (`qsc_\u2026`).",
+            "description": "The quota scope id (`qsc_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -17444,7 +17444,7 @@
         "operationId": "quota_scopes.update",
         "parameters": [
           {
-            "description": "The quota scope id (`qsc_\u2026`).",
+            "description": "The quota scope id (`qsc_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -17796,7 +17796,7 @@
         "operationId": "segments.delete",
         "parameters": [
           {
-            "description": "The segment id (`seg_\u2026`).",
+            "description": "The segment id (`seg_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -17854,7 +17854,7 @@
         "operationId": "segments.retrieve",
         "parameters": [
           {
-            "description": "The segment id (`seg_\u2026`).",
+            "description": "The segment id (`seg_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -17927,7 +17927,7 @@
         "operationId": "segments.update",
         "parameters": [
           {
-            "description": "The segment id (`seg_\u2026`).",
+            "description": "The segment id (`seg_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -18294,7 +18294,7 @@
         "operationId": "sending_domains.delete",
         "parameters": [
           {
-            "description": "The sending domain id (`dom_\u2026`).",
+            "description": "The sending domain id (`dom_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -18352,7 +18352,7 @@
         "operationId": "sending_domains.retrieve",
         "parameters": [
           {
-            "description": "The sending domain id (`dom_\u2026`).",
+            "description": "The sending domain id (`dom_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -18425,7 +18425,7 @@
         "operationId": "sending_domains.update",
         "parameters": [
           {
-            "description": "The sending domain id (`dom_\u2026`).",
+            "description": "The sending domain id (`dom_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -18566,7 +18566,7 @@
         "operationId": "sending_domains.verify",
         "parameters": [
           {
-            "description": "The sending domain id (`dom_\u2026`).",
+            "description": "The sending domain id (`dom_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -19018,7 +19018,7 @@
         "operationId": "suppressions.delete",
         "parameters": [
           {
-            "description": "The suppression id (`sup_\u2026`).",
+            "description": "The suppression id (`sup_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -19086,7 +19086,7 @@
         "operationId": "suppressions.retrieve",
         "parameters": [
           {
-            "description": "The suppression id (`sup_\u2026`).",
+            "description": "The suppression id (`sup_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -19304,7 +19304,7 @@
         "operationId": "threads.retrieve",
         "parameters": [
           {
-            "description": "The thread id (`thr_\u2026`).",
+            "description": "The thread id (`thr_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -19377,7 +19377,7 @@
         "operationId": "threads.update",
         "parameters": [
           {
-            "description": "The thread id (`thr_\u2026`).",
+            "description": "The thread id (`thr_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -19651,7 +19651,7 @@
         "operationId": "webhook_deliveries.retrieve",
         "parameters": [
           {
-            "description": "The delivery id (`whd_\u2026`), also the `webhook-id` header.",
+            "description": "The delivery id (`whd_…`), also the `webhook-id` header.",
             "in": "path",
             "name": "id",
             "required": true,
@@ -19719,7 +19719,7 @@
         "operationId": "webhook_deliveries.retry",
         "parameters": [
           {
-            "description": "The delivery id (`whd_\u2026`).",
+            "description": "The delivery id (`whd_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -20014,7 +20014,7 @@
             "bearer": []
           }
         ],
-        "summary": "Create a webhook endpoint. Its signing secret (`whsec_\u2026`) is in this response only.",
+        "summary": "Create a webhook endpoint. Its signing secret (`whsec_…`) is in this response only.",
         "tags": [
           "Automation"
         ]
@@ -20025,7 +20025,7 @@
         "operationId": "webhook_endpoints.delete",
         "parameters": [
           {
-            "description": "The endpoint id (`whe_\u2026`).",
+            "description": "The endpoint id (`whe_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -20083,7 +20083,7 @@
         "operationId": "webhook_endpoints.retrieve",
         "parameters": [
           {
-            "description": "The endpoint id (`whe_\u2026`).",
+            "description": "The endpoint id (`whe_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -20156,7 +20156,7 @@
         "operationId": "webhook_endpoints.update",
         "parameters": [
           {
-            "description": "The endpoint id (`whe_\u2026`).",
+            "description": "The endpoint id (`whe_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -20297,7 +20297,7 @@
         "operationId": "webhook_endpoints.replay",
         "parameters": [
           {
-            "description": "The endpoint id (`whe_\u2026`).",
+            "description": "The endpoint id (`whe_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -20418,7 +20418,7 @@
         "operationId": "webhook_endpoints.rotate_secret",
         "parameters": [
           {
-            "description": "The endpoint id (`whe_\u2026`).",
+            "description": "The endpoint id (`whe_…`).",
             "in": "path",
             "name": "id",
             "required": true,
@@ -20506,7 +20506,7 @@
         "operationId": "workspaces.retrieve",
         "parameters": [
           {
-            "description": "The workspace id (`ws_\u2026`).",
+            "description": "The workspace id (`ws_…`).",
             "in": "path",
             "name": "id",
             "required": true,
