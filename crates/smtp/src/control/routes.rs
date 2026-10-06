@@ -346,7 +346,7 @@ mod tests {
             StatusCode::CREATED
         );
         let snapshot = |conn: &mut Connection| {
-            let maps = crate::provision::render::State::load(conn)?;
+            let maps = provision::render::State::load(conn)?;
             let pending: i64 = conn.query_row(
                 "SELECT count(*) FROM pending_changes WHERE kind = 'maps' AND applied IS NULL",
                 [],
