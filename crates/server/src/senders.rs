@@ -108,11 +108,14 @@ impl Settings {
             .mta_spf_include
             .as_deref()
             .map(|name| {
-                domains::hostname(name).ok_or_else(|| {
-                    SettingsError::Invalid(
-                        "MTA_SPF_INCLUDE must be a fully qualified hostname".to_owned(),
-                    )
-                })
+                // SPF commonly uses underscore-prefixed DNS policy labels such as _spf.
+                domains::hostname(&name.replace('_', "a"))
+                    .map(|_| name.trim().trim_end_matches('.').to_ascii_lowercase())
+                    .ok_or_else(|| {
+                        SettingsError::Invalid(
+                            "MTA_SPF_INCLUDE must be a fully qualified hostname".to_owned(),
+                        )
+                    })
             })
             .transpose()?;
         Ok(Self {

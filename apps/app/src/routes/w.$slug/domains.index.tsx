@@ -1,7 +1,6 @@
 import { Add01Icon, Globe02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { DomainObject } from "@norbelys/sdk";
-import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
@@ -33,7 +32,6 @@ const recordsText = (domain: DomainObject) => {
  */
 const DomainsPage = () => {
   const workspace = useWorkspace();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const action = useAction();
   const [creating, setCreating] = useState(false);

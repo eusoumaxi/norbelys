@@ -32,12 +32,76 @@ const purposeValue = (value: string): DomainPurpose | null => {
     case "receive":
     case "send":
     case "send_receive":
-    case "tracking":
+    case "tracking": {
       return value;
-    default:
+    }
+    default: {
       return null;
+    }
   }
 };
+
+/** Form defaults preserve an existing choice; new domains have no selected use. */
+const useDomainValues = (domain?: DomainObject) => {
+  const [hostname, setHostname] = useState(domain?.hostname ?? "");
+  const [purpose, setPurpose] = useState<DomainPurpose | null>(
+    domain?.purpose ?? null
+  );
+  const [customTracking, setCustomTracking] = useState(
+    Boolean(domain?.tracking_domain)
+  );
+  const [trackingHostname, setTrackingHostname] = useState(
+    domain?.tracking_domain?.hostname ?? ""
+  );
+  return {
+    hostname,
+    setHostname,
+    purpose,
+    setPurpose,
+    customTracking,
+    setCustomTracking,
+    trackingHostname,
+    setTrackingHostname,
+  };
+};
+
+/** Explain only the operations selected by the person. */
+const DomainGuidance = ({
+  editing,
+  purpose,
+}: {
+  editing: boolean;
+  purpose: DomainPurpose | null;
+}) => (
+  <>
+    {purpose === "receive" || purpose === "send_receive" ? (
+      <p className="text-fg-2 text-sm">
+        Receiving through Norbelys requires MX records and a mailbox. If you
+        already use Google Workspace or Microsoft 365, keep their MX to continue
+        receiving there, or choose a separate receiving subdomain.
+      </p>
+    ) : null}
+    {purpose === "send" ? (
+      <p className="text-fg-2 text-sm">
+        Keep your existing MX records. Sending through Norbelys adds
+        authentication records without moving incoming email.
+      </p>
+    ) : null}
+    {purpose === "tracking" ? (
+      <p className="text-fg-2 text-sm">
+        This hostname serves links through a CNAME. Choose a name without
+        existing mail or website records.
+      </p>
+    ) : null}
+    {editing ? (
+      <p className="text-fg-3 text-xs">
+        Disabling a mail direction stops that operation and keeps its history.
+        Enabling sending again leaves sender identities disabled until you
+        enable them in Mailboxes.
+      </p>
+    ) : null}
+  </>
+);
 
 /** The same explicit domain choices at creation and editing, with no DNS writes. */
 export const DomainDialog = ({
@@ -53,16 +117,16 @@ export const DomainDialog = ({
 }) => {
   const workspace = useWorkspace();
   const queryClient = useQueryClient();
-  const [hostname, setHostname] = useState(domain?.hostname ?? "");
-  const [purpose, setPurpose] = useState<DomainPurpose | null>(
-    domain?.purpose ?? null
-  );
-  const [customTracking, setCustomTracking] = useState(
-    Boolean(domain?.tracking_domain)
-  );
-  const [trackingHostname, setTrackingHostname] = useState(
-    domain?.tracking_domain?.hostname ?? ""
-  );
+  const {
+    hostname,
+    setHostname,
+    purpose,
+    setPurpose,
+    customTracking,
+    setCustomTracking,
+    trackingHostname,
+    setTrackingHostname,
+  } = useDomainValues(domain);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<unknown>(null);
   const problems = fieldProblems(failure);
@@ -72,7 +136,6 @@ export const DomainDialog = ({
     hostname.trim() !== "" &&
     purpose !== null &&
     (!separateTracking || trackingHostname.trim() !== "");
-  const receiving = purpose === "receive" || purpose === "send_receive";
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -188,33 +251,7 @@ export const DomainDialog = ({
                 />
               </FormField>
             ) : null}
-            {receiving ? (
-              <p className="text-fg-2 text-sm">
-                Receiving through Norbelys requires MX records and a mailbox. If
-                you already use Google Workspace or Microsoft 365, keep their MX
-                to continue receiving there, or choose a separate receiving
-                subdomain.
-              </p>
-            ) : null}
-            {purpose === "send" ? (
-              <p className="text-fg-2 text-sm">
-                Keep your existing MX records. Sending through Norbelys adds
-                authentication records without moving incoming email.
-              </p>
-            ) : null}
-            {purpose === "tracking" ? (
-              <p className="text-fg-2 text-sm">
-                This hostname serves links through a CNAME. Choose a name
-                without existing mail or website records.
-              </p>
-            ) : null}
-            {domain ? (
-              <p className="text-fg-3 text-xs">
-                Disabling a mail direction stops that operation and keeps its
-                history. Enabling sending again leaves sender identities
-                disabled until you enable them in Mailboxes.
-              </p>
-            ) : null}
+            <DomainGuidance editing={Boolean(domain)} purpose={purpose} />
             {failure ? (
               <ProblemAlert>{problemLine(failure)}</ProblemAlert>
             ) : null}

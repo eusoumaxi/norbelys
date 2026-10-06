@@ -118,7 +118,9 @@ pub fn validate(args: &ServeArgs) -> anyhow::Result<()> {
         "NORBELYS_SMTP_DKIM_SELECTOR must be a lowercase DNS label"
     );
     anyhow::ensure!(
-        args.spf_include.as_ref().is_none_or(|name| is_domain(name)),
+        args.spf_include
+            .as_ref()
+            .is_none_or(|name| is_domain(&name.replace('_', "a"))),
         "NORBELYS_SMTP_SPF_INCLUDE must be a lowercase fully qualified hostname"
     );
     anyhow::ensure!(

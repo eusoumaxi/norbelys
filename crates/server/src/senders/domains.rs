@@ -604,10 +604,13 @@ pub async fn update_usage(
         None if next == DomainPurpose::Tracking => Some(None),
         None => None,
     };
-    sqlx::query("UPDATE sending_domains SET purpose = $3, tracking_domain_id = CASE WHEN $4 THEN $5 ELSE tracking_domain_id END, dns_checks = CASE WHEN purpose <> $3 THEN dns_checks || '{\"preparation\":\"preparing\"}'::jsonb ELSE dns_checks END WHERE workspace_id = $1 AND id = $2")
+    sqlx::query("UPDATE sending_domains SET purpose = $3, tracking_domain_id = CASE WHEN $4 THEN $5 ELSE tracking_domain_id END, status = CASE WHEN purpose <> $3 THEN 'verifying' ELSE status END, dns_checks = CASE WHEN purpose <> $3 THEN dns_checks || '{\"preparation\":\"preparing\"}'::jsonb ELSE dns_checks END WHERE workspace_id = $1 AND id = $2")
         .bind(workspace.uuid()).bind(id.uuid()).bind(next.as_str()).bind(tracking.is_some()).bind(tracking.flatten())
         .execute(&mut **tx).await?;
     jobs::enqueue(tx, workspace, &DomainPrepare { domain: id }, None).await?;
+    if next != old {
+        jobs::enqueue(tx, workspace, &DomainVerify { domain: id }, None).await?;
+    }
     Ok(())
 }
 

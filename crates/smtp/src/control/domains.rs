@@ -224,7 +224,7 @@ pub async fn create(
         })
         .await?;
     if queued {
-        trigger(&state.settings.trigger)?;
+        trigger(&state);
     }
     let status = if created {
         StatusCode::CREATED
