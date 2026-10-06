@@ -27,6 +27,9 @@ ALTER TABLE connections
     ADD CONSTRAINT connections_unpaced_relays_check
         CHECK (provider NOT IN ('sendgrid', 'mailgun') OR send_interval_minutes IS NULL);
 
+-- The invoker-security projection reads only this additional routing field.
+GRANT SELECT (provider) ON connections TO norbelys_scheduler;
+
 -- Project native sends at their exact minute cadence before grouping into dashboard slots.
 CREATE OR REPLACE VIEW slot_projection WITH (security_invoker = true) AS
 WITH slots AS (

@@ -1249,6 +1249,7 @@ async fn the_scheduler_view_reads_routing_columns_across_workspaces_and_nothing_
         ("both workspaces' queue rows", As::Scheduler, "SELECT message_id FROM delivery_queue", Ok(2)),
         ("their deadlines, for the expiry sweep", As::Scheduler, "SELECT deadline_at FROM delivery_queue", Ok(2)),
         ("the active connections", As::Scheduler, "SELECT id FROM connections", Ok(4)),
+        ("the invoker-security send projection", As::Scheduler, "SELECT slot_offset FROM slot_projection", Ok(12)),
         ("the active provider webhooks", As::Scheduler, "SELECT id FROM provider_webhooks", Ok(1)),
         ("a connection's probe", As::Scheduler,
          "UPDATE connections SET probe_message_id = uuidv7(), probe_generation = 1 WHERE id = '00000000-0000-7000-8000-00000000a011'",
