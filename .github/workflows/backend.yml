@@ -63,7 +63,7 @@ jobs:
           # Cache entries are immutable. An early failure must not freeze an incomplete
           # dependency cache that later successful runs would be unable to extend.
           prefix-key: v1-rust
-          shared-key: gate-${{ inputs.mode || 'workspace' }}
+          shared-key: gate-${{ inputs.mode == 'cli' && 'cli' || 'workspace' }}
 
       - uses: ./.github/actions/setup
         id: setup
