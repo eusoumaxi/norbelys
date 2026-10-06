@@ -1,10 +1,12 @@
+import { afterAll, expect, test } from "bun:test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { afterAll, expect, test } from "bun:test";
-
-import { SAMPLE, VerifySignatures } from "../src/features/webhooks/verify-signatures";
+import {
+  SAMPLE,
+  VerifySignatures,
+} from "../src/features/webhooks/verify-signatures";
 
 let counter = 0;
 const dir = await mkdtemp(path.join(tmpdir(), "verify-snippet-"));
@@ -69,7 +71,7 @@ console.log(verify(headers, body) ? "ACCEPTED" : "REJECTED");
 
 const run = async (
   secret: string | undefined,
-  driver: string,
+  driver: string
 ): Promise<{ exitCode: number | null; stdout: string; stderr: string }> => {
   const file = path.join(dir, `snippet-${counter}.ts`);
   counter += 1;
@@ -108,8 +110,8 @@ test("SAMPLE guards the HMAC key length before any verification", () => {
 test("SAMPLE fail-closes when the secret is unset, empty, or the wrong length", async () => {
   const results = await Promise.all(
     [undefined, "", "whsec_", whsec(23), whsec(65)].map((secret) =>
-      run(secret, LOADED),
-    ),
+      run(secret, LOADED)
+    )
   );
   for (const result of results) {
     expect(result.exitCode).not.toBe(0);
@@ -120,7 +122,7 @@ test("SAMPLE fail-closes when the secret is unset, empty, or the wrong length", 
 
 test("SAMPLE loads when the secret decodes to 24 to 64 bytes", async () => {
   const results = await Promise.all(
-    [whsec(24), whsec(64)].map((secret) => run(secret, LOADED)),
+    [whsec(24), whsec(64)].map((secret) => run(secret, LOADED))
   );
   for (const result of results) {
     expect(result.exitCode).toBe(0);
