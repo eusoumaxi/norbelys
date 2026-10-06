@@ -22,6 +22,8 @@ pub struct State {
     pub catch_alls: Vec<(String, String)>,
     /// The logins of the `relay` rate class.
     pub relays: Vec<String>,
+    /// Enabled relay logins and accounts with a bound evidence route, allowed to use VERP.
+    pub return_paths: Vec<String>,
 }
 
 impl State {
@@ -50,10 +52,19 @@ impl State {
         let relays = stmt
             .query_map([], |row| row.get(0))?
             .collect::<crate::db::Result<_>>()?;
+        let stmt = conn.prepare(
+            "SELECT a.username FROM accounts a WHERE a.disabled_at IS NULL
+               AND (a.rate_class = 'relay' OR EXISTS (
+                 SELECT 1 FROM account_routes r WHERE r.username = a.username)) ORDER BY a.username",
+        )?;
+        let return_paths = stmt
+            .query_map([], |row| row.get(0))?
+            .collect::<crate::db::Result<_>>()?;
         Ok(Self {
             grants,
             catch_alls,
             relays,
+            return_paths,
         })
     }
 }
@@ -149,26 +160,27 @@ fn escape(domain: &str) -> String {
 
 /// `domain-senders.pcre`: a granted login may send as any address of its domain, and each
 /// address keeps its own login; given the MTA's host name, the relay logins may also use the
-/// VERP return paths `bounce+<token>@<mail host>` as envelope senders ([`crate::bounce`]).
+/// VERP return paths `bounce+<token>@<mail host>` as envelope senders ([`crate::bounce`]) for
+/// relay logins and accounts bound to an evidence route. This permission does not change limits.
 #[must_use]
 pub fn domain_senders(
     grants: &[(String, String)],
     mail_host: Option<&str>,
-    relays: &[String],
+    return_paths: &[String],
 ) -> String {
     let mut map: String = grants
         .iter()
         .map(|(login, domain)| format!("/^([^@]+)@{}$/ {login},${{1}}@{domain}\n", escape(domain)))
         .collect();
     if let Some(host) = mail_host
-        && !relays.is_empty()
+        && !return_paths.is_empty()
     {
         map.push_str(&format!(
             "/^bounce\\+[0-9a-z]{{{},{}}}@{}$/ {}\n",
             crate::bounce::TOKEN_MIN,
             crate::bounce::TOKEN_MAX,
             escape(host),
-            relays.join(",")
+            return_paths.join(",")
         ));
     }
     map

@@ -12,7 +12,7 @@
 //!   Lines it does not manage are kept, and a create never overwrites a login it finds there
 //!   with another credential: that change is refused and recorded.
 //! - `domain-senders.pcre` (Postfix's `smtpd_sender_login_maps`: which logins may use which
-//!   envelope senders, the relay logins' VERP return paths `bounce+<token>@<mail host>`
+//!   envelope senders, routed and relay logins' VERP return paths `bounce+<token>@<mail host>`
 //!   included, [`crate::bounce`]), `sender-domains.map` (the grants Rspamd's sender policy
 //!   checks against the MIME From) and `relay-logins.map` (the `whitelisted_user` set of
 //!   Rspamd's `ratelimit` module: the logins of the `relay` rate class, the core's own
@@ -226,7 +226,7 @@ fn apply_connection(args: &ProvisionArgs, mut conn: Connection) -> anyhow::Resul
             "NORBELYS_SMTP_MAIL_HOST must be a lowercase fully qualified host name"
         ),
         None => tracing::warn!(
-            "NORBELYS_SMTP_MAIL_HOST is unset: relay logins cannot use VERP return paths, so Postfix refuses those envelope senders"
+            "NORBELYS_SMTP_MAIL_HOST is unset: managed logins cannot use VERP return paths, so Postfix refuses those envelope senders"
         ),
     }
     db::create_private_dir(&args.common.state_dir)?;
@@ -345,7 +345,7 @@ fn apply_batch(
     }
 
     // The maps follow the state read with the batch, whatever kinds of change it held.
-    let senders = render::domain_senders(&state.grants, mail_host, &state.relays);
+    let senders = render::domain_senders(&state.grants, mail_host, &state.return_paths);
     let grants = render::sender_domains(&state.grants);
     let relays = render::relay_logins(&state.relays);
     let digest = crypto::sha256_hex_of(&[senders.as_bytes(), grants.as_bytes(), relays.as_bytes()]);

@@ -9,6 +9,9 @@
 //! route drops it, so evidence never changes tenant by accident. The tail pins each event to
 //! the login's route when it reads the line, so a later change of route never redirects older
 //! evidence; deleting a route turns its pending events into dead letters.
+//! Binding a route also permits that enabled login to submit the core's VERP return paths;
+//! unbinding revokes the permission. Both changes queue a sender-map refresh without changing
+//! the login's rate class or granting another From address.
 
 use std::collections::{BTreeMap, HashSet};
 
@@ -20,9 +23,10 @@ use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-use super::{ApiError, List, State, parse, split_address};
+use super::{ApiError, List, State, parse, split_address, trigger};
 use crate::crypto;
 use crate::db;
+use crate::provision::{self, Change};
 
 /// The most logins one route carries.
 const MAX_USERNAMES: usize = 1000;
@@ -172,10 +176,12 @@ pub async fn upsert(
                 )?;
             }
             let route = load(&tx, &id)?.ok_or_else(|| ApiError::Internal("a registered route vanished".to_owned()))?;
+            provision::enqueue(&tx, &Change::Maps)?;
             tx.commit()?;
             Ok(route)
         })
         .await?;
+    trigger(&state);
     Ok(Json(route))
 }
 
@@ -233,10 +239,12 @@ pub async fn remove(
             if tx.execute("DELETE FROM routes WHERE provider_webhook_id = ?1", [&id])? == 0 {
                 return Err(ApiError::NotFound(format!("no route {id}")));
             }
+            provision::enqueue(&tx, &Change::Maps)?;
             tx.commit()?;
             Ok(())
         })
         .await?;
+    trigger(&state);
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -323,6 +331,55 @@ mod tests {
                 .0,
             StatusCode::UNPROCESSABLE_ENTITY
         );
+    }
+
+    /// A routed customer login can submit the core's VERP envelope without losing its
+    /// per-login limits; removing its route revokes that permission and queues new maps.
+    #[tokio::test]
+    async fn a_customer_return_path_follows_its_evidence_route() {
+        let dir = TempDir::new();
+        let (app, state) = with_login(&dir).await;
+        let account =
+            r#"{"username":"customer@example.com","kind":"mailbox","rate_class":"customer"}"#;
+        assert_eq!(
+            call(&app, signed("POST", "/v1/accounts", account)).await.0,
+            StatusCode::CREATED
+        );
+        let snapshot = |conn: &mut Connection| {
+            let maps = crate::provision::render::State::load(conn)?;
+            let pending: i64 = conn.query_row(
+                "SELECT count(*) FROM pending_changes WHERE kind = 'maps' AND applied IS NULL",
+                [],
+                |row| row.get(0),
+            )?;
+            Ok::<_, ApiError>((maps.return_paths, maps.relays, pending))
+        };
+        let before = state.db.call(snapshot).await.unwrap();
+        assert!(!before.0.iter().any(|login| login == "customer@example.com"));
+        assert_eq!(
+            call(&app, put("pwh_customer", r#"["customer@example.com"]"#))
+                .await
+                .0,
+            StatusCode::OK
+        );
+        let routed = state.db.call(snapshot).await.unwrap();
+        assert!(routed.0.iter().any(|login| login == "customer@example.com"));
+        assert!(!routed.1.iter().any(|login| login == "customer@example.com"));
+        assert_eq!(routed.2, before.2 + 1);
+        assert_eq!(
+            call(&app, signed("DELETE", "/v1/routes/pwh_customer", ""))
+                .await
+                .0,
+            StatusCode::NO_CONTENT
+        );
+        let removed = state.db.call(snapshot).await.unwrap();
+        assert!(
+            !removed
+                .0
+                .iter()
+                .any(|login| login == "customer@example.com")
+        );
+        assert_eq!(removed.2, routed.2 + 1);
     }
 
     /// The route's secret is stored sealed, bound to its id: the database alone, or a
