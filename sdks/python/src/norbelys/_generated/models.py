@@ -1733,7 +1733,7 @@ SendingDomainsListQuery = TypedDict("SendingDomainsListQuery", {
     "status": NotRequired["SendingDomainStatus"],
 })
 
-SmtpAuthenticateQuery = TypedDict("SmtpAuthenticateQuery", {
+SmtpAuthorizationRetrieveQuery = TypedDict("SmtpAuthorizationRetrieveQuery", {
     "domain": Required[str],
 })
 

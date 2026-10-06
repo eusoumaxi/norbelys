@@ -1158,8 +1158,8 @@ export class SendingDomains {
   }
 }
 
-/** `smtp` */
-export class Smtp {
+/** `smtp_authorization` */
+export class SmtpAuthorization {
   readonly #core: Core;
 
   constructor(core: Core) {
@@ -1169,10 +1169,10 @@ export class Smtp {
   /**
    * Authenticate SMTP submission using the same live API key as HTTP sending.
    *
-   * `GET /v1/smtp/auth`
+   * `GET /v1/smtp_authorization`
    */
-  authenticate(query: NonNullable<operations["smtp.authenticate"]["parameters"]["query"]>, options?: RequestOptions): Promise<schema.SmtpAuthorization> {
-    return this.#core.request<schema.SmtpAuthorization>({ method: "GET", path: "/v1/smtp/auth", idempotent: false }, [], { query }, options);
+  retrieve(query: NonNullable<operations["smtp_authorization.retrieve"]["parameters"]["query"]>, options?: RequestOptions): Promise<schema.SmtpAuthorization> {
+    return this.#core.request<schema.SmtpAuthorization>({ method: "GET", path: "/v1/smtp_authorization", idempotent: false }, [], { query }, options);
   }
 }
 
@@ -1492,7 +1492,7 @@ export class NorbelysResources {
   readonly quotaScopes: QuotaScopes;
   readonly segments: Segments;
   readonly sendingDomains: SendingDomains;
-  readonly smtp: Smtp;
+  readonly smtpAuthorization: SmtpAuthorization;
   readonly suppressions: Suppressions;
   readonly threads: Threads;
   readonly webhookDeliveries: WebhookDeliveries;
@@ -1521,7 +1521,7 @@ export class NorbelysResources {
     this.quotaScopes = new QuotaScopes(core);
     this.segments = new Segments(core);
     this.sendingDomains = new SendingDomains(core);
-    this.smtp = new Smtp(core);
+    this.smtpAuthorization = new SmtpAuthorization(core);
     this.suppressions = new Suppressions(core);
     this.threads = new Threads(core);
     this.webhookDeliveries = new WebhookDeliveries(core);

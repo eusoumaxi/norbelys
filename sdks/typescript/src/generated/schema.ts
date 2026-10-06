@@ -1035,7 +1035,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/smtp/auth": {
+    "/v1/smtp_authorization": {
         parameters: {
             query?: never;
             header?: never;
@@ -1043,7 +1043,7 @@ export interface paths {
             cookie?: never;
         };
         /** Authenticate SMTP submission using the same live API key as HTTP sending. */
-        get: operations["smtp.authenticate"];
+        get: operations["smtp_authorization.retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -10652,7 +10652,7 @@ export interface operations {
             };
         };
     };
-    "smtp.authenticate": {
+    "smtp_authorization.retrieve": {
         parameters: {
             query: {
                 /** @description The connected sending domain used as the SMTP username. */

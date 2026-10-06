@@ -613,6 +613,7 @@
             "items": {
               "$ref": "#/components/schemas/IdentityObject"
             },
+            "maxItems": 1000,
             "type": "array"
           },
           "imap": {
@@ -5031,6 +5032,7 @@
                   "items": {
                     "$ref": "#/components/schemas/IdentityObject"
                   },
+                  "maxItems": 1000,
                   "type": "array"
                 },
                 "imap": {
@@ -18658,9 +18660,9 @@
         ]
       }
     },
-    "/v1/smtp/auth": {
+    "/v1/smtp_authorization": {
       "get": {
-        "operationId": "smtp.authenticate",
+        "operationId": "smtp_authorization.retrieve",
         "parameters": [
           {
             "description": "The connected sending domain used as the SMTP username.",
