@@ -1078,7 +1078,7 @@ mod tests {
     use serde_json::json;
     use uuid::Uuid;
 
-    use super::{DomainVerifyDue, Row, hostname};
+    use super::{DnsRecordPurpose, DomainVerifyDue, Row, hostname};
     use crate::domain::ids::{Id, SendingDomain};
     use crate::jobs::runner::Harness;
     use crate::jobs::{self, Queue, Registry};
