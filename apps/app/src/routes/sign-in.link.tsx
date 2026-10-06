@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import { AuthLayout } from "@/components/auth-layout";
 import { ProblemAlert } from "@/components/problem";
@@ -7,11 +7,24 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useRefreshMe } from "@/lib/auth";
 import { describeProblem } from "@/lib/problem";
-import { auth } from "@/lib/session";
+import { auth, isSignedOut } from "@/lib/session";
+
+const subscribeFragment = (onChange: () => void): (() => void) => {
+  window.addEventListener("hashchange", onChange);
+  window.addEventListener("popstate", onChange);
+  return () => {
+    window.removeEventListener("hashchange", onChange);
+    window.removeEventListener("popstate", onChange);
+  };
+};
+const currentFragment = (): string => window.location.hash;
+const serverFragment = (): string => "";
 
 /** The token and the address a sign-in mail's link carries in its fragment (never sent to a server). */
-const readFragment = (): { email: string; token: string } | null => {
-  const params = new URLSearchParams(window.location.hash.slice(1));
+const readFragment = (
+  fragment: string
+): { email: string; token: string } | null => {
+  const params = new URLSearchParams(fragment.slice(1));
   const token = params.get("token");
   const email = params.get("email");
   return token && email ? { email, token } : null;
@@ -21,12 +34,13 @@ const readFragment = (): { email: string; token: string } | null => {
  * Where a sign-in mail's link lands, in any browser: the page names the account and signs in only
  * when the person confirms, so a mail scanner opening the link signs nobody in.
  */
-const SignInLink = () => {
-  const link = useMemo(() => readFragment(), []);
+const SignInLink = ({ fragment }: { fragment: string }) => {
+  const link = readFragment(fragment);
   const navigate = useNavigate();
   const refreshMe = useRefreshMe();
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [refused, setRefused] = useState(false);
 
   if (!link) {
     return (
@@ -57,27 +71,38 @@ const SignInLink = () => {
     >
       <div className="flex flex-col gap-3">
         {problem ? <ProblemAlert>{problem}</ProblemAlert> : null}
-        <Button
-          className="h-12 w-full text-[15px]"
-          disabled={busy}
-          onClick={async () => {
-            setBusy(true);
-            setProblem(null);
-            try {
-              await auth.finishLink(link.token, link.email);
-              window.history.replaceState(null, "", window.location.pathname);
-              await refreshMe();
-              await navigate({ to: "/" });
-            } catch (error) {
-              setProblem(describeProblem(error).detail);
-              setBusy(false);
-            }
-          }}
-          variant="primary"
-        >
-          {busy ? <Spinner /> : null}
-          Continue as {link.email}
-        </Button>
+        {refused ? (
+          <Button
+            className="h-12 w-full text-[15px]"
+            render={<Link to="/sign-in" />}
+            variant="primary"
+          >
+            Request a new sign-in email
+          </Button>
+        ) : (
+          <Button
+            className="h-12 w-full text-[15px]"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              setProblem(null);
+              try {
+                await auth.finishLink(link.token, link.email);
+                window.history.replaceState(null, "", window.location.pathname);
+                await refreshMe();
+                await navigate({ to: "/" });
+              } catch (error) {
+                setProblem(describeProblem(error).detail);
+                setRefused(isSignedOut(error));
+                setBusy(false);
+              }
+            }}
+            variant="primary"
+          >
+            {busy ? <Spinner /> : null}
+            Continue as {link.email}
+          </Button>
+        )}
         <Button
           className="h-12 w-full text-[15px]"
           render={<Link to="/sign-in" />}
@@ -90,7 +115,17 @@ const SignInLink = () => {
   );
 };
 
+/** A new email may open this same document with only a different fragment. */
+const SignInLinkRoute = () => {
+  const fragment = useSyncExternalStore(
+    subscribeFragment,
+    currentFragment,
+    serverFragment
+  );
+  return <SignInLink fragment={fragment} key={fragment} />;
+};
+
 export const Route = createFileRoute("/sign-in/link")({
   head: () => ({ meta: [{ title: "Sign in · Norbelys" }] }),
-  component: SignInLink,
+  component: SignInLinkRoute,
 });
