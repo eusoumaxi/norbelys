@@ -498,12 +498,15 @@ const ScopeSection = ({ info, problems, set, values }: SectionProps) => {
   );
 };
 
-const intervalText = (info: ProviderInfo) =>
-  info.id === "norbelys"
-    ? "Optional minimum time between campaign emails, in whole minutes. Leave empty to use only the sending limits."
-    : info.pacing === "optional"
-      ? "Leave it empty to send as fast as its limits allow. With minutes, it sends one campaign email at a time, as one address: its account's."
-      : "It waits this long between two campaign emails, like a person writing them: 5 to 1,440, in steps of 5.";
+const intervalText = (info: ProviderInfo): string => {
+  if (info.id === "norbelys") {
+    return "Optional minimum time between campaign emails, in whole minutes. Leave empty to use only the sending limits.";
+  }
+  if (info.pacing === "optional") {
+    return "Leave it empty to send as fast as its limits allow. With minutes, it sends one campaign email at a time, as one address: its account's.";
+  }
+  return "It waits this long between two campaign emails, like a person writing them: 5 to 1,440, in steps of 5.";
+};
 
 /** The fields whose problems open the pace section by themselves. */
 const PACE_FIELDS = [
