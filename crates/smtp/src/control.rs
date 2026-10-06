@@ -5,7 +5,7 @@
 //! | Route | Does |
 //! |---|---|
 //! | `POST /v1/domains`, `GET /v1/domains`, `GET /v1/domains/{name}` | registers a domain with its ownership token; the DNS records to publish |
-//! | `POST /v1/domains/{name}/verify` | checks the ownership TXT record, then queues the domain's DKIM key |
+//! | `POST /v1/domains/{name}/verify` | checks the ownership TXT record and resumes any pending DKIM preparation |
 //! | `POST /v1/accounts`, `GET /v1/accounts`, `GET /v1/accounts/{username}` | creates a login, its password answered once |
 //! | `PATCH /v1/accounts/{username}` | `grant` (send as any address of its domain) and `catch_all` |
 //! | `DELETE /v1/accounts/{username}` | disables the login |

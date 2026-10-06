@@ -739,7 +739,15 @@ impl Job for DomainVerify {
         let managed = if row.purpose == "tracking" {
             Managed::default()
         } else {
-            managed(&env, &row.hostname, &expected, ownership, &row.dns_checks).await?
+            managed(
+                &env,
+                &row.hostname,
+                &expected,
+                ownership,
+                DomainPurpose::stored(&row.purpose)?.sends(),
+                &row.dns_checks,
+            )
+            .await?
         };
         let mut checks = row.dns_checks.clone();
         let observations = prepare::discover(&env, &row.hostname).await?;
@@ -850,12 +858,14 @@ struct Managed {
 /// Registers the domain `hostname`, whose ownership record carries `ownership` (proven when
 /// `proven`), on the managed MTA, and reads whether DNS carries its DKIM record; `previous` holds
 /// the records a previous check kept in `dns_checks`. An unproven domain is not registered, and
-/// keeps its instructions. SPF and DMARC values are read from the MTA without a DNS verdict.
+/// keeps its instructions. DKIM publication is checked only for sending; receiving
+/// does not require outbound authentication records. SPF and DMARC remain instructions.
 async fn managed(
     env: &Env,
     hostname: &str,
     ownership: &str,
     proven: bool,
+    sending: bool,
     previous: &Value,
 ) -> Result<Managed, JobError> {
     let Some(control) = &env.control else {
@@ -883,7 +893,7 @@ async fn managed(
             managed.dmarc = dmarc;
             if let Some((name, value)) = dkim {
                 managed.record = Some(json!({ "name": name, "value": value }));
-            } else {
+            } else if sending {
                 managed.soon = true;
             }
         }
@@ -905,7 +915,7 @@ async fn managed(
             record.get("value")?.as_str()?.to_owned(),
         ))
     });
-    if let Some((name, value)) = record {
+    if sending && let Some((name, value)) = record {
         let published = dkim_published(env, &name, &value).await?;
         managed.published = Some(published);
         if !published && managed.problem.is_none() {

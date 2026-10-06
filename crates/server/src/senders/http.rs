@@ -1532,7 +1532,7 @@ struct CreateDomain {
     path = "/sending_domains",
     tag = "Sending",
     operation_id = "sending_domains.create",
-    request_body(content = CreateDomain, example = json!({"hostname": "links.example.com", "tracking_enabled": true})),
+    request_body(content = CreateDomain, example = json!({"hostname": "example.com", "purpose": "send_receive", "tracking_hostname": "links.example.com"})),
     responses(
         (status = 201, description = "The domain with its records.", body = DomainObject,
          headers(("ETag" = String, description = "The domain's `version`, quoted."))),
@@ -1634,7 +1634,7 @@ struct UpdateDomain {
     tag = "Sending",
     operation_id = "sending_domains.update",
     params(("id" = Id<SendingDomain>, Path, description = "The sending domain id (`dom_…`)."), IfMatch),
-    request_body(content = UpdateDomain, example = json!({"tracking_enabled": true})),
+    request_body(content = UpdateDomain, example = json!({"purpose": "send", "tracking_hostname": "links.example.com"})),
     responses(
         (status = 200, description = "The domain.", body = DomainObject,
          headers(("ETag" = String, description = "The domain's new `version`, quoted."))),

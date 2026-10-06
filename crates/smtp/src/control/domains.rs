@@ -278,7 +278,7 @@ async fn find(state: &State, name: String) -> Result<Domain, ApiError> {
 }
 
 /// `POST /v1/domains/{name}/verify`: reads `_norbelys.<name>` from public DNS; when it holds
-/// the token, the domain is verified (once, for good) and its DKIM key is queued.
+/// the token, the domain is verified. Any DKIM preparation missing from registration is queued.
 ///
 /// # Errors
 ///
