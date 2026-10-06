@@ -23,7 +23,7 @@ end
 
 local function verify(request, password)
   local domain = string.lower(request.user or "")
-  if request.service ~= "smtp" or (request.master_user and request.master_user ~= "")
+  if request.protocol ~= "smtp" or (request.master_user and request.master_user ~= "")
       or not password or #password > 512 or not password:match("^nb_live_[a-zA-Z0-9]+$")
       or #domain > 253 or not domain:match("^[a-zA-Z0-9][a-zA-Z0-9.%-]+$") then
     return dovecot.auth.PASSDB_RESULT_PASSWORD_MISMATCH, {}
