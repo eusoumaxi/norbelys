@@ -85,6 +85,62 @@ const pinImage = (reference: string) => {
   return imageIdentity(reference, metadata);
 };
 
+/** A component can retain its image when CI's inputs for it have not changed. */
+export const compatibleImages = async (
+  server: string,
+  app: string,
+  checkout = root
+): Promise<boolean> => {
+  if (![server, app].every((revision) => /^[0-9a-f]{40}$/u.test(revision))) {
+    return false;
+  }
+  if (server === app) {
+    return true;
+  }
+  const ancestor = (older: string, newer: string) =>
+    spawnSync("git", ["merge-base", "--is-ancestor", older, newer], {
+      cwd: checkout,
+      stdio: "ignore",
+    }).status === 0;
+  const retained = ancestor(app, server)
+    ? "app"
+    : ancestor(server, app)
+      ? "server"
+      : null;
+  if (!retained) {
+    return false;
+  }
+  const changed = spawnSync(
+    "git",
+    ["diff", "--name-only", "--no-renames", "-z", server, app],
+    { cwd: checkout, encoding: "utf-8" }
+  );
+  if (changed.status !== 0) {
+    return false;
+  }
+  const module: unknown = await import(
+    new URL("../.github/scripts/release-scope.mjs", import.meta.url).href
+  );
+  if (
+    typeof module !== "object" ||
+    module === null ||
+    !("scope" in module) ||
+    typeof module.scope !== "function"
+  ) {
+    throw new Error("The installation needs its image publication rules.");
+  }
+  const select = module.scope as (paths: string[]) => unknown;
+  const selection = select(changed.stdout.split("\0").filter(Boolean));
+  const images: unknown[] = Array.isArray(selection) ? selection : [];
+  if (
+    !Array.isArray(selection) ||
+    !images.every((image): image is string => typeof image === "string")
+  ) {
+    throw new Error("Invalid image publication selection.");
+  }
+  return !images.includes(retained);
+};
+
 const run = (
   args: string[],
   input?: string,
@@ -298,7 +354,7 @@ if (import.meta.main) {
       (!process.env.NORBELYS_SERVER_IMAGE || !process.env.NORBELYS_APP_IMAGE)
     ) {
       throw new Error(
-        "An upgrade requires NORBELYS_SERVER_IMAGE and NORBELYS_APP_IMAGE from the same published revision."
+        "An upgrade requires compatible NORBELYS_SERVER_IMAGE and NORBELYS_APP_IMAGE references."
       );
     }
     if (
@@ -314,18 +370,18 @@ if (import.meta.main) {
         process.env.NORBELYS_APP_IMAGE ??
           "ghcr.io/eusoumaxi/norbelys-app:latest"
       );
-      if (server.revision !== app.revision) {
+      if (!(await compatibleImages(server.revision, app.revision))) {
         throw new Error(
-          "The selected images have different source revisions; select a compatible pair explicitly."
+          "The selected images have divergent or changed component inputs; select a compatible pair explicitly."
         );
       }
       settings = settings
         .replaceAll(
-          /^(?:SERVER_IMAGE|APP_IMAGE|SELFHOST_REVISION)=.*\n?/gmu,
+          /^(?:SERVER_IMAGE|APP_IMAGE|SELFHOST_REVISION|APP_REVISION)=.*\n?/gmu,
           ""
         )
         .trimEnd();
-      settings += `\nSERVER_IMAGE=${server.digest}\nAPP_IMAGE=${app.digest}\nSELFHOST_REVISION=${server.revision}\n`;
+      settings += `\nSERVER_IMAGE=${server.digest}\nAPP_IMAGE=${app.digest}\nSELFHOST_REVISION=${server.revision}\nAPP_REVISION=${app.revision}\n`;
       await writeFile(path, settings, { mode: 0o600 });
     }
     run(["up", "-d", "--wait", "postgres"]);

@@ -52,6 +52,8 @@ Database tests require `TEST_DATABASE_URL` and `NORBELYS_TEST_DATABASE_DISPOSABL
 
 `bun run selfhost:setup` generates private settings in `.env.selfhost`, pins a compatible server/dashboard image pair and starts PostgreSQL with a loopback-only maintenance port. It does not apply migrations or restart existing runtime services.
 
+The two images may carry different source revisions when the unchanged component's publication inputs remain identical. Setup checks their Git ancestry and reuses the CI image-selection rules; it rejects divergent histories or changes that require rebuilding the retained image. `SELFHOST_REVISION` always identifies the server and its migrations; `APP_REVISION` records the dashboard separately. Fetch the release history before setup if your checkout lacks either image's revision.
+
 From a clean source checkout matching the recorded `SELFHOST_REVISION`, prepare and start the installation:
 
 ```sh
