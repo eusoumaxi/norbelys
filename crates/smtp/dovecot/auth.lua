@@ -9,13 +9,13 @@ function script_init(settings)
     error("SMTP authentication requires a configured HTTPS API origin")
   end
   client = dovecot.http.client {
-    auto_redirect = false,
-    auto_retry = false,
+    auto_redirect = "no",
+    auto_retry = "no",
     request_max_attempts = 1,
     connect_timeout = "3s",
     request_timeout = "8s",
     request_absolute_timeout = "8s",
-    ssl_client_require_valid_cert = true,
+    ssl_client_require_valid_cert = "yes",
     ssl_client_ca_file = "/etc/ssl/certs/ca-certificates.crt",
   }
   return 0
