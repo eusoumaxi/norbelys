@@ -149,6 +149,46 @@ async fn the_token_endpoint_admits_thirty_requests_a_minute_per_client() {
     assert_eq!(other.status, StatusCode::BAD_REQUEST, "{}", other.json);
 }
 
+/// The revoke endpoint admits 60 requests a minute per client address, counted before any
+/// metadata fetch like its siblings, then answers `429` with `Retry-After`; another address keeps
+/// its own budget. Before the `OauthAddress` guard, a single anonymous address could spray
+/// `/oauth/revoke` with fresh `https://…` client ids and spend the process-global fetch slots a
+/// `clients::fetch` needs, degrading `authorize` and `token` onboarding of any new MCP server; the
+/// guard bounds it like the rest, and a second address is unaffected.
+#[tokio::test]
+async fn the_revoke_endpoint_admits_sixty_requests_a_minute_per_client_address() {
+    let test = TestDb::new().await;
+    let app = test.app();
+    let revoke = |addr: &'static str| {
+        let app = &app;
+        async move {
+            let body = url::form_urlencoded::Serializer::new(String::new())
+                .extend_pairs([("token", "nonsense"), ("client_id", CLI)])
+                .finish();
+            app.post("/oauth/revoke")
+                .header("x-forwarded-for", addr)
+                .raw("application/x-www-form-urlencoded", body)
+                .send()
+                .await
+        }
+    };
+    let mut admitted = 0;
+    let limited = loop {
+        let reply = revoke("203.0.113.9").await;
+        if reply.status == StatusCode::TOO_MANY_REQUESTS {
+            break reply;
+        }
+        assert_eq!(reply.status, StatusCode::OK, "{}", reply.json);
+        admitted += 1;
+        // The budget refills one request per second: a slow run admits a few more, never dozens.
+        assert!(admitted < 70, "the revoke endpoint never refused");
+    };
+    assert!(admitted >= 60, "only {admitted} requests were admitted");
+    assert!(limited.header("retry-after").is_some());
+    let other = revoke("203.0.113.10").await;
+    assert_eq!(other.status, StatusCode::OK, "{}", other.json);
+}
+
 /// A metadata-document client is trusted only while its kept document is fresh: within its cache
 /// lifetime an authorization request goes on to consent; once stale, the document is fetched
 /// again first, and when that fails the request is refused without a redirect, as for an unknown
