@@ -7,8 +7,8 @@ import { useAction } from "@/lib/actions";
 import { useWorkspace } from "@/lib/workspace";
 
 /**
- * Asks before deleting a sending domain, saying what goes with it: its hostname is released, and
- * campaigns that served links from it use the default tracking host for their new messages.
+ * Explain domain removal before revoking managed mail or releasing a tracking hostname.
+ * Existing mailbox history and separately configured tracking domains remain available.
  * `onRemoved` runs once the API deleted it.
  */
 export const RemoveDomainDialog = ({
@@ -31,16 +31,18 @@ export const RemoveDomainDialog = ({
       danger
       description={
         <>
-          {domain?.hostname} is deleted from this workspace and its hostname is
-          released. New messages of campaigns that served their links from it
-          use the default tracking host. Its DNS records can be taken down
-          afterwards.
+          This removes {domain?.hostname} from this workspace.{" "}
+          {domain?.purpose === "tracking"
+            ? "New campaign messages will use the default tracking host."
+            : "Managed sending and receiving for this domain will stop. Existing mailbox messages and history will be kept."}{" "}
+          Remove only DNS records added for Norbelys; keep records used by your
+          other services.
         </>
       }
       onConfirm={() =>
         domain
           ? action(
-              "Sending domain removed",
+              "Domain removed",
               () => workspace.api.sendingDomains.delete(domain.id),
               async () => {
                 await onRemoved?.();
