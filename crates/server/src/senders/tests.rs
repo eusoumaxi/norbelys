@@ -221,19 +221,17 @@ async fn tracking_certificate_permission_refuses_unproven_stale_and_mail_domains
         .send()
         .await;
     assert_eq!(stranger.status, StatusCode::NOT_FOUND);
-    for change in [
-        "checked_at = now() - interval '49 hours'",
-        "checked_at = now(), status = 'suspended'",
-        "status = 'verified', purpose = 'send'",
+    for statement in [
+        "UPDATE sending_domains SET checked_at = now() - interval '49 hours' WHERE workspace_id = $1 AND id = $2",
+        "UPDATE sending_domains SET checked_at = now(), status = 'suspended' WHERE workspace_id = $1 AND id = $2",
+        "UPDATE sending_domains SET status = 'verified', purpose = 'send' WHERE workspace_id = $1 AND id = $2",
     ] {
-        sqlx::query(&format!(
-            "UPDATE sending_domains SET {change} WHERE workspace_id = $1 AND id = $2"
-        ))
-        .bind(workspace.id.uuid())
-        .bind(id.uuid())
-        .execute(test.system.pool())
-        .await
-        .unwrap();
+        sqlx::query(statement)
+            .bind(workspace.id.uuid())
+            .bind(id.uuid())
+            .execute(test.system.pool())
+            .await
+            .unwrap();
         assert_eq!(
             app.get(permission).send().await.status,
             StatusCode::FORBIDDEN

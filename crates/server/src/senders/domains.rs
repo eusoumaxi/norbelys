@@ -832,7 +832,7 @@ impl Job for DomainVerify {
             managed.soon,
             row.status,
             wait.as_secs_f64(),
-            row.updated_at,
+            row.updated_at as _,
         )
         .execute(&mut **chunk.tx())
         .await?.rows_affected();
