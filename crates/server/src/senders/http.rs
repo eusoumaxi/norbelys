@@ -1052,23 +1052,22 @@ async fn update_connection(
                 Problem::invalid_state("The managed service has an invalid domain.")
             })?;
             let purpose = domains::mail_access(&mut tx, principal.workspace, &domain).await?;
-            if let Some(identities) = &changes.identities {
-                if identities
+            if let Some(identities) = &changes.identities
+                && identities
                     .iter()
                     .any(|identity| identity.email.domain() != domain)
-                {
-                    return Err(Problem::invalid_field(
-                        "/identities",
-                        "invalid",
-                        "Every sender must belong to this service's domain.",
-                    ));
-                }
+            {
+                return Err(Problem::invalid_field(
+                    "/identities",
+                    "invalid",
+                    "Every sender must belong to this service's domain.",
+                ));
             }
-            if !connection.account.email.contains('@') {
-                if let Some(identities) = &mut changes.identities {
-                    for identity in identities {
-                        identity.verified = Some(true);
-                    }
+            if !connection.account.email.contains('@')
+                && let Some(identities) = &mut changes.identities
+            {
+                for identity in identities {
+                    identity.verified = Some(true);
                 }
             }
             if !purpose.sends()

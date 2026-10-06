@@ -439,6 +439,16 @@ async fn assemble(
         .into_iter()
         .map(|row| {
             let key = row.id.uuid();
+            let mut smtp: Option<SmtpSettings> =
+                row.smtp.and_then(|smtp| serde_json::from_value(smtp).ok());
+            if row.provider == Provider::Norbelys.as_str()
+                && !row.account_email.contains('@')
+                && let Some(smtp) = &mut smtp
+            {
+                // Customers authenticate with the domain and API key; the worker loads
+                // its private delivery login directly from the stored settings.
+                smtp.username.clone_from(&row.account_email);
+            }
             ConnectionObject {
                 id: row.id,
                 provider: row.provider,
@@ -453,7 +463,7 @@ async fn assemble(
                 paused: row.paused,
                 paused_until: row.paused_until,
                 checked_at: row.checked_at,
-                smtp: row.smtp.and_then(|smtp| serde_json::from_value(smtp).ok()),
+                smtp,
                 imap: row.imap.and_then(|imap| serde_json::from_value(imap).ok()),
                 identities: identities.remove(&key).unwrap_or_default(),
                 receiving: receiving.remove(&key).unwrap_or_default(),
@@ -949,7 +959,7 @@ async fn lock(tx: &mut Tx, workspace: WorkspaceId, id: Id<Connection>) -> Result
         status: row.status.parse().map_err(|_| unknown())?,
         paused: row.paused,
         send_interval_minutes: row.send_interval_minutes,
-        smtp: row.smtp.and_then(|smtp| serde_json::from_value(smtp).ok()),
+        smtp,
         account_email: row.account_email,
     })
 }

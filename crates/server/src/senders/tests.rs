@@ -1886,6 +1886,7 @@ async fn managed_domain_senders_share_a_connection_and_remain_workspace_scoped()
             .all(|sender| sender["verified"] == true)
     );
     assert!(connected.json["imap"].is_null());
+    assert_eq!(connected.json["smtp"]["username"], "acme.example");
     let connection_path = format!("/v1/connections/{}", connected.json["id"].as_str().unwrap());
     for minutes in [3, 5, 6, 7, 8, 9] {
         let paced = app
