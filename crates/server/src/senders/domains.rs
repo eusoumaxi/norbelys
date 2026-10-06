@@ -14,10 +14,13 @@
 //! before, which keeps it.
 //!
 //! **Checks.** A person's `verify` checks at once. Then every proven domain (`verified`,
-//! `pending_certificate`, `suspended`) is checked again when its `next_check_at` falls due, a day
+//! `pending_certificate`, `active`, `suspended`) is checked again when its `next_check_at` falls due, a day
 //! after its last check: `domain.verify_due` enqueues `domain.verify` for each every five
 //! minutes, which also retries a `verifying` domain whose check gave up. A proven domain whose
 //! record is gone is suspended; a suspended one whose record is back is verified again.
+//! Once TXT and CNAME are proven, `domain.certificate` checks valid HTTPS and the
+//! ingress route's domain id before activating custom links. Certificate issuance is
+//! the configured reverse proxy's responsibility, using its narrow permission route.
 //!
 //! **The managed MTA.** Publication instructions and the public DKIM key are prepared after
 //! creation, before ownership verification. This grants no SMTP or IMAP access.
@@ -38,8 +41,10 @@
 //! What the API shows is computed from the row: the records to publish, each with what the last
 //! check observed (`dns_checks`, which also keeps the MTA's DKIM record).
 
+mod certificate;
 mod prepare;
 mod usage;
+pub use certificate::DomainCertificate;
 pub use prepare::{DnsPreparation, DomainPrepare, MailExchange};
 pub use usage::{DomainPurpose, TrackingDomainObject, mail_access, requested};
 
@@ -69,7 +74,13 @@ const OWNERSHIP_LABEL: &str = "_norbelys";
 const OWNERSHIP_PREFIX: &str = "norbelys-verification=";
 /// The statuses checked again when their `next_check_at` falls due: the proven ones, and a
 /// `verifying` one whose check gave up.
-const RECHECKED: [&str; 4] = ["verifying", "verified", "pending_certificate", "suspended"];
+const RECHECKED: [&str; 5] = [
+    "verifying",
+    "verified",
+    "pending_certificate",
+    "active",
+    "suspended",
+];
 /// Domains the fan-out enqueues per run; the rest wait for the next run, five minutes later.
 const DUE_PER_RUN: i64 = 10_000;
 
@@ -714,7 +725,8 @@ impl Job for DomainVerify {
         let mut tx = cx.db().begin_in(workspace).await?;
         let row = sqlx::query!(
             r#"SELECT hostname, status, ownership_token, tracking_enabled, dns_checks, mta_unready_checks, purpose,
-                      verified_at IS NOT NULL AS "ever_verified!", next_check_at <= now() AS "due!"
+                      verified_at IS NOT NULL AS "ever_verified!", next_check_at <= now() AS "due!",
+                      updated_at AS "updated_at: Timestamp"
                  FROM sending_domains WHERE workspace_id = $1 AND id = $2"#,
             workspace.uuid(),
             self.domain.uuid(),
@@ -804,13 +816,13 @@ impl Job for DomainVerify {
             RECHECK
         };
         let mut chunk = cx.begin().await?;
-        sqlx::query!(
+        let changed = sqlx::query!(
             "UPDATE sending_domains
                 SET status = $3, dns_checks = $4, last_error = $5, checked_at = now(),
                     mta_unready_checks = CASE WHEN $7 THEN mta_unready_checks + 1 ELSE 0 END,
                     next_check_at = now() + make_interval(secs => $9),
                     verified_at = CASE WHEN $6 THEN coalesce(verified_at, now()) ELSE verified_at END
-              WHERE workspace_id = $1 AND id = $2 AND status = $8",
+              WHERE workspace_id = $1 AND id = $2 AND status = $8 AND updated_at = $10",
             workspace.uuid(),
             self.domain.uuid(),
             status.as_str(),
@@ -820,9 +832,21 @@ impl Job for DomainVerify {
             managed.soon,
             row.status,
             wait.as_secs_f64(),
+            row.updated_at,
         )
         .execute(&mut **chunk.tx())
-        .await?;
+        .await?.rows_affected();
+        if changed > 0 && status.as_str() == "pending_certificate" {
+            jobs::enqueue(
+                chunk.tx(),
+                workspace,
+                &DomainCertificate {
+                    domain: self.domain,
+                },
+                None,
+            )
+            .await?;
+        }
         cx.checkpoint(chunk, json!({ "status": status.as_str() }))
             .await?;
         Ok(Outcome::Done)

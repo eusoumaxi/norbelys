@@ -48,6 +48,7 @@ fn registry() -> Result<Registry, jobs::kinds::RegistryError> {
         .register::<senders::check::ConnectionCheckDue>()?
         .register::<senders::domains::DomainPrepare>()?
         .register::<senders::domains::DomainVerify>()?
+        .register::<senders::domains::DomainCertificate>()?
         .register::<senders::domains::DomainVerifyDue>()?
         .register::<senders::provision::NorbelysProvision>()?
         .register::<senders::health::HealthEmail>()?

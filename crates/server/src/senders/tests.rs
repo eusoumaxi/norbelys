@@ -134,6 +134,10 @@ async fn domain_uses_and_managed_mailbox_access_are_workspace_scoped() {
     let mailbox_path = format!("/v1/connections/{}", mailbox.json["id"].as_str().unwrap());
     let saved = app.get(&mailbox_path).bearer(&acme.key).send().await;
     assert_eq!(saved.json["identities"][0]["enabled"], false);
+    // Restore only the DNS fixture so the next rejection exercises the receive-only
+    // permission rather than the deliberately pending DNS recheck after editing.
+    sqlx::query("UPDATE sending_domains SET status = 'verified' WHERE workspace_id = $1 AND hostname = 'acme.example'")
+        .bind(acme.id.uuid()).execute(test.system.pool()).await.unwrap();
     let enabled = app.patch(&mailbox_path).bearer(&acme.key).json(json!({"identities":[{"id":saved.json["identities"][0]["id"],"email":"hello@acme.example","enabled":true}]})).send().await;
     assert_eq!(enabled.status, StatusCode::UNPROCESSABLE_ENTITY);
     let send_only = app
@@ -173,6 +177,68 @@ async fn domain_uses_and_managed_mailbox_access_are_workspace_scoped() {
         StatusCode::OK,
         "detaching tracking preserves its resource"
     );
+}
+
+/// Certificate permission needs fresh ownership and CNAME proof for a tracking use.
+/// An authenticated tenant cannot inspect the row through the routing lookup.
+#[tokio::test]
+async fn tracking_certificate_permission_refuses_unproven_stale_and_mail_domains() {
+    let test = TestDb::new().await;
+    let workspace = test.workspace("tracking").await;
+    let other = test.workspace("other").await;
+    let app = test.app();
+    let created = app
+        .post("/v1/sending_domains")
+        .bearer(&workspace.key)
+        .idempotency(&key())
+        .json(json!({"hostname":"links.acme.example","purpose":"tracking"}))
+        .send()
+        .await;
+    assert_eq!(created.status, StatusCode::CREATED);
+    let id = created.json["id"]
+        .as_str()
+        .unwrap()
+        .parse::<Id<crate::domain::ids::SendingDomain>>()
+        .unwrap();
+    let permission = "/internal/tracking-domains/allow?domain=links.acme.example";
+    assert_eq!(
+        app.get(permission).send().await.status,
+        StatusCode::FORBIDDEN
+    );
+    sqlx::query("UPDATE sending_domains SET status = 'pending_certificate', verified_at = now(), checked_at = now(), dns_checks = '{\"ownership\":true,\"tracking\":true}'::jsonb WHERE workspace_id = $1 AND id = $2")
+        .bind(workspace.id.uuid()).bind(id.uuid()).execute(test.system.pool()).await.unwrap();
+    assert_eq!(app.get(permission).send().await.status, StatusCode::OK);
+    let proof = app
+        .get("/.well-known/norbelys-tracking")
+        .header("host", "links.acme.example")
+        .send()
+        .await;
+    assert_eq!(proof.status, StatusCode::OK);
+    assert_eq!(proof.header("cache-control"), Some("no-store"));
+    let stranger = app
+        .get(&format!("/v1/sending_domains/{id}"))
+        .bearer(&other.key)
+        .send()
+        .await;
+    assert_eq!(stranger.status, StatusCode::NOT_FOUND);
+    for change in [
+        "checked_at = now() - interval '49 hours'",
+        "checked_at = now(), status = 'suspended'",
+        "status = 'verified', purpose = 'send'",
+    ] {
+        sqlx::query(&format!(
+            "UPDATE sending_domains SET {change} WHERE workspace_id = $1 AND id = $2"
+        ))
+        .bind(workspace.id.uuid())
+        .bind(id.uuid())
+        .execute(test.system.pool())
+        .await
+        .unwrap();
+        assert_eq!(
+            app.get(permission).send().await.status,
+            StatusCode::FORBIDDEN
+        );
+    }
 }
 
 /// The first field error's pointer of a `validation_failed` problem.
@@ -228,6 +294,8 @@ fn harness(test: &TestDb, settings: Settings, control: Option<Control>) -> Harne
         .register::<super::domains::DomainPrepare>()
         .unwrap()
         .register::<DomainVerify>()
+        .unwrap()
+        .register::<super::domains::DomainCertificate>()
         .unwrap()
         .register::<NorbelysProvision>()
         .unwrap();

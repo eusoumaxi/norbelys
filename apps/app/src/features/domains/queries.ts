@@ -40,6 +40,9 @@ export const domainQuery = (workspace: Workspace, id: string) =>
     refetchInterval: (query) =>
       query.state.data?.status === "verifying" ||
       query.state.data?.tracking_domain?.status === "verifying" ||
+      ((query.state.data?.status === "pending_certificate" ||
+        query.state.data?.tracking_domain?.status === "pending_certificate") &&
+        query.state.dataUpdateCount < 100) ||
       (query.state.data?.dns_preparation === "preparing" &&
         query.state.dataUpdateCount < 40)
         ? CHECKING_POLL_MS

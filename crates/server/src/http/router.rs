@@ -337,6 +337,7 @@ pub fn product(state: AppState) -> Router {
         .route("/files/{*key}", get(crate::storage::serve_local))
         // Unsubscribes and public images; the ingress mode serves them on the public host.
         .merge(crate::tracking::http::public())
+        .merge(crate::tracking::domains::routes())
         // Provider webhooks; a deployment points providers at the ingress mode.
         .merge(crate::webhooks::ingress::routes())
         .nest("/v1", v1);
@@ -353,6 +354,7 @@ pub fn ingress(state: AppState) -> Router {
             .route("/health/live", get(live))
             .route("/health/ready", get(ready))
             .merge(crate::tracking::http::public())
+            .merge(crate::tracking::domains::routes())
             .merge(crate::webhooks::ingress::routes()),
     )
     .with_state(state)

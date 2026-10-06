@@ -21,6 +21,7 @@
 //! - [`images`]: images uploaded for mail, stored in the object store and served publicly, and
 //!   the brand mark of the platform's own mail, served from the binary.
 
+pub mod domains;
 pub mod drain;
 pub mod http;
 pub mod images;
