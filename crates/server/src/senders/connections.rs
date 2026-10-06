@@ -959,7 +959,7 @@ async fn lock(tx: &mut Tx, workspace: WorkspaceId, id: Id<Connection>) -> Result
         status: row.status.parse().map_err(|_| unknown())?,
         paused: row.paused,
         send_interval_minutes: row.send_interval_minutes,
-        smtp,
+        smtp: row.smtp.and_then(|smtp| serde_json::from_value(smtp).ok()),
         account_email: row.account_email,
     })
 }

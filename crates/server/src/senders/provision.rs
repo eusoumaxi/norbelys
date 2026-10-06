@@ -475,6 +475,17 @@ impl Job for NorbelysProvision {
                 let secret = credentials::open_webhook_key(&keys, workspace, webhook, sealed)
                     .map_err(|error| JobError::Failed(error.to_string()))?;
                 let url = env.settings.webhook_url(webhook);
+                let sends = if row.account_email.contains('@') {
+                    true
+                } else {
+                    let mut tx = cx.db().begin_in(workspace).await?;
+                    let purpose =
+                        super::domains::mail_access(&mut tx, workspace, &row.account_email)
+                            .await
+                            .map_err(|error| JobError::Failed(error.to_string()))?;
+                    tx.commit().await?;
+                    purpose.sends()
+                };
                 provision(
                     control,
                     &super::managed::username(workspace, &row.account_email),
@@ -482,6 +493,7 @@ impl Job for NorbelysProvision {
                     &url,
                     &secret,
                     receives,
+                    sends,
                 )
                 .await
                 .map_err(|error| JobError::Failed(error.to_string()))?
@@ -579,6 +591,7 @@ async fn provision(
     url: &str,
     secret: &SecretString,
     receives: bool,
+    sends: bool,
 ) -> Result<Provisioned, ControlError> {
     let (status, body) = control
         .call(Method::GET, &["v1", "accounts", username], None)
@@ -637,7 +650,7 @@ async fn provision(
             .call(
                 Method::PATCH,
                 &["v1", "accounts", username],
-                Some(&json!({"grant": true, "catch_all": receives})),
+                Some(&json!({"grant": sends, "catch_all": receives})),
             )
             .await?;
         if !status.is_success() {

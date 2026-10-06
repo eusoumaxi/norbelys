@@ -543,7 +543,7 @@ pub async fn update_usage(
                     .to_owned(),
             ));
         }
-        let mailboxes = sqlx::query("SELECT id FROM connections WHERE workspace_id = $1 AND provider = 'norbelys' AND split_part(account_email_key, '@', 2) = $2 AND status <> 'archived' ORDER BY id FOR UPDATE")
+        let mailboxes = sqlx::query("SELECT id, account_email_key FROM connections WHERE workspace_id = $1 AND provider = 'norbelys' AND (account_email_key = $2 OR split_part(account_email_key, '@', 2) = $2) AND status <> 'archived' ORDER BY id FOR UPDATE")
             .bind(workspace.uuid()).bind(&name).fetch_all(&mut **tx).await?;
         if next == DomainPurpose::Tracking && !mailboxes.is_empty() {
             return Err(Error::InvalidState("Archive this domain's managed mailboxes before using its hostname for tracking only.".to_owned()));
@@ -579,6 +579,13 @@ pub async fn update_usage(
             if !next.sends() {
                 sqlx::query("UPDATE sender_identities SET enabled = false WHERE workspace_id = $1 AND connection_id = $2")
                     .bind(workspace.uuid()).bind(connection.uuid()).execute(&mut **tx).await?;
+            }
+            if !mailbox
+                .try_get::<String, _>("account_email_key")?
+                .contains('@')
+            {
+                // Reconcile the shared relay grant and catch-all when domain intent changes.
+                super::connections::verify(tx, workspace, connection).await?;
             }
         }
     }

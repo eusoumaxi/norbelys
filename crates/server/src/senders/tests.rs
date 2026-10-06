@@ -185,6 +185,13 @@ async fn domain_uses_and_managed_mailbox_access_are_workspace_scoped() {
     assert_eq!(mailbox.status, StatusCode::CREATED, "{}", mailbox.json);
     assert_eq!(mailbox.json["imap"]["port"], 993);
     assert_eq!(mailbox.json["receiving"]["folders"][0]["folder"], "INBOX");
+    let service = connect(
+        &app,
+        &acme.key,
+        json!({"provider":"norbelys","account_email":"acme.example","identities":[{"email":"service@acme.example"}]}),
+    ).await;
+    assert_eq!(service.status, StatusCode::CREATED, "{}", service.json);
+    let service_path = format!("/v1/connections/{}", service.json["id"].as_str().unwrap());
     let path = format!("/v1/sending_domains/{id}");
     let receive_only = app
         .patch(&path)
@@ -197,6 +204,8 @@ async fn domain_uses_and_managed_mailbox_access_are_workspace_scoped() {
     let mailbox_path = format!("/v1/connections/{}", mailbox.json["id"].as_str().unwrap());
     let saved = app.get(&mailbox_path).bearer(&acme.key).send().await;
     assert_eq!(saved.json["identities"][0]["enabled"], false);
+    let shared = app.get(&service_path).bearer(&acme.key).send().await;
+    assert_eq!(shared.json["identities"][0]["enabled"], false);
     // Restore only the DNS fixture so the next rejection exercises the receive-only
     // permission rather than the deliberately pending DNS recheck after editing.
     sqlx::query("UPDATE sending_domains SET status = 'verified' WHERE workspace_id = $1 AND hostname = 'acme.example'")
@@ -212,6 +221,9 @@ async fn domain_uses_and_managed_mailbox_access_are_workspace_scoped() {
     assert_eq!(send_only.status, StatusCode::OK, "{}", send_only.json);
     let stopped = app.get(&mailbox_path).bearer(&acme.key).send().await;
     assert_eq!(stopped.json["imap"], Value::Null);
+    let shared = app.get(&service_path).bearer(&acme.key).send().await;
+    assert_eq!(shared.json["imap"], Value::Null);
+    assert_eq!(shared.json["receiving"]["folders"][0]["enabled"], false);
     assert_eq!(stopped.json["receiving"]["folders"][0]["enabled"], false);
     let conflicting = app
         .patch(&path)

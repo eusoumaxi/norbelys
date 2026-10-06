@@ -198,7 +198,7 @@ pub(super) async fn suspend_mail(
     workspace: WorkspaceId,
     name: &str,
 ) -> Result<(), sqlx::Error> {
-    let connections = sqlx::query("SELECT id FROM connections WHERE workspace_id = $1 AND provider = 'norbelys' AND split_part(account_email_key, '@', 2) = $2 AND status <> 'archived' ORDER BY id FOR UPDATE")
+    let connections = sqlx::query("SELECT id FROM connections WHERE workspace_id = $1 AND provider = 'norbelys' AND (account_email_key = $2 OR split_part(account_email_key, '@', 2) = $2) AND status <> 'archived' ORDER BY id FOR UPDATE")
         .bind(workspace.uuid()).bind(name).fetch_all(&mut **tx).await?;
     for row in connections {
         let connection = Id::from_uuid(row.try_get("id")?);
