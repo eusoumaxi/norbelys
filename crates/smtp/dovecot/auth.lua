@@ -12,9 +12,9 @@ function script_init(settings)
     auto_redirect = false,
     auto_retry = false,
     request_max_attempts = 1,
-    connect_timeout = 3000,
-    request_timeout = 8000,
-    request_absolute_timeout = 8000,
+    connect_timeout = "3s",
+    request_timeout = "8s",
+    request_absolute_timeout = "8s",
     ssl_client_require_valid_cert = true,
     ssl_client_ca_file = "/etc/ssl/certs/ca-certificates.crt",
   }
