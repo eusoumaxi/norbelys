@@ -521,6 +521,7 @@ const SenderEditor = ({
             id={id("email")}
             onChange={(event) => set({ email: event.target.value })}
             placeholder="ada@example.com"
+            readOnly={connection.provider === "norbelys"}
             ref={first}
             required
             type="email"
@@ -622,7 +623,7 @@ const SenderEditor = ({
         >
           Cancel
         </Button>
-        {sender ? (
+        {sender && connection.provider !== "norbelys" ? (
           <RemoveSender connection={connection} sender={sender} />
         ) : null}
       </div>
@@ -756,6 +757,19 @@ const SenderRow = ({
   );
 };
 
+const senderDescription = (connection: ConnectionObject): string => {
+  if (connection.provider === "ses" && connection.send_interval_minutes) {
+    return "A paced SES connection sends as one address: its account's.";
+  }
+  if (["google", "microsoft", "smtp"].includes(connection.provider)) {
+    return "Your mailbox's sender is created automatically. Add an alias only if your mail provider allows it; aliases share the mailbox's limit and pace.";
+  }
+  if (connection.provider === "norbelys") {
+    return "Edit this address's name, reply-to and signature. Add another address from Norbelys mail.";
+  }
+  return "The addresses authorized by this service, with their names and signatures. They share the account's sending limits.";
+};
+
 /**
  * A mailbox's senders: the From addresses its mail goes out as, each with the name people see and
  * the one signature under its emails. They share the mailbox's daily limit and pace, so a sender
@@ -774,6 +788,9 @@ export const Senders = ({ connection }: { connection: ConnectionObject }) => {
   const { identities } = connection;
   const paced =
     connection.provider === "ses" && Boolean(connection.send_interval_minutes);
+  const mailbox = ["google", "microsoft", "smtp"].includes(connection.provider);
+  const canAdd = editable && !paced && connection.provider !== "norbelys";
+  const addLabel = mailbox ? "Add alias" : "Add sender";
   const editor = (
     <SenderEditor
       connection={connection}
@@ -800,7 +817,7 @@ export const Senders = ({ connection }: { connection: ConnectionObject }) => {
     <Section
       actions={
         // With no sender at all, the empty state holds the one Add button.
-        editable && identities.length > 0 ? (
+        canAdd && identities.length > 0 ? (
           <Button
             disabled={adding}
             onClick={add}
@@ -809,17 +826,13 @@ export const Senders = ({ connection }: { connection: ConnectionObject }) => {
             variant="secondary"
           >
             <HugeiconsIcon icon={Add01Icon} />
-            Add sender
+            {addLabel}
           </Button>
         ) : null
       }
       title="Senders"
     >
-      <p className="text-fg-2 mb-1 text-sm">
-        {paced
-          ? "A paced SES connection sends as one address: its account's."
-          : "The name and address people see, and the signature under each email. Senders share this mailbox's daily limit and pace."}
-      </p>
+      <p className="text-fg-2 mb-1 text-sm">{senderDescription(connection)}</p>
       {identities.length > 0 ? (
         <div className="border-line rounded-sm border">
           <ul>
@@ -857,10 +870,10 @@ export const Senders = ({ connection }: { connection: ConnectionObject }) => {
             ) : (
               <EmptyPanel
                 action={
-                  editable ? (
+                  canAdd ? (
                     <Button onClick={add} ref={addButton} variant="secondary">
                       <HugeiconsIcon icon={Add01Icon} />
-                      Add sender
+                      {addLabel}
                     </Button>
                   ) : null
                 }

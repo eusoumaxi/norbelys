@@ -1,33 +1,33 @@
 import { Add01Icon, MailAccount01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ConnectionObject } from "@norbelys/sdk";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { parseAsString, useQueryState } from "nuqs";
 import { useDeferredValue, useState } from "react";
 
 import { ListTable } from "@/components/data-table";
-import { PageBody, PageHeader } from "@/components/page";
+import { PageBody, PageHeader, Section } from "@/components/page";
 import { CopyIdItem, RowMenu } from "@/components/row-menu";
 import { SearchInput } from "@/components/search-input";
 import { Button } from "@/components/ui/button";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useMailboxControls } from "@/features/mailboxes/mailbox-header";
+import { ManagedMail } from "@/features/mailboxes/managed-mail";
 import {
   ConnectionHealth,
   MailboxCell,
   TodayMeter,
 } from "@/features/mailboxes/parts";
 import { warmupShare } from "@/features/mailboxes/providers";
-import { connectionListQuery } from "@/features/mailboxes/queries";
-import { Reveal } from "@/features/mailboxes/reveal";
-import { useWorkspace } from "@/lib/workspace";
-
-/** How many mailboxes a workspace holds before the list offers its search. */
-const SEARCH_FROM = 6;
+import { connectionGroupQuery } from "@/features/mailboxes/queries";
+import { canWrite, useWorkspace } from "@/lib/workspace";
 
 /** The primary action: the page of providers to connect an account from. */
 const ConnectButton = () => {
   const workspace = useWorkspace();
+  if (!canWrite(workspace)) {
+    return null;
+  }
   return (
     <Button
       nativeButton={false}
@@ -37,7 +37,7 @@ const ConnectButton = () => {
       variant="primary"
     >
       <HugeiconsIcon icon={Add01Icon} />
-      Connect mailbox
+      Connect account
     </Button>
   );
 };
@@ -75,96 +75,126 @@ const TodayCell = ({ mailbox }: { mailbox: ConnectionObject }) => (
   </span>
 );
 
-/**
- * Every account the workspace sends from (mailboxes, relays, the hosted mail), newest first: what
- * it is, whether it works, and how much of what it may send today it has sent. A row opens the
- * mailbox. Once there are enough mailboxes to look for one, a search narrows them by the start
- * of their address.
- */
+/** Personal mailboxes and sending services have distinct setup and sender management. */
 const MailboxesPage = () => {
   const workspace = useWorkspace();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const search = useDeferredValue(q.trim());
-  // The unfiltered list the table shows first: shared, so it is read once.
-  const all = useInfiniteQuery(connectionListQuery(workspace, ""));
-  const first = all.data?.pages[0];
-  const many =
-    (first?.data.length ?? 0) >= SEARCH_FROM || Boolean(first?.meta.has_more);
-  // With no mailbox at all, the empty state holds the one Connect button.
-  const none = first !== undefined && first.data.length === 0;
-
+  const [service, setService] = useQueryState(
+    "service",
+    parseAsString.withOptions({ history: "push" })
+  );
+  if (service === "norbelys") {
+    return <ManagedMail />;
+  }
+  const columns = [
+    {
+      header: "Account",
+      id: "account",
+      render: (m: ConnectionObject) => <MailboxCell connection={m} />,
+    },
+    {
+      header: "Status",
+      id: "status",
+      render: (m: ConnectionObject) => <ConnectionHealth connection={m} />,
+    },
+    {
+      header: "Today",
+      id: "today",
+      render: (m: ConnectionObject) => <TodayCell mailbox={m} />,
+    },
+    {
+      className: "w-[62px]",
+      header: "",
+      id: "menu",
+      render: (m: ConnectionObject) => <MailboxMenu mailbox={m} />,
+    },
+  ];
+  const openAccount = (connection: ConnectionObject) => {
+    void navigate({
+      params: { connectionId: connection.id, slug: workspace.slug },
+      to: "/w/$slug/mailboxes/$connectionId",
+    });
+  };
   return (
     <PageBody>
       <PageHeader
-        actions={none ? null : <ConnectButton />}
-        subtitle="The email accounts Norbelys sends from. Each one sends at its own pace, up to its daily limit, and has its replies read."
+        actions={<ConnectButton />}
+        subtitle="Connect your own mailbox or use a sending service. Manage each account's authorized senders in one place."
         title="Mailboxes"
       />
-      <div className="flex flex-col">
-        <Reveal className="pb-2" open={many || q !== ""}>
-          <SearchInput
-            label="Search mailboxes"
-            onChange={setQ}
-            placeholder="Search by address…"
-            value={q}
-          />
-        </Reveal>
-        <ListTable<ConnectionObject>
-          columns={[
-            {
-              header: "Mailbox",
-              id: "mailbox",
-              render: (m) => <MailboxCell connection={m} />,
-            },
-            {
-              header: "Status",
-              id: "status",
-              render: (m) => <ConnectionHealth connection={m} />,
-            },
-            {
-              header: "Today",
-              id: "today",
-              render: (m) => <TodayCell mailbox={m} />,
-            },
-            {
-              className: "w-[62px]",
-              header: "",
-              id: "menu",
-              render: (m) => <MailboxMenu mailbox={m} />,
-            },
-          ]}
-          empty={
-            search
-              ? {
-                  description: `No mailbox address starts with “${search}”.`,
-                  icon: MailAccount01Icon,
-                  title: "No mailbox found",
-                }
-              : {
-                  action: <ConnectButton />,
-                  description:
-                    "Connect the mailbox you write from (Google, Microsoft or any other) and Norbelys sends from it at a person's pace.",
-                  icon: MailAccount01Icon,
-                  illustration: "mailbox",
-                  title: "Connect your first mailbox",
-                }
-          }
-          onRowClick={(m) => {
-            void navigate({
-              params: { connectionId: m.id, slug: workspace.slug },
-              to: "/w/$slug/mailboxes/$connectionId",
-            });
-          }}
-          query={connectionListQuery(workspace, search)}
-          rowKey={(m) => m.id}
+      <div className="flex flex-col gap-6">
+        <SearchInput
+          label="Search accounts"
+          onChange={setQ}
+          placeholder="Search by address or account…"
+          value={q}
         />
+        <Section title="Your mailboxes">
+          <p className="text-fg-2 text-sm">
+            Gmail, Microsoft and personal SMTP mailboxes. Connecting one creates
+            its main sender automatically.
+          </p>
+          <ListTable<ConnectionObject>
+            columns={columns}
+            empty={{
+              description: search
+                ? `No mailbox address starts with “${search}”.`
+                : "Connect your mailbox to send as yourself and collect replies.",
+              icon: MailAccount01Icon,
+              title: search ? "No mailbox found" : "No personal mailboxes yet",
+            }}
+            onRowClick={openAccount}
+            query={connectionGroupQuery(workspace, "mailboxes", search)}
+            rowKey={(m) => m.id}
+          />
+        </Section>
+        <Section title="Sending services">
+          <button
+            className="border-line hover:bg-hover focus-visible:outline-focus flex w-full cursor-pointer items-center justify-between gap-4 rounded-sm border p-4 text-left outline-none focus-visible:outline-1"
+            onClick={() => {
+              void setService("norbelys");
+            }}
+            type="button"
+          >
+            <span className="flex flex-col gap-1">
+              <span className="font-semibold">Norbelys mail</span>
+              <span className="text-fg-2 text-sm">
+                Your domains and senders. Add addresses directly; no separate
+                connection setup.
+              </span>
+            </span>
+            <span className="text-link shrink-0 text-sm">Manage senders</span>
+          </button>
+          <ListTable<ConnectionObject>
+            columns={columns}
+            empty={{
+              description: search
+                ? `No service account starts with “${search}”.`
+                : "SES, SendGrid and Mailgun: connect an account once, then add its authorized senders.",
+              icon: MailAccount01Icon,
+              title: search
+                ? "No service found"
+                : "No external sending services yet",
+            }}
+            onRowClick={openAccount}
+            query={connectionGroupQuery(workspace, "services", search)}
+            rowKey={(m) => m.id}
+          />
+        </Section>
       </div>
     </PageBody>
   );
 };
 
 export const Route = createFileRoute("/w/$slug/mailboxes/")({
+  validateSearch: (search): { service?: "norbelys" } => {
+    if (search.service === "norbelys") {
+      return { service: "norbelys" };
+    }
+    return {};
+  },
   head: () => ({ meta: [{ title: "Mailboxes · Norbelys" }] }),
   component: MailboxesPage,
 });

@@ -81,10 +81,17 @@ const MailboxPage = () => {
         <PageHeader
           actions={<MailboxActions connection={connection} />}
           back={{
-            label: "Mailboxes",
+            label:
+              connection.provider === "norbelys"
+                ? "Norbelys mail"
+                : "Mailboxes",
             link: {
               params: { slug: workspace.slug },
               to: "/w/$slug/mailboxes",
+              search: () =>
+                connection.provider === "norbelys"
+                  ? { service: "norbelys" }
+                  : {},
             },
           }}
           compact

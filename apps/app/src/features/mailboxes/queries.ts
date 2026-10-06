@@ -30,6 +30,71 @@ export const connectionListQuery = (workspace: Workspace, q: string) =>
       )
   );
 
+/** How often a connection whose check is running is read again, in milliseconds. */
+const CHECKING_POLL_MS = 4000;
+
+export type ConnectionGroup = "mailboxes" | "services" | "norbelys";
+
+/** Provider groups retain the API cursor and skip pages containing only another group. */
+export const connectionGroupQuery = (
+  workspace: Workspace,
+  group: ConnectionGroup,
+  q: string
+) =>
+  ({
+    ...listQuery<ConnectionObject>(
+      [...connectionsKey(workspace), "list", group, q],
+      async (cursor, signal) => {
+        let next = cursor;
+        const visited = new Set<string>();
+        for (;;) {
+          // oxlint-disable-next-line no-await-in-loop -- each cursor comes from the preceding page
+          const page = await workspace.api.connections.list(
+            {
+              cursor: next,
+              limit: 100,
+              provider: group === "norbelys" ? "norbelys" : undefined,
+              q: q || undefined,
+            },
+            { signal }
+          );
+          const data = page.data.filter((connection) => {
+            const mailbox = ["google", "microsoft", "smtp"].includes(
+              connection.provider
+            );
+            if (group === "norbelys") {
+              return connection.provider === "norbelys";
+            }
+            return group === "mailboxes"
+              ? mailbox
+              : !mailbox && connection.provider !== "norbelys";
+          });
+          if (
+            data.length > 0 ||
+            !page.meta.has_more ||
+            !page.meta.next_cursor
+          ) {
+            return { data, meta: page.meta };
+          }
+          if (
+            page.meta.next_cursor === next ||
+            visited.has(page.meta.next_cursor)
+          ) {
+            throw new Error("The mailbox list returned the same cursor twice.");
+          }
+          visited.add(page.meta.next_cursor);
+          next = page.meta.next_cursor;
+        }
+      }
+    ),
+    refetchInterval: (query) =>
+      query.state.data?.pages.some((page) =>
+        page.data.some((connection) => connection.status === "verifying")
+      )
+        ? CHECKING_POLL_MS
+        : false,
+  }) satisfies ReturnType<typeof connectionListQuery>;
+
 /**
  * The workspace's first 100 mailboxes: the choices of a mailbox filter, through their identities
  * those of a message's sender (the API has no lighter list of identities), and the overview's
@@ -41,9 +106,6 @@ export const mailboxOptionsQuery = (workspace: Workspace) =>
     queryFn: async ({ signal }) =>
       await workspace.api.connections.list({ limit: 100 }, { signal }),
   });
-
-/** How often a connection whose check is running is read again, in milliseconds. */
-const CHECKING_POLL_MS = 4000;
 
 /** One connection; read again every few seconds while its check runs (`verifying`). */
 export const connectionQuery = (workspace: Workspace, id: string) =>

@@ -281,14 +281,14 @@ export const PROVIDER_GROUPS: {
       "A person's own mailbox. Norbelys sends from it at a person's pace and reads its replies.",
     id: "mailboxes",
     providers: ["google", "microsoft", "smtp"],
-    title: "Mailboxes",
+    title: "Your mailboxes",
   },
   {
     description:
-      "For volume, through a provider account you own, or Norbelys's own mail server. Relays send only: they read no replies.",
+      "Connect a provider account once, then manage its authorized senders. Norbelys mail uses your own domains.",
     id: "relays",
     providers: ["ses", "sendgrid", "mailgun", "norbelys"],
-    title: "Relays and hosted mail",
+    title: "Sending services",
   },
 ];
 

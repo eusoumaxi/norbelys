@@ -74,6 +74,7 @@ const useConsentLanding = () => {
  */
 const ConnectPage = () => {
   const workspace = useWorkspace();
+  const navigate = useNavigate();
   const dialog = useUrlDialog("provider");
   const consent = useConsentLanding();
   return (
@@ -83,8 +84,8 @@ const ConnectPage = () => {
           label: "Mailboxes",
           link: { params: { slug: workspace.slug }, to: "/w/$slug/mailboxes" },
         }}
-        subtitle="Choose where your emails come from. You can connect as many mailboxes as you like."
-        title="Connect a mailbox"
+        subtitle="Connect a personal mailbox or a sending service. Norbelys mail is available directly."
+        title="Choose an email account"
       />
       <div className="flex max-w-[720px] flex-col gap-8">
         {consent.error ? (
@@ -114,7 +115,20 @@ const ConnectPage = () => {
                 <ProviderChoice
                   info={PROVIDERS[provider]}
                   key={provider}
-                  onConnect={() => dialog.open(provider)}
+                  onConnect={() => {
+                    if (provider === "norbelys") {
+                      void navigate({
+                        params: { slug: workspace.slug },
+                        to: "/w/$slug/mailboxes",
+                        search: (previous) => ({
+                          ...previous,
+                          service: "norbelys",
+                        }),
+                      });
+                    } else {
+                      dialog.open(provider);
+                    }
+                  }}
                 />
               ))}
             </ul>

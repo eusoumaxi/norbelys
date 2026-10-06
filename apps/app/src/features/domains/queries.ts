@@ -16,11 +16,32 @@ export const domainListQuery = (workspace: Workspace) =>
       workspace.api.sendingDomains.list({ cursor, limit: 50 }, { signal })
   );
 
-/** The workspace's 100 newest sending domains: the overview's count and a form's hint. */
+/** All domain choices, following cursors so older verified domains remain selectable. */
 export const domainOptionsQuery = (workspace: Workspace) =>
   queryOptions({
-    queryFn: async ({ signal }) =>
-      await workspace.api.sendingDomains.list({ limit: 100 }, { signal }),
+    queryFn: async ({ signal }) => {
+      const first = await workspace.api.sendingDomains.list(
+        { limit: 100 },
+        { signal }
+      );
+      const data = [...first.data];
+      let page = first;
+      const visited = new Set<string>();
+      while (page.meta.has_more && page.meta.next_cursor) {
+        const cursor = page.meta.next_cursor;
+        if (visited.has(cursor)) {
+          throw new Error("The domain list returned the same cursor twice.");
+        }
+        visited.add(cursor);
+        // oxlint-disable-next-line no-await-in-loop -- each cursor comes from the preceding page
+        page = await workspace.api.sendingDomains.list(
+          { cursor, limit: 100 },
+          { signal }
+        );
+        data.push(...page.data);
+      }
+      return { ...page, data };
+    },
     queryKey: [...domainsKey(workspace), "options"],
   });
 

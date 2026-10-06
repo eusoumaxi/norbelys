@@ -13,6 +13,7 @@ import {
   warmupShare,
 } from "@/features/mailboxes/providers";
 import { formatCount, formatTimestamp } from "@/lib/format";
+import { statusTone } from "@/lib/status";
 
 /** How the sender paces a connection: one campaign email every few minutes, or by its limits. */
 export const paceText = (connection: ConnectionObject): string =>
@@ -51,6 +52,24 @@ export const holdUntil = (
 ): string | null =>
   pausedUntil && Date.parse(pausedUntil) > now ? pausedUntil : null;
 
+/** Managed addresses distinguish provisioning from an established transport. */
+const managedStatus = (status: string): string => {
+  switch (status) {
+    case "active": {
+      return "Ready";
+    }
+    case "verifying": {
+      return "Setting up";
+    }
+    case "archived": {
+      return "Disconnected";
+    }
+    default: {
+      return "Needs attention";
+    }
+  }
+};
+
 /**
  * A connection's health as a dot and a word. A working connection that is not sending says why
  * instead of "Active": Paused (a person paused it) or Waiting (its provider refused several
@@ -86,7 +105,13 @@ export const ConnectionHealth = ({
   }
   return (
     <span className="flex flex-wrap items-center gap-1.5">
-      <StatusBadge kind="connection" value={connection.status} />
+      {connection.provider === "norbelys" ? (
+        <Badge dot tone={statusTone("connection", connection.status)}>
+          {managedStatus(connection.status)}
+        </Badge>
+      ) : (
+        <StatusBadge kind="connection" value={connection.status} />
+      )}
       {connection.paused ? <Badge tone="warning">Paused</Badge> : null}
       {held ? (
         <Badge title={waiting} tone="warning">

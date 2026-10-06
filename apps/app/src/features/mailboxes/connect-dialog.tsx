@@ -5,8 +5,8 @@ import type {
   ImapSecurity,
   SmtpSecurity as Security,
 } from "@norbelys/sdk";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import type { SubmitEvent } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { domainOptionsQuery } from "@/features/domains/queries";
 import {
   Endpoint,
   FormSection,
@@ -38,6 +37,7 @@ import {
   useValues,
 } from "@/features/mailboxes/form";
 import type { SetValue, Values } from "@/features/mailboxes/form";
+import { ManagedSenderDialog } from "@/features/mailboxes/managed-mail";
 import {
   NOT_WARMING,
   providerInfo,
@@ -242,14 +242,6 @@ const accountText = (info: ProviderInfo) => {
       placeholder: "ada@example.com",
     };
   }
-  if (info.way === "managed") {
-    return {
-      description:
-        "An address on a sending domain you verified; Norbelys creates its login on its own mail server.",
-      label: "Address",
-      placeholder: "ada@example.com",
-    };
-  }
   return {
     description:
       info.pacing === "optional"
@@ -267,44 +259,6 @@ interface SectionProps {
   values: Values;
 }
 
-/** The verified sending domains a hosted login's address may be on. */
-const VerifiedDomains = () => {
-  const workspace = useWorkspace();
-  const domains = useQuery(domainOptionsQuery(workspace));
-  if (!domains.data) {
-    return null;
-  }
-  const verified = domains.data.data.filter(
-    (domain) => domain.status === "verified" && domain.purpose !== "tracking"
-  );
-  const link = (
-    <Link
-      className="text-link hover:text-link-hover"
-      params={{ slug: workspace.slug }}
-      to="/w/$slug/domains"
-    >
-      Domains
-    </Link>
-  );
-  if (verified.length === 0) {
-    return (
-      <p className="text-warning text-xs">
-        No mail domain is verified yet. Add one and publish its records first:{" "}
-        {link}.
-      </p>
-    );
-  }
-  return (
-    <p className="text-fg-3 text-xs">
-      Verified:{" "}
-      <span className="text-fg-2 font-mono">
-        {verified.map((domain) => domain.hostname).join(", ")}
-      </span>{" "}
-      ({link}).
-    </p>
-  );
-};
-
 const AccountSection = ({ info, problems, set, values }: SectionProps) => {
   const text = accountText(info);
   return (
@@ -321,7 +275,6 @@ const AccountSection = ({ info, problems, set, values }: SectionProps) => {
         type={info.way === "relay" ? "text" : "email"}
         values={values}
       />
-      {info.way === "managed" ? <VerifiedDomains /> : null}
     </div>
   );
 };
@@ -733,7 +686,11 @@ const ConnectForm = ({ info }: { info: ProviderInfo }) => {
         });
         return;
       }
-      toast.success("Mailbox connected. Norbelys is checking it.");
+      toast.success(
+        info.way === "relay"
+          ? "Sending service connected. Add or edit its senders here."
+          : "Mailbox connected. Its main sender is ready to configure."
+      );
       await navigate({ params, to: "/w/$slug/mailboxes/$connectionId" });
     } catch (error) {
       setFailure(error);
@@ -786,7 +743,27 @@ export const ConnectDialog = ({
   open: boolean;
   provider: string | null;
 }) => {
+  const workspace = useWorkspace();
+  const navigate = useNavigate();
   const info = provider ? providerInfo(provider) : undefined;
+  if (info?.way === "managed") {
+    if (!open) {
+      return null;
+    }
+    return (
+      <ManagedSenderDialog
+        onOpenChange={onOpenChange}
+        onSaved={() => {
+          void navigate({
+            params: { slug: workspace.slug },
+            to: "/w/$slug/mailboxes",
+            search: (previous) => ({ ...previous, service: "norbelys" }),
+          });
+        }}
+        open={open}
+      />
+    );
+  }
   return (
     <Dialog
       onOpenChange={onOpenChange}
