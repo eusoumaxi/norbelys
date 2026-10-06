@@ -192,6 +192,7 @@ pub struct DomainObject {
     /// Optional custom tracking hosted at another hostname.
     pub tracking_domain: Option<TrackingDomainObject>,
     /// Existing MX targets discovered during DNS preparation or verification.
+    #[schema(max_items = 64)]
     pub existing_mx: Vec<MailExchange>,
     /// Existing-provider and DNS conflict advice; no existing DNS record is changed by the API.
     pub warnings: Vec<String>,
@@ -462,32 +463,6 @@ pub async fn count(
         cap.saturating_add(1),
     )
     .fetch_one(&mut **tx)
-    .await
-}
-
-/// Creates a sending domain with a fresh ownership token, `pending_verification`.
-///
-/// # Errors
-///
-/// The workspace has the hostname already (`409 conflict`), the random source failed, or the
-/// database refused.
-pub async fn create(
-    tx: &mut Tx,
-    workspace: WorkspaceId,
-    hostname: &str,
-    tracking_enabled: bool,
-) -> Result<Id<SendingDomain>, Error> {
-    create_usage(
-        tx,
-        workspace,
-        hostname,
-        if tracking_enabled {
-            DomainPurpose::Tracking
-        } else {
-            DomainPurpose::Send
-        },
-        None,
-    )
     .await
 }
 

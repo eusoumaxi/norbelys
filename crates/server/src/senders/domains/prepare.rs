@@ -44,10 +44,12 @@ pub struct MailExchange {
 }
 
 pub(super) fn exchanges(checks: &Value) -> Vec<MailExchange> {
-    checks
+    let mut records: Vec<MailExchange> = checks
         .get("existing_mx")
         .and_then(|value| serde_json::from_value(value.clone()).ok())
-        .unwrap_or_default()
+        .unwrap_or_default();
+    records.truncate(64);
+    records
 }
 
 pub(super) fn warnings(
@@ -200,7 +202,11 @@ impl Job for DomainPrepare {
             .and_then(|progress| progress.get("attempts"))
             .and_then(Value::as_u64)
             .unwrap_or(0);
-        let mut checks = discover(&env, &row.hostname).await?;
+        let Value::Object(mut checks) = discover(&env, &row.hostname).await? else {
+            return Err(JobError::Failed(
+                "DNS observations must be an object".to_owned(),
+            ));
+        };
         let mut waiting = false;
         if purpose != DomainPurpose::Tracking {
             if let Some(control) = &env.control {
@@ -212,30 +218,36 @@ impl Job for DomainPrepare {
                     .await
                     .map_err(|error| JobError::Failed(error.to_string()))?;
                 waiting = purpose.sends() && prepared.dkim.is_none();
-                checks["spf_record"] = json!(prepared.spf);
-                checks["dmarc_record"] = json!(prepared.dmarc);
-                checks["dkim_record"] = prepared.dkim.map_or(
-                    Value::Null,
-                    |(name, value)| json!({"name":name,"value":value}),
+                checks.insert("spf_record".to_owned(), json!(prepared.spf));
+                checks.insert("dmarc_record".to_owned(), json!(prepared.dmarc));
+                checks.insert(
+                    "dkim_record".to_owned(),
+                    prepared.dkim.map_or(
+                        Value::Null,
+                        |(name, value)| json!({"name":name,"value":value}),
+                    ),
                 );
-                checks["preparation"] = json!(if waiting && attempts >= 12 {
-                    "unavailable"
-                } else if waiting {
-                    "preparing"
-                } else {
-                    "ready"
-                });
-                checks["mta_configured"] = json!(true);
+                checks.insert(
+                    "preparation".to_owned(),
+                    json!(if waiting && attempts >= 12 {
+                        "unavailable"
+                    } else if waiting {
+                        "preparing"
+                    } else {
+                        "ready"
+                    }),
+                );
+                checks.insert("mta_configured".to_owned(), json!(true));
             } else {
-                checks["preparation"] = json!("unavailable");
-                checks["mta_configured"] = json!(false);
+                checks.insert("preparation".to_owned(), json!("unavailable"));
+                checks.insert("mta_configured".to_owned(), json!(false));
             }
         } else {
-            checks["preparation"] = json!("ready");
+            checks.insert("preparation".to_owned(), json!("ready"));
         }
         let mut chunk = cx.begin().await?;
         let changed = sqlx::query("UPDATE sending_domains SET dns_checks = dns_checks || $3 WHERE workspace_id = $1 AND id = $2 AND updated_at = $4")
-            .bind(workspace.uuid()).bind(self.domain.uuid()).bind(&checks).bind(row.updated_at)
+            .bind(workspace.uuid()).bind(self.domain.uuid()).bind(Value::Object(checks)).bind(row.updated_at)
             .execute(&mut **chunk.tx()).await?.rows_affected();
         cx.checkpoint(
             chunk,

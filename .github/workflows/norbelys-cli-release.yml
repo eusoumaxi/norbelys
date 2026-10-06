@@ -57,13 +57,54 @@ jobs:
           ref: ${{ inputs.tag || github.ref }}
       - name: Install the pinned Rust toolchain
         run: rustup toolchain install
-      - name: Cache release tooling
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
-        with:
-          shared-key: dist-0.33.0
-          cache-on-failure: true
-      - name: Install dist from checksum-verified crates.io packages
-        run: cargo install --locked cargo-dist@0.33.0
+      - &install-dist
+        name: Install checksum-pinned official dist binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$(uname -s):$(uname -m)" in
+            Darwin:arm64) target=aarch64-apple-darwin ;;
+            Darwin:x86_64) target=x86_64-apple-darwin ;;
+            Linux:aarch64) target=aarch64-unknown-linux-gnu ;;
+            Linux:x86_64) target=x86_64-unknown-linux-gnu ;;
+            MINGW*:x86_64|MSYS*:x86_64) target=x86_64-pc-windows-msvc ;;
+            *) echo "Unsupported release tool platform" >&2; exit 1 ;;
+          esac
+          extension=tar.xz
+          binary=dist
+          if [[ "$target" == *windows* ]]; then extension=zip; binary=dist.exe; fi
+          archive="cargo-dist-$target.$extension"
+          case "$archive" in
+            cargo-dist-aarch64-apple-darwin.tar.xz) expected=7b3cbe25511de01d74c0f5fcb7909edabd379bea9cfa284d93af5a3cdfa3247c ;;
+            cargo-dist-aarch64-unknown-linux-gnu.tar.xz) expected=9c554ab21a58ad46eb9b6710f89633ccb26bc2577cf4b0c2d18a5b826a31913e ;;
+            cargo-dist-aarch64-unknown-linux-musl.tar.xz) expected=4761cff5fc547ad66d1449abbf321380b0e6bd8093b1fe6593852a3314fd0c19 ;;
+            cargo-dist-x86_64-apple-darwin.tar.xz) expected=6a49bfb61bd86770d79c27f3d2b40c6b2e71cde940d3d31a6ccaaffc124d7a29 ;;
+            cargo-dist-x86_64-pc-windows-msvc.zip) expected=9a36d70795e14326a5ec4bf17aee085df00ab85a322739291ea5d4b1b5f693cd ;;
+            cargo-dist-x86_64-unknown-linux-gnu.tar.xz) expected=4b3f0a5f0ebbdb798f6db649d01b32ba1518376b6f7a0502b7d92b75cc2c8293 ;;
+            cargo-dist-x86_64-unknown-linux-musl.tar.xz) expected=b8e95bc76c63375958173ef5ae2dbd8e9211cc1ed03cdee0899702766b4c2a2e ;;
+            *) exit 1 ;;
+          esac
+          directory=$(mktemp -d)
+          trap 'rm -rf "$directory"' EXIT
+          curl --fail --silent --show-error --location --retry 3 \
+            "https://github.com/axodotdev/cargo-dist/releases/download/v0.33.0/$archive" \
+            --output "$directory/$archive"
+          if command -v sha256sum >/dev/null; then
+            actual=$(sha256sum "$directory/$archive")
+          else
+            actual=$(shasum -a 256 "$directory/$archive")
+          fi
+          [[ "${actual%% *}" == "$expected" ]] || { echo "dist checksum mismatch" >&2; exit 1; }
+          if [[ "$extension" == zip ]]; then
+            unzip -q "$directory/$archive" -d "$directory"
+          else
+            tar -xJf "$directory/$archive" -C "$directory"
+          fi
+          mkdir -p "$HOME/.cargo/bin"
+          cp "$directory/cargo-dist-$target/$binary" "$HOME/.cargo/bin/$binary"
+          chmod +x "$HOME/.cargo/bin/$binary"
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          "$HOME/.cargo/bin/$binary" --version | grep -Fx 'cargo-dist 0.33.0'
       - name: Cache dist
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
@@ -131,13 +172,7 @@ jobs:
           fi
       - name: Install the pinned Rust toolchain
         run: rustup toolchain install
-      - name: Cache release tooling
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
-        with:
-          shared-key: dist-0.33.0
-          cache-on-failure: true
-      - name: Install dist from checksum-verified crates.io packages
-        run: cargo install --locked cargo-dist@0.33.0
+      - *install-dist
       # Get the dist-manifest
       - name: Fetch local artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c

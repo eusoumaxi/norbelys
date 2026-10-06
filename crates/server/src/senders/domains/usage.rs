@@ -66,6 +66,7 @@ pub struct TrackingDomainObject {
     pub id: Id<SendingDomain>,
     pub hostname: String,
     pub status: String,
+    #[schema(max_items = 2)]
     pub records: Vec<DnsRecord>,
     pub verified_at: Option<Timestamp>,
     pub checked_at: Option<Timestamp>,
@@ -92,13 +93,13 @@ pub fn requested(
     purpose: Option<DomainPurpose>,
     tracking: Option<bool>,
 ) -> Result<DomainPurpose, Error> {
-    if let (Some(purpose), Some(tracking)) = (purpose, tracking) {
-        if tracking != (purpose == DomainPurpose::Tracking) {
-            return Err(Error::invalid(
-                "/purpose",
-                "purpose and tracking_enabled describe different uses",
-            ));
-        }
+    if let (Some(purpose), Some(tracking)) = (purpose, tracking)
+        && tracking != (purpose == DomainPurpose::Tracking)
+    {
+        return Err(Error::invalid(
+            "/purpose",
+            "purpose and tracking_enabled describe different uses",
+        ));
     }
     Ok(purpose.unwrap_or(if tracking.unwrap_or(false) {
         DomainPurpose::Tracking
