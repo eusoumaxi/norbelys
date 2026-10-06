@@ -1039,10 +1039,28 @@
             "description": "The hostname, such as `links.example.com`.",
             "type": "string"
           },
+          "purpose": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DomainPurpose",
+                "description": "Use this hostname for tracking, sending, receiving, or both mail directions."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "tracking_enabled": {
             "description": "Serve tracking links from it (its CNAME then points at Norbelys).",
             "type": [
               "boolean",
+              "null"
+            ]
+          },
+          "tracking_hostname": {
+            "description": "Optional separate hostname for custom tracking on a mail domain.",
+            "type": [
+              "string",
               "null"
             ]
           }
@@ -2018,6 +2036,16 @@
         "type": "string",
         "x-open-enum": true
       },
+      "DnsPreparation": {
+        "description": "Publication preparation is independent of DNS ownership verification.",
+        "enum": [
+          "preparing",
+          "ready",
+          "unavailable"
+        ],
+        "type": "string",
+        "x-open-enum": true
+      },
       "DnsRecord": {
         "description": "A DNS record a sending domain publishes.",
         "properties": {
@@ -2029,6 +2057,15 @@
             "description": "Publication advice from the managed MTA, including how to preserve existing DNS records.",
             "type": [
               "string",
+              "null"
+            ]
+          },
+          "priority": {
+            "description": "The MX preference; absent for other record types.",
+            "format": "int32",
+            "minimum": 0,
+            "type": [
+              "integer",
               "null"
             ]
           },
@@ -2062,7 +2099,8 @@
           "tracking",
           "spf",
           "dmarc",
-          "dkim"
+          "dkim",
+          "mx"
         ],
         "type": "string",
         "x-open-enum": true
@@ -2081,7 +2119,8 @@
         "description": "The type of a DNS record to publish.",
         "enum": [
           "TXT",
-          "CNAME"
+          "CNAME",
+          "MX"
         ],
         "type": "string",
         "x-open-enum": true
@@ -2102,6 +2141,17 @@
           "created_at": {
             "$ref": "#/components/schemas/Timestamp"
           },
+          "dns_preparation": {
+            "$ref": "#/components/schemas/DnsPreparation",
+            "description": "Whether publication instructions are being prepared, ready, or unavailable on this installation."
+          },
+          "existing_mx": {
+            "description": "Existing MX targets discovered during DNS preparation or verification.",
+            "items": {
+              "$ref": "#/components/schemas/MailExchange"
+            },
+            "type": "array"
+          },
           "hostname": {
             "description": "The hostname, lowercase.",
             "type": "string"
@@ -2120,6 +2170,10 @@
               }
             ]
           },
+          "purpose": {
+            "$ref": "#/components/schemas/DomainPurpose",
+            "description": "The intended use of this hostname; mail and CNAME tracking use separate names."
+          },
           "records": {
             "description": "The records to publish: the ownership TXT record, the tracking CNAME when the hostname\nserves tracking links, and the managed MTA's SPF, DMARC and DKIM records once rendered.\nSPF and DMARC are publication instructions and remain `unchecked`.",
             "items": {
@@ -2131,6 +2185,17 @@
           "status": {
             "$ref": "#/components/schemas/SendingDomainStatus",
             "description": "Where the domain is in its lifecycle; new values may be added."
+          },
+          "tracking_domain": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TrackingDomainObject",
+                "description": "Optional custom tracking hosted at another hostname."
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "tracking_enabled": {
             "description": "Whether the hostname serves tracking links.",
@@ -2153,6 +2218,13 @@
             "description": "The domain's version, also the response's `ETag`: `updated_at` in microseconds since the\nUnix epoch. An update sent with it in `If-Match` applies only to this version. Each DNS\ncheck moves it too.",
             "format": "int64",
             "type": "integer"
+          },
+          "warnings": {
+            "description": "Existing-provider and DNS conflict advice; no existing DNS record is changed by the API.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -2160,12 +2232,27 @@
           "hostname",
           "status",
           "tracking_enabled",
+          "purpose",
+          "dns_preparation",
+          "existing_mx",
+          "warnings",
           "records",
           "created_at",
           "updated_at",
           "version"
         ],
         "type": "object"
+      },
+      "DomainPurpose": {
+        "description": "What this hostname is used for. Mail and CNAME tracking use separate hostnames.",
+        "enum": [
+          "tracking",
+          "send",
+          "receive",
+          "send_receive"
+        ],
+        "type": "string",
+        "x-open-enum": true
       },
       "DsnAction": {
         "description": "What a delivery status notification says happened to a recipient (RFC 3464 §2.3.3,\n<https://www.rfc-editor.org/rfc/rfc3464#section-2.3.3>), when the evidence is one.",
@@ -4146,6 +4233,24 @@
         ],
         "type": "string"
       },
+      "MailExchange": {
+        "description": "A published incoming-mail route, including the provider's MX preference.",
+        "properties": {
+          "hostname": {
+            "type": "string"
+          },
+          "priority": {
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "hostname",
+          "priority"
+        ],
+        "type": "object"
+      },
       "MailId": {
         "description": "Either typed message id, preserving its resource prefix in a shared history.",
         "oneOf": [
@@ -5337,6 +5442,17 @@
                 "created_at": {
                   "$ref": "#/components/schemas/Timestamp"
                 },
+                "dns_preparation": {
+                  "$ref": "#/components/schemas/DnsPreparation",
+                  "description": "Whether publication instructions are being prepared, ready, or unavailable on this installation."
+                },
+                "existing_mx": {
+                  "description": "Existing MX targets discovered during DNS preparation or verification.",
+                  "items": {
+                    "$ref": "#/components/schemas/MailExchange"
+                  },
+                  "type": "array"
+                },
                 "hostname": {
                   "description": "The hostname, lowercase.",
                   "type": "string"
@@ -5355,6 +5471,10 @@
                     }
                   ]
                 },
+                "purpose": {
+                  "$ref": "#/components/schemas/DomainPurpose",
+                  "description": "The intended use of this hostname; mail and CNAME tracking use separate names."
+                },
                 "records": {
                   "description": "The records to publish: the ownership TXT record, the tracking CNAME when the hostname\nserves tracking links, and the managed MTA's SPF, DMARC and DKIM records once rendered.\nSPF and DMARC are publication instructions and remain `unchecked`.",
                   "items": {
@@ -5366,6 +5486,17 @@
                 "status": {
                   "$ref": "#/components/schemas/SendingDomainStatus",
                   "description": "Where the domain is in its lifecycle; new values may be added."
+                },
+                "tracking_domain": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/TrackingDomainObject",
+                      "description": "Optional custom tracking hosted at another hostname."
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 },
                 "tracking_enabled": {
                   "description": "Whether the hostname serves tracking links.",
@@ -5388,6 +5519,13 @@
                   "description": "The domain's version, also the response's `ETag`: `updated_at` in microseconds since the\nUnix epoch. An update sent with it in `If-Match` applies only to this version. Each DNS\ncheck moves it too.",
                   "format": "int64",
                   "type": "integer"
+                },
+                "warnings": {
+                  "description": "Existing-provider and DNS conflict advice; no existing DNS record is changed by the API.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
                 }
               },
               "required": [
@@ -5395,6 +5533,10 @@
                 "hostname",
                 "status",
                 "tracking_enabled",
+                "purpose",
+                "dns_preparation",
+                "existing_mx",
+                "warnings",
                 "records",
                 "created_at",
                 "updated_at",
@@ -8822,6 +8964,53 @@
         ],
         "type": "object"
       },
+      "TrackingDomainObject": {
+        "description": "A mail domain's separately configured tracking hostname.",
+        "properties": {
+          "checked_at": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hostname": {
+            "type": "string"
+          },
+          "id": {
+            "$ref": "#/components/schemas/Id_SendingDomain"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/DnsRecord"
+            },
+            "type": "array"
+          },
+          "status": {
+            "type": "string"
+          },
+          "verified_at": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "hostname",
+          "status",
+          "records"
+        ],
+        "type": "object"
+      },
       "TrackingInput": {
         "additionalProperties": false,
         "description": "A campaign's tracking in a create or an update; a field left out keeps its value.",
@@ -9075,14 +9264,32 @@
         "additionalProperties": false,
         "description": "The body of `PATCH /sending_domains/{id}`.",
         "properties": {
+          "purpose": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DomainPurpose",
+                "description": "Change this hostname's use. Disabling mail directions stops those operations while retaining mailbox history."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "tracking_enabled": {
             "description": "Serve tracking links from it; `verify` then checks its CNAME.",
-            "type": "boolean"
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "tracking_hostname": {
+            "description": "Set a separate tracking hostname; null detaches it without deleting its records or history.",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
-        "required": [
-          "tracking_enabled"
-        ],
         "type": "object"
       },
       "UpdateEndpoint": {
@@ -18331,7 +18538,7 @@
             "bearer": []
           }
         ],
-        "summary": "Update a sending domain: turn tracking on or off.",
+        "summary": "Update a domain's use and its optional separate tracking hostname.",
         "tags": [
           "Sending"
         ]

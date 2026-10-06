@@ -1125,7 +1125,7 @@ export class SendingDomains {
   }
 
   /**
-   * Update a sending domain: turn tracking on or off.
+   * Update a domain's use and its optional separate tracking hostname.
    *
    * `PATCH /v1/sending_domains/{id}`
    *

@@ -188,7 +188,9 @@ CreateConnection = TypedDict("CreateConnection", {
 
 CreateDomain = TypedDict("CreateDomain", {
     "hostname": Required[str],
+    "purpose": NotRequired[Union["DomainPurpose", None]],
     "tracking_enabled": NotRequired[Union[bool, None]],
+    "tracking_hostname": NotRequired[Union[str, None]],
 })
 
 CreateEndpoint = TypedDict("CreateEndpoint", {
@@ -360,34 +362,44 @@ DeliveryObject = TypedDict("DeliveryObject", {
 
 Direction: TypeAlias = Union[Literal["outbound", "inbound"], str]
 
+DnsPreparation: TypeAlias = Union[Literal["preparing", "ready", "unavailable"], str]
+
 DnsRecord = TypedDict("DnsRecord", {
     "name": Required[str],
     "note": NotRequired[Union[str, None]],
+    "priority": NotRequired[Union[int, None]],
     "purpose": Required["DnsRecordPurpose"],
     "status": Required["DnsRecordStatus"],
     "type": Required["DnsRecordType"],
     "value": Required[str],
 })
 
-DnsRecordPurpose: TypeAlias = Union[Literal["ownership", "tracking", "spf", "dmarc", "dkim"], str]
+DnsRecordPurpose: TypeAlias = Union[Literal["ownership", "tracking", "spf", "dmarc", "dkim", "mx"], str]
 
 DnsRecordStatus: TypeAlias = Union[Literal["verified", "missing", "unchecked"], str]
 
-DnsRecordType: TypeAlias = Union[Literal["TXT", "CNAME"], str]
+DnsRecordType: TypeAlias = Union[Literal["TXT", "CNAME", "MX"], str]
 
 DomainObject = TypedDict("DomainObject", {
     "checked_at": NotRequired[Union["Timestamp", None]],
     "created_at": Required["Timestamp"],
+    "dns_preparation": Required["DnsPreparation"],
+    "existing_mx": Required[list["MailExchange"]],
     "hostname": Required[str],
     "id": Required["Id_SendingDomain"],
     "last_error": NotRequired[Union["LastError", None]],
+    "purpose": Required["DomainPurpose"],
     "records": Required[list["DnsRecord"]],
     "status": Required["SendingDomainStatus"],
+    "tracking_domain": NotRequired[Union["TrackingDomainObject", None]],
     "tracking_enabled": Required[bool],
     "updated_at": Required["Timestamp"],
     "verified_at": NotRequired[Union["Timestamp", None]],
     "version": Required[int],
+    "warnings": Required[list[str]],
 })
+
+DomainPurpose: TypeAlias = Union[Literal["tracking", "send", "receive", "send_receive"], str]
 
 DsnAction: TypeAlias = Union[Literal["failed", "delayed", "delivered", "relayed", "expanded"], str]
 
@@ -780,6 +792,11 @@ LastError = TypedDict("LastError", {
 ListInclude: TypeAlias = Literal["total_count"]
 
 ListOrder: TypeAlias = Literal["desc", "asc"]
+
+MailExchange = TypedDict("MailExchange", {
+    "hostname": Required[str],
+    "priority": Required[int],
+})
 
 MailId: TypeAlias = Union["Id_Message", "Id_InboundMessage"]
 
@@ -1321,6 +1338,15 @@ Tracking = TypedDict("Tracking", {
     "opens": Required[bool],
 })
 
+TrackingDomainObject = TypedDict("TrackingDomainObject", {
+    "checked_at": NotRequired[Union["Timestamp", None]],
+    "hostname": Required[str],
+    "id": Required["Id_SendingDomain"],
+    "records": Required[list["DnsRecord"]],
+    "status": Required[str],
+    "verified_at": NotRequired[Union["Timestamp", None]],
+})
+
 TrackingInput = TypedDict("TrackingInput", {
     "clicks": NotRequired[Union[bool, None]],
     "domain_id": NotRequired[Union[str, None]],
@@ -1361,7 +1387,9 @@ UpdateConnection = TypedDict("UpdateConnection", {
 })
 
 UpdateDomain = TypedDict("UpdateDomain", {
-    "tracking_enabled": Required[bool],
+    "purpose": NotRequired[Union["DomainPurpose", None]],
+    "tracking_enabled": NotRequired[Union[bool, None]],
+    "tracking_hostname": NotRequired[Union[str, None]],
 })
 
 UpdateEndpoint = TypedDict("UpdateEndpoint", {

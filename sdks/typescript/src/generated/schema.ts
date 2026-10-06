@@ -1014,7 +1014,7 @@ export interface paths {
         delete: operations["sending_domains.delete"];
         options?: never;
         head?: never;
-        /** Update a sending domain: turn tracking on or off. */
+        /** Update a domain's use and its optional separate tracking hostname. */
         patch: operations["sending_domains.update"];
         trace?: never;
     };
@@ -1653,8 +1653,11 @@ export interface components {
         CreateDomain: {
             /** @description The hostname, such as `links.example.com`. */
             hostname: string;
+            purpose?: components["schemas"]["DomainPurpose"] | null;
             /** @description Serve tracking links from it (its CNAME then points at Norbelys). */
             tracking_enabled?: boolean | null;
+            /** @description Optional separate hostname for custom tracking on a mail domain. */
+            tracking_hostname?: string | null;
         };
         /** @description The body of `POST /webhook_endpoints`. */
         CreateEndpoint: {
@@ -1990,12 +1993,22 @@ export interface components {
          * @enum {string}
          */
         Direction: "outbound" | "inbound";
+        /**
+         * @description Publication preparation is independent of DNS ownership verification.
+         * @enum {string}
+         */
+        DnsPreparation: "preparing" | "ready" | "unavailable";
         /** @description A DNS record a sending domain publishes. */
         DnsRecord: {
             /** @description The record's name. */
             name: string;
             /** @description Publication advice from the managed MTA, including how to preserve existing DNS records. */
             note?: string | null;
+            /**
+             * Format: int32
+             * @description The MX preference; absent for other record types.
+             */
+            priority?: number | null;
             purpose: components["schemas"]["DnsRecordPurpose"];
             status: components["schemas"]["DnsRecordStatus"];
             type: components["schemas"]["DnsRecordType"];
@@ -2006,7 +2019,7 @@ export interface components {
          * @description What a DNS record proves or serves: ownership, tracking, or managed sending authentication.
          * @enum {string}
          */
-        DnsRecordPurpose: "ownership" | "tracking" | "spf" | "dmarc" | "dkim";
+        DnsRecordPurpose: "ownership" | "tracking" | "spf" | "dmarc" | "dkim" | "mx";
         /**
          * @description What the last check of a DNS record observed: the record as expected, its absence, or no
          *     check yet.
@@ -2017,15 +2030,21 @@ export interface components {
          * @description The type of a DNS record to publish.
          * @enum {string}
          */
-        DnsRecordType: "TXT" | "CNAME";
+        DnsRecordType: "TXT" | "CNAME" | "MX";
         /** @description A sending domain as the API shows it. */
         DomainObject: {
             checked_at?: components["schemas"]["Timestamp"] | null;
             created_at: components["schemas"]["Timestamp"];
+            /** @description Whether publication instructions are being prepared, ready, or unavailable on this installation. */
+            dns_preparation: components["schemas"]["DnsPreparation"];
+            /** @description Existing MX targets discovered during DNS preparation or verification. */
+            existing_mx: components["schemas"]["MailExchange"][];
             /** @description The hostname, lowercase. */
             hostname: string;
             id: components["schemas"]["Id_SendingDomain"];
             last_error?: components["schemas"]["LastError"] | null;
+            /** @description The intended use of this hostname; mail and CNAME tracking use separate names. */
+            purpose: components["schemas"]["DomainPurpose"];
             /**
              * @description The records to publish: the ownership TXT record, the tracking CNAME when the hostname
              *     serves tracking links, and the managed MTA's SPF, DMARC and DKIM records once rendered.
@@ -2034,6 +2053,7 @@ export interface components {
             records: components["schemas"]["DnsRecord"][];
             /** @description Where the domain is in its lifecycle; new values may be added. */
             status: components["schemas"]["SendingDomainStatus"];
+            tracking_domain?: components["schemas"]["TrackingDomainObject"] | null;
             /** @description Whether the hostname serves tracking links. */
             tracking_enabled: boolean;
             updated_at: components["schemas"]["Timestamp"];
@@ -2045,7 +2065,14 @@ export interface components {
              *     check moves it too.
              */
             version: number;
+            /** @description Existing-provider and DNS conflict advice; no existing DNS record is changed by the API. */
+            warnings: string[];
         };
+        /**
+         * @description What this hostname is used for. Mail and CNAME tracking use separate hostnames.
+         * @enum {string}
+         */
+        DomainPurpose: "tracking" | "send" | "receive" | "send_receive";
         /**
          * @description What a delivery status notification says happened to a recipient (RFC 3464 §2.3.3,
          *     <https://www.rfc-editor.org/rfc/rfc3464#section-2.3.3>), when the evidence is one.
@@ -2780,6 +2807,12 @@ export interface components {
          * @enum {string}
          */
         ListOrder: "desc" | "asc";
+        /** @description A published incoming-mail route, including the provider's MX preference. */
+        MailExchange: {
+            hostname: string;
+            /** Format: int32 */
+            priority: number;
+        };
         /** @description Either typed message id, preserving its resource prefix in a shared history. */
         MailId: components["schemas"]["Id_Message"] | components["schemas"]["Id_InboundMessage"];
         /** @description A message's latest attempts. */
@@ -3114,10 +3147,16 @@ export interface components {
             data: {
                 checked_at?: components["schemas"]["Timestamp"] | null;
                 created_at: components["schemas"]["Timestamp"];
+                /** @description Whether publication instructions are being prepared, ready, or unavailable on this installation. */
+                dns_preparation: components["schemas"]["DnsPreparation"];
+                /** @description Existing MX targets discovered during DNS preparation or verification. */
+                existing_mx: components["schemas"]["MailExchange"][];
                 /** @description The hostname, lowercase. */
                 hostname: string;
                 id: components["schemas"]["Id_SendingDomain"];
                 last_error?: components["schemas"]["LastError"] | null;
+                /** @description The intended use of this hostname; mail and CNAME tracking use separate names. */
+                purpose: components["schemas"]["DomainPurpose"];
                 /**
                  * @description The records to publish: the ownership TXT record, the tracking CNAME when the hostname
                  *     serves tracking links, and the managed MTA's SPF, DMARC and DKIM records once rendered.
@@ -3126,6 +3165,7 @@ export interface components {
                 records: components["schemas"]["DnsRecord"][];
                 /** @description Where the domain is in its lifecycle; new values may be added. */
                 status: components["schemas"]["SendingDomainStatus"];
+                tracking_domain?: components["schemas"]["TrackingDomainObject"] | null;
                 /** @description Whether the hostname serves tracking links. */
                 tracking_enabled: boolean;
                 updated_at: components["schemas"]["Timestamp"];
@@ -3137,6 +3177,8 @@ export interface components {
                  *     check moves it too.
                  */
                 version: number;
+                /** @description Existing-provider and DNS conflict advice; no existing DNS record is changed by the API. */
+                warnings: string[];
             }[];
             meta: components["schemas"]["Meta"];
         };
@@ -4249,6 +4291,15 @@ export interface components {
             /** @description An open pixel is added to its HTML. */
             opens: boolean;
         };
+        /** @description A mail domain's separately configured tracking hostname. */
+        TrackingDomainObject: {
+            checked_at?: components["schemas"]["Timestamp"] | null;
+            hostname: string;
+            id: components["schemas"]["Id_SendingDomain"];
+            records: components["schemas"]["DnsRecord"][];
+            status: string;
+            verified_at?: components["schemas"]["Timestamp"] | null;
+        };
         /** @description A campaign's tracking in a create or an update; a field left out keeps its value. */
         TrackingInput: {
             clicks?: boolean | null;
@@ -4313,8 +4364,11 @@ export interface components {
         };
         /** @description The body of `PATCH /sending_domains/{id}`. */
         UpdateDomain: {
+            purpose?: components["schemas"]["DomainPurpose"] | null;
             /** @description Serve tracking links from it; `verify` then checks its CNAME. */
-            tracking_enabled: boolean;
+            tracking_enabled?: boolean | null;
+            /** @description Set a separate tracking hostname; null detaches it without deleting its records or history. */
+            tracking_hostname?: string | null;
         };
         /** @description The body of `PATCH /webhook_endpoints/{id}`. */
         UpdateEndpoint: {
@@ -4637,11 +4691,13 @@ export type DeliveryEventKind = components['schemas']['DeliveryEventKind'];
 export type DeliveryEventObject = components['schemas']['DeliveryEventObject'];
 export type DeliveryObject = components['schemas']['DeliveryObject'];
 export type Direction = components['schemas']['Direction'];
+export type DnsPreparation = components['schemas']['DnsPreparation'];
 export type DnsRecord = components['schemas']['DnsRecord'];
 export type DnsRecordPurpose = components['schemas']['DnsRecordPurpose'];
 export type DnsRecordStatus = components['schemas']['DnsRecordStatus'];
 export type DnsRecordType = components['schemas']['DnsRecordType'];
 export type DomainObject = components['schemas']['DomainObject'];
+export type DomainPurpose = components['schemas']['DomainPurpose'];
 export type DsnAction = components['schemas']['DsnAction'];
 export type EndpointDisabledReason = components['schemas']['EndpointDisabledReason'];
 export type EndpointObject = components['schemas']['EndpointObject'];
@@ -4724,6 +4780,7 @@ export type LastAttempt = components['schemas']['LastAttempt'];
 export type LastError = components['schemas']['LastError'];
 export type ListInclude = components['schemas']['ListInclude'];
 export type ListOrder = components['schemas']['ListOrder'];
+export type MailExchange = components['schemas']['MailExchange'];
 export type MailId = components['schemas']['MailId'];
 export type MessageAttempts = components['schemas']['MessageAttempts'];
 export type MessageContent = components['schemas']['MessageContent'];
@@ -4819,6 +4876,7 @@ export type ThreadObject = components['schemas']['ThreadObject'];
 export type ThreadStatus = components['schemas']['ThreadStatus'];
 export type Timestamp = components['schemas']['Timestamp'];
 export type Tracking = components['schemas']['Tracking'];
+export type TrackingDomainObject = components['schemas']['TrackingDomainObject'];
 export type TrackingInput = components['schemas']['TrackingInput'];
 export type TrackingObject = components['schemas']['TrackingObject'];
 export type Transport = components['schemas']['Transport'];

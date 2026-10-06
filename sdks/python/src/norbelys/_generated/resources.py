@@ -148,7 +148,7 @@ class SendingDomains:
         return cast("schema.DomainObject", self._core.request("GET", "/v1/sending_domains/{id}", [id], query=None, body=None, content_type=None, idempotent=False, options=options))
 
     def update(self, id: str, body: schema.UpdateDomain, *, options: RequestOptions | None = None) -> schema.DomainObject:
-        "Update a sending domain: turn tracking on or off."
+        "Update a domain's use and its optional separate tracking hostname."
         return cast("schema.DomainObject", self._core.request("PATCH", "/v1/sending_domains/{id}", [id], query=None, body=body, content_type=None, idempotent=True, options=options))
 
     def delete(self, id: str, *, options: RequestOptions | None = None) -> None:
@@ -793,7 +793,7 @@ class AsyncSendingDomains:
         return cast("schema.DomainObject", await self._core.request("GET", "/v1/sending_domains/{id}", [id], query=None, body=None, content_type=None, idempotent=False, options=options))
 
     async def update(self, id: str, body: schema.UpdateDomain, *, options: RequestOptions | None = None) -> schema.DomainObject:
-        "Update a sending domain: turn tracking on or off."
+        "Update a domain's use and its optional separate tracking hostname."
         return cast("schema.DomainObject", await self._core.request("PATCH", "/v1/sending_domains/{id}", [id], query=None, body=body, content_type=None, idempotent=True, options=options))
 
     async def delete(self, id: str, *, options: RequestOptions | None = None) -> None:
