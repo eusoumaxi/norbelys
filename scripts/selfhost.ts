@@ -121,16 +121,17 @@ export const compatibleImages = async (
   const module: unknown = await import(
     new URL("../.github/scripts/release-scope.mjs", import.meta.url).href
   );
-  if (
-    typeof module !== "object" ||
-    module === null ||
-    !("scope" in module) ||
-    typeof module.scope !== "function"
-  ) {
+  const publicationRules = (
+    value: unknown
+  ): value is { scope: (paths: string[]) => unknown } =>
+    typeof value === "object" &&
+    value !== null &&
+    "scope" in value &&
+    typeof value.scope === "function";
+  if (!publicationRules(module)) {
     throw new Error("The installation needs its image publication rules.");
   }
-  const select = module.scope as (paths: string[]) => unknown;
-  const selection = select(changed.stdout.split("\0").filter(Boolean));
+  const selection = module.scope(changed.stdout.split("\0").filter(Boolean));
   const images: unknown[] = Array.isArray(selection) ? selection : [];
   if (
     !Array.isArray(selection) ||
