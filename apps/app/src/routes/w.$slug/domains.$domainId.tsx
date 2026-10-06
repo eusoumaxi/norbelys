@@ -1,11 +1,12 @@
 import {
   Alert02Icon,
   Delete02Icon,
+  Edit02Icon,
   Refresh01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { DomainObject } from "@norbelys/sdk";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
@@ -15,19 +16,12 @@ import { PageBody, PageHeader, Section } from "@/components/page";
 import { StatusBadge } from "@/components/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { DOMAIN_USES, DomainDialog } from "@/features/domains/domain-dialog";
 import { DomainRecordsTable } from "@/features/domains/domain-records";
 import { domainQuery, domainsKey, lastError } from "@/features/domains/queries";
 import { RemoveDomainDialog } from "@/features/domains/remove-domain";
 import { useAction } from "@/lib/actions";
-import {
-  formatDateTime,
-  formatRelative,
-  formatTimestamp,
-  onOff,
-} from "@/lib/format";
+import { formatDateTime, formatRelative, formatTimestamp } from "@/lib/format";
 import { canWrite, useWorkspace } from "@/lib/workspace";
 
 /** What each status means for the person, in a sentence. */
@@ -63,58 +57,33 @@ const LastError = ({ domain }: { domain: DomainObject }) => {
   );
 };
 
-/** The switch that serves tracking links from the domain (`sending_domains.update`). */
-const Tracking = ({ domain }: { domain: DomainObject }) => {
+/** Intent stays editable; separate tracking keeps mail and website records intact. */
+const DomainUse = ({ domain }: { domain: DomainObject }) => {
   const workspace = useWorkspace();
-  const queryClient = useQueryClient();
-  const action = useAction();
-  const [busy, setBusy] = useState(false);
-  const change = async (on: boolean) => {
-    setBusy(true);
-    await action(
-      on ? "Tracking turned on" : "Tracking turned off",
-      async () => {
-        const saved = await workspace.api.sendingDomains.update(domain.id, {
-          tracking_enabled: on,
-        });
-        queryClient.setQueryData(
-          domainQuery(workspace, domain.id).queryKey,
-          saved
-        );
-      },
-      () => {
-        void queryClient.invalidateQueries({ queryKey: domainsKey(workspace) });
-      }
-    );
-    setBusy(false);
-  };
+  const [editing, setEditing] = useState(false);
   return (
-    <Section title="Tracking links">
-      <Card>
-        <CardContent className="flex flex-col gap-2">
-          <Label className="flex items-center gap-2 text-sm font-semibold">
-            <Switch
-              checked={domain.tracking_enabled}
-              disabled={busy || !canWrite(workspace)}
-              onCheckedChange={(on) => {
-                void change(on);
-              }}
-            />
-            Serve open and click tracking from {domain.hostname}
-          </Label>
-          <p className="text-fg-2 text-sm">
-            The hostname then needs a CNAME to Norbelys (it joins the records
-            above). Once a check finds it, a certificate is issued and the
-            domain becomes Active; only then do campaigns that name it serve
-            their links from it.
-          </p>
-          <p className="text-fg-2 text-sm">
-            Use a separate hostname such as links.example.com for tracking. Keep
-            tracking off on your sending domain: a tracking CNAME cannot share
-            its name with SPF TXT, MX or website records.
-          </p>
-        </CardContent>
-      </Card>
+    <Section title="Domain use">
+      <div className="flex items-center justify-between gap-4">
+        <p>{DOMAIN_USES[domain.purpose]}</p>
+        {canWrite(workspace) ? (
+          <Button onClick={() => setEditing(true)} variant="secondary">
+            <HugeiconsIcon icon={Edit02Icon} />
+            Edit use
+          </Button>
+        ) : null}
+      </div>
+      {domain.tracking_domain ? (
+        <p className="text-fg-2 text-sm">
+          Custom tracking: {domain.tracking_domain.hostname}
+        </p>
+      ) : null}
+      {editing ? (
+        <DomainDialog
+          domain={domain}
+          onOpenChange={setEditing}
+          open={editing}
+        />
+      ) : null}
     </Section>
   );
 };
@@ -164,23 +133,21 @@ const DomainActions = ({ domain }: { domain: DomainObject }) => {
 
 /**
  * One sending domain: its status and what it means, the last check's problem, the DNS records to
- * publish with copy buttons, the tracking switch, and its dates beside them. It reads itself
+ * publish with copy buttons, editable purpose and separate tracking hostname, and its dates beside them. It reads itself
  * again every few seconds while a check runs.
  */
 const DomainPage = () => {
   const workspace = useWorkspace();
   const { domainId } = Route.useParams();
+  const action = useAction();
   const { data: domain } = useSuspenseQuery(domainQuery(workspace, domainId));
-  const hasMailRecords = domain.records.some((record) =>
-    ["spf", "dmarc", "dkim"].includes(record.purpose)
-  );
   return (
     <PageBody>
       <PageHeader
         actions={<DomainActions domain={domain} />}
         compact
         back={{
-          label: "Sending domains",
+          label: "Domains",
           link: {
             params: { slug: workspace.slug },
             to: "/w/$slug/domains",
@@ -198,18 +165,57 @@ const DomainPage = () => {
               DNS provider; proven domains are checked again every day, and
               Verify now checks at once.
             </p>
-            {!hasMailRecords && (
+            {domain.dns_preparation === "preparing" ? (
               <p className="text-fg-2 text-sm">
-                For hosted mail, first publish the ownership TXT record and
-                select Verify now. After ownership is proven, a configured
-                hosted mail service supplies SPF and DMARC instructions; DKIM
-                appears when its signing key is ready. If you use another
-                sending provider, get these records from that provider.
+                Preparing mail records and the public DKIM key. This page
+                refreshes while they become ready.
               </p>
-            )}
+            ) : null}
+            {domain.dns_preparation === "unavailable" ? (
+              <Alert variant="warning">
+                <AlertTitle>Mail records are not ready</AlertTitle>
+                <AlertDescription>
+                  Check the hosted mail configuration, then select Verify now to
+                  retry. If you send through another provider, use its
+                  authentication records.
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            {domain.warnings.map((warning) => (
+              <Alert key={warning} variant="warning">
+                <AlertTitle>Existing DNS configuration</AlertTitle>
+                <AlertDescription>{warning}</AlertDescription>
+              </Alert>
+            ))}
             <DomainRecordsTable records={domain.records} />
           </Section>
-          <Tracking domain={domain} />
+          <DomainUse domain={domain} />
+          {domain.tracking_domain ? (
+            <Section title={`Tracking DNS: ${domain.tracking_domain.hostname}`}>
+              <p className="text-fg-2 text-sm">
+                Publish these records at the tracking hostname. Its verification
+                and certificate are independent of your mail domain.
+              </p>
+              <DomainRecordsTable records={domain.tracking_domain.records} />
+              {canWrite(workspace) ? (
+                <Button
+                  onClick={() =>
+                    action(
+                      "Tracking verification started",
+                      () =>
+                        workspace.api.sendingDomains.verify(
+                          domain.tracking_domain?.id ?? ""
+                        ),
+                      domainsKey(workspace)
+                    )
+                  }
+                  variant="secondary"
+                >
+                  Verify tracking
+                </Button>
+              ) : null}
+            </Section>
+          ) : null}
         </div>
         <DetailsAside>
           <DetailSection
@@ -231,8 +237,8 @@ const DomainPage = () => {
                   : "Not yet",
               },
               {
-                label: "Tracking",
-                value: onOff(domain.tracking_enabled),
+                label: "Use",
+                value: DOMAIN_USES[domain.purpose],
               },
             ]}
             title="Domain"
@@ -256,6 +262,6 @@ export const Route = createFileRoute("/w/$slug/domains/$domainId")({
     context.queryClient.ensureQueryData(
       domainQuery(context.workspace, params.domainId)
     ),
-  head: () => ({ meta: [{ title: "Sending domain · Norbelys" }] }),
+  head: () => ({ meta: [{ title: "Domain · Norbelys" }] }),
   component: DomainPage,
 });

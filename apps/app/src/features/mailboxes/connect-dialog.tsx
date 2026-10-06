@@ -274,21 +274,23 @@ const VerifiedDomains = () => {
   if (!domains.data) {
     return null;
   }
-  const verified = domains.data.data.filter((domain) => domain.verified_at);
+  const verified = domains.data.data.filter(
+    (domain) => domain.status === "verified" && domain.purpose !== "tracking"
+  );
   const link = (
     <Link
       className="text-link hover:text-link-hover"
       params={{ slug: workspace.slug }}
       to="/w/$slug/domains"
     >
-      Sending domains
+      Domains
     </Link>
   );
   if (verified.length === 0) {
     return (
       <p className="text-warning text-xs">
-        No sending domain is verified yet. Add one and publish its records
-        first: {link}.
+        No mail domain is verified yet. Add one and publish its records first:{" "}
+        {link}.
       </p>
     );
   }

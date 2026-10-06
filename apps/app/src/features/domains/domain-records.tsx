@@ -17,6 +17,7 @@ const PURPOSES: Record<string, string> = {
   dkim: "DKIM key of the hosted mail",
   dmarc: "Policy for mail that fails authentication",
   ownership: "Proves you own the domain",
+  mx: "Routes incoming email to the hosted mailbox",
   spf: "Authorizes the hosted mail server",
   tracking: "Serves tracking links",
 };
@@ -47,6 +48,7 @@ export const DomainRecordsTable = ({
         <TableHead className="w-[80px]">Type</TableHead>
         <TableHead>Name</TableHead>
         <TableHead>Value</TableHead>
+        <TableHead>Priority</TableHead>
         <TableHead>Purpose</TableHead>
         <TableHead>Last check</TableHead>
       </TableRow>
@@ -60,6 +62,9 @@ export const DomainRecordsTable = ({
           </TableCell>
           <TableCell className="max-w-[320px]">
             <Value label="value" value={record.value} />
+          </TableCell>
+          <TableCell className="font-mono text-xs">
+            {record.priority ?? "—"}
           </TableCell>
           <TableCell className="text-fg-2">
             {PURPOSES[record.purpose] ?? humanize(record.purpose)}

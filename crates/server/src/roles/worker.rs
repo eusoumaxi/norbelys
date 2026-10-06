@@ -46,6 +46,7 @@ fn registry() -> Result<Registry, jobs::kinds::RegistryError> {
         .register::<webhooks::normalize::Normalize>()?
         .register::<senders::check::ConnectionCheck>()?
         .register::<senders::check::ConnectionCheckDue>()?
+        .register::<senders::domains::DomainPrepare>()?
         .register::<senders::domains::DomainVerify>()?
         .register::<senders::domains::DomainVerifyDue>()?
         .register::<senders::provision::NorbelysProvision>()?

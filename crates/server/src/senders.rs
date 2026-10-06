@@ -81,6 +81,8 @@ pub struct Settings {
     pub tracking_cname_target: String,
     /// The managed MTA's submission host, written into `norbelys` connections.
     pub mta_submission_host: String,
+    /// A stable, configured SPF include; self-hosted installations can choose their own.
+    pub mta_spf_include: Option<String>,
 }
 
 /// Why the Sending area's configuration was refused at start.
@@ -102,12 +104,24 @@ impl Settings {
     /// An OAuth app is half configured, its redirect URL is not `https`, or the HTTP client
     /// cannot be built.
     pub fn from_args(args: &MailArgs) -> Result<Self, SettingsError> {
+        let mta_spf_include = args
+            .mta_spf_include
+            .as_deref()
+            .map(|name| {
+                domains::hostname(name).ok_or_else(|| {
+                    SettingsError::Invalid(
+                        "MTA_SPF_INCLUDE must be a fully qualified hostname".to_owned(),
+                    )
+                })
+            })
+            .transpose()?;
         Ok(Self {
             apps: oauth::Apps::from_args(args)?,
             http: HttpClient::new()?,
             public_webhooks_url: args.public_webhooks_url.clone(),
             tracking_cname_target: args.tracking_cname_target.trim().to_ascii_lowercase(),
             mta_submission_host: args.mta_submission_host.clone(),
+            mta_spf_include,
         })
     }
 
@@ -129,6 +143,7 @@ impl Settings {
             public_webhooks_url: Url::parse("https://hooks.norbelys.test").expect("a URL"),
             tracking_cname_target: "tracking.norbelys.test".to_owned(),
             mta_submission_host: "smtp.norbelys.test".to_owned(),
+            mta_spf_include: None,
         }
     }
 }

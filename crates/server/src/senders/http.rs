@@ -35,7 +35,7 @@ use super::connections::{
     NewConnection, Security, SmtpChange, SmtpSettings, Verified,
 };
 use super::credentials::{ApiCredential, Credential};
-use super::domains::{self, DomainObject, SendingDomainStatus};
+use super::domains::{self, DomainObject, DomainPurpose, SendingDomainStatus};
 use super::identities::IdentityInput;
 use super::oauth::{self, Intent, Pending};
 use super::scopes::{self, LimitChanges, Limits, QuotaScopeObject, WindowUnit};
@@ -562,6 +562,20 @@ async fn create_connection(
         Problem::invalid_field("/account_email", "required", "The account is required.")
     })?;
     let address = EmailAddress::parse(&account_email).ok();
+    // Domain intent is locked before the connection so an edit cannot race a new mailbox.
+    let mut tx = state.db.begin_in(principal.workspace).await?;
+    let managed_purpose = if provider == Provider::Norbelys {
+        let address = address.as_ref().ok_or_else(|| {
+            Problem::invalid_field(
+                "/account_email",
+                "format",
+                "A managed mailbox needs an email address.",
+            )
+        })?;
+        Some(domains::mail_access(&mut tx, principal.workspace, &address.domain()).await?)
+    } else {
+        None
+    };
     let (smtp, credential) = match (provider, body.smtp) {
         (Provider::Norbelys, Some(_)) => {
             return Err(Problem::invalid_field(
@@ -670,7 +684,16 @@ async fn create_connection(
         }
         (_, None) => None,
     };
-    let reads = provider == Provider::Smtp && body.imap.is_some();
+    let imap = if managed_purpose.is_some_and(DomainPurpose::receives) {
+        Some(ImapSettings {
+            host: settings(&state).mta_submission_host.clone(),
+            port: 993,
+            security: ImapSecurity::Tls,
+        })
+    } else {
+        body.imap.map(ImapSettings::from)
+    };
+    let reads = imap.is_some();
     let folders = match requested_folders {
         Some(folders) if !reads && !folders.is_empty() => {
             return Err(Problem::invalid_field(
@@ -683,17 +706,32 @@ async fn create_connection(
         None if reads => vec![INBOX.to_owned()],
         None => Vec::new(),
     };
-    let identities = match (identities.is_empty(), &address) {
+    let mut identities = match (identities.is_empty(), &address) {
         (true, Some(address)) => vec![IdentityInput::address(address.clone(), false)],
         _ => identities,
     };
+    if managed_purpose.is_some_and(|purpose| !purpose.sends()) {
+        if identities
+            .iter()
+            .any(|identity| identity.enabled == Some(true))
+        {
+            return Err(Problem::invalid_field(
+                "/identities",
+                "invalid",
+                "Enable sending on this domain before enabling sender identities.",
+            ));
+        }
+        for identity in &mut identities {
+            identity.enabled = Some(false);
+        }
+    }
     connections::check_paced_relay_identities(provider, interval, &account_email, &identities)?;
     let new = NewConnection {
         provider,
         account_email,
         subject: None,
         smtp: Some(smtp),
-        imap: body.imap.map(ImapSettings::from),
+        imap,
         credential,
         identities,
         folders,
@@ -706,7 +744,6 @@ async fn create_connection(
         quota_scope: body.quota_scope_id,
         created_by: principal.actor.user(),
     };
-    let mut tx = state.db.begin_in(principal.workspace).await?;
     let landed = connections::connect(&mut tx, &state.keys, principal.workspace, &new).await?;
     let connection = connections::read(&mut tx, settings(&state), principal.workspace, landed.id())
         .await?
@@ -904,6 +941,43 @@ async fn update_connection(
     };
     let mut tx = state.db.begin_in(principal.workspace).await?;
     may_manage(&principal, &mut tx, principal.workspace, id).await?;
+    if changes.identities.is_some() || changes.folders.is_some() {
+        let connection = connections::read(&mut tx, settings(&state), principal.workspace, id)
+            .await?
+            .ok_or_else(|| Problem::not_found("connection"))?;
+        if connection.provider == Provider::Norbelys.as_str() {
+            let address = EmailAddress::parse(&connection.account.email).map_err(|_| {
+                Problem::invalid_state("The managed mailbox has an invalid address.")
+            })?;
+            let purpose =
+                domains::mail_access(&mut tx, principal.workspace, &address.domain()).await?;
+            if !purpose.sends()
+                && changes.identities.as_ref().is_some_and(|identities| {
+                    identities
+                        .iter()
+                        .any(|identity| identity.enabled.unwrap_or(true))
+                })
+            {
+                return Err(Problem::invalid_field(
+                    "/identities",
+                    "invalid",
+                    "Enable sending on this domain before enabling sender identities.",
+                ));
+            }
+            if !purpose.receives()
+                && changes
+                    .folders
+                    .as_ref()
+                    .is_some_and(|folders| !folders.is_empty())
+            {
+                return Err(Problem::invalid_field(
+                    "/receiving/folders",
+                    "invalid",
+                    "Enable receiving on this domain before reading its folders.",
+                ));
+            }
+        }
+    }
     let current = connections::lock_version(&mut tx, principal.workspace, id)
         .await?
         .ok_or_else(|| Problem::not_found("connection"))?;
@@ -1444,6 +1518,12 @@ struct CreateDomain {
     /// Serve tracking links from it (its CNAME then points at Norbelys).
     #[garde(skip)]
     tracking_enabled: Option<bool>,
+    /// Use this hostname for tracking, sending, receiving, or both mail directions.
+    #[garde(skip)]
+    purpose: Option<DomainPurpose>,
+    /// Optional separate hostname for custom tracking on a mail domain.
+    #[garde(length(min = 1, max = 254))]
+    tracking_hostname: Option<String>,
 }
 
 /// Create a sending domain, `pending_verification`, with the DNS records to publish.
@@ -1477,11 +1557,12 @@ async fn create_sending_domain(
         )
     })?;
     let mut tx = state.db.begin_in(principal.workspace).await?;
-    let id = domains::create(
+    let id = domains::create_usage(
         &mut tx,
         principal.workspace,
         &hostname,
-        body.tracking_enabled.unwrap_or(false),
+        domains::requested(body.purpose, body.tracking_enabled)?,
+        body.tracking_hostname.as_deref(),
     )
     .await?;
     let domain = domains::read(&mut tx, settings(&state), principal.workspace, id)
@@ -1536,10 +1617,17 @@ async fn retrieve_sending_domain(
 struct UpdateDomain {
     /// Serve tracking links from it; `verify` then checks its CNAME.
     #[garde(skip)]
-    tracking_enabled: bool,
+    tracking_enabled: Option<bool>,
+    /// Change this hostname's use. Disabling mail directions stops those operations while retaining mailbox history.
+    #[garde(skip)]
+    purpose: Option<DomainPurpose>,
+    /// Set a separate tracking hostname; null detaches it without deleting its records or history.
+    #[serde(default, deserialize_with = "nullable")]
+    #[garde(skip)]
+    tracking_hostname: Option<Option<String>>,
 }
 
-/// Update a sending domain: turn tracking on or off.
+/// Update a domain's use and its optional separate tracking hostname.
 #[utoipa::path(
     patch,
     path = "/sending_domains/{id}",
@@ -1572,9 +1660,20 @@ async fn update_sending_domain(
         .await?
         .ok_or_else(|| Problem::not_found("sending domain"))?;
     if_match.check(current)?;
-    if !domains::update(&mut tx, principal.workspace, id, body.tracking_enabled).await? {
-        return Err(Problem::not_found("sending domain"));
-    }
+    let purpose = if body.purpose.is_some() || body.tracking_enabled.is_some() {
+        Some(domains::requested(body.purpose, body.tracking_enabled)?)
+    } else {
+        None
+    };
+    domains::update_usage(
+        &mut tx,
+        settings(&state),
+        principal.workspace,
+        id,
+        purpose,
+        body.tracking_hostname,
+    )
+    .await?;
     let domain = domains::read(&mut tx, settings(&state), principal.workspace, id)
         .await?
         .ok_or_else(|| Problem::not_found("sending domain"))?;

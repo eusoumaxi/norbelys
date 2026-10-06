@@ -1,0 +1,66 @@
+name: Generate public contracts for review
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: prepare-public-contracts
+  cancel-in-progress: false
+jobs:
+  generate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    services:
+      postgres:
+        image: postgres:18.6-trixie@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+        env:
+          POSTGRES_USER: norbelys
+          POSTGRES_PASSWORD: norbelys
+          POSTGRES_DB: norbelys
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U norbelys -d norbelys" --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      DATABASE_URL: postgres://norbelys:norbelys@localhost:5432/norbelys_ci
+      TEST_DATABASE_URL: postgres://norbelys:norbelys@localhost:5432/norbelys_ci
+      NORBELYS_TEST_DATABASE_DISPOSABLE: "1"
+      POSTGRES_VERSION: "18.6"
+      SQLX_OFFLINE: "false"
+      CARGO_INCREMENTAL: "0"
+      CARGO_PROFILE_DEV_DEBUG: "0"
+      CARGO_BUILD_JOBS: "2"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+        with:
+          prefix-key: v1-rust
+          shared-key: database-contracts
+      - uses: ./.github/actions/setup
+      - run: cargo install --locked sqlx-cli@0.9.0 --no-default-features --features rustls,postgres
+      - name: Generate against the disposable installation
+        run: |
+          bun run db:reset
+          cargo sqlx prepare --workspace -- --all-targets --all-features
+          cargo run --locked --package norbelys-server -- admin openapi --public --out crates/server/openapi.json
+          bun run --cwd sdks/typescript generate
+          bun sdks/python/scripts/generate.ts
+          bun apps/docs/scripts/sync-openapi.ts
+          git rev-parse HEAD > contract-source.txt
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: public-contracts
+          include-hidden-files: true
+          path: |
+            .sqlx/
+            crates/server/openapi.json
+            sdks/typescript/src/generated/
+            sdks/python/src/norbelys/_generated/
+            apps/docs/openapi.json
+            contract-source.txt
+          retention-days: 7
+          if-no-files-found: error

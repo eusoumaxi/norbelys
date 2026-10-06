@@ -232,6 +232,9 @@ pub struct MailArgs {
         default_value = "smtp.norbelys.localhost"
     )]
     pub mta_submission_host: String,
+    /// Optional stable SPF include for the configured managed mail installation.
+    #[arg(long, env = "MTA_SPF_INCLUDE")]
+    pub mta_spf_include: Option<String>,
     /// The managed MTA's control API on the private network; without it (and its secret),
     /// `norbelys` connections wait in `verifying`.
     #[arg(long, env = "MTA_CONTROL_URL")]

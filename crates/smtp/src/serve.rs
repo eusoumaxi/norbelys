@@ -118,6 +118,10 @@ pub fn validate(args: &ServeArgs) -> anyhow::Result<()> {
         "NORBELYS_SMTP_DKIM_SELECTOR must be a lowercase DNS label"
     );
     anyhow::ensure!(
+        args.spf_include.as_ref().is_none_or(|name| is_domain(name)),
+        "NORBELYS_SMTP_SPF_INCLUDE must be a lowercase fully qualified hostname"
+    );
+    anyhow::ensure!(
         is_domain(&args.mail_host),
         "NORBELYS_SMTP_MAIL_HOST must be a lowercase fully qualified host name"
     );
@@ -180,6 +184,7 @@ pub async fn run(
         settings: Arc::new(Settings {
             mail_host: args.mail_host.clone(),
             public_ipv4: args.public_ipv4,
+            spf_include: args.spf_include.clone(),
             dkim_selector: args.dkim_selector.clone(),
             evidence_hosts: args
                 .evidence_hosts

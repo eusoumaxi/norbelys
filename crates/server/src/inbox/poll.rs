@@ -717,7 +717,7 @@ impl Reader {
                     reset,
                 })
             }
-            Provider::Smtp => {
+            Provider::Smtp | Provider::Norbelys => {
                 let (Some(smtp), Some(settings)) = (&mailbox.smtp, &mailbox.imap) else {
                     return Err(PollError::Unreadable(
                         "the connection has no IMAP settings to read its mailbox with".to_owned(),
@@ -764,9 +764,9 @@ impl Reader {
                     reset: page.reset,
                 })
             }
-            Provider::Ses | Provider::Sendgrid | Provider::Mailgun | Provider::Norbelys => Err(
-                PollError::Unreadable("a relay has no mailbox to read".to_owned()),
-            ),
+            Provider::Ses | Provider::Sendgrid | Provider::Mailgun => Err(PollError::Unreadable(
+                "a relay has no mailbox to read".to_owned(),
+            )),
         }
     }
 }

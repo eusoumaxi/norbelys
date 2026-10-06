@@ -183,6 +183,9 @@ pub struct ServeArgs {
     /// The MTA's sending address, for SPF.
     #[arg(long, env = "NORBELYS_SMTP_PUBLIC_IPV4")]
     pub public_ipv4: Ipv4Addr,
+    /// Stable DNS name whose SPF authorizes this installation.
+    #[arg(long, env = "NORBELYS_SMTP_SPF_INCLUDE")]
+    pub spf_include: Option<String>,
     /// The DKIM selector of new domains.
     #[arg(long, env = "NORBELYS_SMTP_DKIM_SELECTOR")]
     pub dkim_selector: String,

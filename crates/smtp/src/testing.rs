@@ -71,6 +71,7 @@ pub fn state(dir: &TempDir) -> State {
         settings: Arc::new(Settings {
             mail_host: "mail.example.com".to_owned(),
             public_ipv4: Ipv4Addr::new(192, 0, 2, 10),
+            spf_include: None,
             dkim_selector: "norbelys".to_owned(),
             evidence_hosts: vec!["localhost".to_owned()],
             trigger: dir.join("provision.trigger"),

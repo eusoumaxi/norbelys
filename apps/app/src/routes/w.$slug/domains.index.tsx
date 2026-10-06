@@ -5,14 +5,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { CreateDialog } from "@/components/create-dialog";
 import { Dash, ListTable, NameCell } from "@/components/data-table";
 import { PageBody, PageHeader } from "@/components/page";
 import { CopyIdItem, RowMenu } from "@/components/row-menu";
 import { StatusBadge } from "@/components/status-badge";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { DOMAIN_USES, DomainDialog } from "@/features/domains/domain-dialog";
 import { domainListQuery, domainsKey } from "@/features/domains/queries";
 import { RemoveDomainDialog } from "@/features/domains/remove-domain";
 import { useAction } from "@/lib/actions";
@@ -55,7 +54,7 @@ const DomainsPage = () => {
 
   return (
     <PageBody>
-      <PageHeader actions={addButton} title="Sending domains" />
+      <PageHeader actions={addButton} title="Domains" />
       <ListTable<DomainObject>
         columns={[
           {
@@ -69,14 +68,9 @@ const DomainsPage = () => {
             render: (d) => <StatusBadge kind="domain" value={d.status} />,
           },
           {
-            header: "Tracking",
-            id: "tracking",
-            render: (d) =>
-              d.tracking_enabled ? (
-                <Badge tone="info">Tracking</Badge>
-              ) : (
-                <Dash />
-              ),
+            header: "Use",
+            id: "purpose",
+            render: (d) => DOMAIN_USES[d.purpose],
           },
           { header: "DNS records", id: "records", render: recordsText },
           {
@@ -119,50 +113,22 @@ const DomainsPage = () => {
         empty={{
           action: addButton,
           description:
-            "Verify a domain with a DNS record to send from it with the hosted mail, and to serve tracking links from your own hostname.",
+            "Choose sending, receiving, tracking, or a combination, then publish the records for your choices.",
           icon: Globe02Icon,
           illustration: "domain",
-          title: "No sending domains",
+          title: "No domains",
         }}
         onRowClick={open}
         query={domainListQuery(workspace)}
         rowKey={(d) => d.id}
       />
-      <CreateDialog
-        description="Publish the ownership TXT record, then select Verify now. Hosted mail authentication records appear after ownership is proven."
-        fields={[
-          {
-            label: "Domain",
-            mono: true,
-            name: "hostname",
-            placeholder: "mail.example.com",
-            required: true,
-          },
-          {
-            description:
-              "Use a separate hostname such as links.example.com. Its tracking CNAME cannot share a name with SPF TXT, MX or website records.",
-            label: "Tracking links",
-            name: "tracking_enabled",
-            options: [
-              { label: "Sending domain without tracking", value: "no" },
-              { label: "Also serve tracking links from it", value: "yes" },
-            ],
-          },
-        ]}
-        onOpenChange={setCreating}
-        onSubmit={async (values) => {
-          const domain = await workspace.api.sendingDomains.create({
-            hostname: values.hostname ?? "",
-            tracking_enabled: values.tracking_enabled === "yes",
-          });
-          await queryClient.invalidateQueries({ queryKey: key });
-          setCreating(false);
-          open(domain);
-        }}
-        open={creating}
-        submitLabel="Add domain"
-        title="Add sending domain"
-      />
+      {creating ? (
+        <DomainDialog
+          onOpenChange={setCreating}
+          onSaved={open}
+          open={creating}
+        />
+      ) : null}
       <RemoveDomainDialog
         domain={removing}
         onOpenChange={(next) => {
@@ -177,6 +143,6 @@ const DomainsPage = () => {
 };
 
 export const Route = createFileRoute("/w/$slug/domains/")({
-  head: () => ({ meta: [{ title: "Sending domains · Norbelys" }] }),
+  head: () => ({ meta: [{ title: "Domains · Norbelys" }] }),
   component: DomainsPage,
 });

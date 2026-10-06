@@ -87,7 +87,7 @@ const workspaceNav: NavEntry[][] = [
     {
       children: [
         { icon: MailAccount01Icon, label: "Mailboxes", path: "mailboxes" },
-        { icon: Globe02Icon, label: "Sending domains", path: "domains" },
+        { icon: Globe02Icon, label: "Domains", path: "domains" },
         { icon: DashboardSpeed01Icon, label: "Sending limits", path: "quotas" },
       ],
       icon: Mailbox01Icon,

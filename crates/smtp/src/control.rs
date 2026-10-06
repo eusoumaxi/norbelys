@@ -70,6 +70,8 @@ pub struct Settings {
     pub mail_host: String,
     /// The MTA's sending address.
     pub public_ipv4: Ipv4Addr,
+    /// Stable SPF include, or direct IPv4 publication for an unconfigured self-host.
+    pub spf_include: Option<String>,
     /// The DKIM selector of new domains.
     pub dkim_selector: String,
     /// Host names a route may post evidence to.

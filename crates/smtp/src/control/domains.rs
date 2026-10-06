@@ -1,12 +1,13 @@
 //! Domains: the sending domains the MTA signs for.
 //!
-//! A domain is registered with an ownership token, and nothing else may happen on it until the
+//! A domain is registered with an ownership token and its public DKIM key is prepared.
+//! SMTP and IMAP accounts remain unavailable until the
 //! TXT record `_norbelys.<domain>` in public DNS carries that token: the value the core already
 //! asks the domain's owner to publish, when the core names it (so one record proves the domain
 //! to both), else a random one. That check gates every login, so nobody can send as a domain
 //! they do not control. Once verified, a domain stays verified (removing the record later
-//! changes nothing) and its DKIM key is queued for the provisioning helper, which records the
-//! public key when the key exists.
+//! changes nothing). Preparing the key grants no account access; the provisioning helper
+//! records only the public half when the key exists.
 //!
 //! Customer zones are never written by us: the records are rendered for the customer to
 //! publish, each with a note on merging it with what the zone already holds. They are what
@@ -123,9 +124,12 @@ pub fn render(settings: &Settings, domain: Domain) -> Rendered {
         Record {
             kind: "TXT",
             name: name.clone(),
-            content: format!("v=spf1 ip4:{} ~all", settings.public_ipv4),
+            content: settings.spf_include.as_ref().map_or_else(
+                || format!("v=spf1 ip4:{} ~all", settings.public_ipv4),
+                |name| format!("v=spf1 include:{name} ~all"),
+            ),
             priority: None,
-            note: "Merge the ip4 mechanism into an existing SPF record: a domain has one SPF record",
+            note: "Merge the managed sender mechanism into an existing SPF record: a domain has one SPF record",
         },
         Record {
             kind: "TXT",
@@ -187,7 +191,7 @@ pub async fn create(
         None => format!("norbelys-{}", crypto::random_token(24)?),
     };
     let selector = state.settings.dkim_selector.clone();
-    let (created, domain) = state
+    let (created, domain, queued) = state
         .db
         .call(move |conn| {
             let tx = conn.transaction()?;
@@ -211,10 +215,17 @@ pub async fn create(
             }
             let domain = load(&tx, &name)?
                 .ok_or_else(|| ApiError::Internal("a registered domain vanished".to_owned()))?;
+            let queued = domain.dkim_public.is_none() && !provision::dkim_pending(&tx, &name)?;
+            if queued {
+                provision::enqueue(&tx, &Change::DkimCreate(DkimKey {domain:name.clone(),selector:domain.dkim_selector.clone()}))?;
+            }
             tx.commit()?;
-            Ok::<_, ApiError>((existing.is_none(), domain))
+            Ok::<_, ApiError>((existing.is_none(), domain, queued))
         })
         .await?;
+    if queued {
+        trigger(&state.settings.trigger)?;
+    }
     let status = if created {
         StatusCode::CREATED
     } else {

@@ -54,6 +54,12 @@ fn smtp_login(account: &str, host: &str, port: u16, security: &str) -> Value {
     })
 }
 
+/// Establish the workspace ownership precondition without depending on public DNS.
+async fn verified_mail_domain(test: &TestDb, workspace: &TestWorkspace, name: &str) {
+    sqlx::query("INSERT INTO sending_domains (workspace_id, hostname, status, purpose, ownership_token, ownership_expires_at, verified_at) VALUES ($1, $2, 'verified', 'send', 'test-proof', now() + interval '30 days', now())")
+        .bind(workspace.id.uuid()).bind(name).execute(test.system.pool()).await.unwrap();
+}
+
 /// The ids and addresses of a connection's identities, in order.
 fn identity_ids(connection: &Value) -> Vec<(String, String)> {
     connection["identities"]
@@ -67,6 +73,106 @@ fn identity_ids(connection: &Value) -> Vec<(String, String)> {
             )
         })
         .collect()
+}
+
+/// Domain intent is explicit, tracking uses a separate hostname, and mail ownership
+/// cannot be borrowed from another workspace to provision a managed mailbox.
+#[tokio::test]
+async fn domain_uses_and_managed_mailbox_access_are_workspace_scoped() {
+    let test = TestDb::new().await;
+    let acme = test.workspace("acme").await;
+    let other = test.workspace("other").await;
+    let app = test.app();
+    let domain = app.post("/v1/sending_domains").bearer(&acme.key).idempotency(&key())
+        .json(json!({"hostname":"acme.example","purpose":"send_receive","tracking_hostname":"links.acme.example"})).send().await;
+    assert_eq!(domain.status, StatusCode::CREATED, "{}", domain.json);
+    assert_eq!(domain.json["purpose"], "send_receive");
+    assert_eq!(domain.json["tracking_enabled"], false);
+    assert_eq!(
+        domain.json["tracking_domain"]["hostname"],
+        "links.acme.example"
+    );
+    assert_eq!(
+        domain.json["tracking_domain"]["records"][1]["type"],
+        "CNAME"
+    );
+    let id = domain.json["id"].as_str().unwrap();
+    let unverified = connect(
+        &app,
+        &acme.key,
+        json!({"provider":"norbelys","account_email":"hello@acme.example"}),
+    )
+    .await;
+    assert_eq!(unverified.status, StatusCode::UNPROCESSABLE_ENTITY);
+    sqlx::query("UPDATE sending_domains SET status = 'verified', verified_at = now() WHERE workspace_id = $1 AND hostname = 'acme.example'")
+        .bind(acme.id.uuid()).execute(test.system.pool()).await.unwrap();
+    let stranger = connect(
+        &app,
+        &other.key,
+        json!({"provider":"norbelys","account_email":"hello@acme.example"}),
+    )
+    .await;
+    assert_eq!(stranger.status, StatusCode::UNPROCESSABLE_ENTITY);
+    let mailbox = connect(
+        &app,
+        &acme.key,
+        json!({"provider":"norbelys","account_email":"hello@acme.example"}),
+    )
+    .await;
+    assert_eq!(mailbox.status, StatusCode::CREATED, "{}", mailbox.json);
+    assert_eq!(mailbox.json["imap"]["port"], 993);
+    assert_eq!(mailbox.json["receiving"]["folders"][0]["folder"], "INBOX");
+    let path = format!("/v1/sending_domains/{id}");
+    let receive_only = app
+        .patch(&path)
+        .bearer(&acme.key)
+        .json(json!({"purpose":"receive","tracking_hostname":null}))
+        .send()
+        .await;
+    assert_eq!(receive_only.status, StatusCode::OK, "{}", receive_only.json);
+    assert_eq!(receive_only.json["tracking_domain"], Value::Null);
+    let mailbox_path = format!("/v1/connections/{}", mailbox.json["id"].as_str().unwrap());
+    let saved = app.get(&mailbox_path).bearer(&acme.key).send().await;
+    assert_eq!(saved.json["identities"][0]["enabled"], false);
+    let enabled = app.patch(&mailbox_path).bearer(&acme.key).json(json!({"identities":[{"id":saved.json["identities"][0]["id"],"email":"hello@acme.example","enabled":true}]})).send().await;
+    assert_eq!(enabled.status, StatusCode::UNPROCESSABLE_ENTITY);
+    let send_only = app
+        .patch(&path)
+        .bearer(&acme.key)
+        .json(json!({"purpose":"send"}))
+        .send()
+        .await;
+    assert_eq!(send_only.status, StatusCode::OK, "{}", send_only.json);
+    let stopped = app.get(&mailbox_path).bearer(&acme.key).send().await;
+    assert_eq!(stopped.json["imap"], Value::Null);
+    assert_eq!(stopped.json["receiving"]["folders"][0]["enabled"], false);
+    let conflicting = app
+        .patch(&path)
+        .bearer(&acme.key)
+        .json(json!({"purpose":"tracking"}))
+        .send()
+        .await;
+    assert_eq!(conflicting.status, StatusCode::CONFLICT);
+    let same_hostname = app
+        .patch(&path)
+        .bearer(&acme.key)
+        .json(json!({"tracking_hostname":"acme.example"}))
+        .send()
+        .await;
+    assert_eq!(same_hostname.status, StatusCode::UNPROCESSABLE_ENTITY);
+    let retained = app
+        .get(&format!(
+            "/v1/sending_domains/{}",
+            domain.json["tracking_domain"]["id"].as_str().unwrap()
+        ))
+        .bearer(&acme.key)
+        .send()
+        .await;
+    assert_eq!(
+        retained.status,
+        StatusCode::OK,
+        "detaching tracking preserves its resource"
+    );
 }
 
 /// The first field error's pointer of a `validation_failed` problem.
@@ -118,6 +224,8 @@ fn harness(test: &TestDb, settings: Settings, control: Option<Control>) -> Harne
         .register::<ConnectionCheck>()
         .unwrap()
         .register::<ConnectionCheckDue>()
+        .unwrap()
+        .register::<super::domains::DomainPrepare>()
         .unwrap()
         .register::<DomainVerify>()
         .unwrap()
@@ -887,6 +995,7 @@ async fn relays_are_issued_their_provider_webhook() {
         "the URL never changes"
     );
 
+    verified_mail_domain(&test, &acme, "acme.example").await;
     let norbelys = connect(
         &app,
         &acme.key,
@@ -1180,7 +1289,10 @@ async fn sending_domains_show_their_records_and_are_held_once_verified() {
     assert_eq!(verified.json["status"], "verifying");
     assert_eq!(
         queued(&test, &acme).await,
-        [("domain.verify".to_owned(), Some(id.clone()))]
+        [
+            ("domain.prepare".to_owned(), Some(id.clone())),
+            ("domain.verify".to_owned(), Some(id.clone()))
+        ]
     );
 
     let claimed = create(&globex.key, "links.acme.example").await;
@@ -1639,6 +1751,7 @@ async fn the_managed_mta_provisions_a_login_and_its_evidence_route() {
     .unwrap();
     let runner = harness(&test, Settings::for_tests(), Some(control));
 
+    verified_mail_domain(&test, &acme, "acme.example").await;
     let created = connect(
         &app,
         &acme.key,
@@ -1719,24 +1832,8 @@ async fn the_managed_mta_provisions_a_login_and_its_evidence_route() {
         json!({ "provider": "norbelys", "account_email": "hi@nope.example" }),
     )
     .await;
-    assert_eq!(run_maintenance(&runner).await, ["done"]);
-    let failed = app
-        .get(&format!(
-            "/v1/connections/{}",
-            refused.json["id"].as_str().unwrap()
-        ))
-        .bearer(&acme.key)
-        .send()
-        .await;
-    assert_eq!(failed.json["status"], "failed");
-    assert!(
-        failed.json["status_detail"]
-            .as_str()
-            .unwrap()
-            .contains("not verified"),
-        "{}",
-        failed.json
-    );
+    assert_eq!(refused.status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(pointer(&refused), "/account_email");
 }
 
 /// The opened credential of connection `id` (`con_…`): its password and the API credential sealed

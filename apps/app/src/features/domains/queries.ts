@@ -38,7 +38,12 @@ export const domainQuery = (workspace: Workspace, id: string) =>
       workspace.api.sendingDomains.retrieve(id, { signal }),
     queryKey: [...domainsKey(workspace), "detail", id],
     refetchInterval: (query) =>
-      query.state.data?.status === "verifying" ? CHECKING_POLL_MS : false,
+      query.state.data?.status === "verifying" ||
+      query.state.data?.tracking_domain?.status === "verifying" ||
+      (query.state.data?.dns_preparation === "preparing" &&
+        query.state.dataUpdateCount < 40)
+        ? CHECKING_POLL_MS
+        : false,
   });
 
 /** What the last check found wrong, from the API's untyped `last_error` (`{code, detail, at}`). */

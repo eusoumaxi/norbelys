@@ -227,6 +227,16 @@ pub struct MtaDnsRecord {
     pub note: String,
 }
 
+/// Publication instructions; preparing them does not prove domain ownership.
+pub struct MtaDomainDns {
+    /// SPF instruction to merge into the existing sender policy.
+    pub spf: Option<MtaDnsRecord>,
+    /// Default DMARC instruction; preserve an existing policy.
+    pub dmarc: Option<MtaDnsRecord>,
+    /// Public DKIM TXT owner and value when key preparation has finished.
+    pub dkim: Option<(String, String)>,
+}
+
 /// What the managed MTA knows of a sending domain registered there.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MtaDomain {
@@ -260,6 +270,34 @@ pub enum LoginState {
 }
 
 impl Control {
+    /// Prepare a domain's DNS instructions without granting a login or assuming ownership.
+    ///
+    /// # Errors
+    /// The authenticated control service cannot render the domain.
+    pub async fn prepare_domain(
+        &self,
+        name: &str,
+        ownership: &str,
+    ) -> Result<MtaDomainDns, ControlError> {
+        let (status, body) = self
+            .call(
+                Method::POST,
+                &["v1", "domains"],
+                Some(&json!({ "name":name, "ownership_token":ownership })),
+            )
+            .await?;
+        if !matches!(status, StatusCode::OK | StatusCode::CREATED) {
+            return Err(ControlError::Answer {
+                status: status.as_u16(),
+                detail: detail(status, &body),
+            });
+        }
+        Ok(MtaDomainDns {
+            spf: txt_record(&body, name),
+            dmarc: txt_record(&body, &format!("_dmarc.{name}")),
+            dkim: dkim_record(&body, name),
+        })
+    }
     /// Registers the sending domain `name` on the MTA with `ownership`, the whole value of the
     /// `_norbelys.<name>` TXT record its owner publishes for Norbelys, so the one record proves
     /// the domain to both; asks the MTA to verify it while it is not; and reads the SPF, DMARC
