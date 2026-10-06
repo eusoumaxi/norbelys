@@ -26,6 +26,8 @@ use crate::testing::{DASHBOARD, Reply, Sink, TestApp, TestDb};
 const REDIRECT: &str = "https://client.test/callback";
 /// A PKCE S256 challenge (RFC 7636 appendix B).
 const CHALLENGE: &str = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
+/// A document client id nothing answers on: any fetch fails at once (connection refused).
+const METADATA_CLIENT: &str = "https://127.0.0.1:1/revoke-order.json";
 
 /// `pairs` posted as a form to `path`, as an OAuth client sends it.
 async fn post_form(app: &TestApp, path: &str, pairs: &[(&str, &str)]) -> Reply {
@@ -201,13 +203,11 @@ async fn the_revoke_endpoint_spends_oauth_address_before_a_metadata_fetch() {
     let test = TestDb::new().await;
     let app = test.app();
     // A document client id nothing answers on: any fetch fails at once (connection refused).
-    let client = "https://127.0.0.1:1/revoke-order.json";
     let revoke = |addr: &'static str| {
         let app = &app;
-        let client = client;
         async move {
             let body = url::form_urlencoded::Serializer::new(String::new())
-                .extend_pairs([("token", "nonsense"), ("client_id", client)])
+                .extend_pairs([("token", "nonsense"), ("client_id", METADATA_CLIENT)])
                 .finish();
             app.post("/oauth/revoke")
                 .header("x-forwarded-for", addr)
