@@ -264,7 +264,7 @@ export const DomainDialog = ({
               <ProblemAlert>{problemLine(failure)}</ProblemAlert>
             ) : null}
           </DialogBody>
-          <DialogActions>
+          <DialogActions disabled={busy}>
             <SubmitButton busy={busy} disabled={!ready}>
               {domain ? "Save changes" : "Add domain"}
             </SubmitButton>

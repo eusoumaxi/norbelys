@@ -26,14 +26,18 @@ export const SubmitButton = ({
  */
 export const DialogActions = ({
   children,
+  disabled = false,
   note,
 }: {
   children?: ReactNode;
+  disabled?: boolean;
   note?: ReactNode;
 }) => (
   <DialogFooter>
     {note ? <p className="text-fg-3 mr-auto text-xs">{note}</p> : null}
-    <DialogClose render={<Button variant="secondary" />}>Close</DialogClose>
+    <DialogClose render={<Button disabled={disabled} variant="secondary" />}>
+      Close
+    </DialogClose>
     {children}
   </DialogFooter>
 );
