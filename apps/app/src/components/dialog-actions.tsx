@@ -35,7 +35,7 @@ export const DialogActions = ({
 }) => (
   <DialogFooter>
     {note ? <p className="text-fg-3 mr-auto text-xs">{note}</p> : null}
-    <DialogClose render={<Button disabled={disabled} variant="secondary" />}>
+    <DialogClose disabled={disabled} render={<Button variant="secondary" />}>
       Close
     </DialogClose>
     {children}
