@@ -138,7 +138,14 @@ export const DomainDialog = ({
     (!separateTracking || trackingHostname.trim() !== "");
 
   return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
+    <Dialog
+      onOpenChange={(next) => {
+        if (!busy) {
+          onOpenChange(next);
+        }
+      }}
+      open={open}
+    >
       <DialogContent>
         <form
           className="flex min-h-0 flex-col"
@@ -228,6 +235,7 @@ export const DomainDialog = ({
               <SwitchField
                 checked={customTracking}
                 description="Optional: use another hostname for custom open and click tracking."
+                disabled={busy}
                 id="domain-tracking"
                 label="Add custom tracking links"
                 onChange={setCustomTracking}

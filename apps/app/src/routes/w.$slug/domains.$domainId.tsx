@@ -28,7 +28,7 @@ import { canWrite, useWorkspace } from "@/lib/workspace";
 const STATUS_TEXT: Record<string, string> = {
   active: "Proven, and its tracking hostname serves links.",
   pending_certificate:
-    "Proven, and its tracking CNAME points at Norbelys: its certificate is being issued.",
+    "Ownership and CNAME verified. Checking HTTPS before activating tracking links.",
   pending_verification:
     "Not proven yet: publish the ownership record, then verify.",
   suspended:

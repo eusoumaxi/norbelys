@@ -55,19 +55,26 @@ export const FormField = ({
 export const SwitchField = ({
   checked,
   description,
+  disabled = false,
   id,
   label,
   onChange,
 }: {
   checked: boolean;
   description?: ReactNode;
+  disabled?: boolean;
   id: string;
   label: ReactNode;
   onChange: (checked: boolean) => void;
 }) => (
   <div className="flex flex-col gap-1">
     <Label className="text-fg gap-3 font-normal" htmlFor={id}>
-      <Switch checked={checked} id={id} onCheckedChange={onChange} />
+      <Switch
+        checked={checked}
+        disabled={disabled}
+        id={id}
+        onCheckedChange={onChange}
+      />
       {label}
     </Label>
     {description ? (
