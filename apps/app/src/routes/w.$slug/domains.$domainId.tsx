@@ -108,6 +108,11 @@ const Tracking = ({ domain }: { domain: DomainObject }) => {
             domain becomes Active; only then do campaigns that name it serve
             their links from it.
           </p>
+          <p className="text-fg-2 text-sm">
+            Use a separate hostname such as links.example.com for tracking. Keep
+            tracking off on your sending domain: a tracking CNAME cannot share
+            its name with SPF TXT, MX or website records.
+          </p>
         </CardContent>
       </Card>
     </Section>
@@ -166,6 +171,9 @@ const DomainPage = () => {
   const workspace = useWorkspace();
   const { domainId } = Route.useParams();
   const { data: domain } = useSuspenseQuery(domainQuery(workspace, domainId));
+  const hasMailRecords = domain.records.some((record) =>
+    ["spf", "dmarc", "dkim"].includes(record.purpose)
+  );
   return (
     <PageBody>
       <PageHeader
@@ -190,6 +198,15 @@ const DomainPage = () => {
               DNS provider; proven domains are checked again every day, and
               Verify now checks at once.
             </p>
+            {!hasMailRecords && (
+              <p className="text-fg-2 text-sm">
+                For hosted mail, first publish the ownership TXT record and
+                select Verify now. After ownership is proven, a configured
+                hosted mail service supplies SPF and DMARC instructions; DKIM
+                appears when its signing key is ready. If you use another
+                sending provider, get these records from that provider.
+              </p>
+            )}
             <DomainRecordsTable records={domain.records} />
           </Section>
           <Tracking domain={domain} />

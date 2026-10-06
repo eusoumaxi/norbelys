@@ -129,7 +129,7 @@ const DomainsPage = () => {
         rowKey={(d) => d.id}
       />
       <CreateDialog
-        description="You get the DNS records to publish; the check runs on its own once they resolve."
+        description="Publish the ownership TXT record, then select Verify now. Hosted mail authentication records appear after ownership is proven."
         fields={[
           {
             label: "Domain",
@@ -140,11 +140,11 @@ const DomainsPage = () => {
           },
           {
             description:
-              "Its CNAME then points at Norbelys, and links are served from it once its certificate is issued.",
+              "Use a separate hostname such as links.example.com. Its tracking CNAME cannot share a name with SPF TXT, MX or website records.",
             label: "Tracking links",
             name: "tracking_enabled",
             options: [
-              { label: "Only prove ownership", value: "no" },
+              { label: "Sending domain without tracking", value: "no" },
               { label: "Also serve tracking links from it", value: "yes" },
             ],
           },
