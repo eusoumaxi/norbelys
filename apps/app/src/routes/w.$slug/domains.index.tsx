@@ -19,10 +19,13 @@ import { useWorkspace } from "@/lib/workspace";
 
 /** `2 of 3 found`: the records the last check found. */
 const recordsText = (domain: DomainObject) => {
-  const found = domain.records.filter(
-    (record) => record.status === "verified"
-  ).length;
-  return `${formatCount(found)} of ${formatCount(domain.records.length)} found`;
+  const checked = domain.records.filter(
+    (record) => record.status !== "unchecked"
+  );
+  const found = checked.filter((record) => record.status === "verified").length;
+  return checked.length === 0
+    ? "Not checked"
+    : `${formatCount(found)} of ${formatCount(checked.length)} checked records found`;
 };
 
 /**

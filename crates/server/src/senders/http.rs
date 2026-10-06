@@ -1660,10 +1660,20 @@ async fn update_sending_domain(
         .await?
         .ok_or_else(|| Problem::not_found("sending domain"))?;
     if_match.check(current)?;
-    let purpose = if body.purpose.is_some() || body.tracking_enabled.is_some() {
-        Some(domains::requested(body.purpose, body.tracking_enabled)?)
-    } else {
-        None
+    let purpose = match (body.purpose, body.tracking_enabled) {
+        (Some(purpose), tracking) => Some(domains::requested(Some(purpose), tracking)?),
+        (None, Some(true)) => Some(DomainPurpose::Tracking),
+        (None, Some(false)) => {
+            let domain = domains::read(&mut tx, settings(&state), principal.workspace, id)
+                .await?
+                .ok_or_else(|| Problem::not_found("sending domain"))?;
+            Some(if domain.purpose == DomainPurpose::Tracking {
+                DomainPurpose::Send
+            } else {
+                domain.purpose
+            })
+        }
+        (None, None) => None,
     };
     domains::update_usage(
         &mut tx,

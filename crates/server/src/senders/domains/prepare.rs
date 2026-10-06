@@ -103,15 +103,16 @@ pub(super) fn warnings(
 pub(super) async fn discover(env: &Env, name: &str) -> Result<Value, JobError> {
     let mx = match env.resolver.mx(name).await {
         Ok(answer) => answer
+            .answers()
             .iter()
-            .filter_map(|record| match record {
+            .filter_map(|record| match &record.data {
                 RData::MX(mx) => Some(MailExchange {
                     hostname: mx
-                        .exchange()
+                        .exchange
                         .to_utf8()
                         .trim_end_matches('.')
                         .to_ascii_lowercase(),
-                    priority: mx.preference(),
+                    priority: mx.preference,
                 }),
                 _ => None,
             })
@@ -121,11 +122,17 @@ pub(super) async fn discover(env: &Env, name: &str) -> Result<Value, JobError> {
     };
     let spf = match env.resolver.txt(name).await {
         Ok(answer) => answer
+            .answers()
             .iter()
-            .filter_map(|record| match record {
-                RData::TXT(txt) => String::from_utf8(txt.txt_data().concat())
-                    .ok()
-                    .filter(|text| text.starts_with("v=spf1 ")),
+            .filter_map(|record| match &record.data {
+                RData::TXT(txt) => String::from_utf8(
+                    txt.txt_data
+                        .iter()
+                        .flat_map(|part| part.iter().copied())
+                        .collect(),
+                )
+                .ok()
+                .filter(|text| text.starts_with("v=spf1 ")),
                 _ => None,
             })
             .collect::<Vec<_>>(),
@@ -133,12 +140,19 @@ pub(super) async fn discover(env: &Env, name: &str) -> Result<Value, JobError> {
         Err(error) => return Err(JobError::Failed(format!("TXT lookup for {name}: {error}"))),
     };
     let cname = match env.resolver.cname(name).await {
-        Ok(answer) => answer.iter().find_map(|record| match record {
-            RData::CNAME(target) => {
-                Some(target.to_utf8().trim_end_matches('.').to_ascii_lowercase())
-            }
-            _ => None,
-        }),
+        Ok(answer) => answer
+            .answers()
+            .iter()
+            .find_map(|record| match &record.data {
+                RData::CNAME(target) => Some(
+                    target
+                        .0
+                        .to_ascii()
+                        .trim_end_matches('.')
+                        .to_ascii_lowercase(),
+                ),
+                _ => None,
+            }),
         Err(error) if error.is_nx_domain() || error.is_no_records_found() => None,
         Err(error) => {
             return Err(JobError::Failed(format!(

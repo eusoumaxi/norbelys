@@ -40,6 +40,7 @@ jobs:
         with:
           prefix-key: v1-rust
           shared-key: database-contracts
+          cache-on-failure: true
       - uses: ./.github/actions/setup
       - run: cargo install --locked sqlx-cli@0.9.0 --no-default-features --features rustls,postgres
       - name: Generate against the disposable installation
