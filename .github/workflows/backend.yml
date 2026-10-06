@@ -13,6 +13,12 @@ on:
         type: string
         default: workspace
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Run only the selected backend checks
+        type: choice
+        options: [workspace, gate, database, cli]
+        default: workspace
 
 permissions:
   contents: read
