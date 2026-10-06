@@ -85,6 +85,14 @@ const pinImage = (reference: string) => {
   return imageIdentity(reference, metadata);
 };
 
+const publicationRules = (
+  value: unknown
+): value is { scope: (paths: string[]) => unknown } =>
+  typeof value === "object" &&
+  value !== null &&
+  "scope" in value &&
+  typeof value.scope === "function";
+
 /** A component can retain its image when CI's inputs for it have not changed. */
 export const compatibleImages = async (
   server: string,
@@ -102,14 +110,11 @@ export const compatibleImages = async (
       cwd: checkout,
       stdio: "ignore",
     }).status === 0;
-  const retained = ancestor(app, server)
-    ? "app"
-    : ancestor(server, app)
-      ? "server"
-      : null;
-  if (!retained) {
+  const appRetained = ancestor(app, server);
+  if (!appRetained && !ancestor(server, app)) {
     return false;
   }
+  const retained = appRetained ? "app" : "server";
   const changed = spawnSync(
     "git",
     ["diff", "--name-only", "--no-renames", "-z", server, app],
@@ -121,13 +126,6 @@ export const compatibleImages = async (
   const module: unknown = await import(
     new URL("../.github/scripts/release-scope.mjs", import.meta.url).href
   );
-  const publicationRules = (
-    value: unknown
-  ): value is { scope: (paths: string[]) => unknown } =>
-    typeof value === "object" &&
-    value !== null &&
-    "scope" in value &&
-    typeof value.scope === "function";
   if (!publicationRules(module)) {
     throw new Error("The installation needs its image publication rules.");
   }
