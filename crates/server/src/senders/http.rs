@@ -116,7 +116,7 @@ struct SmtpAuthorization {
     responses(
         (status = 200, description = "The tenant-scoped SMTP authorization.", body = SmtpAuthorization),
         (status = 401, description = "No valid credential."),
-        (status = 403, description = "A live API key with messages:write is required."),
+        (status = 403, description = "A live API key with messages:send is required."),
         (status = 404, description = "No active sending service for this domain."),
         (status = 409, description = "The domain is not enabled for sending."),
         (status = 422, description = "The domain is invalid."),
@@ -128,7 +128,7 @@ async fn authenticate_smtp(
     State(state): State<AppState>,
     Query(query): Query<SmtpAuthQuery>,
 ) -> ApiResult<Response> {
-    principal.require(Scope::MessagesWrite)?;
+    principal.require(Scope::MessagesSend)?;
     if principal.credential != crate::identity::authority::Credential::ApiKey || principal.test_mode
     {
         return Err(Problem::forbidden(

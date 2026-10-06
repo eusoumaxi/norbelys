@@ -10682,7 +10682,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description A live API key with messages:write is required. */
+            /** @description A live API key with messages:send is required. */
             403: {
                 headers: {
                     [name: string]: unknown;

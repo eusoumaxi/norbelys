@@ -18701,7 +18701,7 @@
                 }
               }
             },
-            "description": "A live API key with messages:write is required."
+            "description": "A live API key with messages:send is required."
           },
           "404": {
             "content": {
