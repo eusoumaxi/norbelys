@@ -358,12 +358,12 @@ const sequenceFilter = (value: Value, filter: Filter): Value => {
   if (value.kind !== "value") {
     return value;
   }
-  const items: readonly unknown[] | null =
-    typeof value.value === "string"
-      ? [...value.value]
-      : Array.isArray(value.value)
-        ? value.value
-        : null;
+  let items: readonly unknown[] | null = null;
+  if (typeof value.value === "string") {
+    items = [...value.value];
+  } else if (Array.isArray(value.value)) {
+    items = value.value;
+  }
   return items === null
     ? { kind: "unknown" }
     : { kind: "value", value: items.at(filter.name === "first" ? 0 : -1) };

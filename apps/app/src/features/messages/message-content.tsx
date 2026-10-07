@@ -1,5 +1,6 @@
 import type { MessageContent, MessageObject } from "@norbelys/sdk";
 import { useQuery } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 
 import { Problem } from "@/components/problem";
 import { Button } from "@/components/ui/button";
@@ -39,9 +40,8 @@ const Source = ({ text }: { text: string }) => (
 
 /** Never re-evaluate templates here: these are the MIME parts retained for this message. */
 const StoredBody = ({ content }: { content: MessageContent }) => {
-  const html = content.html;
-  const text = content.text;
-  const hasBody = html != null || text != null;
+  const { html = null, text = null } = content;
+  const hasBody = html !== null || text !== null;
   if (!hasBody) {
     return (
       <p className="text-fg-3 py-4 text-sm">
@@ -52,29 +52,29 @@ const StoredBody = ({ content }: { content: MessageContent }) => {
   }
   return (
     <Tabs
-      defaultValue={html == null ? "text" : "email"}
-      key={html == null ? "text" : "html"}
+      defaultValue={html === null ? "text" : "email"}
+      key={html === null ? "text" : "html"}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <TabsList aria-label="Message content">
-          {html == null ? null : <TabsTab value="email">Email</TabsTab>}
-          {html == null ? null : <TabsTab value="html">HTML source</TabsTab>}
-          {text == null ? null : <TabsTab value="text">Plain text</TabsTab>}
+          {html === null ? null : <TabsTab value="email">Email</TabsTab>}
+          {html === null ? null : <TabsTab value="html">HTML source</TabsTab>}
+          {text === null ? null : <TabsTab value="text">Plain text</TabsTab>}
           {content.headers.length > 0 ? (
             <TabsTab value="headers">Headers</TabsTab>
           ) : null}
         </TabsList>
         <Button
           onClick={() =>
-            downloadBody(content.id, html ?? text ?? "", html != null)
+            downloadBody(content.id, html ?? text ?? "", html !== null)
           }
           size="s"
           variant="secondary"
         >
-          Download {html == null ? "text" : "HTML"}
+          Download {html === null ? "text" : "HTML"}
         </Button>
       </div>
-      {html == null ? null : (
+      {html === null ? null : (
         <>
           <TabsPanel value="email">
             <p className="text-fg-3 mb-3 text-xs">
@@ -88,7 +88,7 @@ const StoredBody = ({ content }: { content: MessageContent }) => {
           </TabsPanel>
         </>
       )}
-      {text == null ? null : (
+      {text === null ? null : (
         <TabsPanel value="text">
           <Source text={text} />
         </TabsPanel>
@@ -116,6 +116,28 @@ export const MessageContentCard = ({ message }: { message: MessageObject }) => {
     ])
   );
   const content = query.data;
+  let body: ReactNode = <Skeleton className="h-40" />;
+  if (query.isError) {
+    body = (
+      <Problem
+        error={query.error}
+        onRetry={() => {
+          void query.refetch();
+        }}
+      />
+    );
+  } else if (content) {
+    body = (
+      <>
+        {content.truncated ? (
+          <p className="text-warning-fg mb-3 text-sm">
+            Only part of this message was retained.
+          </p>
+        ) : null}
+        <StoredBody content={content} />
+      </>
+    );
+  }
   return (
     <Card>
       <CardHeader>
@@ -133,32 +155,12 @@ export const MessageContentCard = ({ message }: { message: MessageObject }) => {
             void query.refetch();
           }}
           size="s"
-          variant="ghost"
+          variant="tertiary"
         >
           Refresh
         </Button>
       </CardHeader>
-      <CardContent>
-        {query.isError ? (
-          <Problem
-            error={query.error}
-            onRetry={() => {
-              void query.refetch();
-            }}
-          />
-        ) : content ? (
-          <>
-            {content.truncated ? (
-              <p className="text-warning mb-3 text-sm">
-                Only part of this message was retained.
-              </p>
-            ) : null}
-            <StoredBody content={content} />
-          </>
-        ) : (
-          <Skeleton className="h-40" />
-        )}
-      </CardContent>
+      <CardContent>{body}</CardContent>
     </Card>
   );
 };

@@ -256,7 +256,7 @@ const passiveMail = (html: string): string => {
     element.remove();
   }
   for (const element of template.content.querySelectorAll("*")) {
-    for (const attribute of [...element.attributes]) {
+    for (const name of element.getAttributeNames()) {
       if (
         [
           "href",
@@ -265,10 +265,10 @@ const passiveMail = (html: string): string => {
           "formaction",
           "ping",
           "autofocus",
-        ].includes(attribute.name) ||
-        attribute.name.startsWith("on")
+        ].includes(name) ||
+        name.startsWith("on")
       ) {
-        element.removeAttribute(attribute.name);
+        element.removeAttribute(name);
       }
     }
   }
