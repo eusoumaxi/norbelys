@@ -37,6 +37,21 @@ async fn policy_reports_distinguish_pending_recovered_and_terminal_messages() {
     let failed = test
         .campaign_message(workspace.id, campaign, &sender, "failed@example.test", 0)
         .await;
+    // A recovered delivery must be visible even beyond the first 20 embedded history events.
+    for number in 0..25 {
+        sqlx::query(
+            "INSERT INTO delivery_events (workspace_id, message_id, recipient_ref, source,
+                 source_event_id, kind, category, diagnostic, confidence, observed_at)
+             VALUES ($1, $2, 'unknown', 'provider_webhook', $3, 'deferred', 'policy',
+                 'JFE050005', 'authenticated', now() - interval '1 minute')",
+        )
+        .bind(workspace.id.uuid())
+        .bind(recovered.uuid())
+        .bind(format!("repeated-policy-{number}"))
+        .execute(test.system.pool())
+        .await
+        .unwrap();
+    }
     for (message, kind, category, diagnostic) in [
         (pending, "deferred", "policy", "JFE050005"),
         (pending, "deferred", "policy", "JFE050005"),
@@ -62,6 +77,22 @@ async fn policy_reports_distinguish_pending_recovered_and_terminal_messages() {
         .unwrap();
     }
     let app = test.app();
+    for (message, status) in [
+        (pending, "blocked"),
+        (recovered, "delivered"),
+        (failed, "failed"),
+    ] {
+        let read = app
+            .get(&format!("/v1/messages/{message}"))
+            .bearer(&workspace.key)
+            .send()
+            .await;
+        assert_eq!(read.status, http::StatusCode::OK, "{}", read.json);
+        assert_eq!(read.json["delivery"]["status"], status);
+        if message == recovered {
+            assert_eq!(read.json["events"]["has_more"], true);
+        }
+    }
     let campaign = crate::domain::ids::Id::<crate::domain::ids::Campaign>::from_uuid(campaign);
     let url = format!("/v1/analytics?campaign_id={campaign}&group_by=variant&include_policy=true");
     let read = app.get(&url).bearer(&workspace.key).send().await;

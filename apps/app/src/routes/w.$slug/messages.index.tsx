@@ -7,13 +7,13 @@ import { z } from "zod";
 
 import { ListTable } from "@/components/data-table";
 import { PageBody, PageHeader } from "@/components/page";
-import { StatusBadge } from "@/components/status-badge";
 import { RelativeTime } from "@/components/time";
 import { Button } from "@/components/ui/button";
 import {
   isFiltered,
   MessageFilterBar,
 } from "@/features/messages/message-filters";
+import { MessageStatus } from "@/features/messages/message-status";
 import { MESSAGE_STATES, messageListQuery } from "@/features/messages/queries";
 import type { MessageFilters } from "@/features/messages/queries";
 import { formatSubject, humanize } from "@/lib/format";
@@ -106,9 +106,7 @@ const MessagesPage = () => {
               id: "from",
             },
             {
-              render: (message) => (
-                <StatusBadge kind="message" value={message.state} />
-              ),
+              render: (message) => <MessageStatus message={message} />,
               header: "Status",
               id: "state",
             },

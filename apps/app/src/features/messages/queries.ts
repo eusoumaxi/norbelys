@@ -1,3 +1,4 @@
+import type { MessageObject } from "@norbelys/sdk";
 import { queryOptions } from "@tanstack/react-query";
 
 import { listQuery } from "@/components/data-table";
@@ -36,10 +37,18 @@ export const messagesKey = (workspace: Workspace) =>
 export const messageListQuery = (
   workspace: Workspace,
   filters: MessageFilters
-) =>
-  listQuery([...messagesKey(workspace), "list", filters], (cursor, signal) =>
+) => ({
+  ...listQuery([...messagesKey(workspace), "list", filters], (cursor, signal) =>
     workspace.api.messages.list({ ...filters, cursor, limit: 50 }, { signal })
-  );
+  ),
+  refetchInterval: 30_000,
+});
+
+/** Accepted messages can still acquire downstream policy, delivery or bounce reports. */
+const awaitingOutcome = (message: MessageObject): boolean =>
+  ["queued", "claimed", "in_flight", "uncertain"].includes(message.state) ||
+  (message.state === "sent" &&
+    !["delivered", "failed"].includes(message.delivery?.status ?? "pending"));
 
 /** One message with its latest attempts, its first delivery events and its holds. */
 export const messageQuery = (workspace: Workspace, id: string) =>
@@ -47,10 +56,7 @@ export const messageQuery = (workspace: Workspace, id: string) =>
     queryKey: [...messagesKey(workspace), "detail", id],
     queryFn: ({ signal }) => workspace.api.messages.retrieve(id, { signal }),
     refetchInterval: (query) =>
-      query.state.data &&
-      ["queued", "claimed", "in_flight"].includes(query.state.data.state)
-        ? 15_000
-        : false,
+      query.state.data && awaitingOutcome(query.state.data) ? 30_000 : false,
   });
 
 /** The stored body, refreshed when a new attempt may have prepared different content. */

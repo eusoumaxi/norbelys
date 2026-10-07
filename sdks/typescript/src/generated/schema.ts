@@ -2013,6 +2013,26 @@ export interface components {
             webhook_endpoint_id: components["schemas"]["Id_WebhookEndpoint"];
         };
         /**
+         * @description Current delivery outcome, separate from whether a sending provider accepted the message.
+         * @enum {string}
+         */
+        DeliveryStatus: "pending" | "blocked" | "delivered" | "failed" | "partial";
+        /**
+         * @description Distinct envelope recipients. The four counts are mutually exclusive; a confirmed delivery
+         *     takes precedence over earlier blocks or failures. Delivery does not imply inbox placement.
+         */
+        DeliverySummary: {
+            /** Format: int64 */
+            blocked: number;
+            /** Format: int64 */
+            delivered: number;
+            /** Format: int64 */
+            failed: number;
+            status: components["schemas"]["DeliveryStatus"];
+            /** Format: int64 */
+            unconfirmed: number;
+        };
+        /**
          * @description Which side of a conversation supplied a message, shared by thread and history reads.
          * @enum {string}
          */
@@ -2913,6 +2933,8 @@ export interface components {
             cc: string[];
             connection_id: components["schemas"]["Id_Connection"];
             created_at: components["schemas"]["Timestamp"];
+            /** @description Current recipient delivery evidence, independent of the submission lifecycle in `state`. */
+            delivery: components["schemas"]["DeliverySummary"];
             enrollment_id?: components["schemas"]["Id_Enrollment"] | null;
             events: components["schemas"]["MessageEvents"];
             expires_at?: components["schemas"]["Timestamp"] | null;
@@ -4781,6 +4803,8 @@ export type Decision = components['schemas']['Decision'];
 export type DeliveryEventKind = components['schemas']['DeliveryEventKind'];
 export type DeliveryEventObject = components['schemas']['DeliveryEventObject'];
 export type DeliveryObject = components['schemas']['DeliveryObject'];
+export type DeliveryStatus = components['schemas']['DeliveryStatus'];
+export type DeliverySummary = components['schemas']['DeliverySummary'];
 export type Direction = components['schemas']['Direction'];
 export type DnsPreparation = components['schemas']['DnsPreparation'];
 export type DnsRecord = components['schemas']['DnsRecord'];

@@ -277,6 +277,8 @@ pub enum HoldResolution {
 #[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct MessageObject {
     pub id: Id<Message>,
+    /// Current recipient delivery evidence, independent of the submission lifecycle in `state`.
+    pub delivery: super::visibility::DeliverySummary,
     /// What the message is. New values may be added.
     #[schema(value_type = MessageKind)]
     pub kind: String,
@@ -629,6 +631,7 @@ async fn with_children(
         events.entry(message.uuid()).or_default().push(row.into());
     }
     let mut holds: HashMap<Uuid, Vec<HoldObject>> = HashMap::new();
+    let delivery = super::visibility::read(tx, workspace, &ids).await?;
     for row in sqlx::query!(
         r#"SELECT message_id, email, reason, observed_at AS "observed_at: Timestamp",
                   review_after AS "review_after: Timestamp", resolved_at AS "resolved_at: Timestamp", resolution
@@ -675,6 +678,15 @@ async fn with_children(
                     .map(str::to_owned),
             };
             MessageObject {
+                delivery: super::visibility::summarize(
+                    &row.to_addresses
+                        .iter()
+                        .chain(&row.cc)
+                        .chain(&row.bcc)
+                        .cloned()
+                        .collect::<Vec<_>>(),
+                    delivery.get(&id).map(Vec::as_slice).unwrap_or_default(),
+                ),
                 attempts: Attempts {
                     has_more: attempts_count > CHILDREN,
                     data: attempts,

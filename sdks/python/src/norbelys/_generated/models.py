@@ -361,6 +361,16 @@ DeliveryObject = TypedDict("DeliveryObject", {
     "webhook_endpoint_id": Required["Id_WebhookEndpoint"],
 })
 
+DeliveryStatus: TypeAlias = Literal["pending", "blocked", "delivered", "failed", "partial"]
+
+DeliverySummary = TypedDict("DeliverySummary", {
+    "blocked": Required[int],
+    "delivered": Required[int],
+    "failed": Required[int],
+    "status": Required["DeliveryStatus"],
+    "unconfirmed": Required[int],
+})
+
 Direction: TypeAlias = Union[Literal["outbound", "inbound"], str]
 
 DnsPreparation: TypeAlias = Union[Literal["preparing", "ready", "unavailable"], str]
@@ -852,6 +862,7 @@ MessageObject = TypedDict("MessageObject", {
     "cc": Required[list[str]],
     "connection_id": Required["Id_Connection"],
     "created_at": Required["Timestamp"],
+    "delivery": Required["DeliverySummary"],
     "enrollment_id": NotRequired[Union["Id_Enrollment", None]],
     "events": Required["MessageEvents"],
     "expires_at": NotRequired[Union["Timestamp", None]],

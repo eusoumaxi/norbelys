@@ -2039,6 +2039,49 @@
         ],
         "type": "object"
       },
+      "DeliveryStatus": {
+        "description": "Current delivery outcome, separate from whether a sending provider accepted the message.",
+        "enum": [
+          "pending",
+          "blocked",
+          "delivered",
+          "failed",
+          "partial"
+        ],
+        "type": "string"
+      },
+      "DeliverySummary": {
+        "description": "Distinct envelope recipients. The four counts are mutually exclusive; a confirmed delivery\ntakes precedence over earlier blocks or failures. Delivery does not imply inbox placement.",
+        "properties": {
+          "blocked": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "delivered": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "failed": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DeliveryStatus"
+          },
+          "unconfirmed": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "status",
+          "delivered",
+          "failed",
+          "blocked",
+          "unconfirmed"
+        ],
+        "type": "object"
+      },
       "Direction": {
         "description": "Which side of a conversation supplied a message, shared by thread and history reads.",
         "enum": [
@@ -4529,6 +4572,10 @@
           "created_at": {
             "$ref": "#/components/schemas/Timestamp"
           },
+          "delivery": {
+            "$ref": "#/components/schemas/DeliverySummary",
+            "description": "Current recipient delivery evidence, independent of the submission lifecycle in `state`."
+          },
           "enrollment_id": {
             "oneOf": [
               {
@@ -4687,6 +4734,7 @@
         },
         "required": [
           "id",
+          "delivery",
           "kind",
           "state",
           "from",

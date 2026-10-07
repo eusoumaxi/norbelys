@@ -6,13 +6,13 @@ import { Copyable } from "@/components/copy";
 import { DetailSection, DetailsAside } from "@/components/details";
 import type { DetailRow } from "@/components/details";
 import { PageBody, PageHeader } from "@/components/page";
-import { StatusBadge } from "@/components/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { DeliveryHistory } from "@/features/messages/delivery-history";
 import { MessageActions } from "@/features/messages/message-actions";
 import { MessageContentCard } from "@/features/messages/message-content";
 import { AttemptsCard, HoldsCard } from "@/features/messages/message-sections";
+import { MessageStatus } from "@/features/messages/message-status";
 import { messageQuery } from "@/features/messages/queries";
 import {
   CampaignLink,
@@ -49,10 +49,18 @@ const timeRows = (message: MessageObject): DetailRow[] => [
     ? [{ label: "Expires", value: formatTimestamp(message.expires_at) }]
     : []),
   {
-    label: "Sent",
+    label: "Provider accepted",
     value: message.sent_at ? formatTimestamp(message.sent_at) : "Not yet",
   },
   { label: "Attempts", value: String(message.attempts_count) },
+  ...(message.delivery
+    ? [
+        { label: "Delivered", value: String(message.delivery.delivered) },
+        { label: "Blocked", value: String(message.delivery.blocked) },
+        { label: "Failed", value: String(message.delivery.failed) },
+        { label: "Unconfirmed", value: String(message.delivery.unconfirmed) },
+      ]
+    : []),
 ];
 
 /** What the message tracks, frozen when it was created. */
@@ -156,12 +164,22 @@ const MessagePage = () => {
             to: "/w/$slug/messages",
           },
         }}
-        subtitle={<StatusBadge kind="message" value={message.state} />}
+        subtitle={<MessageStatus message={message} />}
         title={formatSubject(message.subject)}
       />
       <div className="flex flex-col gap-8 lg:flex-row">
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           {message.state === "uncertain" ? <UncertainNotice /> : null}
+          {message.delivery?.status === "blocked" ? (
+            <Card>
+              <CardContent className="text-warning text-sm">
+                The provider blocked delivery to {message.delivery.blocked}{" "}
+                recipient(s). Sending-provider acceptance does not confirm
+                recipient delivery. The original provider response is retained
+                in Delivery history.
+              </CardContent>
+            </Card>
+          ) : null}
           {message.status_detail ? (
             <Card>
               <CardContent className="text-fg-2 text-sm">
