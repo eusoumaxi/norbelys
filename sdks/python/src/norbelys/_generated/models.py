@@ -1583,7 +1583,7 @@ AnalyticsRetrieveQuery = TypedDict("AnalyticsRetrieveQuery", {
     "from": NotRequired[str],
     "to": NotRequired[str],
     "group_by": NotRequired["GroupBy"],
-    "include_policy": NotRequired[Union[bool, None]],
+    "include_policy": NotRequired[bool],
 })
 
 CampaignsListQuery = TypedDict("CampaignsListQuery", {

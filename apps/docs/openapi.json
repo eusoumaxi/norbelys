@@ -10286,10 +10286,7 @@
             "name": "include_policy",
             "required": false,
             "schema": {
-              "type": [
-                "boolean",
-                "null"
-              ]
+              "type": "boolean"
             }
           }
         ],

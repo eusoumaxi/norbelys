@@ -5019,7 +5019,7 @@ export interface operations {
                 /** @description `day`, `campaign`, `step` or `variant`. */
                 group_by?: components["schemas"]["GroupBy"];
                 /** @description Include retained policy evidence for one campaign; requires campaign_id. */
-                include_policy?: boolean | null;
+                include_policy?: boolean;
             };
             header?: never;
             path?: never;
