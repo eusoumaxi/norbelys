@@ -361,7 +361,7 @@ DeliveryObject = TypedDict("DeliveryObject", {
     "webhook_endpoint_id": Required["Id_WebhookEndpoint"],
 })
 
-DeliveryStatus: TypeAlias = Literal["pending", "blocked", "delivered", "failed", "partial"]
+DeliveryStatus: TypeAlias = Union[Literal["pending", "blocked", "delivered", "failed", "partial"], str]
 
 DeliverySummary = TypedDict("DeliverySummary", {
     "blocked": Required[int],

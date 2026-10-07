@@ -2048,7 +2048,8 @@
           "failed",
           "partial"
         ],
-        "type": "string"
+        "type": "string",
+        "x-open-enum": true
       },
       "DeliverySummary": {
         "description": "Distinct envelope recipients. The four counts are mutually exclusive; a confirmed delivery\ntakes precedence over earlier blocks or failures. Delivery does not imply inbox placement.",
