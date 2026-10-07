@@ -3486,6 +3486,8 @@ export interface components {
                 cc: string[];
                 connection_id: components["schemas"]["Id_Connection"];
                 created_at: components["schemas"]["Timestamp"];
+                /** @description Current recipient delivery evidence, independent of the submission lifecycle in `state`. */
+                delivery: components["schemas"]["DeliverySummary"];
                 enrollment_id?: components["schemas"]["Id_Enrollment"] | null;
                 events: components["schemas"]["MessageEvents"];
                 expires_at?: components["schemas"]["Timestamp"] | null;

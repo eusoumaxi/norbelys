@@ -6533,6 +6533,10 @@
                 "created_at": {
                   "$ref": "#/components/schemas/Timestamp"
                 },
+                "delivery": {
+                  "$ref": "#/components/schemas/DeliverySummary",
+                  "description": "Current recipient delivery evidence, independent of the submission lifecycle in `state`."
+                },
                 "enrollment_id": {
                   "oneOf": [
                     {
@@ -6691,6 +6695,7 @@
               },
               "required": [
                 "id",
+                "delivery",
                 "kind",
                 "state",
                 "from",
