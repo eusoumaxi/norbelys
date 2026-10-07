@@ -216,6 +216,8 @@ pub struct StopRulesObject {
 #[derive(Debug, Clone, Default, Serialize, utoipa::ToSchema)]
 pub struct StatsObject {
     pub sent: i64,
+    /// Messages with confirmed delivery to the recipient's server, not inbox placement.
+    pub delivered: i64,
     pub opened: i64,
     pub clicked: i64,
     pub replied: i64,
@@ -418,6 +420,7 @@ async fn objects(
                 campaign,
                 StatsObject {
                     sent: counters.sent,
+                    delivered: counters.delivered,
                     opened: counters.opened,
                     clicked: counters.clicked,
                     replied: counters.replied,

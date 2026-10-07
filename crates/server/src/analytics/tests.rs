@@ -29,13 +29,13 @@ async fn policy_reports_distinguish_pending_recovered_and_terminal_messages() {
         .await;
     let campaign = test.campaign(workspace.id, &sender, None).await;
     let pending = test
-        .campaign_message(workspace.id, campaign, &sender, "pending@example.test")
+        .campaign_message(workspace.id, campaign, &sender, "pending@example.test", 0)
         .await;
     let recovered = test
-        .campaign_message(workspace.id, campaign, &sender, "recovered@example.test")
+        .campaign_message(workspace.id, campaign, &sender, "recovered@example.test", 0)
         .await;
     let failed = test
-        .campaign_message(workspace.id, campaign, &sender, "failed@example.test")
+        .campaign_message(workspace.id, campaign, &sender, "failed@example.test", 0)
         .await;
     for (message, kind, category, diagnostic) in [
         (pending, "deferred", "policy", "JFE050005"),
@@ -62,6 +62,7 @@ async fn policy_reports_distinguish_pending_recovered_and_terminal_messages() {
         .unwrap();
     }
     let app = test.app();
+    let campaign = crate::domain::ids::Id::<crate::domain::ids::Campaign>::from_uuid(campaign);
     let url = format!("/v1/analytics?campaign_id={campaign}&group_by=variant&include_policy=true");
     let read = app.get(&url).bearer(&workspace.key).send().await;
     assert_eq!(read.status, http::StatusCode::OK, "{}", read.json);

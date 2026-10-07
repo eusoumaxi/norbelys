@@ -4127,6 +4127,11 @@ export interface components {
             /** Format: int64 */
             clicked: number;
             computed_at?: components["schemas"]["Timestamp"] | null;
+            /**
+             * Format: int64
+             * @description Messages with confirmed delivery to the recipient's server, not inbox placement.
+             */
+            delivered: number;
             /** Format: int64 */
             opened: number;
             /** Format: int64 */

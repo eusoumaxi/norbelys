@@ -8415,6 +8415,11 @@
               }
             ]
           },
+          "delivered": {
+            "description": "Messages with confirmed delivery to the recipient's server, not inbox placement.",
+            "format": "int64",
+            "type": "integer"
+          },
           "opened": {
             "format": "int64",
             "type": "integer"
@@ -8434,6 +8439,7 @@
         },
         "required": [
           "sent",
+          "delivered",
           "opened",
           "clicked",
           "replied",

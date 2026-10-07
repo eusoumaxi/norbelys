@@ -1234,6 +1234,7 @@ StatsObject = TypedDict("StatsObject", {
     "bounced": Required[int],
     "clicked": Required[int],
     "computed_at": NotRequired[Union["Timestamp", None]],
+    "delivered": Required[int],
     "opened": Required[int],
     "replied": Required[int],
     "sent": Required[int],
