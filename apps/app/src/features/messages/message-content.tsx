@@ -130,7 +130,7 @@ export const MessageContentCard = ({ message }: { message: MessageObject }) => {
     body = (
       <>
         {content.truncated ? (
-          <p className="text-warning-fg mb-3 text-sm">
+          <p className="text-warning mb-3 text-sm">
             Only part of this message was retained.
           </p>
         ) : null}

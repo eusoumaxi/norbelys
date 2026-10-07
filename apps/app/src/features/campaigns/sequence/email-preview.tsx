@@ -192,7 +192,7 @@ export const EmailPreview = ({
         />
       </div>
       {unsupported.length > 0 ? (
-        <output className="text-warning-fg text-xs">
+        <output className="text-warning text-xs">
           This preview cannot evaluate all template syntax. The remaining tags
           are not the final email. Inspect a prepared message under Messages to
           see its saved content.
