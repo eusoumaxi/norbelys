@@ -7426,7 +7426,8 @@
             "items": {
               "$ref": "#/components/schemas/PolicyGroup"
             },
-            "type": "array"
+            "type": "array",
+            "maxItems": 2500
           },
           "has_more": {
             "type": "boolean"

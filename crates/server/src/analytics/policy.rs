@@ -46,6 +46,7 @@ pub struct PolicyGroup {
 #[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct PolicyReport {
     pub totals: PolicyCounts,
+    #[schema(max_items = 2500)]
     pub data: Vec<PolicyGroup>,
     pub has_more: bool,
     pub computed_at: Timestamp,
