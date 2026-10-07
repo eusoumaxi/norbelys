@@ -714,6 +714,65 @@ async fn start_and_pause_follow_the_lifecycle() {
     );
 }
 
+/// Choosing a launch after enrolling an audience defers pending people, preserves later
+/// cooldowns, and lets materialisation activate the campaign without creating early mail.
+#[tokio::test]
+async fn choosing_a_future_start_defers_existing_enrollments() {
+    let f = fixture("cmp-future-start").await;
+    let ids = people(&f, &["ada", "bob"], "future.example").await;
+    let id = campaign(&f, two_steps(&[f.a.identity], &[])).await["id"].clone();
+    assert_eq!(enroll(&f, &id, &ids).await.status, StatusCode::CREATED);
+    let start_at =
+        jiff::Timestamp::from_second(jiff::Timestamp::now().as_second() + 86_400).unwrap();
+    let later = start_at
+        .checked_add(jiff::SignedDuration::from_hours(24))
+        .unwrap();
+    sqlx::query("UPDATE enrollments SET next_run_at = $2 WHERE person_id = $1")
+        .bind(uuid(&ids[1]))
+        .bind(crate::domain::time::Timestamp(later))
+        .execute(f.test.system.pool())
+        .await
+        .unwrap();
+    let path = format!("/v1/campaigns/{}", id.as_str().unwrap());
+    let changed = patch(
+        &f.app,
+        &f.ws.key,
+        &path,
+        json!({"schedule": {"start_at": start_at.to_string()}}),
+        None,
+    )
+    .await;
+    assert_eq!(changed.status, StatusCode::OK, "{:?}", changed.json);
+    start(&f, &id).await;
+    let mut tx = f.test.worker.begin_in(f.ws.id).await.unwrap();
+    let due: Vec<(Uuid, crate::domain::time::Timestamp)> = sqlx::query_as(
+        "SELECT person_id, next_run_at FROM enrollments WHERE campaign_id = $1 ORDER BY person_id",
+    )
+    .bind(uuid(&id))
+    .fetch_all(&mut *tx)
+    .await
+    .unwrap();
+    tx.commit().await.unwrap();
+    assert_eq!(due.len(), 2);
+    assert!(due.contains(&(uuid(&ids[0]), crate::domain::time::Timestamp(start_at))));
+    assert!(due.contains(&(uuid(&ids[1]), crate::domain::time::Timestamp(later))));
+    assert_eq!(
+        count(
+            &f,
+            "SELECT count(*) FROM messages WHERE campaign_id = $1",
+            uuid(&id)
+        )
+        .await,
+        0
+    );
+    let read = f.app.get(&path).bearer(&f.ws.key).send().await;
+    assert_eq!(read.json["status"], "active");
+    assert_eq!(
+        read.json["enrollments"]["next_run_at"],
+        json!(start_at.to_string())
+    );
+}
+
 /// Deleting a campaign that never sent removes it with its enrollments; deleting one that sent
 /// archives it (`200` with the object), after which it takes no change and no people.
 #[tokio::test]

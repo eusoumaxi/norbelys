@@ -623,12 +623,38 @@ pub async fn update(
     )
     .execute(&mut **tx)
     .await?;
+    if changes.start_at.is_some() {
+        defer_pending_enrollments(tx, workspace, id).await?;
+    }
     if shrank {
         removal::enqueue(tx, workspace, removal::Scope::Campaign(id)).await?;
     }
     read(tx, workspace, id)
         .await?
         .ok_or(Error::NotFound("campaign"))
+}
+
+/// A later launch also applies to people enrolled before the date was chosen. Keep later
+/// follow-up and cooldown times, and leave messages already created to the delivery lifecycle.
+/// The caller holds the campaign row, as enrollment and message creation do.
+async fn defer_pending_enrollments(
+    tx: &mut Tx,
+    workspace: WorkspaceId,
+    campaign: Id<Campaign>,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        "UPDATE enrollments e SET next_run_at = c.start_at
+           FROM campaigns c
+          WHERE c.workspace_id = $1 AND c.id = $2
+            AND e.workspace_id = c.workspace_id AND e.campaign_id = c.id
+            AND e.status IN ('active', 'paused') AND e.message_id IS NULL
+            AND e.next_run_at < c.start_at",
+    )
+    .bind(workspace.uuid())
+    .bind(campaign.uuid())
+    .execute(&mut **tx)
+    .await?;
+    Ok(())
 }
 
 /// Makes `identities` the identities the campaign names; true when one it named before is no
@@ -749,6 +775,7 @@ pub async fn start(
             "A campaign needs at least one step, each with a variant, before it starts.".to_owned(),
         ));
     }
+    defer_pending_enrollments(tx, workspace, locked.id).await?;
     sqlx::query!(
         "UPDATE campaigns SET status = $3, last_error = NULL WHERE workspace_id = $1 AND id = $2",
         workspace.uuid(),
