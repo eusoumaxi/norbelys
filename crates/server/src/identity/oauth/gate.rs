@@ -26,6 +26,8 @@ use crate::testing::{DASHBOARD, Reply, Sink, TestApp, TestDb};
 const REDIRECT: &str = "https://client.test/callback";
 /// A PKCE S256 challenge (RFC 7636 appendix B).
 const CHALLENGE: &str = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
+/// A document client id nothing answers on: any fetch fails at once (connection refused).
+const METADATA_CLIENT: &str = "https://127.0.0.1:1/revoke-order.json";
 
 /// `pairs` posted as a form to `path`, as an OAuth client sends it.
 async fn post_form(app: &TestApp, path: &str, pairs: &[(&str, &str)]) -> Reply {
@@ -147,6 +149,91 @@ async fn the_token_endpoint_admits_thirty_requests_a_minute_per_client() {
     assert!(limited.header("retry-after").is_some());
     let other = refresh(MCP_CLIENT).await;
     assert_eq!(other.status, StatusCode::BAD_REQUEST, "{}", other.json);
+}
+
+/// The revoke endpoint admits 60 requests a minute per client address, counted before any
+/// metadata fetch like its siblings, then answers `429` with `Retry-After`; another address keeps
+/// its own budget. Before the `OauthAddress` guard, a single anonymous address could spray
+/// `/oauth/revoke` with fresh `https://…` client ids and spend the process-global fetch slots a
+/// `clients::fetch` needs, degrading `authorize` and `token` onboarding of any new MCP server; the
+/// guard bounds it like the rest, and a second address is unaffected.
+#[tokio::test]
+async fn the_revoke_endpoint_admits_sixty_requests_a_minute_per_client_address() {
+    let test = TestDb::new().await;
+    let app = test.app();
+    let revoke = |addr: &'static str| {
+        let app = &app;
+        async move {
+            let body = url::form_urlencoded::Serializer::new(String::new())
+                .extend_pairs([("token", "nonsense"), ("client_id", CLI)])
+                .finish();
+            app.post("/oauth/revoke")
+                .header("x-forwarded-for", addr)
+                .raw("application/x-www-form-urlencoded", body)
+                .send()
+                .await
+        }
+    };
+    let mut admitted = 0;
+    let limited = loop {
+        let reply = revoke("203.0.113.9").await;
+        if reply.status == StatusCode::TOO_MANY_REQUESTS {
+            break reply;
+        }
+        assert_eq!(reply.status, StatusCode::OK, "{}", reply.json);
+        admitted += 1;
+        // The budget refills one request per second: a slow run admits a few more, never dozens.
+        assert!(admitted < 70, "the revoke endpoint never refused");
+    };
+    assert!(admitted >= 60, "only {admitted} requests were admitted");
+    assert!(limited.header("retry-after").is_some());
+    let other = revoke("203.0.113.10").await;
+    assert_eq!(other.status, StatusCode::OK, "{}", other.json);
+}
+
+/// The `OauthAddress` guard on `/oauth/revoke` fires before any metadata fetch, the ordering this
+/// change protects: a `https://…` client id that is not kept yet makes `clients::find` attempt a
+/// fetch, which fails at once in the test harness. Within the address budget the request reaches
+/// the handler and is answered `401 invalid_client` (the fetch failed); once the budget is spent
+/// it is answered `429` before the fetch is ever attempted. If the guard moved after
+/// `authenticated_client`, the fetch would fail first on every request and the endpoint would
+/// answer `401` forever, never `429` — so this test pins the ordering directly.
+#[tokio::test]
+async fn the_revoke_endpoint_spends_oauth_address_before_a_metadata_fetch() {
+    let test = TestDb::new().await;
+    let app = test.app();
+    // A document client id nothing answers on: any fetch fails at once (connection refused).
+    let revoke = |addr: &'static str| {
+        let app = &app;
+        async move {
+            let body = url::form_urlencoded::Serializer::new(String::new())
+                .extend_pairs([("token", "nonsense"), ("client_id", METADATA_CLIENT)])
+                .finish();
+            app.post("/oauth/revoke")
+                .header("x-forwarded-for", addr)
+                .raw("application/x-www-form-urlencoded", body)
+                .send()
+                .await
+        }
+    };
+    let mut admitted = 0;
+    let limited = loop {
+        let reply = revoke("203.0.113.9").await;
+        if reply.status == StatusCode::TOO_MANY_REQUESTS {
+            break reply;
+        }
+        // Within budget the fetch is attempted and fails (invalid_client), not 200: this is what
+        // proves the request passed the guard and reached `authenticated_client`.
+        assert_eq!(reply.status, StatusCode::UNAUTHORIZED, "{}", reply.json);
+        admitted += 1;
+        // The budget refills one request per second: a slow run admits a few more, never dozens.
+        assert!(admitted < 70, "the revoke endpoint never refused");
+    };
+    assert!(admitted >= 60, "only {admitted} requests were admitted");
+    assert!(limited.header("retry-after").is_some());
+    // A second address keeps its own budget, and the fetch is still attempted there.
+    let other = revoke("203.0.113.10").await;
+    assert_eq!(other.status, StatusCode::UNAUTHORIZED, "{}", other.json);
 }
 
 /// A metadata-document client is trusted only while its kept document is fresh: within its cache
