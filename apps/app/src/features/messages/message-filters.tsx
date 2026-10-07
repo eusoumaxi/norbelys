@@ -88,9 +88,10 @@ const CampaignFilter = ({
 };
 
 const STATE_OPTIONS: SelectOption[] = [
-  { label: "Any status", value: ALL },
+  { label: "Any sending status", value: ALL },
   ...MESSAGE_STATES.map((state) => ({
-    label: statusLabel("message", state),
+    label:
+      state === "sent" ? "Provider accepted" : statusLabel("message", state),
     value: state,
   })),
 ];
@@ -164,8 +165,8 @@ export const MessageFilterBar = ({
 }) => (
   <div className="flex flex-wrap items-center gap-2">
     <Select
-      className="w-40"
-      label="State"
+      className="w-56"
+      label="Sending status"
       onChange={(next) =>
         onChange({
           state: MESSAGE_STATES.find((state) => state === next),
