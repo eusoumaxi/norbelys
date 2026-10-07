@@ -609,11 +609,11 @@
             "$ref": "#/components/schemas/Id_Connection"
           },
           "identities": {
-            "description": "The From addresses, at most 50.",
+            "description": "The service's sender addresses.",
             "items": {
               "$ref": "#/components/schemas/IdentityObject"
             },
-            "maxItems": 50,
+            "maxItems": 1000,
             "type": "array"
           },
           "imap": {
@@ -657,7 +657,7 @@
             "description": "The folders read, at most 10."
           },
           "send_interval_minutes": {
-            "description": "A paced sender's minutes between cold sends, whole 5-minute slots; null when rate-paced.",
+            "description": "Minutes between campaign emails: exact whole minutes for Norbelys, 5-minute slots for mailboxes and SES; null when rate-paced.",
             "format": "int32",
             "type": [
               "integer",
@@ -905,7 +905,7 @@
         "description": "The body of `POST /connections`.",
         "properties": {
           "account_email": {
-            "description": "The account (not for Google and Microsoft, whose address the provider names): an SMTP\nlogin, the From address of a paced SES connection or of the managed MTA, a name for a\nrelay account.",
+            "description": "The account (not for Google and Microsoft, whose address the provider names): an SMTP\nlogin, the From address of a paced SES connection, a managed domain or mailbox, or a\nrelay account name.",
             "type": [
               "string",
               "null"
@@ -920,10 +920,11 @@
             ]
           },
           "identities": {
-            "description": "The From addresses, at most 50; by default the account's own address.",
+            "description": "The From addresses, at most 1,000; a domain service starts without senders.",
             "items": {
               "$ref": "#/components/schemas/IdentityInput"
             },
+            "maxItems": 1000,
             "type": [
               "array",
               "null"
@@ -970,7 +971,7 @@
             ]
           },
           "send_interval_minutes": {
-            "description": "A paced sender's minutes between cold sends, 5 to 1,440, rounded up to whole 5-minute\nslots; 10 for a mailbox when absent; on SES it makes the connection a paced sender of one\nFrom address; refused for SendGrid, Mailgun and the managed MTA.",
+            "description": "Minutes between campaign emails. Norbelys accepts exact whole minutes, 1 to 1,440.\nMailboxes and paced SES use 5-minute slots; mailboxes default to 10 minutes.\nSendGrid and Mailgun refuse an interval.",
             "format": "int32",
             "type": [
               "integer",
@@ -1345,7 +1346,7 @@
             ]
           },
           "from": {
-            "description": "The sender: a sender identity's id (`sid_…`) or its address. It must be live and enabled.",
+            "description": "The sender: a live, enabled identity or an address on a connected managed domain.\nNew addresses on a verified managed domain are registered automatically.",
             "type": "string"
           },
           "html": {
@@ -2963,6 +2964,17 @@
             "$ref": "#/components/schemas/PreflightReason",
             "description": "Why: `mx`, `implicit_mx` (no MX record, the domain is its own mail host), `syntax`,\n`no_domain`, `null_mx` (the domain accepts no mail), `no_route` or `dns_unavailable`.\nNew values may be added."
           },
+          "smtp": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MailboxFinding",
+                "description": "Optional SMTP recipient check, separate from DNS routing. `accepted` is not proof of\ndelivery; `unknown` and `skipped` do not prevent normal sending."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "status": {
             "$ref": "#/components/schemas/PreflightStatus",
             "description": "`routable` (mail has a route), `invalid` (no mail can reach it) or `unknown` (DNS did not\nanswer; check again later). New values may be added."
@@ -4265,6 +4277,33 @@
           }
         ]
       },
+      "MailboxFinding": {
+        "properties": {
+          "detail": {
+            "description": "A bounded explanation of the SMTP result, or why this check was skipped.",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MailboxStatus"
+          }
+        },
+        "required": [
+          "status",
+          "detail"
+        ],
+        "type": "object"
+      },
+      "MailboxStatus": {
+        "description": "What the optional SMTP check established; acceptance does not prove delivery or ownership.",
+        "enum": [
+          "accepted",
+          "invalid",
+          "unknown",
+          "skipped"
+        ],
+        "type": "string",
+        "x-open-enum": true
+      },
       "MessageAttempts": {
         "description": "A message's latest attempts.",
         "properties": {
@@ -5027,11 +5066,11 @@
                   "$ref": "#/components/schemas/Id_Connection"
                 },
                 "identities": {
-                  "description": "The From addresses, at most 50.",
+                  "description": "The service's sender addresses.",
                   "items": {
                     "$ref": "#/components/schemas/IdentityObject"
                   },
-                  "maxItems": 50,
+                  "maxItems": 1000,
                   "type": "array"
                 },
                 "imap": {
@@ -5075,7 +5114,7 @@
                   "description": "The folders read, at most 10."
                 },
                 "send_interval_minutes": {
-                  "description": "A paced sender's minutes between cold sends, whole 5-minute slots; null when rate-paced.",
+                  "description": "Minutes between campaign emails: exact whole minutes for Norbelys, 5-minute slots for mailboxes and SES; null when rate-paced.",
                   "format": "int32",
                   "type": [
                     "integer",
@@ -8060,6 +8099,18 @@
         ],
         "type": "object"
       },
+      "SmtpAuthorization": {
+        "description": "The private transport login selected after checking a live workspace API key.",
+        "properties": {
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "type": "object"
+      },
       "SmtpInput": {
         "additionalProperties": false,
         "description": "An SMTP endpoint and its login, as a request gives it.",
@@ -9166,6 +9217,7 @@
             "items": {
               "$ref": "#/components/schemas/IdentityInput"
             },
+            "maxItems": 1000,
             "type": [
               "array",
               "null"
@@ -9208,7 +9260,7 @@
             ]
           },
           "send_interval_minutes": {
-            "description": "A paced sender's new interval, rounded up to whole 5-minute slots; a rate-paced\nconnection takes none.",
+            "description": "Minutes between campaign emails. Norbelys accepts exact whole minutes, 1 to 1,440,\nincluding activation on an unpaced connection. Existing paced mailboxes and SES\nround up to whole 5-minute slots.",
             "format": "int32",
             "type": [
               "integer",
@@ -16996,7 +17048,7 @@
     },
     "/v1/preflight": {
       "post": {
-        "description": "Syntax, DNS routing (MX, an implicit MX, or a null MX that refuses all mail), and the\nworkspace's suppressions and holds. Never a mailbox probe: nothing is sent to the addresses, and\nnothing is stored. A route the workspace's sending found in DNS within the last day is answered\nfrom that, as the sender reads it; any other is asked of DNS now, and a lookup DNS could not\nanswer is `unknown`. In a test-mode workspace only the syntax is checked, as its sender does:\nits mail never leaves the fake transport.",
+        "description": "Syntax, DNS routing (MX, an implicit MX, or a null MX that refuses all mail), and the\nworkspace's suppressions and holds. When configured, the remote mail host also checks SMTP\nrecipient acceptance without sending a message. Nothing is stored. SMTP acceptance is not\nproof of delivery; unavailable checks are skipped. A route the workspace's sending found in\nDNS within the last day is answered\nfrom that, as the sender reads it; any other is asked of DNS now, and a lookup DNS could not\nanswer is `unknown`. In a test-mode workspace only the syntax is checked, as its sender does:\nits mail never leaves the fake transport. SMTP checks share a 15-second budget; use batches\nof at most eight addresses to avoid skipping addresses when that budget expires.",
         "operationId": "preflight.create",
         "requestBody": {
           "content": {
@@ -18641,6 +18693,93 @@
           }
         ],
         "summary": "Verify a sending domain now: it becomes `verifying` and its DNS records are checked.",
+        "tags": [
+          "Sending"
+        ]
+      }
+    },
+    "/v1/smtp_authorization": {
+      "get": {
+        "operationId": "smtp_authorization.retrieve",
+        "parameters": [
+          {
+            "description": "The connected sending domain used as the SMTP username.",
+            "in": "query",
+            "name": "domain",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmtpAuthorization"
+                }
+              }
+            },
+            "description": "The tenant-scoped SMTP authorization."
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "No valid credential."
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "A live API key with messages:send is required."
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "No active sending service for this domain."
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "The domain is not enabled for sending."
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "The domain is invalid."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Authenticate SMTP submission using the same live API key as HTTP sending.",
         "tags": [
           "Sending"
         ]

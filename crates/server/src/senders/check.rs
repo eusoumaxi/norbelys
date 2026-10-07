@@ -659,7 +659,7 @@ async fn check_password(
     // A managed MTA login is read from the MTA itself first: one it disabled, forgot or left
     // without an evidence route fails the check whatever `AUTH` says.
     if provider == Provider::Norbelys
-        && let Some(control) = &env.control
+        && let Some(control) = &env.settings.control
     {
         use super::provision::LoginState;
         match control.login(&smtp.username).await {

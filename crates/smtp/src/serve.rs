@@ -180,6 +180,7 @@ pub async fn run(
         let _ = signal_stop.send(true);
     });
 
+    let control_resolver = resolver()?;
     let state = control::State {
         db: control_db,
         keys: Arc::clone(&keys),
@@ -197,7 +198,11 @@ pub async fn run(
             trigger: args.common.trigger(),
         }),
         seen: Arc::new(Mutex::new(HashMap::new())),
-        resolver: resolver()?,
+        recipient_checks: control::recipients::Checks::new(
+            control_resolver.clone(),
+            &args.mail_host,
+        )?,
+        resolver: control_resolver,
     };
     let intake = feedback::Intake::new(
         resolver()?,

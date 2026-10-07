@@ -53,6 +53,7 @@ pub mod enrollments;
 pub mod generate;
 pub mod http;
 pub mod materialise;
+mod recipients;
 pub mod removal;
 #[cfg(test)]
 mod rotation_tests;

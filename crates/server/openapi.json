@@ -2964,6 +2964,17 @@
             "$ref": "#/components/schemas/PreflightReason",
             "description": "Why: `mx`, `implicit_mx` (no MX record, the domain is its own mail host), `syntax`,\n`no_domain`, `null_mx` (the domain accepts no mail), `no_route` or `dns_unavailable`.\nNew values may be added."
           },
+          "smtp": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MailboxFinding",
+                "description": "Optional SMTP recipient check, separate from DNS routing. `accepted` is not proof of\ndelivery; `unknown` and `skipped` do not prevent normal sending."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "status": {
             "$ref": "#/components/schemas/PreflightStatus",
             "description": "`routable` (mail has a route), `invalid` (no mail can reach it) or `unknown` (DNS did not\nanswer; check again later). New values may be added."
@@ -4265,6 +4276,33 @@
             "description": "A received message."
           }
         ]
+      },
+      "MailboxFinding": {
+        "properties": {
+          "detail": {
+            "description": "A bounded explanation of the SMTP result, or why this check was skipped.",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MailboxStatus"
+          }
+        },
+        "required": [
+          "status",
+          "detail"
+        ],
+        "type": "object"
+      },
+      "MailboxStatus": {
+        "description": "What the optional SMTP check established; acceptance does not prove delivery or ownership.",
+        "enum": [
+          "accepted",
+          "invalid",
+          "unknown",
+          "skipped"
+        ],
+        "type": "string",
+        "x-open-enum": true
       },
       "MessageAttempts": {
         "description": "A message's latest attempts.",
@@ -17010,7 +17048,7 @@
     },
     "/v1/preflight": {
       "post": {
-        "description": "Syntax, DNS routing (MX, an implicit MX, or a null MX that refuses all mail), and the\nworkspace's suppressions and holds. Never a mailbox probe: nothing is sent to the addresses, and\nnothing is stored. A route the workspace's sending found in DNS within the last day is answered\nfrom that, as the sender reads it; any other is asked of DNS now, and a lookup DNS could not\nanswer is `unknown`. In a test-mode workspace only the syntax is checked, as its sender does:\nits mail never leaves the fake transport.",
+        "description": "Syntax, DNS routing (MX, an implicit MX, or a null MX that refuses all mail), and the\nworkspace's suppressions and holds. When configured, the remote mail host also checks SMTP\nrecipient acceptance without sending a message. Nothing is stored. SMTP acceptance is not\nproof of delivery; unavailable checks are skipped. A route the workspace's sending found in\nDNS within the last day is answered\nfrom that, as the sender reads it; any other is asked of DNS now, and a lookup DNS could not\nanswer is `unknown`. In a test-mode workspace only the syntax is checked, as its sender does:\nits mail never leaves the fake transport. SMTP checks share a 15-second budget; use batches\nof at most eight addresses to avoid skipping addresses when that budget expires.",
         "operationId": "preflight.create",
         "requestBody": {
           "content": {

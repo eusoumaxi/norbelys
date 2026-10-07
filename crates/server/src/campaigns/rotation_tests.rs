@@ -118,6 +118,7 @@ async fn two_assignments_in_one_campaign_serialise_on_its_row() {
         jiff::Timestamp::now(),
         None,
         1,
+        false,
     )
     .await
     .unwrap();
@@ -136,6 +137,7 @@ async fn two_assignments_in_one_campaign_serialise_on_its_row() {
             jiff::Timestamp::now(),
             Some(after_first),
             1,
+            false,
         )
         .await
         .unwrap();

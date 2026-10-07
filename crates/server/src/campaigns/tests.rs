@@ -221,6 +221,7 @@ async fn pass(f: &Fixture, campaign: Option<Uuid>) -> creator::Pass {
         jiff::Timestamp::now(),
         None,
         CHUNK,
+        false,
     )
     .await
     .unwrap();
@@ -1154,6 +1155,7 @@ async fn the_split_carries_across_chunks_from_the_stored_assignments() {
             jiff::Timestamp::now(),
             None,
             1,
+            false,
         )
         .await
         .unwrap();
@@ -1198,6 +1200,7 @@ async fn two_passes_at_once_create_one_message_per_step() {
             jiff::Timestamp::now(),
             None,
             CHUNK,
+            false,
         )
         .await
         .unwrap();

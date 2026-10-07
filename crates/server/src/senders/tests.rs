@@ -382,7 +382,8 @@ async fn health_events(test: &TestDb, connection: &str) -> Vec<(String, bool)> {
 
 /// A runner of the Sending kinds with the worker's environment over `settings`, reaching
 /// loopback fakes, and the managed MTA's `control` API when given.
-fn harness(test: &TestDb, settings: Settings, control: Option<Control>) -> Harness {
+fn harness(test: &TestDb, mut settings: Settings, control: Option<Control>) -> Harness {
+    settings.control = control;
     let mut registry = Registry::default();
     registry
         .register::<ConnectionCheck>()
@@ -406,7 +407,6 @@ fn harness(test: &TestDb, settings: Settings, control: Option<Control>) -> Harne
             settings,
             crate::dns::Resolver::offline(),
             AddressPolicy::Any,
-            control,
         )
         .unwrap(),
     );

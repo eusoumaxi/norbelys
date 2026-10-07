@@ -85,6 +85,63 @@ pub enum ControlError {
 }
 
 impl Control {
+    /// Construct the one control client shared by provisioning and recipient checks.
+    pub(crate) fn from_args(args: &crate::config::MailArgs) -> Result<Option<Self>, SettingsError> {
+        match (&args.mta_control_url, &args.mta_control_secret) {
+            (Some(url), Some(secret)) => {
+                Self::new(url.clone(), secret, args.mta_control_private_transport).map(Some)
+            }
+            (None, None) => Ok(None),
+            _ => Err(SettingsError::Invalid(
+                "MTA_CONTROL_URL and MTA_CONTROL_SECRET are set together".to_owned(),
+            )),
+        }
+    }
+
+    /// Ask the mail host, which has outbound port 25, to check a bounded batch without DATA.
+    pub(crate) async fn check_recipients(
+        &self,
+        emails: &[String],
+    ) -> Result<Vec<norbelys_mail::verify::RecipientCheck>, ControlError> {
+        use norbelys_mail::verify::{BATCH_MAX, BatchRequest, BatchResponse};
+        if !(1..=BATCH_MAX).contains(&emails.len()) {
+            return Err(ControlError::Network(format!(
+                "a recipient check needs 1 to {BATCH_MAX} addresses"
+            )));
+        }
+        let request = json!(BatchRequest {
+            emails: emails.to_vec()
+        });
+        let (status, body) = self
+            .call(Method::POST, &["v1", "recipients", "check"], Some(&request))
+            .await?;
+        if status != StatusCode::OK {
+            return Err(ControlError::Answer {
+                status: status.as_u16(),
+                detail: detail(status, &body),
+            });
+        }
+        let answer: BatchResponse =
+            serde_json::from_value(body).map_err(|_| ControlError::Answer {
+                status: status.as_u16(),
+                detail: "the recipient check answer is malformed".to_owned(),
+            })?;
+        if answer.data.len() != emails.len()
+            || answer
+                .data
+                .iter()
+                .zip(emails)
+                .any(|(row, email)| &row.email != email || row.detail.chars().count() > 2_000)
+        {
+            return Err(ControlError::Answer {
+                status: status.as_u16(),
+                detail: "the recipient check answer does not match the requested addresses"
+                    .to_owned(),
+            });
+        }
+        Ok(answer.data)
+    }
+
     /// The client of the control API at `base`, signing with `secret` (`whsec_…`).
     ///
     /// # Errors
@@ -467,7 +524,7 @@ impl Job for NorbelysProvision {
         if row.status != Status::Verifying.as_str() {
             return Ok(Outcome::Done);
         }
-        let outcome = match (&env.control, row.webhook, &row.signing_secret) {
+        let outcome = match (&env.settings.control, row.webhook, &row.signing_secret) {
             (None, _, _) => Provisioned::Refused(
                 "The managed MTA is not configured on this deployment.".to_owned(),
             ),
@@ -720,6 +777,34 @@ mod tests {
             Control::new(Url::parse(&origin).unwrap(), &secret, false).unwrap(),
             seen,
         )
+    }
+
+    #[tokio::test]
+    async fn recipient_checks_preserve_order_and_reject_mismatched_answers() {
+        use norbelys_mail::verify::Outcome;
+        let (control, seen) = fake(|_, _| (200, json!({"data": [
+            {"email": "ada@example.com", "status": "accepted", "detail": "250 2.1.5 OK"},
+            {"email": "missing@example.com", "status": "invalid", "detail": "550 5.1.1 Unknown"}
+        ]}))).await;
+        let emails = vec![
+            "ada@example.com".to_owned(),
+            "missing@example.com".to_owned(),
+        ];
+        let found = control.check_recipients(&emails).await.unwrap();
+        assert_eq!(found[0].status, Outcome::Accepted);
+        assert_eq!(found[1].status, Outcome::Invalid);
+        assert_eq!(
+            calls(&seen),
+            [("POST".to_owned(), "/v1/recipients/check".to_owned())]
+        );
+        assert_eq!(seen.lock().unwrap()[0].2, json!({"emails": emails}));
+        assert!(
+            control
+                .check_recipients(&["other@example.com".to_owned()])
+                .await
+                .is_err()
+        );
+        assert!(control.check_recipients(&[]).await.is_err());
     }
 
     /// `acme.example` as the MTA renders it: verified or not, with its DKIM record once `key`.

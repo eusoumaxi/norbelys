@@ -159,8 +159,15 @@ impl Job for MessageGenerate {
             ..self.message()
         };
         let mut chunk = cx.begin().await?;
-        let created =
-            creator::create_generated(chunk.tx(), &keys, workspace, &message, snippets).await?;
+        let created = creator::create_generated(
+            chunk.tx(),
+            &keys,
+            workspace,
+            &message,
+            snippets,
+            super::recipients::validator(cx).enabled(),
+        )
+        .await?;
         if created && let Some(fallback) = fallback.filter(|fallback| *fallback != Fallback::Off) {
             tell(chunk.tx(), workspace, &self, fallback).await?;
         }

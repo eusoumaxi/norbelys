@@ -209,7 +209,7 @@ impl Job for DomainPrepare {
         };
         let mut waiting = false;
         if purpose != DomainPurpose::Tracking {
-            if let Some(control) = &env.control {
+            if let Some(control) = &env.settings.control {
                 let prepared = control
                     .prepare_domain(
                         &row.hostname,

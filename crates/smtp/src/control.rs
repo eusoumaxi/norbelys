@@ -10,6 +10,7 @@
 //! | `PATCH /v1/accounts/{username}` | `grant` (send as any address of its domain) and `catch_all` |
 //! | `DELETE /v1/accounts/{username}` | disables the login |
 //! | `POST /v1/accounts/{username}/password` | issues a new password, re-enabling a disabled login |
+//! | `POST /v1/recipients/check` | checks up to eight recipients against their public MX hosts, without sending a message |
 //! | `PUT /v1/routes/{provider_webhook_id}`, `GET /v1/routes`, `DELETE /v1/routes/{provider_webhook_id}` | where each login's evidence is posted, and with which secret |
 //! | `GET /health/live`, `GET /health/ready` | unsigned, see [`crate::health`] |
 //!
@@ -33,6 +34,7 @@
 
 pub mod accounts;
 pub mod domains;
+pub mod recipients;
 pub mod routes;
 
 use std::collections::HashMap;
@@ -93,11 +95,13 @@ pub struct State {
     pub seen: Arc<Mutex<HashMap<String, i64>>>,
     /// The DNS resolver of ownership checks.
     pub resolver: TokioResolver,
+    pub recipient_checks: recipients::Checks,
 }
 
 /// The router: health unsigned, everything under `/v1` verified.
 pub fn router(state: State) -> Router {
     let v1 = Router::new()
+        .route("/v1/recipients/check", post(recipients::check))
         .route("/v1/domains", post(domains::create).get(domains::list))
         .route("/v1/domains/{name}", get(domains::retrieve))
         .route("/v1/domains/{name}/verify", post(domains::verify))
@@ -346,6 +350,8 @@ pub enum ApiError {
     Invalid(String),
     /// `413 payload_too_large`.
     PayloadTooLarge,
+    /// `429 too_many_requests`: the bounded recipient checker is at capacity.
+    Busy(String),
     /// `503 service_unavailable`: a dependency (DNS, the replay memory) cannot answer now.
     Unavailable(String),
     /// `500 internal_error`: logged, never detailed on the wire.
@@ -374,6 +380,12 @@ impl ApiError {
                 "payload_too_large",
                 "Payload too large",
                 "the body exceeds 64 KiB",
+            ),
+            Self::Busy(detail) => (
+                StatusCode::TOO_MANY_REQUESTS,
+                "too_many_requests",
+                "Too many requests",
+                detail,
             ),
             Self::Unavailable(detail) => (
                 StatusCode::SERVICE_UNAVAILABLE,

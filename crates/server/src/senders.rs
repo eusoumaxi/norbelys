@@ -72,6 +72,10 @@ use crate::domain::ids::{Id, ProviderWebhook};
 /// The Sending area's configuration, read once at start by the api and the worker.
 #[derive(Clone, Debug)]
 pub struct Settings {
+    /// The shared, signed control client of the remote mail host.
+    pub control: Option<provision::Control>,
+    /// Optional recipient checks performed by the remote mail host.
+    pub recipient_validation: crate::delivery::validation::Validation,
     /// Norbelys's OAuth apps at Google and Microsoft, when configured.
     pub apps: oauth::Apps,
     /// The client every provider API call goes through (token endpoints, Gmail, Graph).
@@ -119,7 +123,16 @@ impl Settings {
                     })
             })
             .transpose()?;
+        let control = provision::Control::from_args(args)?;
+        let recipient_validation =
+            crate::delivery::validation::Validation::new(if args.recipient_validation_enabled {
+                control.clone()
+            } else {
+                None
+            });
         Ok(Self {
+            control,
+            recipient_validation,
             apps: oauth::Apps::from_args(args)?,
             http: HttpClient::new()?,
             public_webhooks_url: args.public_webhooks_url.clone(),
@@ -142,6 +155,8 @@ impl Settings {
     #[cfg(test)]
     pub(crate) fn for_tests() -> Self {
         Self {
+            control: None,
+            recipient_validation: crate::delivery::validation::Validation::default(),
             apps: oauth::Apps::default(),
             http: HttpClient::new().expect("the HTTP client builds"),
             public_webhooks_url: Url::parse("https://hooks.norbelys.test").expect("a URL"),
@@ -168,8 +183,6 @@ pub struct Env {
     /// The process's one DNS resolver: sending domains' records, and the hosts of the sessions
     /// above (through their connectors, which share its cache).
     pub resolver: crate::dns::Resolver,
-    /// The managed MTA's control API, when configured.
-    pub control: Option<provision::Control>,
     /// This replica's part of the Gmail and Graph limits maintenance shares with sending and
     /// receiving: every Gmail and Graph read of a connection's check waits for its tokens.
     pub limits: Limits,
@@ -180,7 +193,6 @@ impl std::fmt::Debug for Env {
         formatter
             .debug_struct("Env")
             .field("settings", &self.settings)
-            .field("control", &self.control.is_some())
             .finish_non_exhaustive()
     }
 }
@@ -203,20 +215,7 @@ impl Env {
         } else {
             AddressPolicy::PublicOnly
         };
-        let control = match (&args.mta_control_url, &args.mta_control_secret) {
-            (Some(url), Some(secret)) => Some(provision::Control::new(
-                url.clone(),
-                secret,
-                args.mta_control_private_transport,
-            )?),
-            (None, None) => None,
-            _ => {
-                return Err(SettingsError::Invalid(
-                    "MTA_CONTROL_URL and MTA_CONTROL_SECRET are set together".to_owned(),
-                ));
-            }
-        };
-        let mut env = Self::assemble(Settings::from_args(args)?, resolver, policy, control)?;
+        let mut env = Self::assemble(Settings::from_args(args)?, resolver, policy)?;
         env.limits = limits;
         Ok(env)
     }
@@ -232,7 +231,6 @@ impl Env {
         settings: Settings,
         resolver: crate::dns::Resolver,
         policy: AddressPolicy,
-        control: Option<provision::Control>,
     ) -> Result<Self, SettingsError> {
         let connector = Connector::new(resolver.hickory(), policy)?;
         let private = Connector::new(resolver.hickory(), AddressPolicy::Any)?;
@@ -242,7 +240,6 @@ impl Env {
             mta_smtp: SmtpPool::new(private, PoolConfig::default()),
             connector,
             resolver,
-            control,
             limits: Limits::new(Shares::single(Role::Maintenance)),
         })
     }

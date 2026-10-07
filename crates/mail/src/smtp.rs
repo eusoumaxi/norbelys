@@ -37,6 +37,7 @@
 mod auth;
 mod pool;
 mod protocol;
+pub(crate) use protocol::{reply_text, response_parts};
 pub mod reply;
 mod session;
 mod transaction;

@@ -29,6 +29,7 @@ import { useWorkspace } from "@/lib/workspace";
 
 /** The most addresses one check takes, as the API bounds it. */
 const LIMIT = 100;
+const BATCH = 8;
 
 /** The addresses typed or pasted: one per line (commas and semicolons separate too), once each. */
 const parseAddresses = (text: string): string[] => [
@@ -97,15 +98,38 @@ const WorkspaceFlags = ({ finding }: { finding: Finding }) => {
   );
 };
 
-/** Whether the workspace would mail the address: routable, and neither suppressed nor held. */
+/** A definitive SMTP rejection overrides a usable DNS route. */
+const verdict = (finding: Finding): string =>
+  finding.smtp?.status === "invalid" ? "invalid" : finding.status;
+
+/** Whether the workspace would mail the address, including the optional SMTP check. */
 const mailable = (finding: Finding): boolean =>
-  finding.status === "routable" && !finding.suppression && !finding.hold;
+  verdict(finding) === "routable" && !finding.suppression && !finding.hold;
+
+const SmtpResult = ({ finding }: { finding: Finding }) => {
+  const { smtp } = finding;
+  if (!smtp) {
+    return <Dash />;
+  }
+  return (
+    <span className="flex min-w-0 flex-col gap-1">
+      <span>
+        {smtp.status === "accepted"
+          ? "Accepted by server"
+          : humanize(smtp.status)}
+      </span>
+      <span className="text-fg-3 max-w-64 text-xs break-words">
+        {smtp.detail}
+      </span>
+    </span>
+  );
+};
 
 /** The counts of a check's verdicts, and the findings as a table. */
 const Results = ({ findings }: { findings: Finding[] }) => {
   const testMode = useWorkspace().mode === "test";
   const count = (status: string) =>
-    formatCount(findings.filter((f) => f.status === status).length);
+    formatCount(findings.filter((f) => verdict(f) === status).length);
   const ready = findings.filter(mailable).map((f) => f.email);
   return (
     <Section
@@ -152,7 +176,7 @@ const Results = ({ findings }: { findings: Finding[] }) => {
             id: "email",
           },
           {
-            render: (f) => <StatusBadge kind="verdict" value={f.status} />,
+            render: (f) => <StatusBadge kind="verdict" value={verdict(f)} />,
             header: "Verdict",
             id: "status",
           },
@@ -160,6 +184,11 @@ const Results = ({ findings }: { findings: Finding[] }) => {
             render: (f) => <Reason finding={f} testMode={testMode} />,
             header: "Reason",
             id: "reason",
+          },
+          {
+            render: (f) => <SmtpResult finding={f} />,
+            header: "SMTP",
+            id: "smtp",
           },
           {
             render: (f) => <WorkspaceFlags finding={f} />,
@@ -193,15 +222,27 @@ const CountLine = ({ count }: { count: number }) => {
 /**
  * Checks addresses before they are mailed: syntax, the domain's mail routing in DNS (MX, an
  * implicit MX, or a null MX that refuses all mail), and the workspace's suppressions and holds.
- * It never probes a mailbox: nothing is sent and nothing is stored.
+ * Optionally asks the remote mail host to check SMTP acceptance. No message is sent or stored.
  */
 const PreflightPage = () => {
   const workspace = useWorkspace();
   const [text, setText] = useState("");
+  const [progress, setProgress] = useState({ checked: 0, total: 0 });
   const addresses = parseAddresses(text);
   const check = useMutation({
-    mutationFn: (emails: string[]) =>
-      workspace.api.preflight.create({ emails }),
+    mutationFn: async (emails: string[]) => {
+      const data: Finding[] = [];
+      setProgress({ checked: 0, total: emails.length });
+      for (let offset = 0; offset < emails.length; offset += BATCH) {
+        // oxlint-disable-next-line no-await-in-loop -- bound SMTP concurrency on the remote mail host
+        const batch = await workspace.api.preflight.create({
+          emails: emails.slice(offset, offset + BATCH),
+        });
+        data.push(...batch.data);
+        setProgress({ checked: data.length, total: emails.length });
+      }
+      return { data };
+    },
   });
   return (
     <PageBody>
@@ -210,10 +251,12 @@ const PreflightPage = () => {
         <p className="text-fg-2 text-sm">
           Checks each address&apos;s syntax and its domain&apos;s mail routing
           in DNS (MX records, an implicit MX, or a null MX that refuses all
-          mail), and whether this workspace suppresses or holds it. It never
-          probes a mailbox: nothing is sent to the addresses and nothing is
-          stored. A domain this workspace mailed in the last day is answered as
-          its sending saw it.
+          mail), and whether this workspace suppresses or holds it. When
+          available, SMTP checking asks the receiving server whether it accepts
+          the address, without sending a message. Acceptance does not guarantee
+          delivery: some servers accept every address. Unavailable SMTP checks
+          are skipped. Nothing is stored. A domain this workspace mailed in the
+          last day is answered as its sending saw it.
         </p>
         {workspace.mode === "test" ? (
           <Alert variant="info">
@@ -235,6 +278,7 @@ const PreflightPage = () => {
             <Textarea
               aria-label="Addresses to check"
               className="min-h-40 font-mono"
+              disabled={check.isPending}
               onChange={(event) => setText(event.target.value)}
               placeholder={"ada@example.com\ngrace@example.org"}
               rows={8}
@@ -243,10 +287,18 @@ const PreflightPage = () => {
             />
           </CardContent>
           <CardFooter className="justify-between gap-3">
-            <CountLine count={addresses.length} />
+            {check.isPending ? (
+              <output className="text-fg-3 text-xs tabular-nums">
+                Checked {formatCount(progress.checked)} of{" "}
+                {formatCount(progress.total)} addresses
+              </output>
+            ) : (
+              <CountLine count={addresses.length} />
+            )}
             <div className="flex items-center gap-2">
               {text ? (
                 <Button
+                  disabled={check.isPending}
                   onClick={() => {
                     setText("");
                     check.reset();

@@ -60,13 +60,13 @@ pub(super) fn negative(phase: Phase, code: u16, text: &str) -> Rejection {
 }
 
 /// The text of a negative reply `lettre` turned into an error (its lines, joined).
-pub(super) fn reply_text(error: &SmtpError) -> String {
+pub(crate) fn reply_text(error: &SmtpError) -> String {
     std::error::Error::source(error)
         .map(ToString::to_string)
         .unwrap_or_default()
 }
 
-pub(super) fn response_parts(response: &Response) -> (u16, String) {
+pub(crate) fn response_parts(response: &Response) -> (u16, String) {
     (
         u16::from(response.code()),
         response.message().collect::<Vec<_>>().join(" "),

@@ -239,6 +239,10 @@ pub struct MailArgs {
     /// `norbelys` connections wait in `verifying`.
     #[arg(long, env = "MTA_CONTROL_URL")]
     pub mta_control_url: Option<url::Url>,
+    /// Ask the managed MTA to probe recipients for Address check and campaign preparation.
+    /// Without a configured control API, SMTP checks are skipped automatically.
+    #[arg(long, env = "MAIL_RECIPIENT_VALIDATION_ENABLED")]
+    pub recipient_validation_enabled: bool,
     /// Authorize HTTP to a literal private MTA IP inside an encrypted tunnel. All public
     /// destinations still require HTTPS; this option does not relax tenant SSRF guards.
     #[arg(long, env = "MTA_CONTROL_PRIVATE_TRANSPORT", default_value_t = false)]

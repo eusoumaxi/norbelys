@@ -7,6 +7,8 @@
 //! time passes, exactly as the sender's Start reads it). Nothing is sent to the address. The
 //! sender reads an address's route through [`routes`], which keeps what DNS answered in the
 //! preflight cache; `POST /preflight` ([`check`]) reads the same cache and writes nothing.
+//! The HTTP handler can add the optional remote SMTP findings through [`super::validation`];
+//! they never change this DNS cache or the sender's routing verdict.
 //!
 //! A workspace in test mode checks the syntax only, here as in the sender: its mail never leaves
 //! the fake transport, and its developers write to domains that accept no mail
@@ -271,6 +273,9 @@ pub struct Finding {
     pub suppression: Option<SuppressionSummary>,
     /// The address's active hold: mail to it waits until the hold is lifted.
     pub hold: Option<HoldSummary>,
+    /// Optional SMTP recipient check, separate from DNS routing. `accepted` is not proof of
+    /// delivery; `unknown` and `skipped` do not prevent normal sending.
+    pub smtp: Option<super::validation::MailboxFinding>,
 }
 
 /// A suppression, as preflight shows it.
@@ -388,6 +393,7 @@ pub async fn check(
                 detail: Some(detail),
                 suppression: None,
                 hold: None,
+                smtp: None,
             },
             Ok(address) => {
                 let key = address.key();
@@ -399,6 +405,7 @@ pub async fn check(
                     detail: None,
                     suppression: suppressions.get(&key).cloned(),
                     hold: holds.get(&key).cloned(),
+                    smtp: None,
                 }
             }
         })

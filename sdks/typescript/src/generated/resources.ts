@@ -951,11 +951,14 @@ export class Preflight {
    * Check addresses before mailing them.
    *
    * Syntax, DNS routing (MX, an implicit MX, or a null MX that refuses all mail), and the
-   * workspace's suppressions and holds. Never a mailbox probe: nothing is sent to the addresses, and
-   * nothing is stored. A route the workspace's sending found in DNS within the last day is answered
+   * workspace's suppressions and holds. When configured, the remote mail host also checks SMTP
+   * recipient acceptance without sending a message. Nothing is stored. SMTP acceptance is not
+   * proof of delivery; unavailable checks are skipped. A route the workspace's sending found in
+   * DNS within the last day is answered
    * from that, as the sender reads it; any other is asked of DNS now, and a lookup DNS could not
    * answer is `unknown`. In a test-mode workspace only the syntax is checked, as its sender does:
-   * its mail never leaves the fake transport.
+   * its mail never leaves the fake transport. SMTP checks share a 15-second budget; use batches
+   * of at most eight addresses to avoid skipping addresses when that budget expires.
    *
    * `POST /v1/preflight`
    */

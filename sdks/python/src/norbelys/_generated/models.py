@@ -527,6 +527,7 @@ Finding = TypedDict("Finding", {
     "email": Required[str],
     "hold": NotRequired[Union["HoldSummary", None]],
     "reason": Required["PreflightReason"],
+    "smtp": NotRequired[Union["MailboxFinding", None]],
     "status": Required["PreflightStatus"],
     "suppression": NotRequired[Union["SuppressionSummary", None]],
 })
@@ -799,6 +800,13 @@ MailExchange = TypedDict("MailExchange", {
 })
 
 MailId: TypeAlias = Union["Id_Message", "Id_InboundMessage"]
+
+MailboxFinding = TypedDict("MailboxFinding", {
+    "detail": Required[str],
+    "status": Required["MailboxStatus"],
+})
+
+MailboxStatus: TypeAlias = Union[Literal["accepted", "invalid", "unknown", "skipped"], str]
 
 MessageAttempts = TypedDict("MessageAttempts", {
     "data": Required[list["AttemptObject"]],

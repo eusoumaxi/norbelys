@@ -17,6 +17,7 @@
 //! - [`smtp`] and [`net`]: SMTP submission for mailboxes, relays and the managed MTA, over
 //!   pooled sessions with a deadline per protocol phase; host resolution under an address
 //!   policy that keeps tenant-typed hosts away from non-public addresses.
+//! - [`verify`]: bounded SMTP recipient checks against public MX hosts, without submitting mail.
 //! - [`gmail`], [`graph`] and [`http`]: the Gmail API and Microsoft Graph, both for submission
 //!   and for reading a mailbox; the one HTTP client policy (no automatic retries, no redirects).
 //! - [`compose`]: MIME composition with the headers Norbelys owns (its own `Message-ID`,
@@ -51,6 +52,7 @@ pub mod relays;
 pub mod smtp;
 pub mod status;
 pub mod submission;
+pub mod verify;
 pub mod webhooks;
 
 mod text;
@@ -66,6 +68,7 @@ const _: () = {
     shared::<smtp::SmtpPool>();
     shared::<http::HttpClient>();
     shared::<net::Connector>();
+    shared::<verify::Verifier>();
     shared::<webhooks::ses::SnsCertificates>();
     shared::<webhooks::sendgrid::SendgridKey>();
     shared::<webhooks::mailgun::MailgunKey>();

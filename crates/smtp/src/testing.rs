@@ -77,6 +77,14 @@ pub fn state(dir: &TempDir) -> State {
             trigger: dir.join("provision.trigger"),
         }),
         seen: Arc::new(Mutex::new(HashMap::new())),
+        recipient_checks: control::recipients::Checks::new(
+            TokioResolver::builder_tokio()
+                .expect("read DNS")
+                .build()
+                .expect("build resolver"),
+            "mail.example.com",
+        )
+        .expect("recipient checker"),
         resolver: TokioResolver::builder_tokio()
             .expect("read the host's DNS configuration")
             .build()

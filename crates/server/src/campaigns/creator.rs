@@ -129,6 +129,10 @@ struct Context {
 /// # Errors
 ///
 /// The database refused; the job runs the chunk again.
+#[allow(
+    clippy::too_many_arguments,
+    reason = "the pass's scope, cursor and configured validation gate"
+)]
 pub async fn pass(
     tx: &mut Tx,
     keys: &Keys,
@@ -137,6 +141,7 @@ pub async fn pass(
     now: Instant,
     cursor: Option<Cursor>,
     limit: i64,
+    validation_required: bool,
 ) -> Result<Pass, sqlx::Error> {
     let horizon = policy::horizon(now);
     let due: Vec<Due> = sqlx::query!(
@@ -180,6 +185,25 @@ pub async fn pass(
     campaigns.sort_unstable();
     campaigns.dedup();
     let mut contexts = load(tx, workspace, &campaigns, &due).await?;
+    if validation_required {
+        // Keep the addresses this chunk may snapshot stable until its messages commit.
+        let people = due.iter().map(|row| row.person).collect::<Vec<_>>();
+        sqlx::query(
+            "SELECT id FROM people WHERE workspace_id = $1 AND id = ANY($2) ORDER BY id FOR SHARE",
+        )
+        .bind(workspace.uuid())
+        .bind(&people)
+        .fetch_all(&mut **tx)
+        .await?;
+        let mut ready = Vec::new();
+        for context in contexts {
+            let campaign = Id::from_uuid(context.id);
+            if super::recipients::ready_or_enqueue(tx, workspace, campaign).await? {
+                ready.push(context);
+            }
+        }
+        contexts = ready;
+    }
     for due in &due {
         let Some(context) = contexts
             .iter_mut()
@@ -860,7 +884,22 @@ pub(crate) async fn create_generated(
     workspace: WorkspaceId,
     message: &StepMessage,
     snippets: Option<Map<String, Value>>,
+    validation_required: bool,
 ) -> Result<bool, sqlx::Error> {
+    if validation_required {
+        // An address or the campaign's audience may change while AI writes the snippets.
+        sqlx::query("SELECT id FROM campaigns WHERE workspace_id = $1 AND id = $2 FOR UPDATE")
+            .bind(workspace.uuid())
+            .bind(message.campaign.uuid())
+            .fetch_optional(&mut **tx)
+            .await?;
+        sqlx::query("SELECT p.id FROM people p JOIN enrollments e ON e.workspace_id = p.workspace_id AND e.person_id = p.id
+                     WHERE e.workspace_id = $1 AND e.id = $2 FOR SHARE OF p")
+            .bind(workspace.uuid()).bind(message.enrollment.uuid()).fetch_optional(&mut **tx).await?;
+        if !super::recipients::ready_or_enqueue(tx, workspace, message.campaign).await? {
+            return Ok(false);
+        }
+    }
     let in_pool = sqlx::query_scalar!(
         r#"SELECT EXISTS (
              SELECT 1 FROM sender_identities i JOIN campaigns c ON c.workspace_id = i.workspace_id AND c.id = $3

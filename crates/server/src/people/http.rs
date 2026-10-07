@@ -1991,11 +1991,14 @@ struct PreflightResult {
 /// Check addresses before mailing them.
 ///
 /// Syntax, DNS routing (MX, an implicit MX, or a null MX that refuses all mail), and the
-/// workspace's suppressions and holds. Never a mailbox probe: nothing is sent to the addresses, and
-/// nothing is stored. A route the workspace's sending found in DNS within the last day is answered
+/// workspace's suppressions and holds. When configured, the remote mail host also checks SMTP
+/// recipient acceptance without sending a message. Nothing is stored. SMTP acceptance is not
+/// proof of delivery; unavailable checks are skipped. A route the workspace's sending found in
+/// DNS within the last day is answered
 /// from that, as the sender reads it; any other is asked of DNS now, and a lookup DNS could not
 /// answer is `unknown`. In a test-mode workspace only the syntax is checked, as its sender does:
-/// its mail never leaves the fake transport.
+/// its mail never leaves the fake transport. SMTP checks share a 15-second budget; use batches
+/// of at most eight addresses to avoid skipping addresses when that budget expires.
 #[utoipa::path(
     post,
     path = "/preflight",
@@ -2016,7 +2019,7 @@ async fn create_preflight(
     Json(body): Json<CreatePreflight>,
 ) -> ApiResult<Json<PreflightResult>> {
     principal.require(Scope::PeopleRead)?;
-    let data = preflight::check(
+    let mut data = preflight::check(
         &state.db,
         &state.resolver,
         principal.workspace,
@@ -2024,5 +2027,12 @@ async fn create_preflight(
         principal.test_mode,
     )
     .await?;
+    // Capacity is reported on unchecked rows; campaign jobs retry it instead.
+    let _ = state
+        .settings
+        .senders
+        .recipient_validation
+        .preflight(&mut data, principal.test_mode)
+        .await;
     Ok(Json(PreflightResult { data }))
 }

@@ -890,11 +890,14 @@ export interface paths {
         /**
          * Check addresses before mailing them.
          * @description Syntax, DNS routing (MX, an implicit MX, or a null MX that refuses all mail), and the
-         *     workspace's suppressions and holds. Never a mailbox probe: nothing is sent to the addresses, and
-         *     nothing is stored. A route the workspace's sending found in DNS within the last day is answered
+         *     workspace's suppressions and holds. When configured, the remote mail host also checks SMTP
+         *     recipient acceptance without sending a message. Nothing is stored. SMTP acceptance is not
+         *     proof of delivery; unavailable checks are skipped. A route the workspace's sending found in
+         *     DNS within the last day is answered
          *     from that, as the sender reads it; any other is asked of DNS now, and a lookup DNS could not
          *     answer is `unknown`. In a test-mode workspace only the syntax is checked, as its sender does:
-         *     its mail never leaves the fake transport.
+         *     its mail never leaves the fake transport. SMTP checks share a 15-second budget; use batches
+         *     of at most eight addresses to avoid skipping addresses when that budget expires.
          */
         post: operations["preflight.create"];
         delete?: never;
@@ -2353,6 +2356,7 @@ export interface components {
              *     New values may be added.
              */
             reason: components["schemas"]["PreflightReason"];
+            smtp?: components["schemas"]["MailboxFinding"] | null;
             /**
              * @description `routable` (mail has a route), `invalid` (no mail can reach it) or `unknown` (DNS did not
              *     answer; check again later). New values may be added.
@@ -2835,6 +2839,16 @@ export interface components {
         };
         /** @description Either typed message id, preserving its resource prefix in a shared history. */
         MailId: components["schemas"]["Id_Message"] | components["schemas"]["Id_InboundMessage"];
+        MailboxFinding: {
+            /** @description A bounded explanation of the SMTP result, or why this check was skipped. */
+            detail: string;
+            status: components["schemas"]["MailboxStatus"];
+        };
+        /**
+         * @description What the optional SMTP check established; acceptance does not prove delivery or ownership.
+         * @enum {string}
+         */
+        MailboxStatus: "accepted" | "invalid" | "unknown" | "skipped";
         /** @description A message's latest attempts. */
         MessageAttempts: {
             /** @description At most 20, newest first. */
@@ -4807,6 +4821,8 @@ export type ListInclude = components['schemas']['ListInclude'];
 export type ListOrder = components['schemas']['ListOrder'];
 export type MailExchange = components['schemas']['MailExchange'];
 export type MailId = components['schemas']['MailId'];
+export type MailboxFinding = components['schemas']['MailboxFinding'];
+export type MailboxStatus = components['schemas']['MailboxStatus'];
 export type MessageAttempts = components['schemas']['MessageAttempts'];
 export type MessageContent = components['schemas']['MessageContent'];
 export type MessageEvents = components['schemas']['MessageEvents'];

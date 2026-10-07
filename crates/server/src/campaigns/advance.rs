@@ -140,7 +140,17 @@ async fn advance(
     let mut cursor = None;
     loop {
         let mut chunk = cx.begin_in(workspace).await?;
-        let pass = creator::pass(chunk.tx(), keys, workspace, None, now, cursor, CHUNK).await?;
+        let pass = creator::pass(
+            chunk.tx(),
+            keys,
+            workspace,
+            None,
+            now,
+            cursor,
+            CHUNK,
+            super::recipients::validator(cx).enabled(),
+        )
+        .await?;
         cx.checkpoint(chunk, progress("create")).await?;
         if pass.created > 0 {
             crate::delivery::accept::wake(cx.db()).await;

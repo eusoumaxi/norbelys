@@ -889,7 +889,7 @@ async fn managed(
     sending: bool,
     previous: &Value,
 ) -> Result<Managed, JobError> {
-    let Some(control) = &env.control else {
+    let Some(control) = &env.settings.control else {
         return Ok(Managed::default());
     };
     let mut managed = Managed {

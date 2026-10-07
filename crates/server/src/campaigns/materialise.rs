@@ -47,6 +47,12 @@ impl Job for CampaignMaterialise {
         let workspace = cx.workspace();
         let campaign: Id<Campaign> = Id::from_uuid(self.campaign);
         let keys = cx.env::<Keys>()?.clone();
+        let validation_required = super::recipients::validator(cx).enabled();
+        if !super::recipients::prepare(cx, campaign).await? {
+            return Ok(Outcome::Yield {
+                after: Duration::from_secs(1),
+            });
+        }
         let mut cursor: Option<Cursor> = cx.progress().and_then(|progress| {
             let at = progress.get("at")?.as_str()?.parse().ok()?;
             let id = progress.get("id")?.as_str()?.parse().ok()?;
@@ -62,6 +68,18 @@ impl Job for CampaignMaterialise {
             .fetch_optional(&mut **chunk.tx())
             .await?
             .and_then(|status| status.parse::<CampaignStatus>().ok());
+            // Enrollment takes this lock too, so activation cannot race with new addresses.
+            if validation_required
+                && matches!(
+                    status,
+                    Some(CampaignStatus::Materialising | CampaignStatus::Active)
+                )
+                && !super::recipients::ready(chunk.tx(), workspace, campaign).await?
+            {
+                return Ok(Outcome::Yield {
+                    after: Duration::from_secs(1),
+                });
+            }
             match status {
                 Some(CampaignStatus::Materialising) => {
                     if steps::sendable(chunk.tx(), workspace, campaign).await? {
@@ -120,6 +138,7 @@ impl Job for CampaignMaterialise {
                 jiff::Timestamp::now(),
                 cursor,
                 CHUNK,
+                validation_required,
             )
             .await?;
             cursor = pass.cursor;
