@@ -5,7 +5,8 @@
 //! minutes behind the facts; the answer carries the rollup's `computed_at`. Nothing here scans
 //! raw facts: a request reads at most one row per campaign, step, variant and day of the range,
 //! the range is at most 366 days, and a grouped answer holds at most [`GROUPS`] groups (with
-//! `has_more` when the grouping has more).
+//! `has_more` when the grouping has more). The optional policy report reads retained delivery
+//! evidence for one explicitly selected campaign, independently of the rollup watermark.
 
 use axum::Json;
 use axum::extract::State;

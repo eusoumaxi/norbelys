@@ -51,6 +51,7 @@ pub struct PolicyReport {
     pub computed_at: Timestamp,
 }
 
+/// One aggregate row; the grand total precedes the bounded list of groups.
 #[derive(FromRow)]
 struct Row {
     grouped: bool,
