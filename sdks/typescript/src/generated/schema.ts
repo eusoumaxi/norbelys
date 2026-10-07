@@ -1368,6 +1368,7 @@ export interface components {
             group_by?: components["schemas"]["GroupBy"] | null;
             /** @description The grouping has more groups than `data` holds (at most 2,500). */
             has_more: boolean;
+            policy?: components["schemas"]["PolicyReport"] | null;
             /** @description The last day counted (UTC), included. */
             to: components["schemas"]["Date"];
             /** @description The counters of the whole range and filters. */
@@ -3681,6 +3682,52 @@ export interface components {
             /** @description The given and family names, when the person has either. */
             name?: string | null;
         };
+        /** @description Distinct messages, never the number of repeated provider notifications. */
+        PolicyCounts: {
+            /**
+             * Format: int64
+             * @description Messages with a recognised account restriction (currently JFE050005).
+             *     Other policy refusals have unknown scope, not necessarily content problems.
+             */
+            account_restricted: number;
+            /**
+             * Format: int64
+             * @description Messages with at least one policy refusal; includes recovered deliveries.
+             */
+            affected: number;
+            /**
+             * Format: int64
+             * @description A terminal bounce or rejection without confirmed delivery.
+             */
+            failed: number;
+            /**
+             * Format: int64
+             * @description A policy refusal with neither confirmed delivery nor a terminal refusal.
+             */
+            pending: number;
+            /**
+             * Format: int64
+             * @description A policy refusal followed or accompanied by confirmed delivery.
+             */
+            recovered: number;
+        };
+        /** @description Policy counts for the same grouping as the campaign report. */
+        PolicyGroup: {
+            campaign_id?: string | null;
+            counts: components["schemas"]["PolicyCounts"];
+            day?: components["schemas"]["Date"] | null;
+            step_id?: string | null;
+            variant_id?: string | null;
+            /** Format: int32 */
+            variant_version?: number | null;
+        };
+        /** @description Current retained evidence, not the delayed daily rollup. Archived messages are excluded. */
+        PolicyReport: {
+            computed_at: components["schemas"]["Timestamp"];
+            data: components["schemas"]["PolicyGroup"][];
+            has_more: boolean;
+            totals: components["schemas"]["PolicyCounts"];
+        };
         /**
          * @description Why an address got its verdict; parsed back from the cache (`recipient_validations.reason`).
          * @enum {string}
@@ -4860,6 +4907,9 @@ export type Page_SuppressionObject = components['schemas']['Page_SuppressionObje
 export type Page_ThreadObject = components['schemas']['Page_ThreadObject'];
 export type PersonObject = components['schemas']['PersonObject'];
 export type PersonRef = components['schemas']['PersonRef'];
+export type PolicyCounts = components['schemas']['PolicyCounts'];
+export type PolicyGroup = components['schemas']['PolicyGroup'];
+export type PolicyReport = components['schemas']['PolicyReport'];
 export type PreflightReason = components['schemas']['PreflightReason'];
 export type PreflightResult = components['schemas']['PreflightResult'];
 export type PreflightStatus = components['schemas']['PreflightStatus'];
@@ -4963,6 +5013,8 @@ export interface operations {
                 to?: string;
                 /** @description `day`, `campaign`, `step` or `variant`. */
                 group_by?: components["schemas"]["GroupBy"];
+                /** @description Include retained policy evidence for one campaign; requires campaign_id. */
+                include_policy?: boolean | null;
             };
             header?: never;
             path?: never;

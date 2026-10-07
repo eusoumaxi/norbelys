@@ -119,6 +119,27 @@ export const campaignAnalyticsQuery = (
   });
 };
 
+/** Live policy evidence for one campaign, separate from the delayed engagement rollup. */
+export const campaignPolicyQuery = (
+  workspace: Workspace,
+  campaign: CampaignObject,
+  groupBy: GroupBy
+) =>
+  queryOptions({
+    queryKey: [...campaignKey(workspace, campaign.id), "policy", groupBy],
+    queryFn: ({ signal }) =>
+      workspace.api.analytics.retrieve(
+        {
+          campaign_id: campaign.id,
+          group_by: groupBy,
+          include_policy: true,
+          ...lifetime(campaign),
+        },
+        { signal }
+      ),
+    refetchInterval: campaign.status === "active" ? 60_000 : false,
+  });
+
 /**
  * Whether any message of the campaign exists: deleting such a campaign archives it instead of
  * removing it, because its messages keep pointing at it.

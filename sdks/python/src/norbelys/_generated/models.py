@@ -36,6 +36,7 @@ AnalyticsObject = TypedDict("AnalyticsObject", {
     "from": Required["Date"],
     "group_by": NotRequired[Union["GroupBy", None]],
     "has_more": Required[bool],
+    "policy": NotRequired[Union["PolicyReport", None]],
     "to": Required["Date"],
     "totals": Required["Counters"],
 })
@@ -1027,6 +1028,30 @@ PersonRef = TypedDict("PersonRef", {
     "name": NotRequired[Union[str, None]],
 })
 
+PolicyCounts = TypedDict("PolicyCounts", {
+    "account_restricted": Required[int],
+    "affected": Required[int],
+    "failed": Required[int],
+    "pending": Required[int],
+    "recovered": Required[int],
+})
+
+PolicyGroup = TypedDict("PolicyGroup", {
+    "campaign_id": NotRequired[Union[str, None]],
+    "counts": Required["PolicyCounts"],
+    "day": NotRequired[Union["Date", None]],
+    "step_id": NotRequired[Union[str, None]],
+    "variant_id": NotRequired[Union[str, None]],
+    "variant_version": NotRequired[Union[int, None]],
+})
+
+PolicyReport = TypedDict("PolicyReport", {
+    "computed_at": Required["Timestamp"],
+    "data": Required[list["PolicyGroup"]],
+    "has_more": Required[bool],
+    "totals": Required["PolicyCounts"],
+})
+
 PreflightReason: TypeAlias = Union[Literal["mx", "implicit_mx", "syntax", "no_domain", "null_mx", "no_route", "dns_unavailable"], str]
 
 PreflightResult = TypedDict("PreflightResult", {
@@ -1557,6 +1582,7 @@ AnalyticsRetrieveQuery = TypedDict("AnalyticsRetrieveQuery", {
     "from": NotRequired[str],
     "to": NotRequired[str],
     "group_by": NotRequired["GroupBy"],
+    "include_policy": NotRequired[Union[bool, None]],
 })
 
 CampaignsListQuery = TypedDict("CampaignsListQuery", {

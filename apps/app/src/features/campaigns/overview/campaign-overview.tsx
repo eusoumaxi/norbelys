@@ -2,6 +2,7 @@ import { Illustration } from "@/components/illustration";
 import { CampaignActivity } from "@/features/campaigns/overview/campaign-activity";
 import { CampaignJourney } from "@/features/campaigns/overview/campaign-journey";
 import { CampaignMetrics } from "@/features/campaigns/overview/campaign-metrics";
+import { CampaignPolicy } from "@/features/campaigns/overview/campaign-policy";
 import { CampaignResults } from "@/features/campaigns/overview/campaign-results";
 import { enrollmentSummary, useCampaign } from "@/features/campaigns/queries";
 
@@ -30,6 +31,7 @@ export const CampaignOverview = () => {
       />
       <section className="flex flex-col gap-4">
         <h2 className="text-fg text-xl font-semibold">Results</h2>
+        <CampaignPolicy campaign={campaign} />
         {reported ? (
           <>
             <CampaignMetrics campaign={campaign} />

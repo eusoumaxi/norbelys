@@ -17,6 +17,75 @@ use crate::jobs::runner::Harness;
 use crate::jobs::{self, Job, Queue, Registry, SYSTEM_WORKSPACE};
 use crate::testing::{SenderSpec, TestDb};
 
+/// Repeated policy notices count messages once. Delivery clears the unresolved count without
+/// erasing the original block; terminal failures stay separate and another tenant sees nothing.
+#[tokio::test]
+async fn policy_reports_distinguish_pending_recovered_and_terminal_messages() {
+    let test = TestDb::new().await;
+    let workspace = test.workspace("policy-report").await;
+    let other = test.workspace("policy-other").await;
+    let sender = test
+        .sender(workspace.id, &SenderSpec::mailbox("sender@example.test"))
+        .await;
+    let campaign = test.campaign(workspace.id, &sender, None).await;
+    let pending = test
+        .campaign_message(workspace.id, campaign, &sender, "pending@example.test")
+        .await;
+    let recovered = test
+        .campaign_message(workspace.id, campaign, &sender, "recovered@example.test")
+        .await;
+    let failed = test
+        .campaign_message(workspace.id, campaign, &sender, "failed@example.test")
+        .await;
+    for (message, kind, category, diagnostic) in [
+        (pending, "deferred", "policy", "JFE050005"),
+        (pending, "deferred", "policy", "JFE050005"),
+        (recovered, "deferred", "policy", "JFE050005"),
+        (recovered, "delivered", "delivered", "accepted"),
+        (recovered, "delivered", "delivered", "accepted"),
+        (failed, "deferred", "policy", "policy refusal"),
+        (failed, "bounced", "rejected", "terminal refusal"),
+    ] {
+        sqlx::query(
+            "INSERT INTO delivery_events (workspace_id, message_id, recipient_ref, source,
+                source_event_id, kind, category, diagnostic, confidence, observed_at)
+             VALUES ($1, $2, 'unknown', 'provider_webhook', $3, $4, $5, $6, 'authenticated', now())",
+        )
+        .bind(workspace.id.uuid())
+        .bind(message.uuid())
+        .bind(Uuid::now_v7().to_string())
+        .bind(kind)
+        .bind(category)
+        .bind(diagnostic)
+        .execute(test.system.pool())
+        .await
+        .unwrap();
+    }
+    let app = test.app();
+    let url = format!("/v1/analytics?campaign_id={campaign}&group_by=variant&include_policy=true");
+    let read = app.get(&url).bearer(&workspace.key).send().await;
+    assert_eq!(read.status, http::StatusCode::OK, "{}", read.json);
+    let expected =
+        json!({"affected":3,"pending":1,"recovered":1,"failed":1,"account_restricted":2});
+    assert_eq!(read.json["policy"]["totals"], expected);
+    assert_eq!(read.json["policy"]["data"][0]["counts"], expected);
+    assert_eq!(read.json["policy"]["data"].as_array().unwrap().len(), 1);
+    assert!(read.json["policy"]["computed_at"].is_string());
+    assert_eq!(read.json["policy"]["has_more"], false);
+    let isolated = app.get(&url).bearer(&other.key).send().await;
+    assert_eq!(isolated.status, http::StatusCode::OK);
+    assert_eq!(isolated.json["policy"]["totals"]["affected"], 0);
+    let required = app
+        .get("/v1/analytics?include_policy=true")
+        .bearer(&workspace.key)
+        .send()
+        .await;
+    assert_eq!(required.status, http::StatusCode::UNPROCESSABLE_ENTITY);
+    let default = app.get("/v1/analytics").bearer(&workspace.key).send().await;
+    assert_eq!(default.status, http::StatusCode::OK);
+    assert!(default.json.get("policy").is_none());
+}
+
 /// A runner of this module's system kinds, as the worker registers them, with the test's object
 /// store.
 fn harness(test: &TestDb) -> Harness {

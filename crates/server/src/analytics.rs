@@ -28,6 +28,7 @@ pub mod deletion;
 pub mod http;
 pub mod metrics;
 pub mod parquet;
+mod policy;
 pub mod retention;
 pub mod rollup;
 #[cfg(feature = "analytics")]

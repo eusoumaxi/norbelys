@@ -71,7 +71,11 @@ export const DeliveryHistory = ({ messageId }: { messageId: string }) => {
                   <span className="flex items-center gap-2 text-sm font-semibold">
                     {humanize(event.kind)}
                     {event.category === "policy" ? (
-                      <Badge tone="warning">Provider policy</Badge>
+                      <Badge tone="warning">
+                        {event.provider_code === "JFE050005"
+                          ? "Account restriction"
+                          : "Provider policy"}
+                      </Badge>
                     ) : null}
                   </span>
                   <time
@@ -94,6 +98,13 @@ export const DeliveryHistory = ({ messageId }: { messageId: string }) => {
                 {event.diagnostic ? (
                   <p className="text-fg-2 mt-1 text-sm break-words">
                     {event.diagnostic}
+                  </p>
+                ) : null}
+                {event.provider_code === "JFE050005" ? (
+                  <p className="text-warning mt-1 text-xs">
+                    This is an account restriction, not proof that this variant
+                    caused the refusal. Sending-provider acceptance does not
+                    confirm delivery to the recipient.
                   </p>
                 ) : null}
               </li>

@@ -45,6 +45,8 @@ struct AnalyticsQuery {
     from: Option<Date>,
     to: Option<Date>,
     group_by: Option<GroupBy>,
+    #[serde(default)]
+    include_policy: bool,
 }
 
 /// One group of counters.
@@ -89,6 +91,9 @@ pub struct AnalyticsObject {
     pub has_more: bool,
     /// How far the rollup had counted when these were read; `null` before its first run.
     pub computed_at: Option<Timestamp>,
+    /// Policy refusals from retained delivery evidence; present only with `include_policy=true`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub policy: Option<super::policy::PolicyReport>,
 }
 
 /// Retrieve the workspace's campaign counters.
@@ -107,6 +112,7 @@ pub struct AnalyticsObject {
         ("from" = Option<String>, Query, description = "The first UTC day (`YYYY-MM-DD`); default 29 days before `to`."),
         ("to" = Option<String>, Query, description = "The last UTC day, included (`YYYY-MM-DD`); default today."),
         ("group_by" = Option<GroupBy>, Query, description = "`day`, `campaign`, `step` or `variant`."),
+        ("include_policy" = Option<bool>, Query, description = "Include retained policy evidence for one campaign; requires campaign_id."),
     ),
     responses(
         (status = 200, description = "The counters.", body = AnalyticsObject),
@@ -122,6 +128,13 @@ async fn retrieve(
     Query(query): Query<AnalyticsQuery>,
 ) -> ApiResult<Json<AnalyticsObject>> {
     principal.require(Scope::AnalyticsRead)?;
+    if query.include_policy && query.campaign_id.is_none() {
+        return Err(Problem::invalid_field(
+            "?campaign_id",
+            "required",
+            "A campaign is required to include policy evidence.",
+        ));
+    }
     let (from, to) =
         analytics::range(query.from, query.to, crate::process::now()).map_err(|error| {
             let field = match error {
@@ -149,6 +162,22 @@ async fn retrieve(
         Some(group_by) => groups(&mut tx, ws, &filters, Some(group_by), GROUPS + 1).await?,
         None => Vec::new(),
     };
+    let policy = if query.include_policy {
+        Some(
+            super::policy::read(
+                &mut tx,
+                ws,
+                filters.campaign,
+                filters.step,
+                from,
+                to,
+                query.group_by,
+            )
+            .await?,
+        )
+    } else {
+        None
+    };
     tx.commit().await?;
     let has_more = i64::try_from(data.len()).unwrap_or(i64::MAX) > GROUPS;
     data.truncate(usize::try_from(GROUPS).unwrap_or(usize::MAX));
@@ -160,6 +189,7 @@ async fn retrieve(
         data,
         has_more,
         computed_at,
+        policy,
     }))
 }
 

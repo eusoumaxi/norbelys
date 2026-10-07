@@ -175,6 +175,17 @@
             "description": "The grouping has more groups than `data` holds (at most 2,500).",
             "type": "boolean"
           },
+          "policy": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PolicyReport",
+                "description": "Policy refusals from retained delivery evidence; present only with `include_policy=true`."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "to": {
             "$ref": "#/components/schemas/Date",
             "description": "The last day counted (UTC), included."
@@ -7266,6 +7277,118 @@
         ],
         "type": "object"
       },
+      "PolicyCounts": {
+        "description": "Distinct messages, never the number of repeated provider notifications.",
+        "properties": {
+          "account_restricted": {
+            "description": "Messages with a recognised account restriction (currently JFE050005).\nOther policy refusals have unknown scope, not necessarily content problems.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "affected": {
+            "description": "Messages with at least one policy refusal; includes recovered deliveries.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "failed": {
+            "description": "A terminal bounce or rejection without confirmed delivery.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "pending": {
+            "description": "A policy refusal with neither confirmed delivery nor a terminal refusal.",
+            "format": "int64",
+            "type": "integer"
+          },
+          "recovered": {
+            "description": "A policy refusal followed or accompanied by confirmed delivery.",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "affected",
+          "pending",
+          "recovered",
+          "failed",
+          "account_restricted"
+        ],
+        "type": "object"
+      },
+      "PolicyGroup": {
+        "description": "Policy counts for the same grouping as the campaign report.",
+        "properties": {
+          "campaign_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "counts": {
+            "$ref": "#/components/schemas/PolicyCounts"
+          },
+          "day": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "step_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "variant_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "variant_version": {
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "counts"
+        ],
+        "type": "object"
+      },
+      "PolicyReport": {
+        "description": "Current retained evidence, not the delayed daily rollup. Archived messages are excluded.",
+        "properties": {
+          "computed_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/PolicyGroup"
+            },
+            "type": "array"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/PolicyCounts"
+          }
+        },
+        "required": [
+          "totals",
+          "data",
+          "has_more",
+          "computed_at"
+        ],
+        "type": "object"
+      },
       "PreflightReason": {
         "description": "Why an address got its verdict; parsed back from the cache (`recipient_validations.reason`).",
         "enum": [
@@ -10149,6 +10272,18 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/GroupBy"
+            }
+          },
+          {
+            "description": "Include retained policy evidence for one campaign; requires campaign_id.",
+            "in": "query",
+            "name": "include_policy",
+            "required": false,
+            "schema": {
+              "type": [
+                "boolean",
+                "null"
+              ]
             }
           }
         ],

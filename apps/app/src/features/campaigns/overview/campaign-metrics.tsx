@@ -15,6 +15,11 @@ export const CampaignMetrics = ({ campaign }: { campaign: CampaignObject }) => {
   const metrics: Metric[] = [
     { label: "Sent", value: formatCount(stats.sent) },
     {
+      label: "Delivered",
+      note: share(stats.delivered),
+      value: formatCount(stats.delivered),
+    },
+    {
       accent: stats.replied > 0,
       label: "Replies",
       note: share(stats.replied),
@@ -49,7 +54,7 @@ export const CampaignMetrics = ({ campaign }: { campaign: CampaignObject }) => {
     <MetricGroup
       footer={
         stats.computed_at
-          ? `Counted ${formatRelative(stats.computed_at).toLowerCase()}. Sent means the recipient's server accepted the email; opens and clicks count people, not link scanners.`
+          ? `Counted ${formatRelative(stats.computed_at).toLowerCase()}. Sent means the sending provider accepted the email; Delivered requires a delivery report and does not guarantee inbox placement. Opens and clicks exclude recognised scanners.`
           : undefined
       }
       metrics={metrics}
