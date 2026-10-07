@@ -19,6 +19,7 @@ import {
   missingPaths,
   piecesToHtml,
   renderTemplate,
+  unsupportedTags,
 } from "@/features/messages/templates";
 import type { PreviewContext } from "@/features/messages/templates";
 import { PersonPicker, personLabel } from "@/features/people/person-picker";
@@ -108,12 +109,22 @@ export const EmailPreview = ({
     : null;
   const body = renderTemplate(variant.body.html, context);
   const label = (path: string) => pathLabel(path, fields);
-  const signature = from ? signatureHtml(from) : null;
+  const signatureSource = from ? signatureHtml(from) : null;
+  const signature = signatureSource
+    ? renderTemplate(signatureSource, context)
+    : [];
+  const unsupported = unsupportedTags([
+    ...subject,
+    ...(preheader ?? []),
+    ...body,
+    ...signature,
+  ]);
   const missing = [
     ...new Set([
       ...missingPaths(subject),
       ...missingPaths(preheader ?? []),
       ...missingPaths(body),
+      ...missingPaths(signature),
     ]),
   ].map(label);
   const recipient = person
@@ -180,10 +191,18 @@ export const EmailPreview = ({
         </dl>
         <MailFrame
           className="rounded-none border-0"
-          html={`${piecesToHtml(body, label)}${signature ? `<br>${signature}` : ""}`}
+          html={`${piecesToHtml(body, label)}${signature.length > 0 ? `<br>${piecesToHtml(signature, label)}` : ""}`}
+          readOnly
           title="Email preview"
         />
       </div>
+      {unsupported.length > 0 ? (
+        <p className="text-warning-fg text-xs" role="status">
+          This preview cannot evaluate all template syntax. The remaining tags
+          are not the final email. Inspect a prepared message under Messages to
+          see its saved content.
+        </p>
+      ) : null}
       {missing.length > 0 ? (
         <p className="text-error-fg text-xs">
           No value for {missing.join(", ")}. An email that prints a missing

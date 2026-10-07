@@ -46,6 +46,25 @@ export const messageQuery = (workspace: Workspace, id: string) =>
   queryOptions({
     queryKey: [...messagesKey(workspace), "detail", id],
     queryFn: ({ signal }) => workspace.api.messages.retrieve(id, { signal }),
+    refetchInterval: (query) =>
+      query.state.data &&
+      ["queued", "claimed", "in_flight"].includes(query.state.data.state)
+        ? 15_000
+        : false,
+  });
+
+/** The stored body, refreshed when a new attempt may have prepared different content. */
+export const messageContentQuery = (
+  workspace: Workspace,
+  id: string,
+  revision: readonly [string, number]
+) =>
+  queryOptions({
+    queryKey: [...messagesKey(workspace), "content", id, ...revision],
+    queryFn: ({ signal }) => workspace.api.messages.content(id, { signal }),
+    refetchInterval: ["queued", "claimed", "in_flight"].includes(revision[0])
+      ? 15_000
+      : false,
   });
 
 /** A message's delivery events, oldest first. */

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "cn";
-import { useImperativeHandle, useRef, useState } from "react";
+import { useImperativeHandle, useMemo, useRef, useState } from "react";
 import type { ReactNode, Ref } from "react";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -243,19 +243,58 @@ const mailDocument = (html: string): string =>
   `<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; style-src 'unsafe-inline'; font-src 'none'; form-action 'none'; base-uri 'none'"><meta name="viewport" content="width=device-width"><base target="_blank"><style>html{background:#fff}body{margin:20px 24px;font:14px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#0a0a0a;overflow-wrap:anywhere}p{margin:0 0 14px}img{max-width:100%;height:auto}.nb-missing,.nb-ai,.nb-sample{border-radius:3px;padding:0 4px;font-size:13px}.nb-missing{background:#fde8e6;color:#b42318}.nb-ai{border:1px dashed #a1a1aa;color:#52525b}.nb-sample{background:#f4f4f5;color:#3f3f46}</style>${html}`;
 
 /**
+ * Parse in an inert template before entering the frame. Remove navigation and embedded
+ * documents; the frame's CSP separately blocks remote resources and its sandbox blocks scripts.
+ * The retained source is never changed by this display-only projection.
+ */
+const passiveMail = (html: string): string => {
+  const template = document.createElement("template");
+  template.innerHTML = html;
+  for (const element of template.content.querySelectorAll(
+    "script, meta, base, link, iframe, frame, object, embed, form, template"
+  )) {
+    element.remove();
+  }
+  for (const element of template.content.querySelectorAll("*")) {
+    for (const attribute of [...element.attributes]) {
+      if (
+        [
+          "href",
+          "xlink:href",
+          "action",
+          "formaction",
+          "ping",
+          "autofocus",
+        ].includes(attribute.name) ||
+        attribute.name.startsWith("on")
+      ) {
+        element.removeAttribute(attribute.name);
+      }
+    }
+  }
+  return template.innerHTML;
+};
+
+/**
  * An email body as a mail client shows it, in a frame that runs no script (its document may be
  * read, to grow the frame to its content).
  */
 export const MailFrame = ({
   className,
   html,
+  readOnly = false,
   title,
 }: {
   className?: string;
   html: string;
+  readOnly?: boolean;
   title: string;
 }) => {
   const [height, setHeight] = useState<number>();
+  const documentHtml = useMemo(
+    () => mailDocument(readOnly ? passiveMail(html) : html),
+    [html, readOnly]
+  );
   return (
     <iframe
       className={cn("border-line min-h-40 w-full rounded-sm border", className)}
@@ -265,7 +304,8 @@ export const MailFrame = ({
         )
       }
       sandbox="allow-same-origin"
-      srcDoc={mailDocument(html)}
+      referrerPolicy="no-referrer"
+      srcDoc={documentHtml}
       style={height === undefined ? undefined : { height }}
       title={title}
     />

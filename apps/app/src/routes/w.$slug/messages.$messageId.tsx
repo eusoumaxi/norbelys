@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { DeliveryHistory } from "@/features/messages/delivery-history";
 import { MessageActions } from "@/features/messages/message-actions";
+import { MessageContentCard } from "@/features/messages/message-content";
 import { AttemptsCard, HoldsCard } from "@/features/messages/message-sections";
 import { messageQuery } from "@/features/messages/queries";
 import {
@@ -171,6 +172,7 @@ const MessagePage = () => {
           {message.holds.length > 0 ? (
             <HoldsCard holds={message.holds} />
           ) : null}
+          <MessageContentCard message={message} />
           <AttemptsCard message={message} />
           <DeliveryHistory messageId={messageId} />
         </div>

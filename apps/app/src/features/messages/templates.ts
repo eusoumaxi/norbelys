@@ -6,7 +6,7 @@
  * The server renders templates with MiniJinja; this module reads the part of that language a
  * message usually holds, so the editor can show a tag in words and the preview can fill it in:
  * printed paths (`{{ person.company | default("your team") }}`), the filters `default`, `upper`,
- * `lower`, `trim`, `title` and `capitalize`, and `{% if %}` blocks with `elif`, `else`, `not`,
+ * `lower`, `trim`, `title`, `capitalize`, `split`, `first` and `last`, and `{% if %}` blocks with `elif`, `else`, `not`,
  * `and`, `or`, `==` and `!=`. What it does not know is shown as written. A value the person
  * lacks, printed without a fallback, is marked: the server refuses to create such a message.
  * The exact rendering is the server's; a test send shows it.
@@ -327,6 +327,48 @@ const operand = (text: string, context: PreviewContext): Value => {
   return PATH.test(text) ? lookup(text, context) : { kind: "unknown" };
 };
 
+/** Sequence filters used by greetings and sender domains, preserving intermediate arrays. */
+const sequenceFilter = (value: Value, filter: Filter): Value => {
+  if (filter.name === "split") {
+    const separator = filter.argument?.trim()
+      ? literal(filter.argument)?.value
+      : null;
+    // Other forms remain visibly unsupported rather than guessing at server semantics.
+    if (
+      separator !== null &&
+      (typeof separator !== "string" || separator === "")
+    ) {
+      return { kind: "unknown" };
+    }
+    if (value.kind !== "value") {
+      return value;
+    }
+    const text = display(value.value);
+    return {
+      kind: "value",
+      value:
+        separator === null
+          ? text.trim().split(/\s+/u).filter(Boolean)
+          : text.split(separator),
+    };
+  }
+  if (filter.argument?.trim()) {
+    return { kind: "unknown" };
+  }
+  if (value.kind !== "value") {
+    return value;
+  }
+  const items: readonly unknown[] | null =
+    typeof value.value === "string"
+      ? [...value.value]
+      : Array.isArray(value.value)
+        ? value.value
+        : null;
+  return items === null
+    ? { kind: "unknown" }
+    : { kind: "value", value: items.at(filter.name === "first" ? 0 : -1) };
+};
+
 /** `value` through one filter (`default("there")`, `upper`). */
 const filtered = (
   value: Value,
@@ -334,13 +376,19 @@ const filtered = (
   context: PreviewContext
 ): Value => {
   if (filter.name === "default") {
-    if (value.kind !== "missing") {
+    if (
+      value.kind !== "missing" &&
+      !(value.kind === "value" && value.value === undefined)
+    ) {
       return value;
     }
     const [first = ""] = splitOutside(filter.argument ?? "", ",");
     return first === ""
       ? { kind: "value", value: "" }
       : operand(first, context);
+  }
+  if (["split", "first", "last"].includes(filter.name)) {
+    return sequenceFilter(value, filter);
   }
   const change = TEXT_FILTERS[filter.name];
   if (!change) {
@@ -458,5 +506,16 @@ export const piecesToHtml = (
 export const missingPaths = (pieces: readonly Piece[]): string[] => [
   ...new Set(
     pieces.flatMap((part) => (part.kind === "missing" ? [part.path] : []))
+  ),
+];
+
+/** Syntax the browser left untouched, so a partial preview is never presented as complete. */
+export const unsupportedTags = (pieces: readonly Piece[]): string[] => [
+  ...new Set(
+    pieces.flatMap((part) =>
+      part.kind === "text"
+        ? [...part.text.matchAll(TOKEN)].map(([tag]) => tag)
+        : []
+    )
   ),
 ];
