@@ -594,13 +594,25 @@ pub async fn step(
         .await?
         .ok_or(Error::NotFound("step"))?;
     let tracking = sqlx::query!(
-        r#"SELECT c.track_opens, c.track_clicks, d.hostname AS "hostname?"
+        r#"SELECT c.track_opens, c.track_clicks,
+                  CASE WHEN c.tracking_domain_id IS NULL THEN automatic.hostname
+                       ELSE chosen.hostname END AS "hostname?"
              FROM campaigns c
-             LEFT JOIN sending_domains d ON d.workspace_id = c.workspace_id AND d.id = c.tracking_domain_id
-                                        AND d.tracking_enabled AND d.status = 'active'
+             LEFT JOIN sending_domains configured ON configured.workspace_id = c.workspace_id
+                                                  AND configured.id = c.tracking_domain_id
+             LEFT JOIN sending_domains chosen ON chosen.workspace_id = c.workspace_id
+                                              AND chosen.id = coalesce(configured.tracking_domain_id, configured.id)
+                                              AND chosen.tracking_enabled AND chosen.status = 'active'
+             LEFT JOIN sending_domains sender_domain ON sender_domain.workspace_id = c.workspace_id
+                                                     AND sender_domain.hostname = lower(split_part($3::text, '@', 2))
+                                                     AND sender_domain.status IN ('verified', 'active')
+             LEFT JOIN sending_domains automatic ON automatic.workspace_id = c.workspace_id
+                                                 AND automatic.id = coalesce(sender_domain.tracking_domain_id, sender_domain.id)
+                                                 AND automatic.tracking_enabled AND automatic.status = 'active'
             WHERE c.workspace_id = $1 AND c.id = $2"#,
         workspace.uuid(),
         new.campaign.uuid(),
+        identity.email,
     )
     .fetch_one(&mut **tx)
     .await?;

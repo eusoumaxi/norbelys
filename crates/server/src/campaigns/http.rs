@@ -109,7 +109,8 @@ struct ScheduleInput {
 #[derive(Debug, Default, Deserialize, garde::Validate, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
 struct TrackingInput {
-    /// A sending domain whose tracking host the links use (`dom_…`); `null`: the platform's.
+    /// A fixed tracking domain (`dom_…`), or a mail domain with a separate tracking host.
+    /// `null` selects the sender domain's active tracking host, falling back to the platform's.
     #[serde(default, deserialize_with = "nullable")]
     #[garde(skip)]
     #[schema(value_type = Option<String>)]

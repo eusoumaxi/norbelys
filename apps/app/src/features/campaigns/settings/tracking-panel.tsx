@@ -11,20 +11,20 @@ import { humanize, shortId } from "@/lib/format";
 import { problemAt } from "@/lib/problem";
 import { useWorkspace } from "@/lib/workspace";
 
-/** The platform's host, standing for `domain_id: null` in the choice. */
-const PLATFORM = "platform";
+/** Select the sender domain's active custom host, with the platform as fallback. */
+const AUTOMATIC = "automatic";
 
 /**
  * What the campaign's messages track: human opens, clicks, and the host their links go
- * through (the platform's, or a sending domain of the workspace with tracking turned on).
+ * through (the sender's custom host automatically, or a fixed domain of the workspace).
  */
 export const TrackingPanel = ({ draft, errors, set }: PanelProps) => {
   const workspace = useWorkspace();
   const domains = useQuery(trackingDomainsQuery(workspace));
   const options: SelectOption[] = [
-    { label: "Norbelys (default)", value: PLATFORM },
+    { label: "Automatic by sender domain", value: AUTOMATIC },
     ...(domains.data ?? [])
-      .filter((d) => d.tracking_enabled || d.id === draft.domain_id)
+      .filter((d) => d.tracking_enabled || d.tracking_domain || d.id === draft.domain_id)
       .map((d) => ({
         label: domainVerified(d)
           ? d.hostname
@@ -56,7 +56,7 @@ export const TrackingPanel = ({ draft, errors, set }: PanelProps) => {
       />
       <FormField
         className="max-w-[400px]"
-        description="Your own sending domain, once tracking is turned on for it, makes tracked links look like yours."
+        description="Automatic uses each sender domain's active custom tracking host. Without one, it uses Norbelys. Choose a domain to use the same host for every sender."
         htmlFor="tracking-domain"
         label="Tracked links use"
         problem={
@@ -67,10 +67,10 @@ export const TrackingPanel = ({ draft, errors, set }: PanelProps) => {
         <Select
           id="tracking-domain"
           onChange={(value) =>
-            set({ domain_id: value === PLATFORM ? "" : value })
+            set({ domain_id: value === AUTOMATIC ? "" : value })
           }
           options={options}
-          value={draft.domain_id || PLATFORM}
+          value={draft.domain_id || AUTOMATIC}
         />
       </FormField>
     </SettingsPanel>

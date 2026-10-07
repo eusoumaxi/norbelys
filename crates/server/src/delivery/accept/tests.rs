@@ -184,6 +184,87 @@ async fn create_step(db: &Database, fixture: &Fixture, position: i32) -> StepOut
     outcome
 }
 
+/// Automatic tracking follows a sender's proven domain; a fixed campaign selection wins.
+/// Unready or another workspace's hosts must never be frozen into the message.
+#[tokio::test]
+async fn tracking_uses_the_sender_domain_or_the_explicit_campaign_host() {
+    for (case, parent_status, host_status, fixed, foreign, expected) in [
+        (
+            "automatic",
+            "verified",
+            "active",
+            false,
+            false,
+            Some("links.acme.example"),
+        ),
+        (
+            "fixed",
+            "verified",
+            "active",
+            true,
+            false,
+            Some("links.fixed.example"),
+        ),
+        (
+            "pending",
+            "verified",
+            "pending_certificate",
+            false,
+            false,
+            None,
+        ),
+        ("suspended", "suspended", "active", false, false, None),
+        ("foreign", "verified", "active", false, true, None),
+    ] {
+        let test = TestDb::new().await;
+        let workspace = test.workspace(&format!("tracking-{case}")).await;
+        let fixture = campaign(&test, &workspace, true).await;
+        let owner = if foreign {
+            test.workspace("tracking-other-owner").await.id
+        } else {
+            workspace.id
+        };
+        let (mail, custom, selected) = (Uuid::now_v7(), Uuid::now_v7(), Uuid::now_v7());
+        let mut tx = test.system.begin().await.unwrap();
+        for (id, hostname, status, purpose, tracking) in [
+            (custom, "links.acme.example", host_status, "tracking", true),
+            (mail, "acme.example", parent_status, "send", false),
+        ] {
+            sqlx::query("INSERT INTO sending_domains (workspace_id, id, hostname, status, purpose, tracking_enabled, ownership_token, ownership_expires_at, verified_at) VALUES ($1, $2, $3, $4, $5, $6, 'proof', now() + interval '30 days', now())")
+                .bind(owner.uuid()).bind(id).bind(hostname).bind(status).bind(purpose).bind(tracking)
+                .execute(&mut *tx).await.unwrap();
+        }
+        sqlx::query("UPDATE sending_domains SET tracking_domain_id = $3 WHERE workspace_id = $1 AND id = $2")
+            .bind(owner.uuid()).bind(mail).bind(custom).execute(&mut *tx).await.unwrap();
+        if fixed {
+            sqlx::query("INSERT INTO sending_domains (workspace_id, id, hostname, status, purpose, tracking_enabled, ownership_token, ownership_expires_at, verified_at) VALUES ($1, $2, 'links.fixed.example', 'active', 'tracking', true, 'proof', now() + interval '30 days', now())")
+                .bind(workspace.id.uuid()).bind(selected).execute(&mut *tx).await.unwrap();
+            sqlx::query(
+                "UPDATE campaigns SET tracking_domain_id = $3 WHERE workspace_id = $1 AND id = $2",
+            )
+            .bind(workspace.id.uuid())
+            .bind(fixture.campaign.uuid())
+            .bind(selected)
+            .execute(&mut *tx)
+            .await
+            .unwrap();
+        }
+        tx.commit().await.unwrap();
+        let StepOutcome::Created(message) = create_step(&test.worker, &fixture, 1).await else {
+            panic!("the {case} message was not created");
+        };
+        let tracking: serde_json::Value =
+            sqlx::query_scalar("SELECT tracking FROM messages WHERE workspace_id = $1 AND id = $2")
+                .bind(workspace.id.uuid())
+                .bind(message.message.uuid())
+                .fetch_one(test.system.pool())
+                .await
+                .unwrap();
+        assert_eq!(tracking["hostname"], json!(expected), "{case}");
+        assert_eq!(tracking["opens"], true, "{case}");
+    }
+}
+
 /// The enrollment's pointer, its thread root and the number of its messages.
 async fn enrollment(test: &TestDb, fixture: &Fixture) -> (Option<Uuid>, Option<Uuid>, i64) {
     let row = sqlx::query!(

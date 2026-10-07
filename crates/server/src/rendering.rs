@@ -77,8 +77,8 @@
 //!
 //! # Tracking and unsubscribe links
 //!
-//! They live on the message's tracking host: the campaign's own tracking domain when the message
-//! was created with one (`messages.tracking.hostname`), else the platform's
+//! They live on the tracking host frozen when the message was created (`messages.tracking.hostname`):
+//! a campaign's fixed host, or the sender domain's active custom host in automatic mode; otherwise the platform's
 //! ([`Settings::new`], `PUBLIC_TRACKING_URL`). The unsubscribe link names the message's first
 //! `To` address, the person it was written to.
 //!

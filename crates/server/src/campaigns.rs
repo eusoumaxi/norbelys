@@ -192,7 +192,8 @@ pub struct ScheduleObject {
 /// What the campaign's messages track.
 #[derive(Debug, Clone, Serialize, utoipa::ToSchema)]
 pub struct TrackingObject {
-    /// The sending domain whose tracking host the links use (`dom_…`); `null`: the platform's.
+    /// A fixed tracking domain (`dom_…`), or a mail domain with a separate tracking host.
+    /// `null` selects the sender domain's active tracking host, falling back to the platform's.
     pub domain_id: Option<Id<SendingDomain>>,
     pub opens: bool,
     pub clicks: bool,
