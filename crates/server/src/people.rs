@@ -199,7 +199,7 @@ pub struct PeopleFilters {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schema(value_type = Option<String>)]
     pub segment_id: Option<Id<Segment>>,
-    /// A prefix of the address, a name or the company (ignoring case).
+    /// Text anywhere in the address, full name, company or custom field values (ignoring case).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub q: Option<String>,
     /// Bounds on creation time, flattened into the list's filter keys.
@@ -207,12 +207,12 @@ pub struct PeopleFilters {
     pub created: crate::http::extract::CreatedRange,
 }
 
-/// [`PeopleFilters`] ready for the queries: the search prefix escaped for `LIKE`, the segment
+/// [`PeopleFilters`] ready for the queries: the substring pattern escaped for `LIKE`, the segment
 /// compiled.
 pub(crate) struct Selection {
     email: Option<String>,
     group: Option<Uuid>,
-    prefix: Option<String>,
+    pattern: Option<String>,
     created_gte: Option<Timestamp>,
     created_gt: Option<Timestamp>,
     created_lte: Option<Timestamp>,
@@ -224,7 +224,11 @@ pub(crate) struct Selection {
 impl Selection {
     /// The selection of `filters`, with the segment's compiled filter when one is named.
     pub(crate) fn new(filters: &PeopleFilters, segment: Option<Compiled>) -> Self {
-        let prefix = filters.q.as_deref().and_then(like_prefix);
+        let pattern = filters
+            .q
+            .as_deref()
+            .and_then(like_prefix)
+            .map(|prefix| format!("%{prefix}"));
         let (path, vars) = match segment {
             Some(compiled) => (Some(compiled.path), compiled.vars),
             None => (None, Value::Object(Map::new())),
@@ -232,7 +236,7 @@ impl Selection {
         Self {
             email: filters.email.clone(),
             group: filters.group_id.map(|group| group.uuid()),
-            prefix,
+            pattern,
             created_gte: filters.created.gte,
             created_gt: filters.created.gt,
             created_lte: filters.created.lte,
@@ -270,8 +274,21 @@ pub(crate) async fn list(
                   AND ($3::text IS NULL OR p.email_key = ascii_lower($3))
                   AND ($4::uuid IS NULL OR EXISTS (SELECT 1 FROM group_people g
                         WHERE g.workspace_id = p.workspace_id AND g.group_id = $4 AND g.person_id = p.id))
-                  AND ($5::text IS NULL OR p.email_key LIKE $5 OR lower(p.given_name) LIKE $5
-                       OR lower(p.family_name) LIKE $5 OR lower(p.company) LIKE $5)
+                  AND ($5::text IS NULL OR lower(p.email) LIKE $5
+                       OR lower(concat_ws(' ', p.given_name, p.family_name)) LIKE $5
+                       OR lower(p.company) LIKE $5
+                       OR EXISTS (SELECT 1 FROM jsonb_each_text(p.custom_fields) field
+                            JOIN person_field_definitions definition
+                              ON definition.workspace_id = p.workspace_id AND definition.key = field.key
+                             AND definition.deleted_at IS NULL
+                            WHERE lower(field.value) LIKE $5
+                               OR (definition.field_type = 'boolean'
+                                   AND (CASE field.value WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' END) LIKE $5)
+                               OR ($5 ~ '^%[+0-9() .-]+%$'
+                                   AND length(regexp_replace($5, '[^0-9]', '', 'g')) >= 3
+                                   AND field.value ~ '^[+0-9() .-]+$'
+                                   AND regexp_replace(field.value, '[^0-9]', '', 'g')
+                                       LIKE '%' || regexp_replace($5, '[^0-9]', '', 'g') || '%')))
                   AND ($6::timestamptz IS NULL OR p.created_at >= $6) AND ($7::timestamptz IS NULL OR p.created_at > $7)
                   AND ($8::timestamptz IS NULL OR p.created_at <= $8) AND ($9::timestamptz IS NULL OR p.created_at < $9)
                   AND ($10::text IS NULL OR coalesce(jsonb_path_match(
@@ -284,7 +301,7 @@ pub(crate) async fn list(
             cursor,
             s.email,
             s.group,
-            s.prefix,
+            s.pattern,
             s.created_gte as _,
             s.created_gt as _,
             s.created_lte as _,
@@ -306,8 +323,21 @@ pub(crate) async fn list(
                   AND ($3::text IS NULL OR p.email_key = ascii_lower($3))
                   AND ($4::uuid IS NULL OR EXISTS (SELECT 1 FROM group_people g
                         WHERE g.workspace_id = p.workspace_id AND g.group_id = $4 AND g.person_id = p.id))
-                  AND ($5::text IS NULL OR p.email_key LIKE $5 OR lower(p.given_name) LIKE $5
-                       OR lower(p.family_name) LIKE $5 OR lower(p.company) LIKE $5)
+                  AND ($5::text IS NULL OR lower(p.email) LIKE $5
+                       OR lower(concat_ws(' ', p.given_name, p.family_name)) LIKE $5
+                       OR lower(p.company) LIKE $5
+                       OR EXISTS (SELECT 1 FROM jsonb_each_text(p.custom_fields) field
+                            JOIN person_field_definitions definition
+                              ON definition.workspace_id = p.workspace_id AND definition.key = field.key
+                             AND definition.deleted_at IS NULL
+                            WHERE lower(field.value) LIKE $5
+                               OR (definition.field_type = 'boolean'
+                                   AND (CASE field.value WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' END) LIKE $5)
+                               OR ($5 ~ '^%[+0-9() .-]+%$'
+                                   AND length(regexp_replace($5, '[^0-9]', '', 'g')) >= 3
+                                   AND field.value ~ '^[+0-9() .-]+$'
+                                   AND regexp_replace(field.value, '[^0-9]', '', 'g')
+                                       LIKE '%' || regexp_replace($5, '[^0-9]', '', 'g') || '%')))
                   AND ($6::timestamptz IS NULL OR p.created_at >= $6) AND ($7::timestamptz IS NULL OR p.created_at > $7)
                   AND ($8::timestamptz IS NULL OR p.created_at <= $8) AND ($9::timestamptz IS NULL OR p.created_at < $9)
                   AND ($10::text IS NULL OR coalesce(jsonb_path_match(
@@ -320,7 +350,7 @@ pub(crate) async fn list(
             cursor,
             s.email,
             s.group,
-            s.prefix,
+            s.pattern,
             s.created_gte as _,
             s.created_gt as _,
             s.created_lte as _,
@@ -367,8 +397,21 @@ pub(crate) async fn list_by_update(
                   AND ($3::text IS NULL OR p.email_key = ascii_lower($3))
                   AND ($4::uuid IS NULL OR EXISTS (SELECT 1 FROM group_people g
                         WHERE g.workspace_id = p.workspace_id AND g.group_id = $4 AND g.person_id = p.id))
-                  AND ($5::text IS NULL OR p.email_key LIKE $5 OR lower(p.given_name) LIKE $5
-                       OR lower(p.family_name) LIKE $5 OR lower(p.company) LIKE $5)
+                  AND ($5::text IS NULL OR lower(p.email) LIKE $5
+                       OR lower(concat_ws(' ', p.given_name, p.family_name)) LIKE $5
+                       OR lower(p.company) LIKE $5
+                       OR EXISTS (SELECT 1 FROM jsonb_each_text(p.custom_fields) field
+                            JOIN person_field_definitions definition
+                              ON definition.workspace_id = p.workspace_id AND definition.key = field.key
+                             AND definition.deleted_at IS NULL
+                            WHERE lower(field.value) LIKE $5
+                               OR (definition.field_type = 'boolean'
+                                   AND (CASE field.value WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' END) LIKE $5)
+                               OR ($5 ~ '^%[+0-9() .-]+%$'
+                                   AND length(regexp_replace($5, '[^0-9]', '', 'g')) >= 3
+                                   AND field.value ~ '^[+0-9() .-]+$'
+                                   AND regexp_replace(field.value, '[^0-9]', '', 'g')
+                                       LIKE '%' || regexp_replace($5, '[^0-9]', '', 'g') || '%')))
                   AND ($6::timestamptz IS NULL OR p.created_at >= $6) AND ($7::timestamptz IS NULL OR p.created_at > $7)
                   AND ($8::timestamptz IS NULL OR p.created_at <= $8) AND ($9::timestamptz IS NULL OR p.created_at < $9)
                   AND ($10::text IS NULL OR coalesce(jsonb_path_match(
@@ -381,7 +424,7 @@ pub(crate) async fn list_by_update(
             cursor,
             s.email,
             s.group,
-            s.prefix,
+            s.pattern,
             s.created_gte as _,
             s.created_gt as _,
             s.created_lte as _,
@@ -405,8 +448,21 @@ pub(crate) async fn list_by_update(
                   AND ($3::text IS NULL OR p.email_key = ascii_lower($3))
                   AND ($4::uuid IS NULL OR EXISTS (SELECT 1 FROM group_people g
                         WHERE g.workspace_id = p.workspace_id AND g.group_id = $4 AND g.person_id = p.id))
-                  AND ($5::text IS NULL OR p.email_key LIKE $5 OR lower(p.given_name) LIKE $5
-                       OR lower(p.family_name) LIKE $5 OR lower(p.company) LIKE $5)
+                  AND ($5::text IS NULL OR lower(p.email) LIKE $5
+                       OR lower(concat_ws(' ', p.given_name, p.family_name)) LIKE $5
+                       OR lower(p.company) LIKE $5
+                       OR EXISTS (SELECT 1 FROM jsonb_each_text(p.custom_fields) field
+                            JOIN person_field_definitions definition
+                              ON definition.workspace_id = p.workspace_id AND definition.key = field.key
+                             AND definition.deleted_at IS NULL
+                            WHERE lower(field.value) LIKE $5
+                               OR (definition.field_type = 'boolean'
+                                   AND (CASE field.value WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' END) LIKE $5)
+                               OR ($5 ~ '^%[+0-9() .-]+%$'
+                                   AND length(regexp_replace($5, '[^0-9]', '', 'g')) >= 3
+                                   AND field.value ~ '^[+0-9() .-]+$'
+                                   AND regexp_replace(field.value, '[^0-9]', '', 'g')
+                                       LIKE '%' || regexp_replace($5, '[^0-9]', '', 'g') || '%')))
                   AND ($6::timestamptz IS NULL OR p.created_at >= $6) AND ($7::timestamptz IS NULL OR p.created_at > $7)
                   AND ($8::timestamptz IS NULL OR p.created_at <= $8) AND ($9::timestamptz IS NULL OR p.created_at < $9)
                   AND ($10::text IS NULL OR coalesce(jsonb_path_match(
@@ -419,7 +475,7 @@ pub(crate) async fn list_by_update(
             cursor,
             s.email,
             s.group,
-            s.prefix,
+            s.pattern,
             s.created_gte as _,
             s.created_gt as _,
             s.created_lte as _,
@@ -454,8 +510,21 @@ pub(crate) async fn count(
                   AND ($2::text IS NULL OR p.email_key = ascii_lower($2))
                   AND ($3::uuid IS NULL OR EXISTS (SELECT 1 FROM group_people g
                         WHERE g.workspace_id = p.workspace_id AND g.group_id = $3 AND g.person_id = p.id))
-                  AND ($4::text IS NULL OR p.email_key LIKE $4 OR lower(p.given_name) LIKE $4
-                       OR lower(p.family_name) LIKE $4 OR lower(p.company) LIKE $4)
+                  AND ($4::text IS NULL OR lower(p.email) LIKE $4
+                       OR lower(concat_ws(' ', p.given_name, p.family_name)) LIKE $4
+                       OR lower(p.company) LIKE $4
+                       OR EXISTS (SELECT 1 FROM jsonb_each_text(p.custom_fields) field
+                            JOIN person_field_definitions definition
+                              ON definition.workspace_id = p.workspace_id AND definition.key = field.key
+                             AND definition.deleted_at IS NULL
+                            WHERE lower(field.value) LIKE $4
+                               OR (definition.field_type = 'boolean'
+                                   AND (CASE field.value WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' END) LIKE $4)
+                               OR ($4 ~ '^%[+0-9() .-]+%$'
+                                   AND length(regexp_replace($4, '[^0-9]', '', 'g')) >= 3
+                                   AND field.value ~ '^[+0-9() .-]+$'
+                                   AND regexp_replace(field.value, '[^0-9]', '', 'g')
+                                       LIKE '%' || regexp_replace($4, '[^0-9]', '', 'g') || '%')))
                   AND ($5::timestamptz IS NULL OR p.created_at >= $5) AND ($6::timestamptz IS NULL OR p.created_at > $6)
                   AND ($7::timestamptz IS NULL OR p.created_at <= $7) AND ($8::timestamptz IS NULL OR p.created_at < $8)
                   AND ($9::text IS NULL OR coalesce(jsonb_path_match(
@@ -467,7 +536,7 @@ pub(crate) async fn count(
         workspace.uuid(),
         s.email,
         s.group,
-        s.prefix,
+        s.pattern,
         s.created_gte as _,
         s.created_gt as _,
         s.created_lte as _,

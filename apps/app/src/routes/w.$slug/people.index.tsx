@@ -25,11 +25,16 @@ import { ImportButton } from "@/features/imports/import-button";
 import { PERSON_COLUMNS } from "@/features/people/columns";
 import { DeletePersonDialog } from "@/features/people/delete-person";
 import {
+  fieldsQuery,
   groupOptionsQuery,
   peopleKey,
   peopleListQuery,
 } from "@/features/people/queries";
-import { formatRelative } from "@/lib/format";
+import {
+  CustomFieldMatches,
+  SearchMatch,
+} from "@/features/people/search-matches";
+import { formatName, formatRelative } from "@/lib/format";
 import { canWrite, useWorkspace } from "@/lib/workspace";
 
 // Declared once for nuqs (state) and the router (typed links, such as a group's "View people").
@@ -78,7 +83,7 @@ const GroupNames = ({
 };
 
 /**
- * Everyone in the workspace, newest first: a search over the address, the names and the company,
+ * Everyone in the workspace, newest first: search all contact details and custom values,
  * and a group filter (`people.list` with `q` and `group_id`, both kept in the address). A row
  * opens the person; writers can add one, import a file or delete from the row's menu.
  */
@@ -97,10 +102,23 @@ const PeoplePage = () => {
   const [groupId, setGroupId] = useQueryState("group", search.group);
   const q = useDeferredValue(input.trim());
   const groups = useQuery(groupOptionsQuery(workspace));
+  const fields = useQuery(fieldsQuery(workspace));
   const names = new Map(
     (groups.data ?? []).map((group) => [group.id, group.name])
   );
   const filtered = Boolean(q || groupId);
+  const clearFilters = () => {
+    void setInput(null);
+    void setGroupId(null);
+  };
+  let emptyDescription =
+    "Add people one by one, import a CSV file, or create them through the API.";
+  if (q) {
+    emptyDescription = `No matches for “${q}”${groupId ? " in this group" : ""}. Try a shorter search or clear the filters.`;
+  } else if (groupId) {
+    emptyDescription =
+      "This group has no people yet. Clear the filters to see everyone.";
+  }
   const open = (person: PersonObject) => {
     void navigate({
       params: { personId: person.id, slug: workspace.slug },
@@ -119,16 +137,21 @@ const PeoplePage = () => {
 
   return (
     <PageBody>
-      <PageHeader actions={actions} title="People" />
-      <div className="flex flex-col gap-2">
+      <PageHeader
+        actions={actions}
+        subtitle="Find and manage everyone in your audience."
+        title="People"
+      />
+      <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-2 sm:flex-row">
           <SearchInput
+            describedBy="people-search-help"
             label="Search people"
             maxLength={256}
             onChange={(value) => {
               void setInput(value || null);
             }}
-            placeholder="Search by email, name or company..."
+            placeholder="Search email, name, company, phone or custom fields…"
             value={input}
           />
           <Select
@@ -147,11 +170,58 @@ const PeoplePage = () => {
             value={groupId ?? ""}
           />
         </div>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-fg-3 text-xs" id="people-search-help">
+            Search any part of a contact’s details, including all custom field
+            values.
+          </p>
+          {filtered ? (
+            <Button onClick={clearFilters} size="s" variant="tertiary">
+              Clear filters
+            </Button>
+          ) : null}
+        </div>
         <ListTable<PersonObject>
           columns={[
-            PERSON_COLUMNS.email,
-            PERSON_COLUMNS.name,
-            PERSON_COLUMNS.company,
+            {
+              ...PERSON_COLUMNS.email,
+              render: (p) => (
+                <span className="text-fg font-bold">
+                  <SearchMatch query={q} text={p.email} />
+                </span>
+              ),
+            },
+            {
+              ...PERSON_COLUMNS.name,
+              render: (p) => {
+                const name = formatName(p);
+                return name ? <SearchMatch query={q} text={name} /> : <Dash />;
+              },
+            },
+            {
+              ...PERSON_COLUMNS.company,
+              render: (p) =>
+                p.company ? (
+                  <SearchMatch query={q} text={p.company} />
+                ) : (
+                  <Dash />
+                ),
+            },
+            ...(q
+              ? [
+                  {
+                    render: (p: PersonObject) => (
+                      <CustomFieldMatches
+                        definitions={fields.data ?? []}
+                        person={p}
+                        query={q}
+                      />
+                    ),
+                    header: "Matching fields",
+                    id: "matches",
+                  },
+                ]
+              : []),
             {
               render: (p) => (
                 <GroupNames groupIds={p.group_ids} names={names} />
@@ -188,13 +258,17 @@ const PeoplePage = () => {
             },
           ]}
           empty={{
-            action: filtered ? undefined : actions,
-            description: filtered
-              ? "Nobody matches these filters."
-              : "Add people one by one, import a CSV file, or create them through the API.",
+            action: filtered ? (
+              <Button onClick={clearFilters} variant="secondary">
+                Clear filters
+              </Button>
+            ) : (
+              actions
+            ),
+            description: emptyDescription,
             icon: UserIcon,
             illustration: filtered ? undefined : "people",
-            title: filtered ? "No results" : "No people yet",
+            title: filtered ? "No people found" : "No people yet",
           }}
           onRowClick={open}
           query={peopleListQuery(workspace, { groupId, q })}

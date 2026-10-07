@@ -1,0 +1,33 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT count(*) AS \"count!\" FROM (\n               SELECT 1 FROM people p\n                WHERE p.workspace_id = $1\n                  AND ($2::text IS NULL OR p.email_key = ascii_lower($2))\n                  AND ($3::uuid IS NULL OR EXISTS (SELECT 1 FROM group_people g\n                        WHERE g.workspace_id = p.workspace_id AND g.group_id = $3 AND g.person_id = p.id))\n                  AND ($4::text IS NULL OR lower(p.email) LIKE $4\n                       OR lower(concat_ws(' ', p.given_name, p.family_name)) LIKE $4\n                       OR lower(p.company) LIKE $4\n                       OR EXISTS (SELECT 1 FROM jsonb_each_text(p.custom_fields) field\n                            JOIN person_field_definitions definition\n                              ON definition.workspace_id = p.workspace_id AND definition.key = field.key\n                             AND definition.deleted_at IS NULL\n                            WHERE lower(field.value) LIKE $4\n                               OR (definition.field_type = 'boolean'\n                                   AND (CASE field.value WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' END) LIKE $4)\n                               OR ($4 ~ '^%[+0-9() .-]+%$'\n                                   AND length(regexp_replace($4, '[^0-9]', '', 'g')) >= 3\n                                   AND field.value ~ '^[+0-9() .-]+$'\n                                   AND regexp_replace(field.value, '[^0-9]', '', 'g')\n                                       LIKE '%' || regexp_replace($4, '[^0-9]', '', 'g') || '%')))\n                  AND ($5::timestamptz IS NULL OR p.created_at >= $5) AND ($6::timestamptz IS NULL OR p.created_at > $6)\n                  AND ($7::timestamptz IS NULL OR p.created_at <= $7) AND ($8::timestamptz IS NULL OR p.created_at < $8)\n                  AND ($9::text IS NULL OR coalesce(jsonb_path_match(\n                        jsonb_build_object('email', p.email_key, 'email_domain', split_part(p.email_key, '@', 2),\n                            'given_name', p.given_name, 'family_name', p.family_name, 'company', p.company,\n                            'created_at', date_part('epoch', p.created_at), 'fields', p.custom_fields),\n                        $9::text::jsonpath, $10::jsonb, true), false))\n                LIMIT $11) counted",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Uuid",
+        "Text",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Text",
+        "Jsonb",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "fca3bc1eaa073283c5db66b745d246027300ab552141a3323558df46ae3b2f61"
+}

@@ -172,7 +172,7 @@ fn check_fields(definitions: &[Definition], values: &Map<String, Value>) -> Resu
         ("email" = Option<String>, Query, description = "The person with this address (ignoring ASCII case)."),
         ("group_id" = Option<Id<Group>>, Query, description = "Members of this group."),
         ("segment_id" = Option<Id<Segment>>, Query, description = "People this segment matches."),
-        ("q" = Option<String>, Query, description = "A prefix of the address, a name or the company, ignoring case."),
+        ("q" = Option<String>, Query, description = "Text anywhere in the address, full name, company or custom field values, ignoring case. Phone numbers in custom fields also match without spaces or punctuation (at least three digits)."),
         ("created_at[gte]" = Option<String>, Query, description = "Created at or after this instant (RFC 3339)."),
         ("created_at[gt]" = Option<String>, Query, description = "Created after this instant."),
         ("created_at[lte]" = Option<String>, Query, description = "Created at or before this instant."),

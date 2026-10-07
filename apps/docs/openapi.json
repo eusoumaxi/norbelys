@@ -16708,7 +16708,7 @@
             }
           },
           {
-            "description": "A prefix of the address, a name or the company, ignoring case.",
+            "description": "Text anywhere in the address, full name, company or custom field values, ignoring case. Phone numbers in custom fields also match without spaces or punctuation (at least three digits).",
             "in": "query",
             "name": "q",
             "required": false,

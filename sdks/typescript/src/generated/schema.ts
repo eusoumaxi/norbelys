@@ -9216,7 +9216,7 @@ export interface operations {
                 group_id?: components["schemas"]["Id_Group"];
                 /** @description People this segment matches. */
                 segment_id?: components["schemas"]["Id_Segment"];
-                /** @description A prefix of the address, a name or the company, ignoring case. */
+                /** @description Text anywhere in the address, full name, company or custom field values, ignoring case. Phone numbers in custom fields also match without spaces or punctuation (at least three digits). */
                 q?: string;
                 /** @description Created at or after this instant (RFC 3339). */
                 "created_at[gte]"?: string;

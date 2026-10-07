@@ -31,7 +31,7 @@ export const peopleListQuery = (workspace: Workspace, filters: PeopleFilters) =>
   );
 
 /**
- * The first people matching `q` (a prefix of the address, a name or the company), newest first;
+ * The first people matching `q` (text anywhere in the address, full name, company or custom values), newest first;
  * with no `q`, the newest. The choices of a person picker.
  */
 export const peopleSearchQuery = (workspace: Workspace, q: string) =>

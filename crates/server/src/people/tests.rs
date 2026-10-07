@@ -257,6 +257,92 @@ async fn people_lists_page_and_filter() {
     assert_eq!(problem(&foreign).0, StatusCode::BAD_REQUEST);
 }
 
+/// Substring search covers contact details and every custom value type, with literal
+/// wildcards and formatted phones, in both sort directions and the matching count.
+#[tokio::test]
+async fn people_searches_all_contact_details() {
+    let test = TestDb::new().await;
+    let acme = test.workspace("acme").await;
+    let other = test.workspace("other").await;
+    let app = test.app();
+    for definition in [
+        json!({ "key": "phone", "label": "Phone", "type": "text" }),
+        json!({ "key": "note", "label": "Note", "type": "text" }),
+        json!({ "key": "employees", "label": "Employees", "type": "number" }),
+        json!({ "key": "active", "label": "Active", "type": "boolean" }),
+        json!({ "key": "tier", "label": "Tier", "type": "enum", "options": ["Premium"] }),
+        json!({ "key": "birthday", "label": "Birthday", "type": "date" }),
+    ] {
+        create(&app, &acme.key, "/v1/fields", definition).await;
+    }
+    create(
+        &app,
+        &acme.key,
+        "/v1/people",
+        json!({
+            "email": "ada@hotmail.com", "given_name": "Ada", "family_name": "Lovelace",
+            "company": "Analytical Engines",
+            "fields": { "phone": "+57 (300) 123-4567", "note": "VIP 50%_done\\archive",
+                "employees": 42, "active": true, "tier": "Premium", "birthday": "1815-12-10" }
+        }),
+    )
+    .await;
+    create(
+        &app,
+        &acme.key,
+        "/v1/people",
+        json!({ "email": "bob@example.com" }),
+    )
+    .await;
+    create(
+        &app,
+        &other.key,
+        "/v1/people",
+        json!({ "email": "foreign@hotmail.com" }),
+    )
+    .await;
+    for query in [
+        "HOTMAIL.COM",
+        "da%20love",
+        "lytical",
+        "3001234567",
+        "%2B57%20300%20123%204567",
+        "VIP",
+        "42",
+        "true",
+        "yes",
+        "remiu",
+        "1815-12",
+        "50%25_done",
+        "%5Carchive",
+    ] {
+        for sort in ["id", "updated_at"] {
+            for order in ["asc", "desc"] {
+                let reply = app
+                    .get(&format!(
+                        "/v1/people?q={query}&sort={sort}&order={order}&include=total_count"
+                    ))
+                    .bearer(&acme.key)
+                    .send()
+                    .await;
+                assert_eq!(reply.status, StatusCode::OK, "{query}: {:?}", reply.json);
+                assert_eq!(emails(&reply), ["ada@hotmail.com"], "{query}");
+                assert_eq!(reply.json["meta"]["total_count"], json!(1), "{query}");
+            }
+        }
+    }
+    // Clearing a definition must hide its values from search immediately, before cleanup.
+    sqlx::query("UPDATE person_field_definitions SET deleted_at = now() WHERE workspace_id = $1 AND key = 'note'")
+        .bind(acme.id.uuid()).execute(test.system.pool()).await.unwrap();
+    let reply = app
+        .get("/v1/people?q=VIP&include=total_count")
+        .bearer(&acme.key)
+        .send()
+        .await;
+    assert!(emails(&reply).is_empty());
+    assert_eq!(reply.json["meta"]["total_count"], json!(0));
+}
+
 /// `GET /v1/people?sort=updated_at` lists people by when each last changed, each tie broken by
 /// id, so a person changed later comes first, which the `id` order never does. One page at a
 /// time, every person comes exactly once and in that order even where several changed in one

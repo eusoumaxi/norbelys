@@ -1,15 +1,17 @@
-import { Search01Icon } from "@hugeicons/core-free-icons";
+import { Cancel01Icon, Search01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
+import { Button } from "@/components/ui/button";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
 
-/** The search field above a list: a magnifier, the text, and Escape to clear it. */
+/** The search field above a list, with a clear button and Escape to clear it. */
 export const SearchInput = ({
   className,
+  describedBy,
   label,
   maxLength,
   onChange,
@@ -17,6 +19,7 @@ export const SearchInput = ({
   value,
 }: {
   className?: string;
+  describedBy?: string;
   /** The field's accessible name, such as "Search people". */
   label: string;
   maxLength?: number;
@@ -29,6 +32,7 @@ export const SearchInput = ({
       <HugeiconsIcon icon={Search01Icon} />
     </InputGroupAddon>
     <InputGroupInput
+      aria-describedby={describedBy}
       aria-label={label}
       maxLength={maxLength}
       onChange={(event) => onChange(event.target.value)}
@@ -41,5 +45,17 @@ export const SearchInput = ({
       type="search"
       value={value}
     />
+    {value ? (
+      <InputGroupAddon align="inline-end">
+        <Button
+          aria-label={`Clear ${label.toLowerCase()}`}
+          onClick={() => onChange("")}
+          size="icon-s"
+          variant="tertiary"
+        >
+          <HugeiconsIcon icon={Cancel01Icon} />
+        </Button>
+      </InputGroupAddon>
+    ) : null}
   </InputGroup>
 );
