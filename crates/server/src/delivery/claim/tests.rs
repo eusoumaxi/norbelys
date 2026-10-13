@@ -668,6 +668,60 @@ async fn an_idle_clock_moves_forward_to_its_next_chance() {
     );
 }
 
+/// A managed (provider `norbelys`) paced sender's idle clock moves forward by its interval —
+/// not pinned to `now` — so an idle managed mailbox is looked at once an interval, like an SMTP
+/// mailbox once a slot. After an idle claim the clock lands strictly in the future, and a second
+/// immediate claim does not re-select the connection (the clock is not due again, so the claim
+/// writes nothing and leaves it where it was).
+#[tokio::test]
+async fn a_managed_idle_clock_moves_forward_speculatively() {
+    let test = TestDb::new().await;
+    let ws = test.workspace("managed-idle").await.id;
+    let managed = test
+        .sender(
+            ws,
+            &SenderSpec {
+                provider: "norbelys",
+                address: "managed@example.test".to_owned(),
+                interval: Some(5),
+                phase: 41,
+                daily_limit: 100,
+                next_send_in: Some(-60),
+                scope: None,
+            },
+        )
+        .await;
+    let (before, _) = clocks(&test, managed.connection).await;
+    assert_eq!(
+        take_on(&test.worker, ws, managed.connection, false).await,
+        Claim::Nothing,
+    );
+    let (after, _) = clocks(&test, managed.connection).await;
+    let db_now = now(&test).await;
+    assert!(
+        after.0 > db_now.0,
+        "the managed idle clock must be strictly in the future after an idle claim: {after}"
+    );
+    assert!(
+        after > before.plus(Duration::from_secs(300)),
+        "the clock advanced by at least the 5-minute interval: {after} from {before}"
+    );
+    assert_eq!(
+        take_on(&test.worker, ws, managed.connection, false).await,
+        Claim::Nothing,
+        "a second immediate claim finds the clock not due and takes nothing"
+    );
+    let (again, _) = clocks(&test, managed.connection).await;
+    assert_eq!(
+        after, again,
+        "the second claim did not move the clock: {again}"
+    );
+    assert!(
+        again.0 > db_now.0,
+        "the clock is still strictly in the future: {again}"
+    );
+}
+
 /// A rate-paced relay never takes campaign mail outside its windows: the claim takes the mail
 /// created through the API and pushes the closed campaign's row to its window's opening, so the
 /// row is not claimed and returned at every sweep.
