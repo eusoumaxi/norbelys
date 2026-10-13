@@ -722,6 +722,48 @@ async fn a_managed_idle_clock_moves_forward_speculatively() {
     );
 }
 
+/// A managed (provider `norbelys`) paced sender with a closed connection window keeps the
+/// window's opening, not the opening plus its interval: the idle clock lands on the opening so
+/// the sender is looked at when the window opens, not after it closes. With the old code the
+/// managed branch added the interval to `clock_to` unconditionally, so a 60-minute sender with a
+/// 09:00–10:00 window got `next_send_at = 10:00`, skipping the whole window every day.
+#[tokio::test]
+async fn a_managed_idle_clock_with_a_closed_window_keeps_the_opening() {
+    let test = TestDb::new().await;
+    let ws = test.workspace("managed-window").await.id;
+    let managed = test
+        .sender(
+            ws,
+            &SenderSpec {
+                provider: "norbelys",
+                address: "managed-window@example.test".to_owned(),
+                interval: Some(60),
+                phase: 41,
+                daily_limit: 100,
+                next_send_in: Some(-60),
+                scope: None,
+            },
+        )
+        .await;
+    let window = json!({ "days": [tomorrow()], "start": "09:00", "end": "10:00" });
+    sqlx::query("UPDATE connections SET send_window = $1, timezone = 'UTC' WHERE id = $2")
+        .bind(window)
+        .bind(managed.connection.uuid())
+        .execute(test.system.pool())
+        .await
+        .expect("set the send window");
+    assert_eq!(
+        take_on(&test.worker, ws, managed.connection, false).await,
+        Claim::Nothing,
+    );
+    let (clock, _) = clocks(&test, managed.connection).await;
+    assert_eq!(
+        clock.0,
+        tomorrow_at_nine(),
+        "the managed idle clock with a closed window keeps the opening, not the opening plus the interval"
+    );
+}
+
 /// A rate-paced relay never takes campaign mail outside its windows: the claim takes the mail
 /// created through the API and pushes the closed campaign's row to its window's opening, so the
 /// row is not claimed and returned at every sweep.
