@@ -870,7 +870,10 @@ impl Job for DomainVerify {
 /// writes the same status runs the suspend idempotently and never runs a restore; the domain's
 /// row is already locked for the status write that precedes this. See [`domain_checked`]: a
 /// suspended domain whose record is back moves to `verified` (or `pending_certificate`), and only
-/// that `suspended` → `verified`/`pending_certificate` transition needs a restore.
+/// that `suspended` → `verified`/`pending_certificate` transition needs a restore. A person's
+/// `verify` request first sets the domain to `verifying`, so the check reads `verifying` instead
+/// of `suspended`; that proven transition restores too, and `restore_mail` is a no-op for a
+/// domain that never suspended (it re-enables only `suspended_by_domain` rows).
 async fn reconcile_mail(
     tx: &mut Tx,
     workspace: WorkspaceId,
@@ -880,7 +883,9 @@ async fn reconcile_mail(
 ) -> Result<(), sqlx::Error> {
     if to == "suspended" {
         usage::suspend_mail(tx, workspace, hostname).await?;
-    } else if from == "suspended" {
+    } else if from == "suspended"
+        || (from == "verifying" && (to == "verified" || to == "pending_certificate"))
+    {
         usage::restore_mail(tx, workspace, hostname).await?;
     }
     Ok(())
@@ -1328,9 +1333,10 @@ mod tests {
         assert_eq!(queued, expected);
     }
 
-    /// One connection's identities and its INBOX binding as `(email_or_folder, enabled,
-    /// suspended_by_domain)`, identities first (by email) then the INBOX binding. Read through the
-    /// system pool, which sees every row.
+    /// One connection's identities and its bindings as `(email_or_folder, enabled,
+    /// suspended_by_domain)`, identities first (by email) then every binding (by folder). A
+    /// folder the person stopped reading is among them, so a test can assert it stays off and
+    /// unmarked. Read through the system pool, which sees every row.
     async fn mail_state(
         test: &TestDb,
         workspace: &crate::testing::TestWorkspace,
@@ -1355,18 +1361,18 @@ mod tests {
                 )
             })
             .collect();
-        let inbox = sqlx::query(
-            "SELECT enabled, suspended_by_domain FROM receive_bindings
-              WHERE workspace_id = $1 AND connection_id = $2 AND folder = 'INBOX'",
+        let bindings = sqlx::query(
+            "SELECT folder, enabled, suspended_by_domain FROM receive_bindings
+              WHERE workspace_id = $1 AND connection_id = $2 ORDER BY folder",
         )
         .bind(workspace.id.uuid())
         .bind(connection)
-        .fetch_optional(test.system.pool())
+        .fetch_all(test.system.pool())
         .await
         .unwrap();
-        if let Some(row) = inbox {
+        for row in bindings {
             state.push((
-                "INBOX".to_owned(),
+                row.try_get::<String, _>("folder").unwrap(),
                 row.try_get::<bool, _>("enabled").unwrap(),
                 row.try_get::<bool, _>("suspended_by_domain").unwrap(),
             ));
@@ -1465,6 +1471,7 @@ mod tests {
                 ("ada@mail.acme.example".to_owned(), true, false),
                 ("team@mail.acme.example".to_owned(), false, false),
                 ("INBOX".to_owned(), true, false),
+                ("Sent".to_owned(), false, false),
             ],
         );
         // Suspending the domain disables its live mail and marks only that.
@@ -1481,6 +1488,7 @@ mod tests {
                 ("ada@mail.acme.example".to_owned(), false, true),
                 ("team@mail.acme.example".to_owned(), false, false),
                 ("INBOX".to_owned(), false, true),
+                ("Sent".to_owned(), false, false),
             ],
             "the suspension disabled and marked only the live mail",
         );
@@ -1498,6 +1506,7 @@ mod tests {
                 ("ada@mail.acme.example".to_owned(), true, false),
                 ("team@mail.acme.example".to_owned(), false, false),
                 ("INBOX".to_owned(), true, false),
+                ("Sent".to_owned(), false, false),
             ],
             "reverification restored only what the suspension had disabled",
         );
@@ -1506,7 +1515,10 @@ mod tests {
     /// `reconcile_mail` applies the mail side-effects of a status change a DNS check found:
     /// suspending on the way to `suspended`, restoring on the way out of it, neither on a stable
     /// recheck, and a recheck that stays `suspended` only re-runs the idempotent suspend. It is a
-    /// direct test of the dispatch `DomainVerify` calls after its fenced status write.
+    /// direct test of the dispatch `DomainVerify` calls after its fenced status write. The
+    /// `verifying` → `verified` case is the person's `verify` request, which sets a suspended
+    /// domain to `verifying` before the check reads it, so the restore must not rely on
+    /// `from == "suspended"`.
     #[tokio::test]
     async fn reconcile_mail_suspends_or_restores_a_domains_mail_for_each_status_change() {
         let test = TestDb::new().await;
@@ -1519,6 +1531,7 @@ mod tests {
                 ("ada@mail.acme.example".to_owned(), true, false),
                 ("team@mail.acme.example".to_owned(), false, false),
                 ("INBOX".to_owned(), true, false),
+                ("Sent".to_owned(), false, false),
             ],
         );
         // `verified` -> `suspended` suspends the mail.
@@ -1529,6 +1542,7 @@ mod tests {
                 ("ada@mail.acme.example".to_owned(), false, true),
                 ("team@mail.acme.example".to_owned(), false, false),
                 ("INBOX".to_owned(), false, true),
+                ("Sent".to_owned(), false, false),
             ],
             "the way in suspends",
         );
@@ -1540,6 +1554,7 @@ mod tests {
                 ("ada@mail.acme.example".to_owned(), true, false),
                 ("team@mail.acme.example".to_owned(), false, false),
                 ("INBOX".to_owned(), true, false),
+                ("Sent".to_owned(), false, false),
             ],
             "the way out restores",
         );
@@ -1551,6 +1566,7 @@ mod tests {
                 ("ada@mail.acme.example".to_owned(), true, false),
                 ("team@mail.acme.example".to_owned(), false, false),
                 ("INBOX".to_owned(), true, false),
+                ("Sent".to_owned(), false, false),
             ],
             "a stable recheck changes nothing",
         );
@@ -1562,6 +1578,7 @@ mod tests {
                 ("ada@mail.acme.example".to_owned(), false, true),
                 ("team@mail.acme.example".to_owned(), false, false),
                 ("INBOX".to_owned(), false, true),
+                ("Sent".to_owned(), false, false),
             ],
             "suspended again",
         );
@@ -1573,8 +1590,23 @@ mod tests {
                 ("ada@mail.acme.example".to_owned(), false, true),
                 ("team@mail.acme.example".to_owned(), false, false),
                 ("INBOX".to_owned(), false, true),
+                ("Sent".to_owned(), false, false),
             ],
             "staying suspended does not restore",
+        );
+        // `verifying` -> `verified` (a person's verify request set the suspended domain to
+        // `verifying` first, so the check read that) restores the suspended mail, not relying on
+        // the previous status being `suspended`.
+        reconcile(&test, &acme, "mail.acme.example", "verifying", "verified").await;
+        assert_eq!(
+            mail_state(&test, &acme, connection).await,
+            vec![
+                ("ada@mail.acme.example".to_owned(), true, false),
+                ("team@mail.acme.example".to_owned(), false, false),
+                ("INBOX".to_owned(), true, false),
+                ("Sent".to_owned(), false, false),
+            ],
+            "the person's verify route restores too",
         );
     }
 }
