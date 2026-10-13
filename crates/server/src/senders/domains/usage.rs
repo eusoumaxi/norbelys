@@ -198,13 +198,32 @@ pub(super) async fn suspend_mail(
     workspace: WorkspaceId,
     name: &str,
 ) -> Result<(), sqlx::Error> {
-    let connections = sqlx::query("SELECT id FROM connections WHERE workspace_id = $1 AND provider = 'norbelys' AND (account_email_key = $2 OR split_part(account_email_key, '@', 2) = $2) AND status <> 'archived' ORDER BY id FOR UPDATE")
+    let connections = sqlx::query("SELECT id, account_email_key FROM connections WHERE workspace_id = $1 AND provider = 'norbelys' AND (account_email_key = $2 OR split_part(account_email_key, '@', 2) = $2) AND status <> 'archived' ORDER BY id FOR UPDATE")
         .bind(workspace.uuid()).bind(name).fetch_all(&mut **tx).await?;
     for row in connections {
         let connection = Id::from_uuid(row.try_get("id")?);
         sqlx::query("UPDATE sender_identities SET enabled = false WHERE workspace_id = $1 AND connection_id = $2")
             .bind(workspace.uuid()).bind(connection.uuid()).execute(&mut **tx).await?;
         crate::senders::bindings::set(tx, workspace, connection, &[]).await?;
+        let account_email_key: String = row.try_get("account_email_key")?;
+        if !account_email_key.contains('@') {
+            // Revoke the shared relay grant and catch-all on the managed MTA. By the time a
+            // domain is suspended or deleted, the provision job's `sends` lookup (through
+            // `mail_access`) fails because the domain is gone or unverified, so re-verification
+            // cannot reconcile it. Clear `imap` and enqueue an explicit revoke job instead.
+            sqlx::query("UPDATE connections SET imap = NULL WHERE workspace_id = $1 AND id = $2")
+                .bind(workspace.uuid())
+                .bind(connection.uuid())
+                .execute(&mut **tx)
+                .await?;
+            crate::jobs::enqueue(
+                tx,
+                workspace,
+                &crate::senders::provision::NorbelysRevoke { connection },
+                None,
+            )
+            .await?;
+        }
     }
     Ok(())
 }

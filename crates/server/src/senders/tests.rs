@@ -6,6 +6,7 @@
 //! answer to `AUTH` the test chooses (and may hold, to change the row while a check is out), and
 //! an OAuth and Gmail server that issues the tokens and profile a test configures.
 
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use axum::http::StatusCode;
@@ -19,7 +20,7 @@ use uuid::Uuid;
 
 use super::check::{ConnectionCheck, ConnectionCheckDue};
 use super::domains::DomainVerify;
-use super::provision::{Control, NorbelysProvision};
+use super::provision::{Control, NorbelysProvision, NorbelysRevoke};
 use super::{Env, Settings, oauth};
 use crate::domain::ids::{Id, User};
 use crate::domain::scope::ScopeSet;
@@ -397,6 +398,8 @@ fn harness(test: &TestDb, mut settings: Settings, control: Option<Control>) -> H
         .register::<super::domains::DomainCertificate>()
         .unwrap()
         .register::<NorbelysProvision>()
+        .unwrap()
+        .register::<NorbelysRevoke>()
         .unwrap();
     let mut env = http::Extensions::new();
     env.insert(testing::keys());
@@ -1973,6 +1976,177 @@ async fn fake_control(received: Received) -> String {
     origin
 }
 
+/// A fake stateful MTA account: the fields the managed MTA tracks for a login.
+#[derive(Clone)]
+struct FakeAccount {
+    grant_domain: Option<String>,
+    catch_all: bool,
+    route: Option<String>,
+}
+
+/// The domain part of `username`, or the empty string when it has none.
+fn mta_domain_of(username: &str) -> &str {
+    username.split_once('@').map(|(_, d)| d).unwrap_or("")
+}
+
+/// The answer of the stateful fake MTA's control API: it tracks each login's grant and
+/// catch-all, enforces the one-catch-all-per-domain rule (409 conflict, the whole PATCH rolled
+/// back), creates logins on POST, resets passwords, PATCHes grant/catch_all, accepts route PUTs
+/// and domain registrations.
+fn mta_response(
+    method: &str,
+    path: &str,
+    json: &Value,
+    accounts: &Mutex<HashMap<String, FakeAccount>>,
+) -> (StatusCode, Value) {
+    match (method, path) {
+        ("GET", p) if p.starts_with("/v1/accounts/") && !p.ends_with("/password") => {
+            let username = p.trim_start_matches("/v1/accounts/");
+            let accounts = accounts.lock().unwrap();
+            if let Some(account) = accounts.get(username) {
+                (
+                    StatusCode::OK,
+                    json!({
+                        "username": username, "domain": mta_domain_of(username),
+                        "kind": "service", "rate_class": "customer",
+                        "grant_domain": account.grant_domain, "catch_all": account.catch_all,
+                        "route": account.route, "created_at": "2026-10-01T00:00:00Z",
+                        "disabled_at": Value::Null,
+                    }),
+                )
+            } else {
+                (StatusCode::NOT_FOUND, json!({"detail": "no such account"}))
+            }
+        }
+        ("POST", "/v1/accounts") => {
+            let username = json["username"].as_str().unwrap_or("").to_owned();
+            let mut accounts = accounts.lock().unwrap();
+            if accounts.contains_key(&username) {
+                (
+                    StatusCode::CONFLICT,
+                    json!({"detail": format!("the account {username} exists")}),
+                )
+            } else {
+                accounts.insert(
+                    username.clone(),
+                    FakeAccount {
+                        grant_domain: None,
+                        catch_all: false,
+                        route: None,
+                    },
+                );
+                (
+                    StatusCode::CREATED,
+                    json!({"username": username, "password": "mta-password"}),
+                )
+            }
+        }
+        ("POST", p) if p.starts_with("/v1/accounts/") && p.ends_with("/password") => {
+            let username = p
+                .trim_start_matches("/v1/accounts/")
+                .trim_end_matches("/password");
+            (
+                StatusCode::OK,
+                json!({"username": username, "password": "mta-password-2"}),
+            )
+        }
+        ("PATCH", p) if p.starts_with("/v1/accounts/") => {
+            let username = p.trim_start_matches("/v1/accounts/").to_owned();
+            let mut accounts = accounts.lock().unwrap();
+            if !accounts.contains_key(&username) {
+                return (StatusCode::NOT_FOUND, json!({"detail": "no such account"}));
+            }
+            // Enforce catch-all uniqueness first: the real MTA rolls back the whole PATCH.
+            if json.get("catch_all").and_then(Value::as_bool) == Some(true)
+                && let Some((other, _)) = accounts.iter().find(|(name, acc)| {
+                    name.as_str() != username.as_str()
+                        && acc.catch_all
+                        && mta_domain_of(name) == mta_domain_of(&username)
+                })
+            {
+                return (
+                    StatusCode::CONFLICT,
+                    json!({"detail": format!(
+                        "{} is already the catch-all of {}",
+                        other,
+                        mta_domain_of(&username)
+                    )}),
+                );
+            }
+            let account = accounts.get_mut(&username).unwrap();
+            if let Some(grant) = json.get("grant").and_then(Value::as_bool) {
+                account.grant_domain = if grant {
+                    Some(mta_domain_of(&username).to_owned())
+                } else {
+                    None
+                };
+            }
+            if let Some(catch_all) = json.get("catch_all").and_then(Value::as_bool) {
+                account.catch_all = catch_all;
+            }
+            (
+                StatusCode::OK,
+                json!({
+                    "username": username, "domain": mta_domain_of(&username),
+                    "grant_domain": account.grant_domain, "catch_all": account.catch_all,
+                }),
+            )
+        }
+        ("PUT", p) if p.starts_with("/v1/routes/") => {
+            let route = p.trim_start_matches("/v1/routes/").to_owned();
+            if let Some(usernames) = json.get("usernames").and_then(Value::as_array) {
+                let mut accounts = accounts.lock().unwrap();
+                for username in usernames.iter().filter_map(Value::as_str) {
+                    if let Some(account) = accounts.get_mut(username) {
+                        account.route = Some(route.clone());
+                    }
+                }
+            }
+            (StatusCode::OK, json!({"id": route}))
+        }
+        ("POST", "/v1/domains") => {
+            let name = json["name"].as_str().unwrap_or("").to_owned();
+            (StatusCode::CREATED, json!({"name": name, "records": []}))
+        }
+        ("POST", p) if p.starts_with("/v1/domains/") && p.ends_with("/verify") => (
+            StatusCode::OK,
+            json!({"verified_at": "2026-10-02T00:00:00Z", "records": []}),
+        ),
+        _ => (StatusCode::NOT_FOUND, json!({"detail": "not found"})),
+    }
+}
+
+/// A stateful fake of the managed MTA's control API (see [`mta_response`]): returns the origin
+/// URL and records every call's method, path, headers and body in `received`.
+async fn fake_mta(
+    received: Received,
+    accounts: Arc<Mutex<HashMap<String, FakeAccount>>>,
+) -> String {
+    let app = axum::Router::new().fallback(move |request: axum::extract::Request| {
+        let received = Arc::clone(&received);
+        let accounts = Arc::clone(&accounts);
+        async move {
+            let (parts, body) = request.into_parts();
+            let body = axum::body::to_bytes(body, 65_536).await.unwrap_or_default();
+            let json: Value = serde_json::from_slice(&body).unwrap_or(Value::Null);
+            let path = parts.uri.path().to_owned();
+            let method = parts.method.to_string();
+            received.lock().unwrap().push((
+                method.clone(),
+                path.clone(),
+                parts.headers,
+                body.to_vec(),
+            ));
+            let (status, answer) = mta_response(&method, &path, &json, &accounts);
+            (status, axum::Json(answer))
+        }
+    });
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    tokio::spawn(async move { axum::serve(listener, app).await });
+    origin
+}
+
 /// Provisioning a managed MTA login: the job asks the control API whether the login exists,
 /// creates it, registers the connection's webhook as its evidence route with the generated
 /// secret, signs every request per Standard Webhooks with the installation's secret, seals the
@@ -2226,4 +2400,168 @@ async fn a_relay_api_credential_is_sealed_beside_its_password() {
         refused.json
     );
     assert_eq!(refused.json["errors"][0]["pointer"], "/api_credential");
+}
+
+/// Deleting a sending domain that has a shared domain-service connection revokes the shared
+/// login's relay grant and catch-all on the managed MTA — it PATCHes `{"grant": false,
+/// "catch_all": false}` for that login — and clears the connection's IMAP settings. A later
+/// workspace that registers the same domain and connects its own shared service can then take
+/// the catch-all without a 409 conflict.
+#[tokio::test]
+async fn deleting_a_domain_revokes_shared_service_grant_and_catch_all_on_mta() {
+    use base64::Engine as _;
+    let test = TestDb::new().await;
+    let acme = test.workspace("acme").await;
+    let beta = test.workspace("beta").await;
+    let app = test.app();
+
+    let accounts: Arc<Mutex<HashMap<String, FakeAccount>>> = Arc::default();
+    let received: Received = Arc::default();
+    let origin = fake_mta(Arc::clone(&received), Arc::clone(&accounts)).await;
+    let control = Control::new(
+        url::Url::parse(&origin).unwrap(),
+        &secrecy::SecretString::from(format!(
+            "whsec_{}",
+            base64::engine::general_purpose::STANDARD.encode([9_u8; 32])
+        )),
+        false,
+    )
+    .unwrap();
+    let runner = harness(&test, Settings::for_tests(), Some(control));
+
+    // Acme owns acme.example (send_receive, verified) and connects its shared service.
+    sqlx::query(
+        "INSERT INTO sending_domains (workspace_id, hostname, status, purpose, ownership_token, \
+         ownership_expires_at, verified_at) VALUES ($1, $2, 'verified', 'send_receive', \
+         'test-proof', now() + interval '30 days', now())",
+    )
+    .bind(acme.id.uuid())
+    .bind("acme.example")
+    .execute(test.system.pool())
+    .await
+    .unwrap();
+    let acme_service = connect(
+        &app,
+        &acme.key,
+        json!({"provider":"norbelys","account_email":"acme.example","identities":[{"email":"service@acme.example"}]}),
+    )
+    .await;
+    assert_eq!(
+        acme_service.status,
+        StatusCode::CREATED,
+        "{}",
+        acme_service.json
+    );
+    // Provisioning the shared service creates the login, sets grant and catch_all, and the route.
+    assert_eq!(run_maintenance(&runner).await, ["done"]);
+    let acme_username = super::managed::username(acme.id, "acme.example");
+    {
+        let mta = accounts.lock().unwrap();
+        let account = mta.get(&acme_username).unwrap();
+        assert_eq!(account.grant_domain.as_deref(), Some("acme.example"));
+        assert!(account.catch_all);
+    }
+
+    // Acme deletes the domain.
+    let domain_id = sqlx::query_scalar!(
+        "SELECT id FROM sending_domains WHERE workspace_id = $1 AND hostname = 'acme.example'",
+        acme.id.uuid(),
+    )
+    .fetch_one(test.system.pool())
+    .await
+    .unwrap();
+    let deleted = app
+        .delete(&format!(
+            "/v1/sending_domains/{}",
+            Id::<crate::domain::ids::SendingDomain>::from_uuid(domain_id)
+        ))
+        .bearer(&acme.key)
+        .send()
+        .await;
+    assert_eq!(deleted.status, StatusCode::NO_CONTENT);
+
+    // The revoke job runs and PATCHes `{"grant": false, "catch_all": false}` to acme's login.
+    assert_eq!(run_maintenance(&runner).await, ["done"]);
+    {
+        let mta = accounts.lock().unwrap();
+        let account = mta.get(&acme_username).unwrap();
+        assert!(
+            account.grant_domain.is_none(),
+            "the relay grant should have been revoked"
+        );
+        assert!(!account.catch_all, "the catch-all should have been revoked");
+        // The login is still enabled (NOT deleted) with its route: its mail stays.
+        assert!(account.route.is_some(), "the route should be retained");
+    }
+    // The revoking PATCH was issued by the MTA.
+    let revoke_body = json!({"grant": false, "catch_all": false});
+    let revoke_count = received
+        .lock()
+        .unwrap()
+        .iter()
+        .filter(|(m, p, _, body)| {
+            *m == "PATCH"
+                && *p == format!("/v1/accounts/{acme_username}")
+                && serde_json::from_slice::<Value>(body).unwrap_or(Value::Null) == revoke_body
+        })
+        .count();
+    assert_eq!(
+        revoke_count, 1,
+        "exactly one revoke PATCH with grant=false, catch_all=false"
+    );
+    // Acme's connection's IMAP was cleared.
+    let acme_connection: Uuid = acme_service.json["id"]
+        .as_str()
+        .unwrap()
+        .trim_start_matches("con_")
+        .parse()
+        .unwrap();
+    let imap_null = sqlx::query_scalar!(
+        r#"SELECT imap IS NULL AS "null!" FROM connections WHERE id = $1"#,
+        acme_connection,
+    )
+    .fetch_one(test.system.pool())
+    .await
+    .unwrap();
+    assert!(imap_null, "the suspended service's imap should be cleared");
+
+    // Beta registers the same domain and connects its own shared service: the provision job
+    // succeeds, because acme's login no longer holds the catch-all.
+    sqlx::query(
+        "INSERT INTO sending_domains (workspace_id, hostname, status, purpose, ownership_token, \
+         ownership_expires_at, verified_at) VALUES ($1, $2, 'verified', 'send_receive', \
+         'test-proof', now() + interval '30 days', now())",
+    )
+    .bind(beta.id.uuid())
+    .bind("acme.example")
+    .execute(test.system.pool())
+    .await
+    .unwrap();
+    let beta_service = connect(
+        &app,
+        &beta.key,
+        json!({"provider":"norbelys","account_email":"acme.example","identities":[{"email":"service@acme.example"}]}),
+    )
+    .await;
+    assert_eq!(
+        beta_service.status,
+        StatusCode::CREATED,
+        "{}",
+        beta_service.json
+    );
+    assert_eq!(
+        run_maintenance(&runner).await,
+        ["done"],
+        "beta's provision job should succeed"
+    );
+    let beta_username = super::managed::username(beta.id, "acme.example");
+    {
+        let mta = accounts.lock().unwrap();
+        let account = mta.get(&beta_username).unwrap();
+        assert_eq!(account.grant_domain.as_deref(), Some("acme.example"));
+        assert!(
+            account.catch_all,
+            "beta should have taken the catch-all for its domain"
+        );
+    }
 }
