@@ -99,15 +99,17 @@ pub enum Error {
     Storage(#[from] StorageError),
 }
 
-/// A search's `LIKE` pattern: the trimmed text in lowercase, its `\`, `%` and `_` escaped
-/// (backslash is `LIKE`'s default escape), followed by `%`; `None` for an empty search.
+/// A search's `LIKE` pattern: the trimmed text with its `\`, `%` and `_` escaped (backslash is
+/// `LIKE`'s default escape), followed by `%`; `None` for an empty search. The text keeps its
+/// original case: the queries compare `lower(stored) LIKE lower($n)`, so PostgreSQL folds both
+/// sides with one rule, and characters whose Rust `to_lowercase` and database `lower()` disagree
+/// (such as Turkish `İ`) still match.
 pub(crate) fn like_prefix(q: &str) -> Option<String> {
     let q = q.trim();
     if q.is_empty() {
         return None;
     }
     let escaped: String = q
-        .to_lowercase()
         .chars()
         .flat_map(|c| match c {
             '\\' | '%' | '_' => vec!['\\', c],
@@ -274,16 +276,16 @@ pub(crate) async fn list(
                   AND ($3::text IS NULL OR p.email_key = ascii_lower($3))
                   AND ($4::uuid IS NULL OR EXISTS (SELECT 1 FROM group_people g
                         WHERE g.workspace_id = p.workspace_id AND g.group_id = $4 AND g.person_id = p.id))
-                  AND ($5::text IS NULL OR lower(p.email) LIKE $5
-                       OR lower(concat_ws(' ', p.given_name, p.family_name)) LIKE $5
-                       OR lower(p.company) LIKE $5
+                  AND ($5::text IS NULL OR lower(p.email) LIKE lower($5)
+                       OR lower(concat_ws(' ', p.given_name, p.family_name)) LIKE lower($5)
+                       OR lower(p.company) LIKE lower($5)
                        OR EXISTS (SELECT 1 FROM jsonb_each_text(p.custom_fields) field
                             JOIN person_field_definitions definition
                               ON definition.workspace_id = p.workspace_id AND definition.key = field.key
                              AND definition.deleted_at IS NULL
-                            WHERE lower(field.value) LIKE $5
+                            WHERE lower(field.value) LIKE lower($5)
                                OR (definition.field_type = 'boolean'
-                                   AND (CASE field.value WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' END) LIKE $5)
+                                   AND (CASE field.value WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' END) LIKE lower($5))
                                OR ($5 ~ '^%[+0-9() .-]+%$'
                                    AND length(regexp_replace($5, '[^0-9]', '', 'g')) >= 3
                                    AND field.value ~ '^[+0-9() .-]+$'
@@ -323,16 +325,16 @@ pub(crate) async fn list(
                   AND ($3::text IS NULL OR p.email_key = ascii_lower($3))
                   AND ($4::uuid IS NULL OR EXISTS (SELECT 1 FROM group_people g
                         WHERE g.workspace_id = p.workspace_id AND g.group_id = $4 AND g.person_id = p.id))
-                  AND ($5::text IS NULL OR lower(p.email) LIKE $5
-                       OR lower(concat_ws(' ', p.given_name, p.family_name)) LIKE $5
-                       OR lower(p.company) LIKE $5
+                  AND ($5::text IS NULL OR lower(p.email) LIKE lower($5)
+                       OR lower(concat_ws(' ', p.given_name, p.family_name)) LIKE lower($5)
+                       OR lower(p.company) LIKE lower($5)
                        OR EXISTS (SELECT 1 FROM jsonb_each_text(p.custom_fields) field
                             JOIN person_field_definitions definition
                               ON definition.workspace_id = p.workspace_id AND definition.key = field.key
                              AND definition.deleted_at IS NULL
-                            WHERE lower(field.value) LIKE $5
+                            WHERE lower(field.value) LIKE lower($5)
                                OR (definition.field_type = 'boolean'
-                                   AND (CASE field.value WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' END) LIKE $5)
+                                   AND (CASE field.value WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' END) LIKE lower($5))
                                OR ($5 ~ '^%[+0-9() .-]+%$'
                                    AND length(regexp_replace($5, '[^0-9]', '', 'g')) >= 3
                                    AND field.value ~ '^[+0-9() .-]+$'
@@ -397,16 +399,16 @@ pub(crate) async fn list_by_update(
                   AND ($3::text IS NULL OR p.email_key = ascii_lower($3))
                   AND ($4::uuid IS NULL OR EXISTS (SELECT 1 FROM group_people g
                         WHERE g.workspace_id = p.workspace_id AND g.group_id = $4 AND g.person_id = p.id))
-                  AND ($5::text IS NULL OR lower(p.email) LIKE $5
-                       OR lower(concat_ws(' ', p.given_name, p.family_name)) LIKE $5
-                       OR lower(p.company) LIKE $5
+                  AND ($5::text IS NULL OR lower(p.email) LIKE lower($5)
+                       OR lower(concat_ws(' ', p.given_name, p.family_name)) LIKE lower($5)
+                       OR lower(p.company) LIKE lower($5)
                        OR EXISTS (SELECT 1 FROM jsonb_each_text(p.custom_fields) field
                             JOIN person_field_definitions definition
                               ON definition.workspace_id = p.workspace_id AND definition.key = field.key
                              AND definition.deleted_at IS NULL
-                            WHERE lower(field.value) LIKE $5
+                            WHERE lower(field.value) LIKE lower($5)
                                OR (definition.field_type = 'boolean'
-                                   AND (CASE field.value WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' END) LIKE $5)
+                                   AND (CASE field.value WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' END) LIKE lower($5))
                                OR ($5 ~ '^%[+0-9() .-]+%$'
                                    AND length(regexp_replace($5, '[^0-9]', '', 'g')) >= 3
                                    AND field.value ~ '^[+0-9() .-]+$'
@@ -448,16 +450,16 @@ pub(crate) async fn list_by_update(
                   AND ($3::text IS NULL OR p.email_key = ascii_lower($3))
                   AND ($4::uuid IS NULL OR EXISTS (SELECT 1 FROM group_people g
                         WHERE g.workspace_id = p.workspace_id AND g.group_id = $4 AND g.person_id = p.id))
-                  AND ($5::text IS NULL OR lower(p.email) LIKE $5
-                       OR lower(concat_ws(' ', p.given_name, p.family_name)) LIKE $5
-                       OR lower(p.company) LIKE $5
+                  AND ($5::text IS NULL OR lower(p.email) LIKE lower($5)
+                       OR lower(concat_ws(' ', p.given_name, p.family_name)) LIKE lower($5)
+                       OR lower(p.company) LIKE lower($5)
                        OR EXISTS (SELECT 1 FROM jsonb_each_text(p.custom_fields) field
                             JOIN person_field_definitions definition
                               ON definition.workspace_id = p.workspace_id AND definition.key = field.key
                              AND definition.deleted_at IS NULL
-                            WHERE lower(field.value) LIKE $5
+                            WHERE lower(field.value) LIKE lower($5)
                                OR (definition.field_type = 'boolean'
-                                   AND (CASE field.value WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' END) LIKE $5)
+                                   AND (CASE field.value WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' END) LIKE lower($5))
                                OR ($5 ~ '^%[+0-9() .-]+%$'
                                    AND length(regexp_replace($5, '[^0-9]', '', 'g')) >= 3
                                    AND field.value ~ '^[+0-9() .-]+$'
@@ -510,16 +512,16 @@ pub(crate) async fn count(
                   AND ($2::text IS NULL OR p.email_key = ascii_lower($2))
                   AND ($3::uuid IS NULL OR EXISTS (SELECT 1 FROM group_people g
                         WHERE g.workspace_id = p.workspace_id AND g.group_id = $3 AND g.person_id = p.id))
-                  AND ($4::text IS NULL OR lower(p.email) LIKE $4
-                       OR lower(concat_ws(' ', p.given_name, p.family_name)) LIKE $4
-                       OR lower(p.company) LIKE $4
+                  AND ($4::text IS NULL OR lower(p.email) LIKE lower($4)
+                       OR lower(concat_ws(' ', p.given_name, p.family_name)) LIKE lower($4)
+                       OR lower(p.company) LIKE lower($4)
                        OR EXISTS (SELECT 1 FROM jsonb_each_text(p.custom_fields) field
                             JOIN person_field_definitions definition
                               ON definition.workspace_id = p.workspace_id AND definition.key = field.key
                              AND definition.deleted_at IS NULL
-                            WHERE lower(field.value) LIKE $4
+                            WHERE lower(field.value) LIKE lower($4)
                                OR (definition.field_type = 'boolean'
-                                   AND (CASE field.value WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' END) LIKE $4)
+                                   AND (CASE field.value WHEN 'true' THEN 'yes' WHEN 'false' THEN 'no' END) LIKE lower($4))
                                OR ($4 ~ '^%[+0-9() .-]+%$'
                                    AND length(regexp_replace($4, '[^0-9]', '', 'g')) >= 3
                                    AND field.value ~ '^[+0-9() .-]+$'

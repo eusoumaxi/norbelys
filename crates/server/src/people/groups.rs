@@ -64,8 +64,8 @@ impl From<GroupRow> for GroupObject {
     }
 }
 
-/// One page of `workspace`'s groups whose name starts with `prefix` (a `LIKE` pattern of
-/// lowercase text), in id order after `cursor`. Fetches `limit` rows.
+/// One page of `workspace`'s groups whose name starts with `prefix` (a `LIKE` pattern, matched
+/// ignoring case by `lower` on both sides), in id order after `cursor`. Fetches `limit` rows.
 ///
 /// # Errors
 ///
@@ -85,7 +85,7 @@ pub async fn list(
                   (SELECT count(*) FROM group_people m WHERE m.workspace_id = g.workspace_id AND m.group_id = g.id) AS "people_count!",
                   g.created_at AS "created_at: Timestamp", g.updated_at AS "updated_at: Timestamp"
              FROM groups g
-            WHERE g.workspace_id = $1 AND g.deleted_at IS NULL AND ($2::text IS NULL OR lower(g.name) LIKE $2)
+            WHERE g.workspace_id = $1 AND g.deleted_at IS NULL AND ($2::text IS NULL OR lower(g.name) LIKE lower($2))
               AND ($3::uuid IS NULL OR CASE WHEN $4 THEN g.id > $3 ELSE g.id < $3 END)
             ORDER BY CASE WHEN $4 THEN g.id END, g.id DESC LIMIT $5"#,
         workspace.uuid(),
@@ -112,7 +112,7 @@ pub async fn count(
 ) -> Result<i64, sqlx::Error> {
     sqlx::query_scalar!(
         r#"SELECT count(*) AS "count!" FROM (
-               SELECT 1 FROM groups WHERE workspace_id = $1 AND deleted_at IS NULL AND ($2::text IS NULL OR lower(name) LIKE $2) LIMIT $3) counted"#,
+               SELECT 1 FROM groups WHERE workspace_id = $1 AND deleted_at IS NULL AND ($2::text IS NULL OR lower(name) LIKE lower($2)) LIMIT $3) counted"#,
         workspace.uuid(),
         prefix,
         cap.saturating_add(1),
