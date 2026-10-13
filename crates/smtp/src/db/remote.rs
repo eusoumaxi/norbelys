@@ -33,6 +33,7 @@ pub(crate) struct Remote {
     prefix: String,
     stream: RefCell<Stream>,
     in_transaction: Cell<bool>,
+    transaction_lost: Cell<bool>,
 }
 
 #[derive(Clone)]
@@ -169,6 +170,7 @@ impl Remote {
             }),
             origin,
             in_transaction: Cell::new(false),
+            transaction_lost: Cell::new(false),
         })
     }
 
@@ -183,6 +185,7 @@ impl Remote {
                 baton: None,
             }),
             in_transaction: Cell::new(false),
+            transaction_lost: Cell::new(false),
         }
     }
 
@@ -217,6 +220,14 @@ impl Remote {
         let begin = sql.trim().eq_ignore_ascii_case("BEGIN IMMEDIATE");
         let end = sql.trim().eq_ignore_ascii_case("COMMIT")
             || sql.trim().eq_ignore_ascii_case("ROLLBACK");
+        if self.transaction_lost.get() {
+            if sql.trim().eq_ignore_ascii_case("ROLLBACK") {
+                self.in_transaction.set(false);
+                self.transaction_lost.set(false);
+                return Ok(());
+            }
+            return Err(Error::Protocol("SQL transaction lost; rollback required"));
+        }
         let keep = begin || (self.in_transaction.get() && !end);
         let result = self
             .operation(
@@ -229,6 +240,9 @@ impl Remote {
         if result.is_ok() || end {
             self.in_transaction.set(keep);
         }
+        if end || (begin && result.is_err()) {
+            self.transaction_lost.set(false);
+        }
         result
     }
 
@@ -240,7 +254,20 @@ impl Remote {
         if !keep {
             requests.push(Request::Close);
         }
-        let mut results = self.pipeline(requests)?;
+        if self.transaction_lost.get() {
+            return Err(Error::Protocol("SQL transaction lost; rollback required"));
+        }
+        let mut results = match self.pipeline(requests) {
+            Ok(results) => results,
+            Err(error) => {
+                // The server may have committed. Abandon this stream, never replay its writes.
+                let mut stream = self.stream.borrow_mut();
+                stream.url = self.origin.clone();
+                stream.baton = None;
+                self.transaction_lost.set(keep || self.in_transaction.get());
+                return Err(error);
+            }
+        };
         if !keep && !matches!(results.pop(), Some(Response::Close)) {
             return Err(Error::Protocol("SQL stream did not confirm close"));
         }

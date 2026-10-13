@@ -60,6 +60,30 @@ pub enum Error {
     Queue(#[from] queue::Error),
 }
 
+impl Error {
+    /// Only temporary transport and server failures may retry a whole fenced operation.
+    /// Callers must preserve stable event ids and must never retry an individual SQL write.
+    pub fn retryable(&self) -> bool {
+        match self {
+            Self::Http(error) => {
+                error.is_timeout() || error.is_connect() || error.is_request() || error.is_body()
+            }
+            Self::Io(_) => true,
+            Self::Status(status) => *status == 408 || *status == 429 || *status >= 500,
+            Self::Sql(code) => matches!(
+                code.as_str(),
+                "SQLITE_BUSY" | "SQLITE_LOCKED" | "TRANSACTION_TIMEOUT" | "STREAM_EXPIRED"
+            ),
+            Self::Protocol(_)
+            | Self::QueryReturnedNoRows
+            | Self::ToSqlConversionFailure(_)
+            | Self::Sqlite(_)
+            | Self::Json(_)
+            | Self::Queue(_) => false,
+        }
+    }
+}
+
 /// The result of a canonical database operation.
 pub type Result<T> = std::result::Result<T, Error>;
 

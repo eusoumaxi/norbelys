@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT q.message_id, m.campaign_id, m.recipient_count AS \"recipient_count!\"\n           FROM delivery_queue q JOIN messages m ON m.workspace_id = q.workspace_id AND m.id = q.message_id\n          WHERE q.workspace_id = $1 AND q.connection_id = $2 AND q.state = 'queued' AND q.run_at <= now()\n            AND ($3::boolean IS NULL OR q.paced = $3)\n          ORDER BY q.run_at, q.message_id\n          LIMIT $4\n            FOR UPDATE OF q SKIP LOCKED",
+  "query": "SELECT q.message_id, m.campaign_id, m.recipient_count AS \"recipient_count!\"\n           FROM delivery_queue q JOIN messages m ON m.workspace_id = q.workspace_id AND m.id = q.message_id\n          WHERE q.workspace_id = $1 AND q.connection_id = $2 AND q.state = 'queued' AND q.run_at <= now()\n            AND ($3::boolean IS NULL OR q.paced = $3)\n          ORDER BY (q.first_submitted_at IS NULL), q.run_at, q.message_id\n          LIMIT $4\n            FOR UPDATE OF q SKIP LOCKED",
   "describe": {
     "columns": [
       {
@@ -51,5 +51,5 @@
       true
     ]
   },
-  "hash": "6d75d1513cf440c89ecd74cc197ee9e43994e19202799e33ba9b944e17fa2795"
+  "hash": "9854aeaa2324ecaf495d5b2afee010f545cfda7603c1aac37de8ab54871c977b"
 }

@@ -422,7 +422,9 @@ pub struct SenderArgs {
     #[command(flatten)]
     pub shares: LimitShareArgs,
     /// How long after its first submission a message keeps being tried, in hours.
-    #[arg(long, env = "DELIVERY_RETRY_WINDOW_HOURS", default_value_t = 24)]
+    /// Seven days allows paced campaigns to retry across daily caps and closed send windows;
+    /// a transactional message's own expiry always takes precedence.
+    #[arg(long, env = "DELIVERY_RETRY_WINDOW_HOURS", default_value_t = 168)]
     pub retry_window_hours: u64,
 }
 
@@ -761,7 +763,7 @@ pub enum AdminCommand {
         rendering: RenderingArgs,
         /// The sender's retry window, in hours, as the sender reads it: a Mailgun message without
         /// a deadline asks to be delivered within it.
-        #[arg(long, env = "DELIVERY_RETRY_WINDOW_HOURS", default_value_t = 24)]
+        #[arg(long, env = "DELIVERY_RETRY_WINDOW_HOURS", default_value_t = 168)]
         retry_window_hours: u64,
     },
     /// Counter maintenance.

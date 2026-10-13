@@ -8,7 +8,7 @@
 
 use std::time::Duration;
 
-use crate::db::{Connection, Db, params};
+use crate::db::{Connection, Db};
 use crate::queue::{Queue, Record};
 use crate::serve::Shutdown;
 use crate::telemetry;
@@ -53,16 +53,22 @@ pub fn transfer(conn: &mut Connection, queue: &Queue) -> Result<usize, Error> {
         }
     }
     tx.execute_many("INSERT INTO events (id, provider_webhook_id, payload, created) VALUES (?1, ?2, ?3, ?4) ON CONFLICT (id) DO NOTHING", events)?;
-    for item in &pending {
-        if let Record::Cursor {
-            node,
-            inode,
-            position,
-        } = &item.record
-        {
-            tx.execute("INSERT INTO cursors (node, inode, position) VALUES (?1, ?2, ?3) ON CONFLICT (node) DO UPDATE SET inode = excluded.inode, position = excluded.position", params![node, inode, position])?;
-        }
-    }
+    let cursors = pending
+        .iter()
+        .filter_map(|item| match &item.record {
+            Record::Cursor {
+                node,
+                inode,
+                position,
+            } => Some(vec![
+                node.clone().into(),
+                inode.clone().into(),
+                (*position).into(),
+            ]),
+            Record::Event { .. } => None,
+        })
+        .collect();
+    tx.execute_many("INSERT INTO cursors (node, inode, position) VALUES (?1, ?2, ?3) ON CONFLICT (node) DO UPDATE SET inode = excluded.inode, position = excluded.position", cursors)?;
     tx.commit()?;
     queue.acknowledge(&pending.iter().map(|row| row.sequence).collect::<Vec<_>>())?;
     Ok(pending.len())

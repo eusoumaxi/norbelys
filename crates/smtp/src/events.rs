@@ -80,7 +80,7 @@ const LEASE_SECONDS: f64 = 60.0;
 /// An event older than this is not retried again.
 const MAX_AGE_SECONDS: f64 = 48.0 * 3600.0;
 /// How long the dispatcher waits when nothing is due.
-const IDLE: Duration = Duration::from_millis(500);
+const IDLE: Duration = Duration::from_secs(2);
 
 /// One event of the contract, as it is journaled and later posted.
 #[derive(Debug, Serialize)]
@@ -213,12 +213,17 @@ struct Data<'a> {
 struct Instruments {
     events: Counter<u64>,
     duration: Histogram<f64>,
+    database_failures: Counter<u64>,
 }
 
 impl Instruments {
     fn new() -> Self {
         let meter = telemetry::meter();
         Self {
+            database_failures: meter
+                .u64_counter("norbelys_mta_dispatch_database_failures_total")
+                .with_description("Temporary outbox database failures; events remain pending")
+                .build(),
             events: meter
                 .u64_counter("norbelys_mta_events_dispatched")
                 .with_description("Events by the outcome of their request: delivered, retry, dead")
@@ -236,6 +241,15 @@ impl Instruments {
 /// Claims up to `slots` batches, each the due events of the route with the oldest due event.
 fn claim(conn: &mut Connection, slots: usize) -> db::Result<Vec<Batch>> {
     let now = db::now();
+    // Idle polling needs one read, not an empty write transaction on every stream.
+    let due: bool = conn.query_row(
+        "SELECT EXISTS (SELECT 1 FROM events WHERE done = 0 AND next_at <= ?1 AND provider_webhook_id IS NOT NULL)",
+        [now],
+        |row| row.get(0),
+    )?;
+    if !due {
+        return Ok(Vec::new());
+    }
     let tx = conn.transaction()?;
     let mut batches = Vec::with_capacity(slots);
     for _ in 0..slots {
@@ -490,7 +504,8 @@ fn report(instruments: &Instruments, settled: &Settled) {
 ///
 /// # Errors
 ///
-/// The HTTP client cannot be built, or the database fails.
+/// The HTTP client cannot be built, a task panics, or the database fails permanently.
+/// Temporary database failures retain pending events and never stop SMTP listeners.
 pub async fn run(db: Db, keys: Arc<Keys>, mut shutdown: Shutdown) -> anyhow::Result<()> {
     let client = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
@@ -502,25 +517,67 @@ pub async fn run(db: Db, keys: Arc<Keys>, mut shutdown: Shutdown) -> anyhow::Res
         .build()?;
     let instruments = Instruments::new();
     let mut in_flight: JoinSet<Vec<Settled>> = JoinSet::new();
+    let mut database_failures: i64 = 0;
     loop {
         let stopping = shutdown.requested();
         let free = IN_FLIGHT.saturating_sub(in_flight.len());
         let mut claimed = 0;
         if free > 0 && !stopping {
-            let batches = db
+            let batches = match db
                 .call(move |conn| claim(conn, free).map_err(anyhow::Error::from))
-                .await?;
+                .await
+            {
+                Ok(batches) => {
+                    if database_failures > 0 {
+                        tracing::info!(
+                            event = "mta.dispatch.database",
+                            outcome = "recovered",
+                            "outbox database recovered"
+                        );
+                    }
+                    database_failures = 0;
+                    batches
+                }
+                Err(error)
+                    if error
+                        .downcast_ref::<db::Error>()
+                        .is_some_and(db::Error::retryable) =>
+                {
+                    instruments.database_failures.add(1, &[]);
+                    if database_failures == 0 {
+                        tracing::warn!(event = "mta.dispatch.database", outcome = "retry", error = %error, "outbox paused; pending events retained");
+                    }
+                    database_failures = database_failures.saturating_add(1);
+                    Vec::new()
+                }
+                Err(error) => return Err(error),
+            };
             claimed = batches.len();
             for batch in batches {
                 in_flight.spawn(send(client.clone(), Arc::clone(&keys), batch));
             }
         }
-        let pause = if claimed > 0 { Duration::ZERO } else { IDLE };
+        let pause = if database_failures > 0 {
+            Duration::from_secs_f64(backoff(database_failures).min(60.0))
+        } else if claimed > 0 {
+            Duration::ZERO
+        } else {
+            IDLE
+        };
         tokio::select! {
             Some(joined) = in_flight.join_next() => {
                 for settled in joined? {
                     report(&instruments, &settled);
-                    db.call(move |conn| settle(conn, &settled).map_err(anyhow::Error::from)).await?;
+                    match db.call(move |conn| settle(conn, &settled).map_err(anyhow::Error::from)).await {
+                        Ok(()) => {}
+                        Err(error) if error.downcast_ref::<db::Error>().is_some_and(db::Error::retryable) => {
+                            instruments.database_failures.add(1, &[]);
+                            // An uncertain settlement leaves the lease intact. Its next claim
+                            // reuses stable event ids, so the receiver can deduplicate delivery.
+                            tracing::warn!(event = "mta.dispatch.database", outcome = "retry", error = %error, "outbox settlement unconfirmed; lease will retry");
+                        }
+                        Err(error) => return Err(error),
+                    }
                 }
             }
             () = tokio::time::sleep(pause), if !stopping => {}

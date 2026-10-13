@@ -12,16 +12,16 @@
 //!    a `bounce`, or an `address_change` when a recipient's status is `X.1.6` (moved).
 //! 2. **An abuse report** (RFC 5965, <https://www.rfc-editor.org/rfc/rfc5965>): a `complaint`
 //!    when its feedback type is about consent (`abuse`, `fraud`), else an `auto_reply`.
-//! 3. **The automatic-mail markers**: `Auto-Submitted` other than `no` (RFC 3834,
+//! 3. **Explicit unsubscribe requests**: the exact subject `unsubscribe`, including requests
+//!    generated automatically by mail clients. Aggregate DMARC reports remain automatic mail
+//!    and never propose suppressing a reporting address.
+//! 4. **The automatic-mail markers**: `Auto-Submitted` other than `no` (RFC 3834,
 //!    <https://www.rfc-editor.org/rfc/rfc3834>) or a `Precedence` of `auto_reply`, `bulk`,
 //!    `junk` or `list`: an `out_of_office` when the text reads as an absence notice, else an
 //!    `auto_reply`. Within this tier the notice patterns still say what the automatic reply is
 //!    about when it announces a closed mailbox or a person who left (the classic "I no longer
 //!    work here, write to …" auto-reply), because that is the case where the mail most needs a
 //!    person's review; the markers keep the classification out of `human_reply` either way.
-//! 4. **An unsubscribe request by mail**: the subject `unsubscribe` that our `List-Unsubscribe`
-//!    `mailto:` link asks mail clients to send (the companion of the one-click POST of RFC 8058,
-//!    <https://www.rfc-editor.org/rfc/rfc8058>).
 //! 5. **Notice patterns**: words a person (or a mail system speaking for them) writes when a
 //!    mailbox is closed, when they left, when they ask to be removed, or when they are away.
 //! 6. **A human reply**: the message answers one of our messages and nothing above applied.
@@ -181,10 +181,10 @@ pub enum Authority {
     Dsn,
     /// An abuse report.
     Arf,
-    /// `Auto-Submitted` or `Precedence`.
-    Automatic,
-    /// The subject our unsubscribe `mailto:` link asks for.
+    /// The subject our unsubscribe `mailto:` link asks for, even in automatic mail.
     UnsubscribeRequest,
+    /// `Auto-Submitted`, `Precedence` or aggregate domain-report boilerplate.
+    Automatic,
     /// A notice pattern in the subject or the text.
     Notice,
     /// The message answers one of ours.
@@ -394,6 +394,24 @@ pub fn classify(facts: &Facts<'_>) -> Verdict {
         }
         None => {}
     }
+    if is_unsubscribe_request(facts.subject) {
+        return verdict(
+            Classification::Unsubscribe,
+            Authority::UnsubscribeRequest,
+            "subject: unsubscribe",
+            None,
+        );
+    }
+    // Aggregate authentication reports describe a domain, never a recipient's mailbox.
+    // Their boilerplate often says that the reporting address is not monitored.
+    if is_aggregate_report(facts) {
+        return verdict(
+            Classification::AutoReply,
+            Authority::Automatic,
+            "aggregate DMARC report",
+            None,
+        );
+    }
     let text = notice_text(facts.subject, facts.text);
     let notice = [
         Notice::Closed,
@@ -433,14 +451,6 @@ pub fn classify(facts: &Facts<'_>) -> Verdict {
                 None,
             ),
         };
-    }
-    if is_unsubscribe_request(facts.subject) {
-        return verdict(
-            Classification::Unsubscribe,
-            Authority::UnsubscribeRequest,
-            "subject: unsubscribe",
-            None,
-        );
     }
     if let Some((found, phrase)) = notice {
         let (classification, proposal) = noticed(found, facts, &text);
@@ -485,6 +495,19 @@ fn automatic(facts: &Facts<'_>) -> Option<String> {
         .precedence
         .filter(|value| matches!(*value, "auto_reply" | "bulk" | "junk" | "list"))
         .map(|value| format!("precedence: {value}"))
+}
+
+/// Recognizes aggregate-report boilerplate without treating it as delivery evidence.
+fn is_aggregate_report(facts: &Facts<'_>) -> bool {
+    let subject = facts.subject.unwrap_or_default().to_ascii_lowercase();
+    let text: String = facts
+        .text
+        .unwrap_or_default()
+        .chars()
+        .take(NOTICE_CHARS)
+        .collect();
+    (subject.starts_with("report domain:") || subject.starts_with("dmarc aggregate report"))
+        && text.to_ascii_lowercase().contains("dmarc")
 }
 
 /// Whether the subject is the one our unsubscribe `mailto:` link asks for.
@@ -902,6 +925,26 @@ mod tests {
                 "{text}"
             );
         }
+    }
+
+    /// Mail clients generate unsubscribe requests automatically; their marker must not
+    /// override the explicit request. DMARC boilerplate must not suppress a reporting address.
+    #[test]
+    fn automatic_unsubscribe_and_aggregate_report_have_distinct_authority() {
+        let unsubscribe = classify(&Facts {
+            subject: Some("unsubscribe"),
+            auto_submitted: Some("auto-replied"),
+            ..Facts::default()
+        });
+        assert_eq!(unsubscribe.classification, Classification::Unsubscribe);
+        assert_eq!(unsubscribe.authority, Authority::UnsubscribeRequest);
+        let aggregate = classify(&Facts {
+            subject: Some("Report Domain: example.com Submitter: yahoo.com Report-ID: 42"),
+            text: Some("This is an aggregate DMARC report. This address is not monitored."),
+            ..Facts::default()
+        });
+        assert_eq!(aggregate.classification, Classification::AutoReply);
+        assert!(aggregate.proposal.is_none());
     }
 
     /// The automatic markers: any `Auto-Submitted` but `no`, and the four `Precedence` values of

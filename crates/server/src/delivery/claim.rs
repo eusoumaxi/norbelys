@@ -1036,13 +1036,15 @@ async fn due_rows(
     paced: Option<bool>,
     limit: i64,
 ) -> Result<Vec<Due>, sqlx::Error> {
+    // Retries already have a deadline. Fresh campaign rows can otherwise exhaust each
+    // day's quota before any retry gets a slot, expiring mail after just one refusal.
     sqlx::query_as!(
         Due,
         "SELECT q.message_id, m.campaign_id, m.recipient_count AS \"recipient_count!\"
            FROM delivery_queue q JOIN messages m ON m.workspace_id = q.workspace_id AND m.id = q.message_id
           WHERE q.workspace_id = $1 AND q.connection_id = $2 AND q.state = 'queued' AND q.run_at <= now()
             AND ($3::boolean IS NULL OR q.paced = $3)
-          ORDER BY q.run_at, q.message_id
+          ORDER BY (q.first_submitted_at IS NULL), q.run_at, q.message_id
           LIMIT $4
             FOR UPDATE OF q SKIP LOCKED",
         workspace.uuid(),
