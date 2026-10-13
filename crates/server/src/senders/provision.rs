@@ -664,8 +664,9 @@ impl Job for NorbelysProvision {
 /// on the managed MTA when its domain is deleted or loses ownership. By the time the suspension
 /// path runs, the domain is gone or unverified, so the normal provision job cannot reconcile the
 /// MTA — its `sends` lookup fails against a deleted or suspended domain. If the domain was
-/// re-onboarded and proven again before this job runs, the provision path sets the MTA state for
-/// the new owner and this job skips, so it does not undo it.
+/// re-onboarded and proven again before this job runs, the connection's IMAP (cleared by
+/// `suspend_mail`) is restored from the domain's current purpose and the connection is re-verified
+/// so the provision job reconciles its MTA account for the current owner instead of revoking it.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NorbelysRevoke {
     /// The connection whose shared service login should be revoked.
@@ -701,20 +702,57 @@ impl Job for NorbelysRevoke {
         )
         .fetch_optional(&mut *tx)
         .await?;
-        tx.commit().await?;
         let Some(row) = row else {
+            tx.commit().await?;
             return Ok(Outcome::Done);
         };
         // Only shared domain-service logins (bare domain, no '@') carry a relay grant and
         // catch-all on the managed MTA; per-mailbox logins have neither.
         if row.account_email.contains('@') {
+            tx.commit().await?;
             return Ok(Outcome::Done);
         }
         // If the domain was re-onboarded and proven again before this revocation ran, the
         // provision job reconciles the MTA for the new owner; a revoke here would undo it.
+        // Restore the connection's IMAP (cleared by `suspend_mail`) from the domain's current
+        // purpose and re-verify the connection so the provision job reconciles its MTA account's
+        // grant and catch-all for the current owner. If the connection is archived or missing,
+        // verification is refused and the MTA state is left as-is.
         if row.domain_live {
+            if super::connections::verify(&mut tx, workspace, self.connection)
+                .await
+                .is_ok()
+            {
+                let purpose: Option<String> = sqlx::query_scalar(
+                    "SELECT purpose FROM sending_domains \
+                     WHERE workspace_id = $1 AND hostname = $2 \
+                     AND status IN ('verified', 'active', 'pending_certificate') LIMIT 1",
+                )
+                .bind(workspace.uuid())
+                .bind(&row.account_email)
+                .fetch_optional(&mut *tx)
+                .await?;
+                let receives = matches!(purpose.as_deref(), Some("receive") | Some("send_receive"));
+                let imap = receives.then(|| super::connections::ImapSettings {
+                    host: env.settings.mta_submission_host.clone(),
+                    port: 993,
+                    security: super::connections::ImapSecurity::Tls,
+                });
+                let imap = imap
+                    .map(serde_json::to_value)
+                    .transpose()
+                    .map_err(|error| JobError::Failed(error.to_string()))?;
+                sqlx::query("UPDATE connections SET imap = $3 WHERE workspace_id = $1 AND id = $2")
+                    .bind(workspace.uuid())
+                    .bind(self.connection.uuid())
+                    .bind(imap)
+                    .execute(&mut *tx)
+                    .await?;
+            }
+            tx.commit().await?;
             return Ok(Outcome::Done);
         }
+        tx.commit().await?;
         let Some(control) = &env.settings.control else {
             return Ok(Outcome::Done);
         };
