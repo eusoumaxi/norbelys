@@ -265,6 +265,7 @@ pub(crate) async fn list(
 ) -> Result<Vec<PersonObject>, sqlx::Error> {
     let s = selection;
     // Two statements, one per direction, so each walks the primary key in its own order.
+    // jscpd:ignore-start
     let rows = if ascending {
         sqlx::query_as!(
             PersonRow,
@@ -364,6 +365,7 @@ pub(crate) async fn list(
         .fetch_all(&mut **tx)
         .await?
     };
+    // jscpd:ignore-end
     with_groups(tx, workspace, rows).await
 }
 
@@ -387,6 +389,7 @@ pub(crate) async fn list_by_update(
     let (after_at, cursor) = after.unzip();
     // Two statements, one per direction, so each walks `people_by_updated` in its own order; the
     // column is never NULL and the id breaks its ties.
+    // jscpd:ignore-start
     let rows = if ascending {
         sqlx::query_as!(
             PersonRow,
@@ -490,6 +493,7 @@ pub(crate) async fn list_by_update(
         .fetch_all(&mut **tx)
         .await?
     };
+    // jscpd:ignore-end
     with_groups(tx, workspace, rows).await
 }
 

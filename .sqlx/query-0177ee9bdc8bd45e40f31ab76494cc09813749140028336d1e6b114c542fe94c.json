@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT g.id AS \"id: Id<Group>\", g.name, g.description,\n                  (SELECT count(*) FROM group_people m WHERE m.workspace_id = g.workspace_id AND m.group_id = g.id) AS \"people_count!\",\n                  g.created_at AS \"created_at: Timestamp\", g.updated_at AS \"updated_at: Timestamp\"\n             FROM groups g\n            WHERE g.workspace_id = $1 AND g.deleted_at IS NULL AND ($2::text IS NULL OR lower(g.name) LIKE $2)\n              AND ($3::uuid IS NULL OR CASE WHEN $4 THEN g.id > $3 ELSE g.id < $3 END)\n            ORDER BY CASE WHEN $4 THEN g.id END, g.id DESC LIMIT $5",
+  "query": "SELECT g.id AS \"id: Id<Group>\", g.name, g.description,\n                  (SELECT count(*) FROM group_people m WHERE m.workspace_id = g.workspace_id AND m.group_id = g.id) AS \"people_count!\",\n                  g.created_at AS \"created_at: Timestamp\", g.updated_at AS \"updated_at: Timestamp\"\n             FROM groups g\n            WHERE g.workspace_id = $1 AND g.deleted_at IS NULL AND ($2::text IS NULL OR lower(g.name) LIKE lower($2))\n              AND ($3::uuid IS NULL OR CASE WHEN $4 THEN g.id > $3 ELSE g.id < $3 END)\n            ORDER BY CASE WHEN $4 THEN g.id END, g.id DESC LIMIT $5",
   "describe": {
     "columns": [
       {
@@ -83,5 +83,5 @@
       false
     ]
   },
-  "hash": "381db95df46515c22dd7d4b6e0c04cb3b4a8c21ab2c0c8552a5786dfe48afc9a"
+  "hash": "0177ee9bdc8bd45e40f31ab76494cc09813749140028336d1e6b114c542fe94c"
 }

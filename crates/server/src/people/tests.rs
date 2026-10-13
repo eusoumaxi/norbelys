@@ -348,6 +348,9 @@ async fn people_searches_all_contact_details() {
 /// code points) while the database's `lower()` folds to a single `i`, still finds a stored
 /// value of the same text — in the name, company and custom-field branches alike, and in the
 /// count. An ASCII-only lowercase query also matches the stored value with the Turkish capital.
+/// Each branch is tested on its own person so that a broken arm is not masked by a working one:
+/// the name, company and custom-field search arms are joined with `OR`, so a match in any one
+/// arm would otherwise hide a failure in the others.
 /// `İ` is UTF-8 `\xC4\xB0`, URL-encoded as `%C4%B0`.
 #[tokio::test]
 async fn people_search_ignores_case_as_the_database_folds_it() {
@@ -361,16 +364,26 @@ async fn people_search_ignores_case_as_the_database_folds_it() {
         json!({ "key": "city", "label": "City", "type": "text" }),
     )
     .await;
+    // One person per search arm (name, company, custom field) so a broken arm is not masked.
     create(
         &app,
         &acme.key,
         "/v1/people",
-        json!({
-            "email": "ada@example.com",
-            "given_name": "İstanbul",
-            "company": "İstanbul Ltd",
-            "fields": { "city": "İstanbul" }
-        }),
+        json!({ "email": "name@example.com", "given_name": "İstanbul" }),
+    )
+    .await;
+    create(
+        &app,
+        &acme.key,
+        "/v1/people",
+        json!({ "email": "company@example.com", "company": "İstanbul Ltd" }),
+    )
+    .await;
+    create(
+        &app,
+        &acme.key,
+        "/v1/people",
+        json!({ "email": "field@example.com", "fields": { "city": "İstanbul" } }),
     )
     .await;
     create(
@@ -392,12 +405,18 @@ async fn people_search_ignores_case_as_the_database_folds_it() {
                     .send()
                     .await;
                 assert_eq!(reply.status, StatusCode::OK, "{query}: {:?}", reply.json);
+                let mut found = emails(&reply);
+                found.sort();
                 assert_eq!(
-                    emails(&reply),
-                    ["ada@example.com"],
+                    found,
+                    [
+                        "company@example.com",
+                        "field@example.com",
+                        "name@example.com"
+                    ],
                     "{query} {sort} {order}"
                 );
-                assert_eq!(reply.json["meta"]["total_count"], json!(1), "{query}");
+                assert_eq!(reply.json["meta"]["total_count"], json!(3), "{query}");
             }
         }
     }
