@@ -2147,6 +2147,119 @@ async fn fake_mta(
     origin
 }
 
+/// The shared MTA test scaffold: a stateful fake MTA, a control client pointed at it, and the
+/// worker harness wired with it. Returns the fake's accounts, its recorded calls, and the runner.
+async fn mta_harness(
+    test: &TestDb,
+) -> (Arc<Mutex<HashMap<String, FakeAccount>>>, Received, Harness) {
+    use base64::Engine as _;
+    let accounts: Arc<Mutex<HashMap<String, FakeAccount>>> = Arc::default();
+    let received: Received = Arc::default();
+    let origin = fake_mta(Arc::clone(&received), Arc::clone(&accounts)).await;
+    let control = Control::new(
+        url::Url::parse(&origin).unwrap(),
+        &secrecy::SecretString::from(format!(
+            "whsec_{}",
+            base64::engine::general_purpose::STANDARD.encode([9_u8; 32])
+        )),
+        false,
+    )
+    .unwrap();
+    let runner = harness(test, Settings::for_tests(), Some(control));
+    (accounts, received, runner)
+}
+
+/// Inserts a verified `send_receive` domain for `workspace` (shared-service provisioning
+/// requires a verified mail domain; DNS is bypassed by inserting the row directly).
+async fn own_send_receive_domain(test: &TestDb, workspace: &TestWorkspace, hostname: &str) {
+    sqlx::query(
+        "INSERT INTO sending_domains (workspace_id, hostname, status, purpose, ownership_token, \
+         ownership_expires_at, verified_at) VALUES ($1, $2, 'verified', 'send_receive', \
+         'test-proof', now() + interval '30 days', now())",
+    )
+    .bind(workspace.id.uuid())
+    .bind(hostname)
+    .execute(test.system.pool())
+    .await
+    .unwrap();
+}
+
+/// Connects a shared norbelys service for `workspace` at `domain` and returns the reply.
+async fn connect_shared_service(app: &TestApp, workspace: &TestWorkspace, domain: &str) -> Reply {
+    connect(
+        app,
+        &workspace.key,
+        json!({"provider":"norbelys","account_email":domain,"identities":[{"email":format!("service@{domain}")}]}),
+    )
+    .await
+}
+
+/// Owns a `send_receive` domain, connects a shared norbelys service, provisions it, and asserts
+/// the MTA holds the grant and catch-all. Returns the connection reply and the managed username.
+async fn provision_shared_service(
+    test: &TestDb,
+    app: &TestApp,
+    workspace: &TestWorkspace,
+    domain: &str,
+    accounts: &Arc<Mutex<HashMap<String, FakeAccount>>>,
+    runner: &Harness,
+) -> (Reply, String) {
+    own_send_receive_domain(test, workspace, domain).await;
+    let service = connect_shared_service(app, workspace, domain).await;
+    assert_eq!(service.status, StatusCode::CREATED, "{}", service.json);
+    // Provisioning the shared service creates the login, sets grant and catch_all, and the route.
+    assert_eq!(run_maintenance(runner).await, ["done"]);
+    let username = super::managed::username(workspace.id, domain);
+    {
+        let mta = accounts.lock().unwrap();
+        let account = mta.get(&username).unwrap();
+        assert_eq!(account.grant_domain.as_deref(), Some(domain));
+        assert!(account.catch_all);
+    }
+    (service, username)
+}
+
+/// Deletes a sending domain through the API and asserts it returned no content.
+async fn delete_sending_domain(
+    app: &TestApp,
+    test: &TestDb,
+    workspace: &TestWorkspace,
+    hostname: &str,
+) {
+    let domain_id: Uuid = sqlx::query_scalar(
+        "SELECT id FROM sending_domains WHERE workspace_id = $1 AND hostname = $2",
+    )
+    .bind(workspace.id.uuid())
+    .bind(hostname)
+    .fetch_one(test.system.pool())
+    .await
+    .unwrap();
+    let deleted = app
+        .delete(&format!(
+            "/v1/sending_domains/{}",
+            Id::<crate::domain::ids::SendingDomain>::from_uuid(domain_id)
+        ))
+        .bearer(&workspace.key)
+        .send()
+        .await;
+    assert_eq!(deleted.status, StatusCode::NO_CONTENT);
+}
+
+/// How many revoke PATCHes the MTA received for `username` (`{"grant": false, "catch_all": false}`).
+fn revoke_patch_count(received: &Received, username: &str) -> usize {
+    let revoke_body = json!({"grant": false, "catch_all": false});
+    received
+        .lock()
+        .unwrap()
+        .iter()
+        .filter(|(m, p, _, body)| {
+            *m == "PATCH"
+                && *p == format!("/v1/accounts/{username}")
+                && serde_json::from_slice::<Value>(body).unwrap_or(Value::Null) == revoke_body
+        })
+        .count()
+}
+
 /// Provisioning a managed MTA login: the job asks the control API whether the login exists,
 /// creates it, registers the connection's webhook as its evidence route with the generated
 /// secret, signs every request per Standard Webhooks with the installation's secret, seals the
@@ -2409,76 +2522,18 @@ async fn a_relay_api_credential_is_sealed_beside_its_password() {
 /// the catch-all without a 409 conflict.
 #[tokio::test]
 async fn deleting_a_domain_revokes_shared_service_grant_and_catch_all_on_mta() {
-    use base64::Engine as _;
     let test = TestDb::new().await;
     let acme = test.workspace("acme").await;
     let beta = test.workspace("beta").await;
     let app = test.app();
-
-    let accounts: Arc<Mutex<HashMap<String, FakeAccount>>> = Arc::default();
-    let received: Received = Arc::default();
-    let origin = fake_mta(Arc::clone(&received), Arc::clone(&accounts)).await;
-    let control = Control::new(
-        url::Url::parse(&origin).unwrap(),
-        &secrecy::SecretString::from(format!(
-            "whsec_{}",
-            base64::engine::general_purpose::STANDARD.encode([9_u8; 32])
-        )),
-        false,
-    )
-    .unwrap();
-    let runner = harness(&test, Settings::for_tests(), Some(control));
+    let (accounts, received, runner) = mta_harness(&test).await;
 
     // Acme owns acme.example (send_receive, verified) and connects its shared service.
-    sqlx::query(
-        "INSERT INTO sending_domains (workspace_id, hostname, status, purpose, ownership_token, \
-         ownership_expires_at, verified_at) VALUES ($1, $2, 'verified', 'send_receive', \
-         'test-proof', now() + interval '30 days', now())",
-    )
-    .bind(acme.id.uuid())
-    .bind("acme.example")
-    .execute(test.system.pool())
-    .await
-    .unwrap();
-    let acme_service = connect(
-        &app,
-        &acme.key,
-        json!({"provider":"norbelys","account_email":"acme.example","identities":[{"email":"service@acme.example"}]}),
-    )
-    .await;
-    assert_eq!(
-        acme_service.status,
-        StatusCode::CREATED,
-        "{}",
-        acme_service.json
-    );
-    // Provisioning the shared service creates the login, sets grant and catch_all, and the route.
-    assert_eq!(run_maintenance(&runner).await, ["done"]);
-    let acme_username = super::managed::username(acme.id, "acme.example");
-    {
-        let mta = accounts.lock().unwrap();
-        let account = mta.get(&acme_username).unwrap();
-        assert_eq!(account.grant_domain.as_deref(), Some("acme.example"));
-        assert!(account.catch_all);
-    }
+    let (acme_service, acme_username) =
+        provision_shared_service(&test, &app, &acme, "acme.example", &accounts, &runner).await;
 
     // Acme deletes the domain.
-    let domain_id = sqlx::query_scalar!(
-        "SELECT id FROM sending_domains WHERE workspace_id = $1 AND hostname = 'acme.example'",
-        acme.id.uuid(),
-    )
-    .fetch_one(test.system.pool())
-    .await
-    .unwrap();
-    let deleted = app
-        .delete(&format!(
-            "/v1/sending_domains/{}",
-            Id::<crate::domain::ids::SendingDomain>::from_uuid(domain_id)
-        ))
-        .bearer(&acme.key)
-        .send()
-        .await;
-    assert_eq!(deleted.status, StatusCode::NO_CONTENT);
+    delete_sending_domain(&app, &test, &acme, "acme.example").await;
 
     // The revoke job runs and PATCHes `{"grant": false, "catch_all": false}` to acme's login.
     assert_eq!(run_maintenance(&runner).await, ["done"]);
@@ -2494,19 +2549,9 @@ async fn deleting_a_domain_revokes_shared_service_grant_and_catch_all_on_mta() {
         assert!(account.route.is_some(), "the route should be retained");
     }
     // The revoking PATCH was issued by the MTA.
-    let revoke_body = json!({"grant": false, "catch_all": false});
-    let revoke_count = received
-        .lock()
-        .unwrap()
-        .iter()
-        .filter(|(m, p, _, body)| {
-            *m == "PATCH"
-                && *p == format!("/v1/accounts/{acme_username}")
-                && serde_json::from_slice::<Value>(body).unwrap_or(Value::Null) == revoke_body
-        })
-        .count();
     assert_eq!(
-        revoke_count, 1,
+        revoke_patch_count(&received, &acme_username),
+        1,
         "exactly one revoke PATCH with grant=false, catch_all=false"
     );
     // Acme's connection's IMAP was cleared.
@@ -2527,22 +2572,8 @@ async fn deleting_a_domain_revokes_shared_service_grant_and_catch_all_on_mta() {
 
     // Beta registers the same domain and connects its own shared service: the provision job
     // succeeds, because acme's login no longer holds the catch-all.
-    sqlx::query(
-        "INSERT INTO sending_domains (workspace_id, hostname, status, purpose, ownership_token, \
-         ownership_expires_at, verified_at) VALUES ($1, $2, 'verified', 'send_receive', \
-         'test-proof', now() + interval '30 days', now())",
-    )
-    .bind(beta.id.uuid())
-    .bind("acme.example")
-    .execute(test.system.pool())
-    .await
-    .unwrap();
-    let beta_service = connect(
-        &app,
-        &beta.key,
-        json!({"provider":"norbelys","account_email":"acme.example","identities":[{"email":"service@acme.example"}]}),
-    )
-    .await;
+    own_send_receive_domain(&test, &beta, "acme.example").await;
+    let beta_service = connect_shared_service(&app, &beta, "acme.example").await;
     assert_eq!(
         beta_service.status,
         StatusCode::CREATED,
@@ -2570,57 +2601,14 @@ async fn deleting_a_domain_revokes_shared_service_grant_and_catch_all_on_mta() {
 /// catch-all: `suspend_mail` includes archived connections in the remote cleanup.
 #[tokio::test]
 async fn archiving_a_service_before_its_domain_revoke_still_clears_grant_and_catch_all() {
-    use base64::Engine as _;
     let test = TestDb::new().await;
     let acme = test.workspace("acme").await;
     let app = test.app();
-
-    let accounts: Arc<Mutex<HashMap<String, FakeAccount>>> = Arc::default();
-    let received: Received = Arc::default();
-    let origin = fake_mta(Arc::clone(&received), Arc::clone(&accounts)).await;
-    let control = Control::new(
-        url::Url::parse(&origin).unwrap(),
-        &secrecy::SecretString::from(format!(
-            "whsec_{}",
-            base64::engine::general_purpose::STANDARD.encode([9_u8; 32])
-        )),
-        false,
-    )
-    .unwrap();
-    let runner = harness(&test, Settings::for_tests(), Some(control));
+    let (accounts, received, runner) = mta_harness(&test).await;
 
     // Acme owns acme.example (send_receive, verified) and connects its shared service.
-    sqlx::query(
-        "INSERT INTO sending_domains (workspace_id, hostname, status, purpose, ownership_token, \
-         ownership_expires_at, verified_at) VALUES ($1, $2, 'verified', 'send_receive', \
-         'test-proof', now() + interval '30 days', now())",
-    )
-    .bind(acme.id.uuid())
-    .bind("acme.example")
-    .execute(test.system.pool())
-    .await
-    .unwrap();
-    let acme_service = connect(
-        &app,
-        &acme.key,
-        json!({"provider":"norbelys","account_email":"acme.example","identities":[{"email":"service@acme.example"}]}),
-    )
-    .await;
-    assert_eq!(
-        acme_service.status,
-        StatusCode::CREATED,
-        "{}",
-        acme_service.json
-    );
-    // Provisioning the shared service creates the login, sets grant and catch_all, and the route.
-    assert_eq!(run_maintenance(&runner).await, ["done"]);
-    let acme_username = super::managed::username(acme.id, "acme.example");
-    {
-        let mta = accounts.lock().unwrap();
-        let account = mta.get(&acme_username).unwrap();
-        assert_eq!(account.grant_domain.as_deref(), Some("acme.example"));
-        assert!(account.catch_all);
-    }
+    let (acme_service, acme_username) =
+        provision_shared_service(&test, &app, &acme, "acme.example", &accounts, &runner).await;
 
     // Acme archives the connection before deleting the domain.
     let acme_connection_id = acme_service.json["id"].as_str().unwrap().to_owned();
@@ -2633,22 +2621,7 @@ async fn archiving_a_service_before_its_domain_revoke_still_clears_grant_and_cat
     assert_eq!(archived.json["status"], "archived");
 
     // Acme deletes the domain. The revoke job runs even for the archived connection.
-    let domain_id = sqlx::query_scalar!(
-        "SELECT id FROM sending_domains WHERE workspace_id = $1 AND hostname = 'acme.example'",
-        acme.id.uuid(),
-    )
-    .fetch_one(test.system.pool())
-    .await
-    .unwrap();
-    let deleted = app
-        .delete(&format!(
-            "/v1/sending_domains/{}",
-            Id::<crate::domain::ids::SendingDomain>::from_uuid(domain_id)
-        ))
-        .bearer(&acme.key)
-        .send()
-        .await;
-    assert_eq!(deleted.status, StatusCode::NO_CONTENT);
+    delete_sending_domain(&app, &test, &acme, "acme.example").await;
 
     // The revoke job runs and PATCHes `{"grant": false, "catch_all": false}` to acme's login,
     // even though the connection is archived.
@@ -2666,19 +2639,9 @@ async fn archiving_a_service_before_its_domain_revoke_still_clears_grant_and_cat
         );
     }
     // The revoke PATCH was issued by the MTA.
-    let revoke_body = json!({"grant": false, "catch_all": false});
-    let revoke_count = received
-        .lock()
-        .unwrap()
-        .iter()
-        .filter(|(m, p, _, body)| {
-            *m == "PATCH"
-                && *p == format!("/v1/accounts/{acme_username}")
-                && serde_json::from_slice::<Value>(body).unwrap_or(Value::Null) == revoke_body
-        })
-        .count();
     assert_eq!(
-        revoke_count, 1,
+        revoke_patch_count(&received, &acme_username),
+        1,
         "exactly one revoke PATCH with grant=false, catch_all=false"
     );
 }
@@ -2689,75 +2652,17 @@ async fn archiving_a_service_before_its_domain_revoke_still_clears_grant_and_cat
 /// them.
 #[tokio::test]
 async fn re_onboarding_a_domain_before_revoke_restores_imap_and_reconciles_the_mta() {
-    use base64::Engine as _;
     let test = TestDb::new().await;
     let acme = test.workspace("acme").await;
     let app = test.app();
-
-    let accounts: Arc<Mutex<HashMap<String, FakeAccount>>> = Arc::default();
-    let received: Received = Arc::default();
-    let origin = fake_mta(Arc::clone(&received), Arc::clone(&accounts)).await;
-    let control = Control::new(
-        url::Url::parse(&origin).unwrap(),
-        &secrecy::SecretString::from(format!(
-            "whsec_{}",
-            base64::engine::general_purpose::STANDARD.encode([9_u8; 32])
-        )),
-        false,
-    )
-    .unwrap();
-    let runner = harness(&test, Settings::for_tests(), Some(control));
+    let (accounts, received, runner) = mta_harness(&test).await;
 
     // Acme owns acme.example (send_receive, verified) and connects its shared service.
-    sqlx::query(
-        "INSERT INTO sending_domains (workspace_id, hostname, status, purpose, ownership_token, \
-         ownership_expires_at, verified_at) VALUES ($1, $2, 'verified', 'send_receive', \
-         'test-proof', now() + interval '30 days', now())",
-    )
-    .bind(acme.id.uuid())
-    .bind("acme.example")
-    .execute(test.system.pool())
-    .await
-    .unwrap();
-    let acme_service = connect(
-        &app,
-        &acme.key,
-        json!({"provider":"norbelys","account_email":"acme.example","identities":[{"email":"service@acme.example"}]}),
-    )
-    .await;
-    assert_eq!(
-        acme_service.status,
-        StatusCode::CREATED,
-        "{}",
-        acme_service.json
-    );
-    // Provisioning the shared service creates the login, sets grant and catch_all, and the route.
-    assert_eq!(run_maintenance(&runner).await, ["done"]);
-    let acme_username = super::managed::username(acme.id, "acme.example");
-    {
-        let mta = accounts.lock().unwrap();
-        let account = mta.get(&acme_username).unwrap();
-        assert_eq!(account.grant_domain.as_deref(), Some("acme.example"));
-        assert!(account.catch_all);
-    }
+    let (acme_service, acme_username) =
+        provision_shared_service(&test, &app, &acme, "acme.example", &accounts, &runner).await;
 
     // Acme deletes the domain (suspend_mail clears imap and enqueues NorbelysRevoke).
-    let domain_id = sqlx::query_scalar!(
-        "SELECT id FROM sending_domains WHERE workspace_id = $1 AND hostname = 'acme.example'",
-        acme.id.uuid(),
-    )
-    .fetch_one(test.system.pool())
-    .await
-    .unwrap();
-    let deleted = app
-        .delete(&format!(
-            "/v1/sending_domains/{}",
-            Id::<crate::domain::ids::SendingDomain>::from_uuid(domain_id)
-        ))
-        .bearer(&acme.key)
-        .send()
-        .await;
-    assert_eq!(deleted.status, StatusCode::NO_CONTENT);
+    delete_sending_domain(&app, &test, &acme, "acme.example").await;
 
     // The connection's IMAP was cleared by suspend_mail.
     let acme_connection: Uuid = acme_service.json["id"]
@@ -2776,16 +2681,7 @@ async fn re_onboarding_a_domain_before_revoke_restores_imap_and_reconciles_the_m
     assert!(imap_null, "the suspended service's imap should be cleared");
 
     // Before the revoke job runs, Acme re-registers the same domain.
-    sqlx::query(
-        "INSERT INTO sending_domains (workspace_id, hostname, status, purpose, ownership_token, \
-         ownership_expires_at, verified_at) VALUES ($1, $2, 'verified', 'send_receive', \
-         'test-proof', now() + interval '30 days', now())",
-    )
-    .bind(acme.id.uuid())
-    .bind("acme.example")
-    .execute(test.system.pool())
-    .await
-    .unwrap();
+    own_send_receive_domain(&test, &acme, "acme.example").await;
 
     // The revoke job runs, sees the domain is live, and re-verifies the connection (restoring
     // IMAP and enqueuing NorbelysProvision) instead of revoking the MTA.
@@ -2805,19 +2701,9 @@ async fn re_onboarding_a_domain_before_revoke_restores_imap_and_reconciles_the_m
         );
     }
     // No revoke PATCH was issued.
-    let revoke_body = json!({"grant": false, "catch_all": false});
-    let revoke_count = received
-        .lock()
-        .unwrap()
-        .iter()
-        .filter(|(m, p, _, body)| {
-            *m == "PATCH"
-                && *p == format!("/v1/accounts/{acme_username}")
-                && serde_json::from_slice::<Value>(body).unwrap_or(Value::Null) == revoke_body
-        })
-        .count();
     assert_eq!(
-        revoke_count, 0,
+        revoke_patch_count(&received, &acme_username),
+        0,
         "no revoke PATCH should be issued when the domain is re-onboarded"
     );
 
