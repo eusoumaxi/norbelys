@@ -158,6 +158,28 @@ impl Job for CampaignMaterialise {
                 jobs::wake(cx.db(), Queue::Ai).await;
             }
             if cursor.is_none() {
+                // An enrollment that landed during the run had its enqueue absorbed by this
+                // running job; re-check readiness so it is not missed until the next advance pass.
+                if validation_required {
+                    let mut chunk = cx.begin().await?;
+                    let status = sqlx::query_scalar!(
+                        "SELECT status FROM campaigns WHERE workspace_id = $1 AND id = $2 FOR UPDATE",
+                        workspace.uuid(),
+                        campaign.uuid(),
+                    )
+                    .fetch_optional(&mut **chunk.tx())
+                    .await?
+                    .and_then(|status| status.parse::<CampaignStatus>().ok());
+                    if matches!(
+                        status,
+                        Some(CampaignStatus::Materialising | CampaignStatus::Active)
+                    ) && !super::recipients::ready(chunk.tx(), workspace, campaign).await?
+                    {
+                        return Ok(Outcome::Yield {
+                            after: Duration::ZERO,
+                        });
+                    }
+                }
                 return Ok(Outcome::Done);
             }
         }
