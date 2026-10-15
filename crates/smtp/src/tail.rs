@@ -51,6 +51,9 @@ use crate::{bounce, crypto, db};
 const MAX_LINE: u64 = 64 * 1024;
 /// Lines read per transaction.
 const LIMIT: usize = 100;
+/// Yield the remote write lock between lines, before competing requests time out.
+/// One line's bounded SQL operations may finish after this cooperative deadline.
+const TRANSACTION_BUDGET: Duration = Duration::from_secs(5);
 /// How long a rotated file must stay unchanged before the tail leaves it.
 const QUIET: Duration = Duration::from_secs(10);
 /// How long correlation rows are kept.
@@ -186,6 +189,7 @@ impl Tail {
         let current_inode = current.ino().to_string();
         let cursor = self.conn.cursor(&self.node)?;
         let tx = self.conn.transaction()?;
+        let transaction_started = Instant::now();
         let (inode, position) = match &cursor {
             Some((inode, position)) => (
                 inode.clone(),
@@ -210,7 +214,9 @@ impl Tail {
         let mut progress = Progress::default();
         let mut offset = position;
         let mut buffer = Vec::new();
-        while progress.lines < limit {
+        while progress.lines < limit
+            && (progress.lines == 0 || transaction_started.elapsed() < TRANSACTION_BUDGET)
+        {
             buffer.clear();
             let read = (&mut reader)
                 .take(MAX_LINE + 1)
@@ -489,8 +495,8 @@ impl Instruments {
     }
 }
 
-/// Runs the tail until shutdown: at once again after a full step, every second when caught up,
-/// every ten seconds after an error (logged when it changes).
+/// Runs the tail until shutdown: yields briefly between batches with unread bytes,
+/// waits a second when caught up, and ten seconds after an error (logged when it changes).
 ///
 /// # Errors
 ///
@@ -543,8 +549,9 @@ pub async fn run(mut tail: Tail, mut shutdown: Shutdown) -> anyhow::Result<()> {
                         "mta.tail"
                     );
                 }
-                if progress.lines == LIMIT {
-                    Duration::ZERO
+                if progress.lines > 0 && progress.lag_bytes > 0 {
+                    // Let other writers claim the lock before the next bounded batch.
+                    Duration::from_millis(100)
                 } else {
                     Duration::from_secs(1)
                 }

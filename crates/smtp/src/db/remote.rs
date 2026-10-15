@@ -158,7 +158,10 @@ impl Remote {
             .redirect(reqwest::redirect::Policy::none())
             .no_proxy()
             .connect_timeout(Duration::from_secs(5))
-            .timeout(Duration::from_secs(20))
+            // Turso may wait for a competing writer before acknowledging BEGIN.
+            // Keep that wait inside the request deadline so a timeout does not
+            // routinely abandon a transaction whose lock was just granted.
+            .timeout(Duration::from_secs(45))
             .user_agent(concat!("norbelys-smtp/", env!("CARGO_PKG_VERSION")))
             .build()?;
         Ok(Self {
