@@ -46,6 +46,12 @@ RUN --mount=type=cache,id=cargo-registry,target=/usr/local/cargo/registry \
     cargo build --release --locked -p norbelys-smtp --bin norbelys-smtp \
     && install -D -m 0755 target/release/norbelys-smtp /out/norbelys-smtp
 
+# The smtp role's default state directory (`NORBELYS_SMTP_STATE_DIR`). The runtime image has no
+# shell, so the directory is provisioned here and copied into the smtp target chowned to the
+# unprivileged user; without it a fresh volume is root-owned and `serve` cannot create its lock.
+FROM source AS smtp-state
+RUN install -d -m 0750 /smtp-state
+
 # glibc, libgcc, libstdc++ (DuckDB) and CA certificates; no shell, no package manager; runs as
 # the unprivileged `nonroot` user (uid 65532). The allocator keeps at most two arenas: glibc's
 # default of eight per core multiplies the memory a small container holds.
@@ -56,6 +62,7 @@ USER nonroot
 
 FROM runtime AS smtp
 COPY --from=build-smtp /out/norbelys-smtp /app/norbelys-smtp
+COPY --chown=65532:65532 --from=smtp-state /smtp-state /var/lib/norbelys-smtp
 CMD ["/app/norbelys-smtp", "serve"]
 
 FROM runtime AS server-analytics
