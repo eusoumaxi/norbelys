@@ -343,6 +343,93 @@ async fn people_searches_all_contact_details() {
     assert_eq!(reply.json["meta"]["total_count"], json!(0));
 }
 
+/// A search ignores case as PostgreSQL `lower()` folds it, so a query containing Turkish
+/// capital `İ` (U+0130), which Rust's `to_lowercase` turns into `i` plus a combining dot (two
+/// code points) while the database's `lower()` folds to a single `i`, still finds a stored
+/// value of the same text — in the name, company and custom-field branches alike, and in the
+/// count. An ASCII-only lowercase query also matches the stored value with the Turkish capital.
+/// Each branch is tested on its own person so that a broken arm is not masked by a working one:
+/// the name, company and custom-field search arms are joined with `OR`, so a match in any one
+/// arm would otherwise hide a failure in the others.
+/// `İ` is UTF-8 `\xC4\xB0`, URL-encoded as `%C4%B0`.
+#[tokio::test]
+async fn people_search_ignores_case_as_the_database_folds_it() {
+    let test = TestDb::new().await;
+    let acme = test.workspace("acme").await;
+    let app = test.app();
+    create(
+        &app,
+        &acme.key,
+        "/v1/fields",
+        json!({ "key": "city", "label": "City", "type": "text" }),
+    )
+    .await;
+    // One person per search arm (name, company, custom field) so a broken arm is not masked.
+    create(
+        &app,
+        &acme.key,
+        "/v1/people",
+        json!({ "email": "name@example.com", "given_name": "İstanbul" }),
+    )
+    .await;
+    create(
+        &app,
+        &acme.key,
+        "/v1/people",
+        json!({ "email": "company@example.com", "company": "İstanbul Ltd" }),
+    )
+    .await;
+    create(
+        &app,
+        &acme.key,
+        "/v1/people",
+        json!({ "email": "field@example.com", "fields": { "city": "İstanbul" } }),
+    )
+    .await;
+    create(
+        &app,
+        &acme.key,
+        "/v1/people",
+        json!({ "email": "bob@example.com", "company": "Berlin" }),
+    )
+    .await;
+    // "%C4%B0stanbul" is "İstanbul" URL-encoded; "istanbul" is the plain ASCII lowercasing.
+    for query in ["%C4%B0stanbul", "istanbul", "%C4%B0STANBUL"] {
+        for sort in ["id", "updated_at"] {
+            for order in ["asc", "desc"] {
+                let reply = app
+                    .get(&format!(
+                        "/v1/people?q={query}&sort={sort}&order={order}&include=total_count"
+                    ))
+                    .bearer(&acme.key)
+                    .send()
+                    .await;
+                assert_eq!(reply.status, StatusCode::OK, "{query}: {:?}", reply.json);
+                let mut found = emails(&reply);
+                found.sort();
+                assert_eq!(
+                    found,
+                    [
+                        "company@example.com",
+                        "field@example.com",
+                        "name@example.com"
+                    ],
+                    "{query} {sort} {order}"
+                );
+                assert_eq!(reply.json["meta"]["total_count"], json!(3), "{query}");
+            }
+        }
+    }
+    // Group search (prefix of the name) honors the same fold.
+    create(&app, &acme.key, "/v1/groups", json!({ "name": "İzmir" })).await;
+    let searched = app
+        .get("/v1/groups?q=%C4%B0zmir")
+        .bearer(&acme.key)
+        .send()
+        .await;
+    assert_eq!(searched.json["data"][0]["name"], json!("İzmir"));
+}
+
 /// `GET /v1/people?sort=updated_at` lists people by when each last changed, each tie broken by
 /// id, so a person changed later comes first, which the `id` order never does. One page at a
 /// time, every person comes exactly once and in that order even where several changed in one

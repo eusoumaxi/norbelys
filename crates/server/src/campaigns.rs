@@ -345,7 +345,7 @@ pub async fn list(
              FROM campaigns
             WHERE workspace_id = $1
               AND ($2::text IS NULL OR status = $2)
-              AND ($3::text IS NULL OR lower(name) LIKE $3)
+              AND ($3::text IS NULL OR lower(name) LIKE lower($3))
               AND ($4::uuid IS NULL OR CASE WHEN $5 THEN id > $4 ELSE id < $4 END)
             ORDER BY CASE WHEN $5 THEN id END, id DESC
             LIMIT $6"#,
@@ -376,7 +376,7 @@ pub async fn count(
     sqlx::query_scalar!(
         r#"SELECT count(*) AS "count!" FROM (
              SELECT 1 FROM campaigns
-              WHERE workspace_id = $1 AND ($2::text IS NULL OR status = $2) AND ($3::text IS NULL OR lower(name) LIKE $3)
+              WHERE workspace_id = $1 AND ($2::text IS NULL OR status = $2) AND ($3::text IS NULL OR lower(name) LIKE lower($3))
               LIMIT $4) capped"#,
         workspace.uuid(),
         filters.status.map(CampaignStatus::as_str),
