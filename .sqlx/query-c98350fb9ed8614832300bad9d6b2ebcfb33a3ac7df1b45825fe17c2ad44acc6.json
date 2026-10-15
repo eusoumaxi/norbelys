@@ -1,0 +1,36 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT c.account_email,\n                   EXISTS(SELECT 1 FROM sending_domains\n                           WHERE workspace_id = c.workspace_id\n                             AND hostname = c.account_email_key\n                             AND status IN ('verified', 'active', 'pending_certificate')) AS \"domain_live!\"\n              FROM connections c\n             WHERE c.workspace_id = $1 AND c.id = $2 AND c.provider = 'norbelys'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "account_email",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "connections",
+            "name": "account_email"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "domain_live!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "c98350fb9ed8614832300bad9d6b2ebcfb33a3ac7df1b45825fe17c2ad44acc6"
+}
