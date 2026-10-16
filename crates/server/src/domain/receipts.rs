@@ -303,6 +303,7 @@ mod tests {
     fn refined_dsns_never_suppress_full_mailboxes_policy_or_sender_failures() {
         for diagnostic in [
             "452-4.2.2 Over quota",
+            "450 4.1.1 Temporarily unavailable recipient",
             "550 5.1.1 undeliverable: 552 5.2.2 Quota exceeded",
             "550 5.7.1 Account restricted (JFE050004)",
             "550 5.1.7 Invalid sender",

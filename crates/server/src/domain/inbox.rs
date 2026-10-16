@@ -620,7 +620,9 @@ pub fn dsn_outcome(
         Some(DsnAction::Failed) => match detail {
             Some((1, 6)) => (EventKind::AddressChanged, Category::AddressChanged),
             Some((2, 2)) => (EventKind::Bounced, Category::MailboxFull),
-            Some((1, 1 | 3 | 10)) => (EventKind::Bounced, Category::InvalidRecipient),
+            Some((1, 1 | 3 | 10)) if status.is_some_and(|(class, _, _)| class == 5) => {
+                (EventKind::Bounced, Category::InvalidRecipient)
+            }
             Some((4, _)) => (EventKind::Bounced, Category::NoRoute),
             Some((7, _)) => (EventKind::Bounced, Category::Policy),
             _ => (EventKind::Bounced, Category::Rejected),
@@ -1030,6 +1032,11 @@ mod tests {
         let failed = Some(DsnAction::Failed);
         let delayed = Some(DsnAction::Delayed);
         let cases = [
+            (
+                failed,
+                Some((4, 1, 1)),
+                (EventKind::Bounced, Category::Rejected),
+            ),
             (
                 failed,
                 Some((5, 1, 7)),
