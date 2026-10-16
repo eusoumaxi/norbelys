@@ -230,16 +230,20 @@ pub struct DsnRecipient {
 }
 
 /// Interpret a generic report status using structured SMTP replies in its diagnostic.
-/// A precise reported status remains authoritative. Policy or a full mailbox takes
-/// precedence over a quoted invalid-address wrapper; other conflicting replies stay generic.
+/// Precise non-recipient statuses remain authoritative. Policy or a full mailbox
+/// overrides an invalid-address wrapper; other conflicting invalid claims stay inconclusive.
 /// This classifies the report only and never establishes its authenticity.
 #[must_use]
 pub fn effective_status(
     reported: Option<EnhancedStatus>,
     diagnostic: Option<&str>,
 ) -> Option<EnhancedStatus> {
-    if reported
-        .is_some_and(|status| status.class() == 2 || status.subject() != 0 || status.detail() != 0)
+    let invalid_claim = reported
+        .is_some_and(|s| s.class() == 5 && s.subject() == 1 && matches!(s.detail(), 1 | 3 | 10));
+    if !invalid_claim
+        && reported.is_some_and(|status| {
+            status.class() == 2 || status.subject() != 0 || status.detail() != 0
+        })
     {
         return reported;
     }
@@ -261,6 +265,9 @@ pub fn effective_status(
     let sender_phase = diagnostic
         .to_ascii_lowercase()
         .contains("in reply to mail from command");
+    if sender_phase && invalid_claim {
+        return None;
+    }
     let mut first = None;
     let mut conflict = false;
     let mut full = None;
@@ -281,7 +288,11 @@ pub fn effective_status(
     policy
         .or(full)
         .or(if conflict { None } else { first })
-        .or(reported)
+        .or(if invalid_claim && conflict {
+            None
+        } else {
+            reported
+        })
 }
 
 /// The `Action` of a recipient group (RFC 3464 §2.3.3).

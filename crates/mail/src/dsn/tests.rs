@@ -269,6 +269,12 @@ fn streaming_refuses_oversized_evidence_and_preserves_non_reports() {
 #[test]
 fn generic_dsns_use_structured_diagnostics_without_promoting_conflicting_invalids() {
     for (reported, diagnostic, expected) in [
+        (
+            "5.1.1",
+            "550 5.1.1 undeliverable: 552 5.2.2 Quota exceeded",
+            "5.2.2",
+        ),
+        ("5.1.1", "550 5.7.1 Account restriction", "5.7.1"),
         ("5.0.0", "550-5.1.1 No such user", "5.1.1"),
         ("5.0.0", "553 5.1.3 Bad destination", "5.1.3"),
         (
@@ -350,6 +356,19 @@ fn diagnostic_type_must_be_smtp_and_report_action_is_preserved() {
             } else {
                 None
             }
+        );
+    }
+}
+
+#[test]
+fn precise_invalid_claims_with_conflicting_replies_do_not_suppress_recipients() {
+    for diagnostic in [
+        "550 5.1.1 refused: 550 5.4.1 Access denied",
+        "550 5.1.1 refused (in reply to MAIL FROM command)",
+    ] {
+        assert_eq!(
+            super::effective_status(status("5.1.1"), Some(diagnostic)),
+            None
         );
     }
 }
