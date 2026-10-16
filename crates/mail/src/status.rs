@@ -58,6 +58,42 @@ impl EnhancedStatus {
             .map(|token| token.trim_matches('.'))
             .find_map(|token| token.parse().ok())
     }
+
+    /// Reads an enhanced failure status immediately after a three-digit SMTP reply code.
+    /// Unlike [`Self::find`], a status mentioned in prose, an address or a URL is not a reply.
+    /// Both `550 5.1.1` and SMTP's multiline form `550-5.1.1` are accepted, and the
+    /// SMTP and enhanced status classes must agree.
+    #[must_use]
+    pub fn from_smtp_reply(text: &str) -> Option<(u16, Self)> {
+        let mut words = text.split_ascii_whitespace();
+        while let Some(word) = words.next() {
+            let Some(code) = word
+                .get(..3)
+                .and_then(|value| value.parse::<u16>().ok())
+                .filter(|code| (400..600).contains(code))
+            else {
+                continue;
+            };
+            let suffix = word.get(3..).unwrap_or_default();
+            let candidate = if suffix.is_empty() || suffix == "-" {
+                words.clone().next()
+            } else {
+                suffix.strip_prefix('-')
+            };
+            let Some(status) = candidate.and_then(|value| {
+                value
+                    .trim_end_matches([')', ']', '"', '\'', ';', ',', '.'])
+                    .parse::<Self>()
+                    .ok()
+            }) else {
+                continue;
+            };
+            if u16::from(status.class()) == code / 100 {
+                return Some((code, status));
+            }
+        }
+        None
+    }
 }
 
 impl FromStr for EnhancedStatus {
@@ -102,6 +138,29 @@ impl fmt::Display for EnhancedStatus {
 #[cfg(test)]
 mod tests {
     use super::EnhancedStatus;
+
+    #[test]
+    fn smtp_reply_status_requires_a_matching_reply_code() {
+        for text in [
+            "host mx.example said: 550 5.1.1 No such user",
+            "550-5.1.1 No such user 550 5.1.1 See help",
+            "smtp; 550 5.1.1 No such user",
+        ] {
+            assert_eq!(
+                EnhancedStatus::from_smtp_reply(text),
+                Some((550, "5.1.1".parse().unwrap()))
+            );
+        }
+        for text in [
+            "See documentation for 5.1.1",
+            "https://example.net/550/5.1.1",
+            "550 4.1.1 inconsistent classes",
+            "250 5.1.1 inconsistent classes",
+            "5500 5.1.1 not a reply code",
+        ] {
+            assert_eq!(EnhancedStatus::from_smtp_reply(text), None, "{text}");
+        }
+    }
 
     fn status(class: u8, subject: u16, detail: u16) -> EnhancedStatus {
         EnhancedStatus {

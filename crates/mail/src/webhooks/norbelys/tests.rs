@@ -11,6 +11,73 @@ use crate::webhooks::{EventKind, Provenance, VerifyError};
 const SECRET: &[u8] = b"0123456789abcdef0123456789abcdef";
 const NOW: i64 = 1_759_320_000;
 
+#[test]
+fn native_bounces_recover_explicit_recipient_status_from_generic_wrappers() {
+    let parse = |kind: &str, provenance: &str, outer: Option<&str>, detail: &str| {
+        events(
+            &serde_json::to_vec(&json!({
+                "event_id": "recipient-refusal",
+                "kind": kind,
+                "recipient": "recipient@example.net",
+                "enhanced_status": outer,
+                "detail": detail,
+                "provenance": provenance,
+                "observed_at": "2026-10-16T00:00:00Z"
+            }))
+            .unwrap(),
+        )
+        .unwrap()
+        .remove(0)
+        .status
+        .map(|status| status.to_string())
+    };
+    for outer in [Some("5.0.0"), None] {
+        for reply in ["550-5.1.1 No such user", "550 5.1.3 Bad recipient syntax"] {
+            assert_eq!(
+                parse("bounced", "smtp_reply", outer, reply),
+                Some(
+                    if reply.contains("5.1.1") {
+                        "5.1.1"
+                    } else {
+                        "5.1.3"
+                    }
+                    .to_owned()
+                )
+            );
+        }
+    }
+    for (kind, provenance, outer, reply) in [
+        ("bounced", "smtp_reply", "5.7.1", "550 5.1.1 No such user"),
+        ("bounced", "verp_dsn", "5.0.0", "550 5.1.1 No such user"),
+        ("deferred", "smtp_reply", "4.0.0", "550 5.1.1 No such user"),
+        (
+            "bounced",
+            "smtp_reply",
+            "5.0.0",
+            "See documentation for 5.1.1",
+        ),
+        ("bounced", "smtp_reply", "5.0.0", "550 5.1.7 Invalid sender"),
+        ("bounced", "smtp_reply", "5.0.0", "552 5.2.2 Mailbox full"),
+        (
+            "bounced",
+            "smtp_reply",
+            "5.0.0",
+            "550 5.7.1 Too many invalid recipients (JFE050007)",
+        ),
+        (
+            "bounced",
+            "smtp_reply",
+            "5.0.0",
+            "550 5.1.1 refused (in reply to MAIL FROM command)",
+        ),
+    ] {
+        assert_eq!(
+            parse(kind, provenance, Some(outer), reply).as_deref(),
+            Some(outer)
+        );
+    }
+}
+
 fn key() -> NorbelysKey {
     NorbelysKey::new(SECRET).expect("a key")
 }

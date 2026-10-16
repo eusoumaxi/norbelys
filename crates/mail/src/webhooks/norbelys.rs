@@ -220,7 +220,7 @@ pub fn events(raw: &[u8]) -> Result<Vec<Event>, ParseError> {
             )));
         }
     };
-    let status = match wire
+    let mut status = match wire
         .enhanced_status
         .as_deref()
         .map(str::trim)
@@ -233,6 +233,25 @@ pub fn events(raw: &[u8]) -> Result<Vec<Event>, ParseError> {
                 .map_err(|error| ParseError(error.to_string()))?,
         ),
     };
+    // Postfix can wrap a remote recipient refusal in its generic 5.0.0 status.
+    // Recover only an explicit destination-mailbox failure from its own signed
+    // SMTP observation. A provider/account policy refusal is not recipient evidence.
+    if kind == EventKind::Bounced
+        && provenance == Provenance::SmtpReply
+        && status.is_none_or(|status| {
+            status.class() == 5 && status.subject() == 0 && status.detail() == 0
+        })
+        && let Some(detail) = wire.detail.as_deref()
+        && !detail
+            .to_ascii_lowercase()
+            .contains("in reply to mail from command")
+        && let Some((_, reply)) = EnhancedStatus::from_smtp_reply(detail)
+        && reply.class() == 5
+        && reply.subject() == 1
+        && matches!(reply.detail(), 1 | 3)
+    {
+        status = Some(reply);
+    }
     let observed_at: Timestamp = wire
         .observed_at
         .parse()
