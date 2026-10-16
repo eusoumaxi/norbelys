@@ -255,12 +255,17 @@ fn mail_hosts(domain: &str, exchanges: impl Iterator<Item = (u16, String)>) -> O
 }
 
 fn recipient_reply(code: u16, reply: &str) -> Finding {
-    // Enhanced status belongs at the beginning of an SMTP reply (RFC 2034). Do not search
-    // arbitrary diagnostics: a policy refusal can quote another server's 5.1.1.
-    let status = reply
-        .split_whitespace()
+    // Require the reply's own status or the exact legacy chkuser refusal. A policy
+    // diagnostic quoting another SMTP reply must not classify this recipient.
+    let has_status = reply
+        .split_ascii_whitespace()
         .next()
-        .and_then(|word| word.parse::<EnhancedStatus>().ok());
+        .is_some_and(|word| word.parse::<EnhancedStatus>().is_ok());
+    let status = (has_status || code == 511)
+        .then(|| EnhancedStatus::from_smtp_reply(&format!("{code} {reply}")))
+        .flatten()
+        .filter(|(reply_code, _)| *reply_code == code)
+        .map(|(_, status)| status);
     let invalid = (500..600).contains(&code)
         && status.is_some_and(|status| {
             status.class() == 5 && status.subject() == 1 && matches!(status.detail(), 1 | 3)

@@ -46,6 +46,15 @@ fn native_bounces_recover_explicit_recipient_status_from_generic_wrappers() {
             );
         }
     }
+    assert_eq!(
+        parse(
+            "bounced",
+            "smtp_reply",
+            Some("5.0.0"),
+            "host mx.example.net said: 511 sorry, no mailbox here by that name (#5.1.1 - chkuser) (in reply to RCPT TO command)"
+        ),
+        Some("5.1.1".to_owned())
+    );
     for (kind, provenance, outer, reply) in [
         ("bounced", "smtp_reply", "5.7.1", "550 5.1.1 No such user"),
         ("bounced", "verp_dsn", "5.0.0", "550 5.1.1 No such user"),
@@ -58,6 +67,12 @@ fn native_bounces_recover_explicit_recipient_status_from_generic_wrappers() {
         ),
         ("bounced", "smtp_reply", "5.0.0", "550 5.1.7 Invalid sender"),
         ("bounced", "smtp_reply", "5.0.0", "552 5.2.2 Mailbox full"),
+        (
+            "bounced",
+            "smtp_reply",
+            "5.0.0",
+            "550 5.1.1 undeliverable address: 552 5.2.2 Quota exceeded",
+        ),
         (
             "bounced",
             "smtp_reply",

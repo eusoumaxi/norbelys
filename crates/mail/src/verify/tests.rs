@@ -26,6 +26,17 @@ fn only_explicit_recipient_refusals_are_invalid() {
         (553, "5.1.3 Bad recipient address", Outcome::Invalid),
         (550, "User unknown", Outcome::Unknown),
         (
+            511,
+            "sorry, no mailbox here by that name (#5.1.1 - chkuser)",
+            Outcome::Invalid,
+        ),
+        (
+            550,
+            "5.1.1 forwarding failed: 552 5.2.2 Quota exceeded",
+            Outcome::Unknown,
+        ),
+        (550, "policy refusal quoting 550 5.1.1", Outcome::Unknown),
+        (
             550,
             "5.7.1 Blocked; another host returned 5.1.1",
             Outcome::Unknown,

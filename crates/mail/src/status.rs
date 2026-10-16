@@ -59,18 +59,20 @@ impl EnhancedStatus {
             .find_map(|token| token.parse().ok())
     }
 
-    /// Reads an enhanced failure status immediately after a three-digit SMTP reply code.
+    /// Reads an enhanced status immediately after a three-digit SMTP reply code.
     /// Unlike [`Self::find`], a status mentioned in prose, an address or a URL is not a reply.
     /// Both `550 5.1.1` and SMTP's multiline form `550-5.1.1` are accepted, and the
-    /// SMTP and enhanced status classes must agree.
+    /// SMTP and enhanced status classes must agree. Conflicting nested replies stay unknown.
+    /// The exact legacy chkuser mailbox refusal is also recognized.
     #[must_use]
     pub fn from_smtp_reply(text: &str) -> Option<(u16, Self)> {
         let mut words = text.split_ascii_whitespace();
+        let mut found: Option<(u16, Self)> = None;
         while let Some(word) = words.next() {
             let Some(code) = word
                 .get(..3)
                 .and_then(|value| value.parse::<u16>().ok())
-                .filter(|code| (400..600).contains(code))
+                .filter(|code| (200..600).contains(code))
             else {
                 continue;
             };
@@ -80,19 +82,32 @@ impl EnhancedStatus {
             } else {
                 suffix.strip_prefix('-')
             };
-            let Some(status) = candidate.and_then(|value| {
+            let status = candidate.and_then(|value| {
                 value
                     .trim_end_matches([')', ']', '"', '\'', ';', ',', '.'])
                     .parse::<Self>()
                     .ok()
-            }) else {
+            });
+            let status = status.or_else(|| {
+                // Match the complete legacy RCPT refusal, never a marker quoted in prose.
+                const CHKUSER: &str = "sorry, no mailbox here by that name (#5.1.1 - chkuser)";
+                const CHKUSER_RCPT: &str = "sorry, no mailbox here by that name (#5.1.1 - chkuser) (in reply to RCPT TO command)";
+                (code == 511 && suffix.is_empty()
+                    && (words.clone().eq(CHKUSER.split_ascii_whitespace())
+                        || words.clone().eq(CHKUSER_RCPT.split_ascii_whitespace())))
+                    .then_some(Self { class: 5, subject: 1, detail: 1 })
+            });
+            let Some(status) = status else {
                 continue;
             };
             if u16::from(status.class()) == code / 100 {
-                return Some((code, status));
+                if found.is_some_and(|(_, previous)| previous != status) {
+                    return None;
+                }
+                found.get_or_insert((code, status));
             }
         }
-        None
+        found
     }
 }
 
@@ -157,9 +172,24 @@ mod tests {
             "550 4.1.1 inconsistent classes",
             "250 5.1.1 inconsistent classes",
             "5500 5.1.1 not a reply code",
+            "550 5.1.1 forwarding failed: 552 5.2.2 Quota exceeded",
         ] {
             assert_eq!(EnhancedStatus::from_smtp_reply(text), None, "{text}");
         }
+    }
+
+    #[test]
+    fn legacy_chkuser_refusal_is_recipient_specific() {
+        assert_eq!(
+            EnhancedStatus::from_smtp_reply(
+                "511 sorry, no mailbox here by that name (#5.1.1 - chkuser)"
+            ),
+            Some((511, "5.1.1".parse().unwrap()))
+        );
+        assert_eq!(
+            EnhancedStatus::from_smtp_reply("550 policy refusal mentioning (#5.1.1 - chkuser)"),
+            None
+        );
     }
 
     fn status(class: u8, subject: u16, detail: u16) -> EnhancedStatus {
