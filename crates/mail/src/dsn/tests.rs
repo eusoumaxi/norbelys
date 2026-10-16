@@ -265,3 +265,91 @@ fn streaming_refuses_oversized_evidence_and_preserves_non_reports() {
         b"Content-Type: text/plain\r\n\r\nordinary message\r\n"
     );
 }
+
+#[test]
+fn generic_dsns_use_structured_diagnostics_without_promoting_conflicting_invalids() {
+    for (reported, diagnostic, expected) in [
+        ("5.0.0", "550-5.1.1 No such user", "5.1.1"),
+        ("5.0.0", "553 5.1.3 Bad destination", "5.1.3"),
+        (
+            "5.0.0",
+            "452-4.2.2 The recipient inbox is out of storage space",
+            "4.2.2",
+        ),
+        (
+            "5.0.0",
+            "550 5.1.1 undeliverable: 552 5.2.2 Quota exceeded",
+            "5.2.2",
+        ),
+        ("5.0.0", "550 5.7.1 account restricted (JFE050004)", "5.7.1"),
+        (
+            "5.0.0",
+            "550 5.1.1 rejected: 554 5.7.1 Policy restriction",
+            "5.7.1",
+        ),
+        (
+            "5.0.0",
+            "550 5.1.1 quoted: 550 5.4.1 Access denied",
+            "5.0.0",
+        ),
+        ("5.0.0", "See 550 5.1.1 in documentation", "5.0.0"),
+        ("5.0.0", "5500 not a reply; 550 5.1.1 quoted", "5.0.0"),
+        (
+            "5.0.0",
+            "550 5.1.1 refused (in reply to MAIL FROM command)",
+            "5.0.0",
+        ),
+        ("5.0.0", "Network error connecting to MX: timeout", "5.0.0"),
+        ("5.7.1", "550 5.1.1 No such user", "5.7.1"),
+        ("5.2.2", "550 5.1.1 No such user", "5.2.2"),
+        ("2.0.0", "550 5.1.1 No such user", "2.0.0"),
+    ] {
+        assert_eq!(
+            super::effective_status(status(reported), Some(diagnostic)),
+            status(expected),
+            "{reported}: {diagnostic}"
+        );
+    }
+    assert_eq!(
+        super::effective_status(status("5.0.0"), None),
+        status("5.0.0")
+    );
+    assert_eq!(
+        super::effective_status(None, Some("550 5.1.1 No such user")),
+        status("5.1.1")
+    );
+}
+
+#[test]
+fn diagnostic_type_must_be_smtp_and_report_action_is_preserved() {
+    for (kind, expected) in [
+        ("smtp", "4.2.2"),
+        ("SMTP", "4.2.2"),
+        ("smtp-other", "5.0.0"),
+        ("x-unix", "5.0.0"),
+    ] {
+        let fields = vec![
+            (
+                "final-recipient".to_owned(),
+                "rfc822; person@example.net".to_owned(),
+            ),
+            ("action".to_owned(), "failed".to_owned()),
+            ("status".to_owned(), "5.0.0".to_owned()),
+            (
+                "diagnostic-code".to_owned(),
+                format!("{kind}; 452-4.2.2 Over quota"),
+            ),
+        ];
+        let recipient = super::recipient(&fields);
+        assert_eq!(recipient.status, status(expected));
+        assert_eq!(recipient.action, Some(Action::Failed));
+        assert_eq!(
+            recipient.smtp_code,
+            if kind.eq_ignore_ascii_case("smtp") {
+                Some(452)
+            } else {
+                None
+            }
+        );
+    }
+}

@@ -989,3 +989,47 @@ async fn an_id_of_an_archived_period_answers_archived() {
     let reply = read(format!("/v1/inbound_messages/{inbound}")).await;
     assert_eq!(reply.json["code"], "not_found");
 }
+
+#[test]
+fn retained_generic_dsns_show_the_effective_reason_without_promoting_trust() {
+    for (diagnostic, status, category) in [
+        ("550 5.1.1 No such user", "5.1.1", "invalid_recipient"),
+        ("452-4.2.2 Over quota", "4.2.2", "mailbox_full"),
+        (
+            "550 5.1.1 undeliverable: 552 5.2.2 Quota exceeded",
+            "5.2.2",
+            "mailbox_full",
+        ),
+        ("550 5.7.1 Account blocked (JFE050004)", "5.7.1", "policy"),
+        ("550 5.1.7 Invalid sender", "5.1.7", "rejected"),
+    ] {
+        let at = crate::domain::time::Timestamp("2026-10-16T00:00:00Z".parse().unwrap());
+        let id = Id::new();
+        let row = super::EventRecord {
+            id,
+            message_id: Some(Id::new()),
+            thread_id: None,
+            attempt_number: None,
+            kind: "bounced".to_owned(),
+            source: "dsn".to_owned(),
+            confidence: "corroborated".to_owned(),
+            recipient_email: Some("person@example.net".to_owned()),
+            recipient_ref: "named".to_owned(),
+            action: Some("failed".to_owned()),
+            phase: None,
+            enhanced_status: Some("5.0.0".to_owned()),
+            category: "rejected".to_owned(),
+            diagnostic: Some(diagnostic.to_owned()),
+            observed_at: at,
+            received_at: at,
+            created_at: at,
+        };
+        let event: super::DeliveryEventObject = row.into();
+        assert_eq!(event.id, id);
+        assert_eq!(event.enhanced_status.as_deref(), Some(status));
+        assert_eq!(event.category, category);
+        assert_eq!(event.kind, "bounced");
+        assert_eq!(event.confidence, "corroborated");
+        assert_eq!(event.diagnostic.as_deref(), Some(diagnostic));
+    }
+}

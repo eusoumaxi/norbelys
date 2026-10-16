@@ -57,7 +57,6 @@ fn native_bounces_recover_explicit_recipient_status_from_generic_wrappers() {
     );
     for (kind, provenance, outer, reply) in [
         ("bounced", "smtp_reply", "5.7.1", "550 5.1.1 No such user"),
-        ("bounced", "verp_dsn", "5.0.0", "550 5.1.1 No such user"),
         ("deferred", "smtp_reply", "4.0.0", "550 5.1.1 No such user"),
         (
             "bounced",
@@ -90,6 +89,43 @@ fn native_bounces_recover_explicit_recipient_status_from_generic_wrappers() {
             parse(kind, provenance, Some(outer), reply).as_deref(),
             Some(outer)
         );
+    }
+}
+
+#[test]
+fn returned_dsns_refine_generic_status_without_changing_provenance() {
+    for (kind, reply, expected) in [
+        ("bounced", "550 5.1.1 No such user", "5.1.1"),
+        ("bounced", "452-4.2.2 Mailbox over quota", "4.2.2"),
+        (
+            "bounced",
+            "550 5.1.1 forwarding failed: 552 5.2.2 Quota exceeded",
+            "5.2.2",
+        ),
+        (
+            "deferred",
+            "450 4.7.1 account restricted (JFE050004)",
+            "4.7.1",
+        ),
+        (
+            "bounced",
+            "550 5.7.1 account blocked; 550 5.1.1 quoted",
+            "5.7.1",
+        ),
+    ] {
+        let event = events(
+            &serde_json::to_vec(&json!({"event_id":"returned-dsn", "kind":kind,
+            "recipient":"recipient@example.net", "enhanced_status":"5.0.0", "detail":reply,
+            "provenance":"verp_dsn", "observed_at":"2026-10-16T00:00:00Z"}))
+            .unwrap(),
+        )
+        .unwrap()
+        .remove(0);
+        assert_eq!(
+            event.status.map(|s| s.to_string()).as_deref(),
+            Some(expected)
+        );
+        assert_eq!(event.provenance, Some(Provenance::VerpDsn));
     }
 }
 

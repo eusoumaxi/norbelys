@@ -66,48 +66,61 @@ impl EnhancedStatus {
     /// The exact legacy chkuser mailbox refusal is also recognized.
     #[must_use]
     pub fn from_smtp_reply(text: &str) -> Option<(u16, Self)> {
-        let mut words = text.split_ascii_whitespace();
         let mut found: Option<(u16, Self)> = None;
-        while let Some(word) = words.next() {
-            let Some(code) = word
-                .get(..3)
-                .and_then(|value| value.parse::<u16>().ok())
-                .filter(|code| (200..600).contains(code))
-            else {
-                continue;
-            };
-            let suffix = word.get(3..).unwrap_or_default();
-            let candidate = if suffix.is_empty() || suffix == "-" {
-                words.clone().next()
-            } else {
-                suffix.strip_prefix('-')
-            };
-            let status = candidate.and_then(|value| {
-                value
-                    .trim_end_matches([')', ']', '"', '\'', ';', ',', '.'])
-                    .parse::<Self>()
-                    .ok()
-            });
-            let status = status.or_else(|| {
-                // Match the complete legacy RCPT refusal, never a marker quoted in prose.
-                const CHKUSER: &str = "sorry, no mailbox here by that name (#5.1.1 - chkuser)";
-                const CHKUSER_RCPT: &str = "sorry, no mailbox here by that name (#5.1.1 - chkuser) (in reply to RCPT TO command)";
-                (code == 511 && suffix.is_empty()
-                    && (words.clone().eq(CHKUSER.split_ascii_whitespace())
-                        || words.clone().eq(CHKUSER_RCPT.split_ascii_whitespace())))
-                    .then_some(Self { class: 5, subject: 1, detail: 1 })
-            });
-            let Some(status) = status else {
-                continue;
-            };
-            if u16::from(status.class()) == code / 100 {
-                if found.is_some_and(|(_, previous)| previous != status) {
-                    return None;
-                }
-                found.get_or_insert((code, status));
+        for (code, status) in Self::smtp_replies(text) {
+            if found.is_some_and(|(_, previous)| previous != status) {
+                return None;
             }
+            found.get_or_insert((code, status));
         }
         found
+    }
+
+    pub(crate) fn smtp_replies(text: &str) -> impl Iterator<Item = (u16, Self)> + '_ {
+        let mut words = text.split_ascii_whitespace();
+        std::iter::from_fn(move || {
+            while let Some(word) = words.next() {
+                let Some(code) = word
+                    .get(..3)
+                    .and_then(|value| value.parse::<u16>().ok())
+                    .filter(|code| (200..600).contains(code))
+                else {
+                    continue;
+                };
+                let suffix = word.get(3..).unwrap_or_default();
+                let candidate = if suffix.is_empty() || suffix == "-" {
+                    words.clone().next()
+                } else {
+                    suffix.strip_prefix('-')
+                };
+                let status = candidate.and_then(|value| {
+                    value
+                        .trim_end_matches([')', ']', '"', '\'', ';', ',', '.'])
+                        .parse::<Self>()
+                        .ok()
+                });
+                let status = status.or_else(|| {
+                    const CHKUSER: &str = "sorry, no mailbox here by that name (#5.1.1 - chkuser)";
+                    const RCPT: &str = "(in reply to RCPT TO command)";
+                    let legacy = words.clone().eq(CHKUSER.split_ascii_whitespace())
+                        || words.clone().eq(CHKUSER
+                            .split_ascii_whitespace()
+                            .chain(RCPT.split_ascii_whitespace()));
+                    (code == 511 && suffix.is_empty() && legacy).then_some(Self {
+                        class: 5,
+                        subject: 1,
+                        detail: 1,
+                    })
+                });
+                let Some(status) = status else {
+                    continue;
+                };
+                if u16::from(status.class()) == code / 100 {
+                    return Some((code, status));
+                }
+            }
+            None
+        })
     }
 }
 

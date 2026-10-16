@@ -233,6 +233,12 @@ pub fn events(raw: &[u8]) -> Result<Vec<Event>, ParseError> {
                 .map_err(|error| ParseError(error.to_string()))?,
         ),
     };
+    // A returned DSN authenticates neither its sender nor the destination's verdict.
+    // Refine its generic status without changing the provenance used by suppression policy.
+    if matches!(kind, EventKind::Bounced | EventKind::Deferred) && provenance == Provenance::VerpDsn
+    {
+        status = crate::dsn::effective_status(status, wire.detail.as_deref());
+    }
     // Postfix can wrap a remote recipient refusal in its generic 5.0.0 status.
     // Recover only an explicit destination-mailbox failure from its own signed
     // SMTP observation. A provider/account policy refusal is not recipient evidence.

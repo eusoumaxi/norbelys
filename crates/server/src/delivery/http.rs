@@ -1373,7 +1373,32 @@ struct EventRecord {
 }
 
 impl From<EventRecord> for DeliveryEventObject {
-    fn from(row: EventRecord) -> Self {
+    fn from(mut row: EventRecord) -> Self {
+        // Interpret retained generic DSNs with the same rule as new reports. Keep the
+        // original diagnostic, source, confidence and identifiers; reading never replays effects.
+        if (row.source == "dsn"
+            || (row.source == "provider_webhook" && row.confidence == "corroborated"))
+            && matches!(row.kind.as_str(), "bounced" | "deferred")
+        {
+            let reported = row
+                .enhanced_status
+                .as_deref()
+                .and_then(|status| status.parse().ok());
+            let status = norbelys_mail::dsn::effective_status(reported, row.diagnostic.as_deref());
+            if status != reported {
+                let action = if row.kind == "bounced" {
+                    norbelys_mail::dsn::Action::Failed
+                } else {
+                    norbelys_mail::dsn::Action::Delayed
+                };
+                let (_, category) = crate::domain::inbox::dsn_outcome(
+                    Some(action),
+                    status.map(|s| (s.class(), s.subject(), s.detail())),
+                );
+                row.enhanced_status = status.map(|status| status.to_string());
+                row.category = category.as_str().to_owned();
+            }
+        }
         Self {
             id: row.id,
             message_id: row.message_id,

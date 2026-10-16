@@ -219,7 +219,7 @@ pub struct DsnRecipient {
     pub original_recipient: Option<String>,
     /// What happened (`Action`).
     pub action: Option<Action>,
-    /// The RFC 3463 status (`Status`).
+    /// The RFC 3463 status, refined from an SMTP diagnostic only when `Status` is generic.
     pub status: Option<EnhancedStatus>,
     /// The remote server the reporter talked to (`Remote-MTA`).
     pub remote_mta: Option<String>,
@@ -227,6 +227,61 @@ pub struct DsnRecipient {
     pub diagnostic: Option<String>,
     /// The SMTP code at the start of an `smtp;` diagnostic.
     pub smtp_code: Option<u16>,
+}
+
+/// Interpret a generic report status using structured SMTP replies in its diagnostic.
+/// A precise reported status remains authoritative. Policy or a full mailbox takes
+/// precedence over a quoted invalid-address wrapper; other conflicting replies stay generic.
+/// This classifies the report only and never establishes its authenticity.
+#[must_use]
+pub fn effective_status(
+    reported: Option<EnhancedStatus>,
+    diagnostic: Option<&str>,
+) -> Option<EnhancedStatus> {
+    if reported
+        .is_some_and(|status| status.class() == 2 || status.subject() != 0 || status.detail() != 0)
+    {
+        return reported;
+    }
+    let Some(diagnostic) = diagnostic.map(str::trim_start) else {
+        return reported;
+    };
+    // SMTP diagnostics begin with a reply code. Do not interpret codes quoted in prose.
+    let reply_code = diagnostic
+        .get(..3)
+        .and_then(|code| code.parse::<u16>().ok());
+    if !reply_code.is_some_and(|code| (400..600).contains(&code))
+        || !diagnostic
+            .as_bytes()
+            .get(3)
+            .is_some_and(|byte| byte.is_ascii_whitespace() || *byte == b'-')
+    {
+        return reported;
+    }
+    let sender_phase = diagnostic
+        .to_ascii_lowercase()
+        .contains("in reply to mail from command");
+    let mut first = None;
+    let mut conflict = false;
+    let mut full = None;
+    let mut policy = None;
+    for (_, status) in EnhancedStatus::smtp_replies(diagnostic) {
+        if status.class() == 2 || (sender_phase && status.subject() == 1) {
+            continue;
+        }
+        conflict |= first.is_some_and(|previous| previous != status);
+        first.get_or_insert(status);
+        if status.subject() == 2 && status.detail() == 2 {
+            full.get_or_insert(status);
+        }
+        if status.subject() == 7 {
+            policy.get_or_insert(status);
+        }
+    }
+    policy
+        .or(full)
+        .or(if conflict { None } else { first })
+        .or(reported)
 }
 
 /// The `Action` of a recipient group (RFC 3464 §2.3.3).
@@ -317,8 +372,11 @@ pub(crate) fn from_message(message: &Message<'_>) -> Option<Dsn> {
 
 fn recipient(group: &[(String, String)]) -> DsnRecipient {
     let diagnostic = field(group, "diagnostic-code");
-    let is_smtp =
-        diagnostic.is_some_and(|value| value.trim_start().to_ascii_lowercase().starts_with("smtp"));
+    let is_smtp = diagnostic.is_some_and(|value| {
+        value
+            .split_once(';')
+            .is_some_and(|(kind, _)| kind.trim().eq_ignore_ascii_case("smtp"))
+    });
     let diagnostic = diagnostic
         .map(typed_value)
         .filter(|value| !value.is_empty());
@@ -328,13 +386,19 @@ fn recipient(group: &[(String, String)]) -> DsnRecipient {
         .and_then(|value| value.get(..3))
         .and_then(|digits| digits.parse::<u16>().ok())
         .filter(|code| (200..600).contains(code));
+    let reported = field(group, "status")
+        .and_then(|value| value.split_whitespace().next())
+        .and_then(|code| code.parse().ok());
+    let status = if is_smtp {
+        effective_status(reported, diagnostic.as_deref())
+    } else {
+        reported
+    };
     DsnRecipient {
         final_recipient: field(group, "final-recipient").map(address),
         original_recipient: field(group, "original-recipient").map(address),
         action: field(group, "action").and_then(Action::parse),
-        status: field(group, "status")
-            .and_then(|value| value.split_whitespace().next())
-            .and_then(|code| code.parse().ok()),
+        status,
         remote_mta: field(group, "remote-mta").map(typed_value),
         diagnostic,
         smtp_code,

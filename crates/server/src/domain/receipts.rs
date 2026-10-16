@@ -299,4 +299,40 @@ mod tests {
             RecipientEffect::Review(_)
         ));
     }
+    #[test]
+    fn refined_dsns_never_suppress_full_mailboxes_policy_or_sender_failures() {
+        for diagnostic in [
+            "452-4.2.2 Over quota",
+            "550 5.1.1 undeliverable: 552 5.2.2 Quota exceeded",
+            "550 5.7.1 Account restricted (JFE050004)",
+            "550 5.1.7 Invalid sender",
+        ] {
+            let refined = norbelys_mail::dsn::effective_status(status("5.0.0"), Some(diagnostic));
+            let (kind, category) = outcome(ProviderKind::Bounced, refined);
+            for trust in [false, true] {
+                let settings = DeliverySettings {
+                    trust_own_inbox_dsns: trust,
+                };
+                for confidence in [
+                    Confidence::Authenticated,
+                    Confidence::Corroborated,
+                    Confidence::Inferred,
+                ] {
+                    assert!(
+                        !matches!(
+                            recipient_effect(
+                                kind,
+                                category,
+                                RecipientRef::Named,
+                                confidence,
+                                settings
+                            ),
+                            RecipientEffect::Suppress(_)
+                        ),
+                        "{diagnostic}"
+                    );
+                }
+            }
+        }
+    }
 }
