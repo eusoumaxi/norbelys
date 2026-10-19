@@ -24,7 +24,10 @@ export const TrackingPanel = ({ draft, errors, set }: PanelProps) => {
   const options: SelectOption[] = [
     { label: "Automatic by sender domain", value: AUTOMATIC },
     ...(domains.data ?? [])
-      .filter((d) => d.tracking_enabled || d.tracking_domain || d.id === draft.domain_id)
+      .filter(
+        (d) =>
+          d.tracking_enabled || d.tracking_domain || d.id === draft.domain_id
+      )
       .map((d) => ({
         label: domainVerified(d)
           ? d.hostname
