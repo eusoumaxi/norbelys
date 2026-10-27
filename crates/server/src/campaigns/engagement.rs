@@ -15,7 +15,7 @@ use crate::problem::{ApiResult, Problem};
 
 #[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
-enum Engagement {
+pub(crate) enum Engagement {
     #[default]
     All,
     Opened,

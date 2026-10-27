@@ -26,6 +26,7 @@ export const collectAudience = async (
 ): Promise<string> => {
   const rows = ["email,person_id,sent,opened,clicked"];
   const seen = new Set<string>();
+  const cursors = new Set<string>();
   let after: string | null = null;
   do {
     // oxlint-disable-next-line no-await-in-loop -- cursor pages must be fetched in order
@@ -45,15 +46,18 @@ export const collectAudience = async (
       }
     }
     after = page.meta.has_more ? (page.meta.next_cursor ?? null) : null;
-    if (page.meta.has_more && !after) {
+    if (page.meta.has_more && (!after || cursors.has(after))) {
       throw new Error(
         "The server returned an incomplete page. No file was exported."
       );
     }
-    if (seen.size >= 20_000 && after) {
+    if (seen.size > 20_000 || (seen.size === 20_000 && after)) {
       throw new Error(
         "This export exceeds 20,000 people. Narrow the audience before exporting."
       );
+    }
+    if (after) {
+      cursors.add(after);
     }
   } while (after);
 

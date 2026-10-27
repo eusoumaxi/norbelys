@@ -47,3 +47,25 @@ test("CSV escaping protects quoted addresses and spreadsheet formulas", () => {
   expect(csvCell('a"b@example.com')).toBe('"a""b@example.com"');
   expect(csvCell("+sum@example.com")).toBe('"\'+sum@example.com"');
 });
+
+test("a repeated cursor cannot keep an export running forever", async () => {
+  await expect(
+    collectAudience(() => Promise.resolve(page(0, true)))
+  ).rejects.toThrow("incomplete page");
+});
+
+test("a final page that crosses the limit is also refused", async () => {
+  await expect(
+    collectAudience((cursor) => {
+      const offset = Number(cursor ?? 0);
+      const result = page(offset, offset < 19_900);
+      if (offset === 0) {
+        result.data = result.data.slice(1);
+      }
+      if (offset === 19_900) {
+        result.meta = { has_more: true, next_cursor: "20000" };
+      }
+      return Promise.resolve(result);
+    })
+  ).rejects.toThrow("exceeds 20,000");
+});

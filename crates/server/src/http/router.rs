@@ -58,7 +58,8 @@ const REQUEST_DEADLINE: Duration = Duration::from_secs(30);
     components(schemas(
         crate::problem::Body,
         crate::pagination::Order,
-        crate::pagination::Include
+        crate::pagination::Include,
+        crate::campaigns::engagement::Engagement
     )),
     modifiers(&Security)
 )]
