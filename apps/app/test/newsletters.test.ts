@@ -1,7 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { Norbelys } from "@norbelys/sdk";
-
+import { Norbelys } from "../../../sdks/typescript/src/index";
 import {
   draftBody,
   draftKey,

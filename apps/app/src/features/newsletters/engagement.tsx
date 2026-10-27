@@ -1,23 +1,11 @@
-import type { CampaignObject, Meta } from "@norbelys/sdk";
+import type { CampaignObject } from "@norbelys/sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { collectAudience } from "@/features/newsletters/recipient-export";
+import type { Recipients } from "@/features/newsletters/recipient-export";
 import { useWorkspace } from "@/lib/workspace";
-
-interface Recipient {
-  person_id: string;
-  email: string;
-  sent: number;
-  opened: number;
-  clicked: number;
-  opens_tracked: boolean;
-}
-
-interface Recipients {
-  data: Recipient[];
-  meta: Meta;
-}
 
 const OPTIONS = [
   ["all", "All sent recipients"],
@@ -26,50 +14,13 @@ const OPTIONS = [
   ["clicked", "Click recorded"],
 ] as const;
 
-/** CSV cells cannot become spreadsheet formulas when exported addresses start with punctuation. */
-export const csvCell = (value: string): string => {
-  const safe = /^[=+@\-\t\r\n]/u.test(value) ? `'${value}` : value;
-  return `"${safe.replaceAll('"', '""')}"`;
-};
-
 const downloadAudience = async (
   read: (after: string | null) => Promise<Recipients>,
   filename: string
 ): Promise<void> => {
-  const rows = ["email,person_id,sent,opened,clicked"];
-  const seen = new Set<string>();
-  let after: string | null = null;
-  do {
-    // oxlint-disable-next-line no-await-in-loop -- cursor pages must be fetched in order
-    const page = await read(after);
-    for (const person of page.data) {
-      if (!seen.has(person.person_id)) {
-        seen.add(person.person_id);
-        rows.push(
-          [
-            csvCell(person.email),
-            csvCell(person.person_id),
-            person.sent,
-            person.opened,
-            person.clicked,
-          ].join(",")
-        );
-      }
-    }
-    after = page.meta.has_more ? (page.meta.next_cursor ?? null) : null;
-    if (page.meta.has_more && !after) {
-      throw new Error(
-        "The server returned an incomplete page. No file was exported."
-      );
-    }
-    if (seen.size >= 20_000 && after) {
-      throw new Error(
-        "This export exceeds 20,000 people. Narrow the audience before exporting."
-      );
-    }
-  } while (after);
+  const csv = await collectAudience(read);
   const url = URL.createObjectURL(
-    new Blob([rows.join("\r\n")], { type: "text/csv;charset=utf-8" })
+    new Blob([csv], { type: "text/csv;charset=utf-8" })
   );
   const link = document.createElement("a");
   link.href = url;
