@@ -187,18 +187,13 @@ async fn newsletter_engagement_is_tenant_scoped_and_conservative_about_missing_o
         "report.example",
     )
     .await;
+    assert_eq!(
+        enroll(&f, &source["id"], &people).await.status,
+        StatusCode::CREATED
+    );
+    start(&f, &source["id"]).await;
     for person in &people {
-        let reply = post(
-            &f.app,
-            &f.ws.key,
-            "/v1/messages",
-            json!({
-                "step_id": source["steps"][0]["id"], "person_id": person,
-            }),
-        )
-        .await;
-        assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.json);
-        let message = uuid(&reply.json["id"]);
+        let message = message_of(&f, person).await;
         sqlx::query("DELETE FROM delivery_queue WHERE workspace_id = $1 AND message_id = $2")
             .bind(f.ws.id.uuid())
             .bind(message)
