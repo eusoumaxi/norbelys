@@ -102,62 +102,58 @@ const PackPreview = ({
   onSelect: (index: number) => void;
 }) => {
   const edition = pack?.editions[selected];
-  return (
-    <>
-      {pack && edition ? (
-        <section className="grid gap-6 lg:grid-cols-[280px_1fr]">
-          <div>
-            <h2 className="mb-3 font-semibold">{pack.name}</h2>
-            <div className="flex flex-col gap-2">
-              {pack.editions.map((item, index) => (
-                <button
-                  aria-pressed={index === selected}
-                  className="border-line hover:bg-hover aria-pressed:bg-selected rounded-lg border p-4 text-left"
-                  key={item.id}
-                  onClick={() => onSelect(index)}
-                  type="button"
-                >
-                  <span className="text-fg-3 text-xs">
-                    {String(index + 1).padStart(2, "0")} · {item.category}
-                  </span>
-                  <span className="mt-1 block text-sm font-medium">
-                    {item.title}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="min-w-0">
-            <div className="border-line mb-4 rounded-lg border p-5">
-              <p className="text-fg-3 text-xs uppercase">Preview · Not sent</p>
-              <h2 className="mt-2 text-xl font-semibold">{edition.subject}</h2>
-              <p className="text-fg-2 mt-2 text-sm">{edition.preheader}</p>
-              <p className="mt-4 text-sm">
-                <strong>Intended audience:</strong> {edition.audience}
-              </p>
-              <p className="text-fg-2 mt-2 text-sm">
-                Select the matching consented group or segment in the saved
-                draft. This description does not enroll contacts.
-              </p>
-              <a
-                className="text-accent mt-3 inline-block text-sm underline"
-                href={edition.source}
-                rel="noreferrer"
-                target="_blank"
-              >
-                Editorial source
-              </a>
-            </div>
-            <MailFrame
-              html={edition.html}
-              readOnly
-              title={`${edition.title} newsletter preview`}
-            />
-          </div>
-        </section>
-      ) : null}
-    </>
-  );
+  return pack && edition ? (
+    <section className="grid gap-6 lg:grid-cols-[280px_1fr]">
+      <div>
+        <h2 className="mb-3 font-semibold">{pack.name}</h2>
+        <div className="flex flex-col gap-2">
+          {pack.editions.map((item, index) => (
+            <button
+              aria-pressed={index === selected}
+              className="border-line hover:bg-hover aria-pressed:bg-selected rounded-lg border p-4 text-left"
+              key={item.id}
+              onClick={() => onSelect(index)}
+              type="button"
+            >
+              <span className="text-fg-3 text-xs">
+                {String(index + 1).padStart(2, "0")} · {item.category}
+              </span>
+              <span className="mt-1 block text-sm font-medium">
+                {item.title}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="min-w-0">
+        <div className="border-line mb-4 rounded-lg border p-5">
+          <p className="text-fg-3 text-xs uppercase">Preview · Not sent</p>
+          <h2 className="mt-2 text-xl font-semibold">{edition.subject}</h2>
+          <p className="text-fg-2 mt-2 text-sm">{edition.preheader}</p>
+          <p className="mt-4 text-sm">
+            <strong>Intended audience:</strong> {edition.audience}
+          </p>
+          <p className="text-fg-2 mt-2 text-sm">
+            Select the matching consented group or segment in the saved draft.
+            This description does not enroll contacts.
+          </p>
+          <a
+            className="text-accent mt-3 inline-block text-sm underline"
+            href={edition.source}
+            rel="noreferrer"
+            target="_blank"
+          >
+            Editorial source
+          </a>
+        </div>
+        <MailFrame
+          html={edition.html}
+          readOnly
+          title={`${edition.title} newsletter preview`}
+        />
+      </div>
+    </section>
+  ) : null;
 };
 
 const SenderLimit = ({ sender }: { sender: SenderIdentity | undefined }) => {

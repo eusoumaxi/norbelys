@@ -36,6 +36,17 @@ export const packSchema = z
     editions: z.array(editionSchema).min(1).max(50),
   })
   .superRefine((pack, context) => {
+    for (const edition of pack.editions) {
+      if (
+        `${NEWSLETTER_PREFIX}${pack.id}/${edition.id} · ${edition.title}`
+          .length > 200
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "An edition's combined campaign name exceeds 200 characters",
+        });
+      }
+    }
     if (
       new Set(pack.editions.map((edition) => edition.id)).size !==
       pack.editions.length
@@ -109,10 +120,10 @@ export const prepareDrafts = async (
     q: `${NEWSLETTER_PREFIX}${pack.id}/`,
     limit: 100,
   })) {
-    existing.add(campaign.name);
+    existing.add(campaign.name.split(" · ")[0] ?? campaign.name);
   }
   for (const [index, edition] of pack.editions.entries()) {
-    const name = editionName(pack, edition);
+    const name = `${NEWSLETTER_PREFIX}${pack.id}/${edition.id}`;
     if (!existing.has(name)) {
       const body = draftBody(pack, edition, senderId);
       // oxlint-disable-next-line no-await-in-loop -- sequential writes bound load and preserve progress on failure
