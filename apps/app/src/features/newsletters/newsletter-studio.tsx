@@ -6,6 +6,7 @@ import { useState } from "react";
 import { PageBody, PageHeader } from "@/components/page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import type { SenderIdentity } from "@/features/campaigns/queries";
 import { campaignsKey, sendersQuery } from "@/features/campaigns/queries";
 import { MailFrame } from "@/features/messages/body-editor";
 import { NewsletterEngagement } from "@/features/newsletters/engagement";
@@ -67,188 +68,6 @@ const SavedEdition = ({ campaign }: { campaign: CampaignObject }) => {
           : "Delivery follows the sender's limits."}
       </p>
     </article>
-  );
-};
-
-/** A newsletter is a one-step campaign, retaining the server's queue, suppression and tracking. */
-export const NewsletterStudio = () => {
-  const workspace = useWorkspace();
-  const queryClient = useQueryClient();
-  const [pack, setPack] = useState<NewsletterPack | null>(null);
-  const [selected, setSelected] = useState(0);
-  const [senderId, setSenderId] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-  const senders = useQuery(sendersQuery(workspace));
-  const saved = useQuery({
-    queryKey: [...campaignsKey(workspace), "newsletters"],
-    queryFn: ({ signal }) => loadNewsletters(workspace.api, signal),
-    refetchInterval: 60_000,
-  });
-  const sender = senders.data?.find((entry) => entry.identity.id === senderId);
-  const writable = canWrite(workspace);
-  const importPack = (file: File) => {
-    setError("");
-    setNotice("");
-    void readPack(file)
-      .then((imported) => {
-        setPack(imported);
-        setSelected(0);
-        setProgress(0);
-      })
-      .catch((error: unknown) => {
-        setError(
-          error instanceof Error ? error.message : "Could not import this pack."
-        );
-      });
-  };
-  const prepare = () => {
-    if (!pack || !sender || !writable || busy) {
-      return;
-    }
-    setBusy(true);
-    setError("");
-    setNotice("");
-    void prepareDrafts(workspace.api, workspace.id, pack, senderId, setProgress)
-      .then(() =>
-        setNotice(
-          "Drafts saved. No audience was enrolled and no newsletter was started. Review each audience before activation."
-        )
-      )
-      .catch((error: unknown) =>
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Could not save every draft. Retry to resume."
-        )
-      )
-      .finally(() => {
-        setBusy(false);
-        void queryClient.invalidateQueries({
-          queryKey: campaignsKey(workspace),
-        });
-      });
-  };
-  return (
-    <>
-      <PageHeader
-        title="Newsletters"
-        subtitle="One edition. One audience. One broadcast."
-      />
-      <PageBody>
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 py-6">
-          <section className="border-line rounded-xl border p-6">
-            <p className="text-accent text-xs font-semibold tracking-widest uppercase">
-              Prepare · Review · Send
-            </p>
-            <h2 className="mt-3 text-2xl font-semibold">
-              A quiet place to prepare your next edition
-            </h2>
-            <p className="text-fg-2 mt-2 max-w-2xl text-sm">
-              Import a content pack, preview every edition and save independent
-              drafts. Dates are proposals until you explicitly start an edition.
-              Opens and clicks use the existing campaign tracking.
-            </p>
-            <div className="mt-5 flex flex-wrap items-end gap-5">
-              <label
-                className="flex flex-col gap-2 text-sm"
-                htmlFor="newsletter-pack"
-              >
-                Content pack (JSON)
-                <Input
-                  accept="application/json,.json"
-                  disabled={!writable || busy}
-                  id="newsletter-pack"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) {
-                      void importPack(file);
-                    }
-                  }}
-                  type="file"
-                />
-              </label>
-              <label
-                className="flex min-w-64 flex-col gap-2 text-sm"
-                htmlFor="newsletter-sender"
-              >
-                Sender
-                <select
-                  className="border-line bg-surface rounded-md border p-2"
-                  disabled={!writable || busy || senders.isPending}
-                  id="newsletter-sender"
-                  onChange={(event) => setSenderId(event.target.value)}
-                  value={senderId}
-                >
-                  <option value="">Choose a connected sender</option>
-                  {senders.data
-                    ?.filter(
-                      (entry) =>
-                        entry.identity.enabled &&
-                        entry.connection.status === "active" &&
-                        !entry.connection.paused
-                    )
-                    .map((entry) => (
-                      <option key={entry.identity.id} value={entry.identity.id}>
-                        {entry.identity.email} · {entry.connection.provider}
-                      </option>
-                    ))}
-                </select>
-              </label>
-              <Button
-                disabled={!pack || !sender || busy || !writable}
-                onClick={() => {
-                  void prepare();
-                }}
-                variant="primary"
-              >
-                {busy
-                  ? `Saving ${progress}/${pack?.editions.length ?? 0}`
-                  : `Save ${pack?.editions.length ?? "all"} as drafts`}
-              </Button>
-            </div>
-            {sender ? (
-              <p className="text-fg-2 mt-3 text-sm">
-                Sender limit: {sender.connection.daily_limit.toLocaleString()}{" "}
-                messages/day.
-                {sender.connection.send_interval_minutes
-                  ? ` Paced at one message every ${sender.connection.send_interval_minutes} minutes.`
-                  : " Rate-paced queue."}{" "}
-                Larger audiences wait for quota; importing never changes these
-                limits.
-              </p>
-            ) : null}
-            {error ? (
-              <p className="mt-4 text-sm" role="alert">
-                {error}
-              </p>
-            ) : null}
-            {senders.isError || saved.isError ? (
-              <p className="mt-4 text-sm" role="alert">
-                Could not load workspace data. Refresh to retry.
-              </p>
-            ) : null}
-            {notice ? (
-              <output className="text-accent mt-4 block text-sm">
-                {notice}
-              </output>
-            ) : null}
-          </section>
-          <PackPreview pack={pack} selected={selected} onSelect={setSelected} />
-          <SavedEditions campaigns={saved.data} loading={saved.isPending} />
-          <NewsletterEngagement campaigns={saved.data ?? []} />
-          <p className="text-fg-3 max-w-3xl text-xs">
-            An open is an observed signal, not proof of reading. Privacy proxies
-            and blocked images affect it. “No open recorded” is not an unread
-            count. Editorial categories do not control Gmail tabs. Use consented
-            audiences; unsubscribes and suppressions remain enforced by the
-            server.
-          </p>
-        </div>
-      </PageBody>
-    </>
   );
 };
 
@@ -337,6 +156,193 @@ const PackPreview = ({
           </div>
         </section>
       ) : null}
+    </>
+  );
+};
+
+const SenderLimit = ({ sender }: { sender: SenderIdentity | undefined }) => {
+  if (!sender) {
+    return null;
+  }
+  const { connection } = sender;
+  return (
+    <p className="text-fg-2 mt-3 text-sm">
+      Sender limit: {connection.daily_limit.toLocaleString()} messages/day.
+      {connection.send_interval_minutes
+        ? ` Paced at one message every ${connection.send_interval_minutes} minutes.`
+        : " Rate-paced queue."}{" "}
+      Larger audiences wait for quota; importing never changes these limits.
+    </p>
+  );
+};
+
+/** A newsletter is a one-step campaign, retaining the server's queue, suppression and tracking. */
+export const NewsletterStudio = () => {
+  const workspace = useWorkspace();
+  const queryClient = useQueryClient();
+  const [pack, setPack] = useState<NewsletterPack | null>(null);
+  const [selected, setSelected] = useState(0);
+  const [senderId, setSenderId] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [failure, setFailure] = useState("");
+  const [notice, setNotice] = useState("");
+  const senders = useQuery(sendersQuery(workspace));
+  const saved = useQuery({
+    queryKey: [...campaignsKey(workspace), "newsletters"],
+    queryFn: ({ signal }) => loadNewsletters(workspace.api, signal),
+    refetchInterval: 60_000,
+  });
+  const sender = senders.data?.find((entry) => entry.identity.id === senderId);
+  const writable = canWrite(workspace);
+  const importPack = async (file: File) => {
+    setFailure("");
+    setNotice("");
+    try {
+      setPack(await readPack(file));
+      setSelected(0);
+      setProgress(0);
+    } catch (error) {
+      setFailure(
+        error instanceof Error ? error.message : "Could not import this pack."
+      );
+    }
+  };
+  const prepare = async () => {
+    if (!pack || !sender || !writable || busy) {
+      return;
+    }
+    setBusy(true);
+    setFailure("");
+    setNotice("");
+    try {
+      await prepareDrafts(
+        workspace.api,
+        workspace.id,
+        pack,
+        senderId,
+        setProgress
+      );
+      setNotice(
+        "Drafts saved. No audience was enrolled and no newsletter was started. Review each audience before activation."
+      );
+    } catch (error) {
+      setFailure(
+        error instanceof Error
+          ? error.message
+          : "Could not save every draft. Retry to resume."
+      );
+    }
+    setBusy(false);
+    void queryClient.invalidateQueries({ queryKey: campaignsKey(workspace) });
+  };
+  return (
+    <>
+      <PageHeader
+        title="Newsletters"
+        subtitle="One edition. One audience. One broadcast."
+      />
+      <PageBody>
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 py-6">
+          <section className="border-line rounded-xl border p-6">
+            <p className="text-accent text-xs font-semibold tracking-widest uppercase">
+              Prepare · Review · Send
+            </p>
+            <h2 className="mt-3 text-2xl font-semibold">
+              A quiet place to prepare your next edition
+            </h2>
+            <p className="text-fg-2 mt-2 max-w-2xl text-sm">
+              Import a content pack, preview every edition and save independent
+              drafts. Dates are proposals until you explicitly start an edition.
+              Opens and clicks use the existing campaign tracking.
+            </p>
+            <div className="mt-5 flex flex-wrap items-end gap-5">
+              <label
+                className="flex flex-col gap-2 text-sm"
+                htmlFor="newsletter-pack"
+              >
+                Content pack (JSON)
+                <Input
+                  accept="application/json,.json"
+                  disabled={!writable || busy}
+                  id="newsletter-pack"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) {
+                      void importPack(file);
+                    }
+                  }}
+                  type="file"
+                />
+              </label>
+              <label
+                className="flex min-w-64 flex-col gap-2 text-sm"
+                htmlFor="newsletter-sender"
+              >
+                Sender
+                <select
+                  className="border-line bg-surface rounded-md border p-2"
+                  disabled={!writable || busy || senders.isPending}
+                  id="newsletter-sender"
+                  onChange={(event) => setSenderId(event.target.value)}
+                  value={senderId}
+                >
+                  <option value="">Choose a connected sender</option>
+                  {senders.data
+                    ?.filter(
+                      (entry) =>
+                        entry.identity.enabled &&
+                        entry.connection.status === "active" &&
+                        !entry.connection.paused
+                    )
+                    .map((entry) => (
+                      <option key={entry.identity.id} value={entry.identity.id}>
+                        {entry.identity.email} · {entry.connection.provider}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <Button
+                disabled={!pack || !sender || busy || !writable}
+                onClick={() => {
+                  void prepare();
+                }}
+                variant="primary"
+              >
+                {busy
+                  ? `Saving ${progress}/${pack?.editions.length ?? 0}`
+                  : `Save ${pack?.editions.length ?? "all"} as drafts`}
+              </Button>
+            </div>
+            <SenderLimit sender={sender} />
+            {failure ? (
+              <p className="mt-4 text-sm" role="alert">
+                {failure}
+              </p>
+            ) : null}
+            {senders.isError || saved.isError ? (
+              <p className="mt-4 text-sm" role="alert">
+                Could not load workspace data. Refresh to retry.
+              </p>
+            ) : null}
+            {notice ? (
+              <output className="text-accent mt-4 block text-sm">
+                {notice}
+              </output>
+            ) : null}
+          </section>
+          <PackPreview pack={pack} selected={selected} onSelect={setSelected} />
+          <SavedEditions campaigns={saved.data} loading={saved.isPending} />
+          <NewsletterEngagement campaigns={saved.data ?? []} />
+          <p className="text-fg-3 max-w-3xl text-xs">
+            An open is an observed signal, not proof of reading. Privacy proxies
+            and blocked images affect it. “No open recorded” is not an unread
+            count. Editorial categories do not control Gmail tabs. Use consented
+            audiences; unsubscribes and suppressions remain enforced by the
+            server.
+          </p>
+        </div>
+      </PageBody>
     </>
   );
 };

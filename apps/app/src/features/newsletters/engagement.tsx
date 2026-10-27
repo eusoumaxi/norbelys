@@ -32,6 +32,52 @@ export const csvCell = (value: string): string => {
   return `"${safe.replaceAll('"', '""')}"`;
 };
 
+const downloadAudience = async (
+  read: (after: string | null) => Promise<Recipients>,
+  filename: string
+): Promise<void> => {
+  const rows = ["email,person_id,sent,opened,clicked"];
+  const seen = new Set<string>();
+  let after: string | null = null;
+  do {
+    // oxlint-disable-next-line no-await-in-loop -- cursor pages must be fetched in order
+    const page = await read(after);
+    for (const person of page.data) {
+      if (!seen.has(person.person_id)) {
+        seen.add(person.person_id);
+        rows.push(
+          [
+            csvCell(person.email),
+            csvCell(person.person_id),
+            person.sent,
+            person.opened,
+            person.clicked,
+          ].join(",")
+        );
+      }
+    }
+    after = page.meta.has_more ? (page.meta.next_cursor ?? null) : null;
+    if (page.meta.has_more && !after) {
+      throw new Error(
+        "The server returned an incomplete page. No file was exported."
+      );
+    }
+    if (seen.size >= 20_000 && after) {
+      throw new Error(
+        "This export exceeds 20,000 people. Narrow the audience before exporting."
+      );
+    }
+  } while (after);
+  const url = URL.createObjectURL(
+    new Blob([rows.join("\r\n")], { type: "text/csv;charset=utf-8" })
+  );
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
 export const NewsletterEngagement = ({
   campaigns,
 }: {
@@ -42,7 +88,7 @@ export const NewsletterEngagement = ({
   const [engagement, setEngagement] = useState("all");
   const [cursor, setCursor] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
-  const [error, setError] = useState("");
+  const [failure, setFailure] = useState("");
   const read = (
     after: string | null,
     signal?: AbortSignal
@@ -73,14 +119,18 @@ export const NewsletterEngagement = ({
     queryFn: ({ signal }) => read(cursor, signal),
     enabled: Boolean(campaignId),
   });
-  const exportAudience = () => {
+  const exportAudience = async () => {
     setExporting(true);
-    setError("");
-    void downloadAudience(read, `newsletter-${campaignId}-${engagement}.csv`)
-      .catch((error: unknown) =>
-        setError(error instanceof Error ? error.message : "The export failed.")
-      )
-      .finally(() => setExporting(false));
+    setFailure("");
+    try {
+      await downloadAudience(
+        read,
+        `newsletter-${campaignId}-${engagement}.csv`
+      );
+    } catch (error) {
+      setFailure(error instanceof Error ? error.message : "The export failed.");
+    }
+    setExporting(false);
   };
   return (
     <section className="border-line rounded-lg border p-5">
@@ -152,9 +202,9 @@ export const NewsletterEngagement = ({
         with your consent and profile criteria, then review the draft. Activity
         can change while pages are read.
       </p>
-      {query.isError || error ? (
+      {query.isError || failure ? (
         <p className="mt-3 text-sm" role="alert">
-          {error ||
+          {failure ||
             "Could not load this report. The server must include the newsletter dashboard update."}
         </p>
       ) : null}
@@ -206,50 +256,4 @@ export const NewsletterEngagement = ({
       ) : null}
     </section>
   );
-};
-
-const downloadAudience = async (
-  read: (after: string | null) => Promise<Recipients>,
-  filename: string
-): Promise<void> => {
-  const rows = ["email,person_id,sent,opened,clicked"];
-  const seen = new Set<string>();
-  let after: string | null = null;
-  do {
-    // oxlint-disable-next-line no-await-in-loop -- cursor pages must be fetched in order
-    const page = await read(after);
-    for (const person of page.data) {
-      if (!seen.has(person.person_id)) {
-        seen.add(person.person_id);
-        rows.push(
-          [
-            csvCell(person.email),
-            csvCell(person.person_id),
-            person.sent,
-            person.opened,
-            person.clicked,
-          ].join(",")
-        );
-      }
-    }
-    after = page.meta.has_more ? (page.meta.next_cursor ?? null) : null;
-    if (page.meta.has_more && !after) {
-      throw new Error(
-        "The server returned an incomplete page. No file was exported."
-      );
-    }
-    if (seen.size >= 20_000 && after) {
-      throw new Error(
-        "This export exceeds 20,000 people. Narrow the audience before exporting."
-      );
-    }
-  } while (after);
-  const url = URL.createObjectURL(
-    new Blob([rows.join("\r\n")], { type: "text/csv;charset=utf-8" })
-  );
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
 };
