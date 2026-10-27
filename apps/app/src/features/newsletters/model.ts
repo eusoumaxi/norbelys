@@ -1,4 +1,4 @@
-import type { CreateCampaign, Norbelys } from "@norbelys/sdk";
+import type { CampaignObject, CreateCampaign, Norbelys } from "@norbelys/sdk";
 import { z } from "zod";
 
 export const NEWSLETTER_PREFIX = "[Newsletter] ";
@@ -25,8 +25,10 @@ export const packSchema = z
     name: z.string().min(1).max(100),
     timezone: z.string().refine((zone) => {
       try {
-        new Intl.DateTimeFormat("en", { timeZone: zone });
-        return true;
+        return Boolean(
+          new Intl.DateTimeFormat("en", { timeZone: zone }).resolvedOptions()
+            .timeZone
+        );
       } catch {
         return false;
       }
@@ -121,4 +123,26 @@ export const prepareDrafts = async (
     }
     onProgress(index + 1);
   }
+};
+
+export const readPack = async (file: File): Promise<NewsletterPack> => {
+  if (file.size > 4 * 1024 * 1024) {
+    throw new Error("Choose a newsletter pack smaller than 4 MiB.");
+  }
+  const value: unknown = JSON.parse(await file.text());
+  return packSchema.parse(value);
+};
+
+export const loadNewsletters = async (
+  api: Norbelys,
+  signal: AbortSignal
+): Promise<CampaignObject[]> => {
+  const rows: CampaignObject[] = [];
+  for await (const campaign of api.campaigns.list(
+    { q: NEWSLETTER_PREFIX, limit: 100 },
+    { signal }
+  )) {
+    rows.push(campaign);
+  }
+  return rows;
 };

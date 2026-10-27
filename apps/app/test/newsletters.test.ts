@@ -29,8 +29,7 @@ const pack = packSchema.parse({
 });
 
 test("preparation resumes a partial pack and never enrolls or starts an edition", async () => {
-  const first = pack.editions[0];
-  const second = pack.editions[1];
+  const [first, second] = pack.editions;
   if (!first || !second) {
     throw new Error("The fixture needs two editions");
   }
@@ -39,13 +38,15 @@ test("preparation resumes a partial pack and never enrolls or starts an edition"
     apiKey: "nb_test_example",
     baseUrl: "https://api.example.com",
     maxRetries: 0,
-    fetch: async (url, init) => {
+    fetch: (url, init) => {
       requests.push({ url, method: init.method ?? "GET" });
       if (init.method === "GET") {
-        return Response.json({
-          data: [{ name: editionName(pack, first) }],
-          meta: { has_more: false },
-        });
+        return Promise.resolve(
+          Response.json({
+            data: [{ name: editionName(pack, first) }],
+            meta: { has_more: false },
+          })
+        );
       }
       expect(JSON.parse(String(init.body))).toEqual(
         draftBody(pack, second, "sid_sender")
@@ -53,7 +54,9 @@ test("preparation resumes a partial pack and never enrolls or starts an edition"
       expect(new Headers(init.headers).get("idempotency-key")).toStartWith(
         "newsletter:ws_example:"
       );
-      return Response.json({ id: "cmp_draft", status: "draft" });
+      return Promise.resolve(
+        Response.json({ id: "cmp_draft", status: "draft" })
+      );
     },
   });
   const progress: number[] = [];
@@ -70,7 +73,7 @@ test("preparation resumes a partial pack and never enrolls or starts an edition"
 });
 
 test("a broadcast has one step, no follow-up and stable retry keys scoped to its exact content", async () => {
-  const edition = pack.editions[0];
+  const [edition] = pack.editions;
   if (!edition) {
     throw new Error("The fixture needs an edition");
   }
@@ -98,7 +101,9 @@ test("invalid packs cannot hide duplicate editions or an unsafe editorial source
   expect(
     packSchema.safeParse({
       ...pack,
-      editions: [{ ...pack.editions[0], source: "javascript:alert(1)" }],
+      editions: [
+        { ...pack.editions[0], source: "http://example.com/untrusted" },
+      ],
     }).success
   ).toBe(false);
 });

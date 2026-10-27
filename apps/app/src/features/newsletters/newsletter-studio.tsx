@@ -11,7 +11,8 @@ import { MailFrame } from "@/features/messages/body-editor";
 import { NewsletterEngagement } from "@/features/newsletters/engagement";
 import {
   NEWSLETTER_PREFIX,
-  packSchema,
+  readPack,
+  loadNewsletters,
   prepareDrafts,
 } from "@/features/newsletters/model";
 import type { NewsletterPack } from "@/features/newsletters/model";
@@ -19,7 +20,7 @@ import { canWrite, useWorkspace } from "@/lib/workspace";
 
 const SavedEdition = ({ campaign }: { campaign: CampaignObject }) => {
   const workspace = useWorkspace();
-  const stats = campaign.stats;
+  const { stats } = campaign;
   const metrics = [
     ["Sent", stats.sent],
     ["Open recorded", stats.opened],
@@ -83,70 +84,52 @@ export const NewsletterStudio = () => {
   const senders = useQuery(sendersQuery(workspace));
   const saved = useQuery({
     queryKey: [...campaignsKey(workspace), "newsletters"],
-    queryFn: async ({ signal }) => {
-      const rows: CampaignObject[] = [];
-      for await (const campaign of workspace.api.campaigns.list(
-        { q: NEWSLETTER_PREFIX, limit: 100 },
-        { signal }
-      )) {
-        rows.push(campaign);
-      }
-      return rows;
-    },
+    queryFn: ({ signal }) => loadNewsletters(workspace.api, signal),
     refetchInterval: 60_000,
   });
-  const edition = pack?.editions[selected];
   const sender = senders.data?.find((entry) => entry.identity.id === senderId);
   const writable = canWrite(workspace);
-  const importPack = async (file: File) => {
+  const importPack = (file: File) => {
     setError("");
     setNotice("");
-    try {
-      if (file.size > 4 * 1024 * 1024) {
-        throw new Error("Choose a newsletter pack smaller than 4 MiB.");
-      }
-      const value: unknown = JSON.parse(await file.text());
-      setPack(packSchema.parse(value));
-      setSelected(0);
-      setProgress(0);
-    } catch (failure) {
-      setError(
-        failure instanceof Error
-          ? failure.message
-          : "Could not import this pack."
-      );
-    }
+    void readPack(file)
+      .then((imported) => {
+        setPack(imported);
+        setSelected(0);
+        setProgress(0);
+      })
+      .catch((error: unknown) => {
+        setError(
+          error instanceof Error ? error.message : "Could not import this pack."
+        );
+      });
   };
-  const prepare = async () => {
+  const prepare = () => {
     if (!pack || !sender || !writable || busy) {
       return;
     }
     setBusy(true);
     setError("");
     setNotice("");
-    try {
-      await prepareDrafts(
-        workspace.api,
-        workspace.id,
-        pack,
-        senderId,
-        setProgress
-      );
-      setNotice(
-        "Drafts saved. No audience was enrolled and no newsletter was started. Review each audience before activation."
-      );
-    } catch (failure) {
-      setError(
-        failure instanceof Error
-          ? failure.message
-          : "Could not save every draft. Retry to resume."
-      );
-    } finally {
-      await queryClient.invalidateQueries({
-        queryKey: campaignsKey(workspace),
+    void prepareDrafts(workspace.api, workspace.id, pack, senderId, setProgress)
+      .then(() =>
+        setNotice(
+          "Drafts saved. No audience was enrolled and no newsletter was started. Review each audience before activation."
+        )
+      )
+      .catch((error: unknown) =>
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Could not save every draft. Retry to resume."
+        )
+      )
+      .finally(() => {
+        setBusy(false);
+        void queryClient.invalidateQueries({
+          queryKey: campaignsKey(workspace),
+        });
       });
-      setBusy(false);
-    }
   };
   return (
     <>
@@ -248,82 +231,13 @@ export const NewsletterStudio = () => {
               </p>
             ) : null}
             {notice ? (
-              <p className="text-accent mt-4 text-sm" role="status">
+              <output className="text-accent mt-4 block text-sm">
                 {notice}
-              </p>
+              </output>
             ) : null}
           </section>
-          {pack && edition ? (
-            <section className="grid gap-6 lg:grid-cols-[280px_1fr]">
-              <div>
-                <h2 className="mb-3 font-semibold">{pack.name}</h2>
-                <div className="flex flex-col gap-2">
-                  {pack.editions.map((item, index) => (
-                    <button
-                      aria-pressed={index === selected}
-                      className="border-line hover:bg-hover aria-pressed:bg-selected rounded-lg border p-4 text-left"
-                      key={item.id}
-                      onClick={() => setSelected(index)}
-                      type="button"
-                    >
-                      <span className="text-fg-3 text-xs">
-                        {String(index + 1).padStart(2, "0")} · {item.category}
-                      </span>
-                      <span className="mt-1 block text-sm font-medium">
-                        {item.title}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="min-w-0">
-                <div className="border-line mb-4 rounded-lg border p-5">
-                  <p className="text-fg-3 text-xs uppercase">
-                    Preview · Not sent
-                  </p>
-                  <h2 className="mt-2 text-xl font-semibold">
-                    {edition.subject}
-                  </h2>
-                  <p className="text-fg-2 mt-2 text-sm">{edition.preheader}</p>
-                  <p className="mt-4 text-sm">
-                    <strong>Intended audience:</strong> {edition.audience}
-                  </p>
-                  <p className="text-fg-2 mt-2 text-sm">
-                    Select the matching consented group or segment in the saved
-                    draft. This description does not enroll contacts.
-                  </p>
-                  <a
-                    className="text-accent mt-3 inline-block text-sm underline"
-                    href={edition.source}
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    Editorial source
-                  </a>
-                </div>
-                <MailFrame
-                  html={edition.html}
-                  readOnly
-                  title={`${edition.title} newsletter preview`}
-                />
-              </div>
-            </section>
-          ) : null}
-          <section className="flex flex-col gap-4">
-            <h2 className="text-lg font-semibold">Saved editions</h2>
-            {saved.isPending ? (
-              <p className="text-fg-2 text-sm">Loading editions…</p>
-            ) : null}
-            {saved.data?.length === 0 ? (
-              <p className="text-fg-2 text-sm">
-                No newsletters saved yet. Import a pack to prepare the first
-                draft.
-              </p>
-            ) : null}
-            {saved.data?.map((campaign) => (
-              <SavedEdition campaign={campaign} key={campaign.id} />
-            ))}
-          </section>
+          <PackPreview pack={pack} selected={selected} onSelect={setSelected} />
+          <SavedEditions campaigns={saved.data} loading={saved.isPending} />
           <NewsletterEngagement campaigns={saved.data ?? []} />
           <p className="text-fg-3 max-w-3xl text-xs">
             An open is an observed signal, not proof of reading. Privacy proxies
@@ -334,6 +248,95 @@ export const NewsletterStudio = () => {
           </p>
         </div>
       </PageBody>
+    </>
+  );
+};
+
+const SavedEditions = ({
+  campaigns,
+  loading,
+}: {
+  campaigns: CampaignObject[] | undefined;
+  loading: boolean;
+}) => (
+  <section className="flex flex-col gap-4">
+    <h2 className="text-lg font-semibold">Saved editions</h2>
+    {loading ? <p className="text-fg-2 text-sm">Loading editions…</p> : null}
+    {campaigns?.length === 0 ? (
+      <p className="text-fg-2 text-sm">
+        No newsletters saved yet. Import a pack to prepare the first draft.
+      </p>
+    ) : null}
+    {campaigns?.map((campaign) => (
+      <SavedEdition campaign={campaign} key={campaign.id} />
+    ))}
+  </section>
+);
+
+const PackPreview = ({
+  pack,
+  selected,
+  onSelect,
+}: {
+  pack: NewsletterPack | null;
+  selected: number;
+  onSelect: (index: number) => void;
+}) => {
+  const edition = pack?.editions[selected];
+  return (
+    <>
+      {pack && edition ? (
+        <section className="grid gap-6 lg:grid-cols-[280px_1fr]">
+          <div>
+            <h2 className="mb-3 font-semibold">{pack.name}</h2>
+            <div className="flex flex-col gap-2">
+              {pack.editions.map((item, index) => (
+                <button
+                  aria-pressed={index === selected}
+                  className="border-line hover:bg-hover aria-pressed:bg-selected rounded-lg border p-4 text-left"
+                  key={item.id}
+                  onClick={() => onSelect(index)}
+                  type="button"
+                >
+                  <span className="text-fg-3 text-xs">
+                    {String(index + 1).padStart(2, "0")} · {item.category}
+                  </span>
+                  <span className="mt-1 block text-sm font-medium">
+                    {item.title}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="min-w-0">
+            <div className="border-line mb-4 rounded-lg border p-5">
+              <p className="text-fg-3 text-xs uppercase">Preview · Not sent</p>
+              <h2 className="mt-2 text-xl font-semibold">{edition.subject}</h2>
+              <p className="text-fg-2 mt-2 text-sm">{edition.preheader}</p>
+              <p className="mt-4 text-sm">
+                <strong>Intended audience:</strong> {edition.audience}
+              </p>
+              <p className="text-fg-2 mt-2 text-sm">
+                Select the matching consented group or segment in the saved
+                draft. This description does not enroll contacts.
+              </p>
+              <a
+                className="text-accent mt-3 inline-block text-sm underline"
+                href={edition.source}
+                rel="noreferrer"
+                target="_blank"
+              >
+                Editorial source
+              </a>
+            </div>
+            <MailFrame
+              html={edition.html}
+              readOnly
+              title={`${edition.title} newsletter preview`}
+            />
+          </div>
+        </section>
+      ) : null}
     </>
   );
 };

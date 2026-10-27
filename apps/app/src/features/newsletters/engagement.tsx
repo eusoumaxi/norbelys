@@ -73,57 +73,14 @@ export const NewsletterEngagement = ({
     queryFn: ({ signal }) => read(cursor, signal),
     enabled: Boolean(campaignId),
   });
-  const exportAudience = async () => {
+  const exportAudience = () => {
     setExporting(true);
     setError("");
-    try {
-      const rows = ["email,person_id,sent,opened,clicked"];
-      const seen = new Set<string>();
-      let after: string | null = null;
-      do {
-        // oxlint-disable-next-line no-await-in-loop -- cursor pages must be fetched in order
-        const page = await read(after);
-        for (const person of page.data) {
-          if (!seen.has(person.person_id)) {
-            seen.add(person.person_id);
-            rows.push(
-              [
-                csvCell(person.email),
-                csvCell(person.person_id),
-                person.sent,
-                person.opened,
-                person.clicked,
-              ].join(",")
-            );
-          }
-        }
-        after = page.meta.has_more ? (page.meta.next_cursor ?? null) : null;
-        if (page.meta.has_more && !after) {
-          throw new Error(
-            "The server returned an incomplete page. No file was exported."
-          );
-        }
-        if (seen.size >= 20_000 && after) {
-          throw new Error(
-            "This export exceeds 20,000 people. Narrow the audience before exporting."
-          );
-        }
-      } while (after);
-      const url = URL.createObjectURL(
-        new Blob([rows.join("\r\n")], { type: "text/csv;charset=utf-8" })
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `newsletter-${campaignId}-${engagement}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch (failure) {
-      setError(
-        failure instanceof Error ? failure.message : "The export failed."
-      );
-    } finally {
-      setExporting(false);
-    }
+    void downloadAudience(read, `newsletter-${campaignId}-${engagement}.csv`)
+      .catch((error: unknown) =>
+        setError(error instanceof Error ? error.message : "The export failed.")
+      )
+      .finally(() => setExporting(false));
   };
   return (
     <section className="border-line rounded-lg border p-5">
@@ -249,4 +206,50 @@ export const NewsletterEngagement = ({
       ) : null}
     </section>
   );
+};
+
+const downloadAudience = async (
+  read: (after: string | null) => Promise<Recipients>,
+  filename: string
+): Promise<void> => {
+  const rows = ["email,person_id,sent,opened,clicked"];
+  const seen = new Set<string>();
+  let after: string | null = null;
+  do {
+    // oxlint-disable-next-line no-await-in-loop -- cursor pages must be fetched in order
+    const page = await read(after);
+    for (const person of page.data) {
+      if (!seen.has(person.person_id)) {
+        seen.add(person.person_id);
+        rows.push(
+          [
+            csvCell(person.email),
+            csvCell(person.person_id),
+            person.sent,
+            person.opened,
+            person.clicked,
+          ].join(",")
+        );
+      }
+    }
+    after = page.meta.has_more ? (page.meta.next_cursor ?? null) : null;
+    if (page.meta.has_more && !after) {
+      throw new Error(
+        "The server returned an incomplete page. No file was exported."
+      );
+    }
+    if (seen.size >= 20_000 && after) {
+      throw new Error(
+        "This export exceeds 20,000 people. Narrow the audience before exporting."
+      );
+    }
+  } while (after);
+  const url = URL.createObjectURL(
+    new Blob([rows.join("\r\n")], { type: "text/csv;charset=utf-8" })
+  );
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 };
