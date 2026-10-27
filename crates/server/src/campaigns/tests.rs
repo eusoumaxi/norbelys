@@ -170,6 +170,119 @@ async fn campaign(f: &Fixture, body: Value) -> Value {
     reply.json
 }
 
+/// Newsletter reports require a browser workspace token and distinguish missing opens from
+/// untracked mail, proxy activity and clicks. A foreign workspace cannot read the report.
+#[tokio::test]
+async fn newsletter_engagement_is_tenant_scoped_and_conservative_about_missing_opens() {
+    let f = fixture("newsletter-report").await;
+    let source = campaign(&f, json!({
+        "name": "[Newsletter] report",
+        "tracking": {"opens": true, "clicks": true},
+        "senders": {"identity_ids": [f.a.identity.to_string()]},
+        "steps": [{"name": "Edition", "variants": [{"subject": "Hello", "html": "<p>Hello</p>"}]}]
+    })).await;
+    let people = people(
+        &f,
+        &["opened", "proxy", "clicked", "quiet", "untracked"],
+        "report.example",
+    )
+    .await;
+    for person in &people {
+        let reply = post(
+            &f.app,
+            &f.ws.key,
+            "/v1/messages",
+            json!({
+                "step_id": source["steps"][0]["id"], "person_id": person,
+            }),
+        )
+        .await;
+        assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.json);
+        let message = uuid(&reply.json["id"]);
+        sqlx::query("DELETE FROM delivery_queue WHERE workspace_id = $1 AND message_id = $2")
+            .bind(f.ws.id.uuid())
+            .bind(message)
+            .execute(f.test.system.pool())
+            .await
+            .unwrap();
+        sqlx::query("UPDATE messages SET state = 'sent', sent_at = now() WHERE workspace_id = $1 AND id = $2")
+            .bind(f.ws.id.uuid()).bind(message).execute(f.test.system.pool()).await.unwrap();
+        let index = people.iter().position(|value| value == person).unwrap();
+        if index < 3 {
+            sqlx::query("INSERT INTO message_engagement (workspace_id, message_id, opens, clicks, human_opens, human_clicks) VALUES ($1, $2, $3, $4, $5, $6)")
+                .bind(f.ws.id.uuid()).bind(message).bind(i32::from(index < 2))
+                .bind(i32::from(index == 2)).bind(i32::from(index == 0)).bind(i32::from(index == 2))
+                .execute(f.test.system.pool()).await.unwrap();
+        }
+        if index == 4 {
+            sqlx::query("UPDATE messages SET tracking = '{}' WHERE workspace_id = $1 AND id = $2")
+                .bind(f.ws.id.uuid())
+                .bind(message)
+                .execute(f.test.system.pool())
+                .await
+                .unwrap();
+        }
+    }
+    f.test.signing_key().await;
+    let session = f.test.session("owner@newsletter-report.example").await;
+    let token = f
+        .app
+        .post("/v1/auth/tokens")
+        .browser(&session)
+        .json(json!({"workspace_id": f.ws.id.to_string()}))
+        .send()
+        .await;
+    assert_eq!(token.status, StatusCode::CREATED, "{}", token.json);
+    let bearer = token.json["token"].as_str().unwrap();
+    let path = format!(
+        "/v1/workspaces/{}/newsletters/{}/recipients",
+        f.ws.id,
+        source["id"].as_str().unwrap()
+    );
+    assert_eq!(
+        f.app.get(&path).bearer(&f.ws.key).send().await.status,
+        StatusCode::FORBIDDEN
+    );
+    for (filter, index) in [("opened", 0), ("clicked", 2), ("not_opened", 3)] {
+        let reply = f
+            .app
+            .get(&format!("{path}?engagement={filter}"))
+            .bearer(bearer)
+            .send()
+            .await;
+        assert_eq!(reply.status, StatusCode::OK, "{}", reply.json);
+        assert_eq!(
+            reply.json["data"].as_array().unwrap().len(),
+            1,
+            "{}",
+            reply.json
+        );
+        assert_eq!(reply.json["data"][0]["person_id"], people[index]);
+    }
+    let other = f.test.workspace("newsletter-other").await;
+    let foreign_path = path.replace(&f.ws.id.to_string(), &other.id.to_string());
+    assert_eq!(
+        f.app.get(&foreign_path).bearer(bearer).send().await.status,
+        StatusCode::NOT_FOUND
+    );
+    let page = f
+        .app
+        .get(&format!("{path}?limit=1"))
+        .bearer(bearer)
+        .send()
+        .await;
+    assert_eq!(page.status, StatusCode::OK, "{}", page.json);
+    assert_eq!(page.json["meta"]["has_more"], true);
+    let cursor = page.json["meta"]["next_cursor"].as_str().unwrap();
+    let changed_filter = f
+        .app
+        .get(&format!("{path}?engagement=opened&cursor={cursor}"))
+        .bearer(bearer)
+        .send()
+        .await;
+    assert_eq!(changed_filter.status, StatusCode::BAD_REQUEST);
+}
+
 /// Creates people (`given_name@<domain>`, given name capitalised) and returns their ids.
 async fn people(f: &Fixture, names: &[&str], domain: &str) -> Vec<Value> {
     let mut ids = Vec::new();

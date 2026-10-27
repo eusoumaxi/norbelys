@@ -93,6 +93,7 @@ pub fn v1() -> OpenApiRouter<AppState> {
         .merge(crate::analytics::http::routes())
         .merge(crate::analytics::metrics::routes())
         .merge(crate::campaigns::http::routes())
+        .merge(crate::campaigns::engagement::routes())
         .merge(crate::delivery::http::routes())
         .merge(crate::delivery::content::routes())
         .merge(crate::delivery::attachments::routes())
@@ -866,6 +867,7 @@ mod tests {
         "memberships.create",
         "recovery_codes.create",
         // The dashboard: the workspace.
+        "newsletter_recipients.list",
         "workspaces.list",
         "workspaces.create",
         "workspaces.update",

@@ -28,6 +28,7 @@ import { Route as WSlugFieldsRouteImport } from './routes/w.$slug/fields'
 import { Route as WSlugGroupsRouteImport } from './routes/w.$slug/groups'
 import { Route as WSlugImportsRouteImport } from './routes/w.$slug/imports'
 import { Route as WSlugLogsRouteImport } from './routes/w.$slug/logs'
+import { Route as WSlugNewslettersRouteImport } from './routes/w.$slug/newsletters'
 import { Route as WSlugPreflightRouteImport } from './routes/w.$slug/preflight'
 import { Route as WSlugQuotasRouteImport } from './routes/w.$slug/quotas'
 import { Route as WSlugSettingsRouteImport } from './routes/w.$slug/settings'
@@ -158,6 +159,11 @@ const WSlugImportsRoute = WSlugImportsRouteImport.update({
 const WSlugLogsRoute = WSlugLogsRouteImport.update({
   id: '/logs',
   path: '/logs',
+  getParentRoute: () => WSlugRoute,
+} as any)
+const WSlugNewslettersRoute = WSlugNewslettersRouteImport.update({
+  id: '/newsletters',
+  path: '/newsletters',
   getParentRoute: () => WSlugRoute,
 } as any)
 const WSlugPreflightRoute = WSlugPreflightRouteImport.update({
@@ -376,6 +382,7 @@ export interface FileRoutesByFullPath {
   '/w/$slug/groups': typeof WSlugGroupsRoute
   '/w/$slug/imports': typeof WSlugImportsRouteWithChildren
   '/w/$slug/logs': typeof WSlugLogsRoute
+  '/w/$slug/newsletters': typeof WSlugNewslettersRoute
   '/w/$slug/preflight': typeof WSlugPreflightRoute
   '/w/$slug/quotas': typeof WSlugQuotasRoute
   '/w/$slug/settings': typeof WSlugSettingsRoute
@@ -431,6 +438,7 @@ export interface FileRoutesByTo {
   '/w/$slug/fields': typeof WSlugFieldsRoute
   '/w/$slug/groups': typeof WSlugGroupsRoute
   '/w/$slug/logs': typeof WSlugLogsRoute
+  '/w/$slug/newsletters': typeof WSlugNewslettersRoute
   '/w/$slug/preflight': typeof WSlugPreflightRoute
   '/w/$slug/quotas': typeof WSlugQuotasRoute
   '/w/$slug/settings': typeof WSlugSettingsRoute
@@ -487,6 +495,7 @@ export interface FileRoutesById {
   '/w/$slug/groups': typeof WSlugGroupsRoute
   '/w/$slug/imports': typeof WSlugImportsRouteWithChildren
   '/w/$slug/logs': typeof WSlugLogsRoute
+  '/w/$slug/newsletters': typeof WSlugNewslettersRoute
   '/w/$slug/preflight': typeof WSlugPreflightRoute
   '/w/$slug/quotas': typeof WSlugQuotasRoute
   '/w/$slug/settings': typeof WSlugSettingsRoute
@@ -546,6 +555,7 @@ export interface FileRouteTypes {
     | '/w/$slug/groups'
     | '/w/$slug/imports'
     | '/w/$slug/logs'
+    | '/w/$slug/newsletters'
     | '/w/$slug/preflight'
     | '/w/$slug/quotas'
     | '/w/$slug/settings'
@@ -601,6 +611,7 @@ export interface FileRouteTypes {
     | '/w/$slug/fields'
     | '/w/$slug/groups'
     | '/w/$slug/logs'
+    | '/w/$slug/newsletters'
     | '/w/$slug/preflight'
     | '/w/$slug/quotas'
     | '/w/$slug/settings'
@@ -656,6 +667,7 @@ export interface FileRouteTypes {
     | '/w/$slug/groups'
     | '/w/$slug/imports'
     | '/w/$slug/logs'
+    | '/w/$slug/newsletters'
     | '/w/$slug/preflight'
     | '/w/$slug/quotas'
     | '/w/$slug/settings'
@@ -840,6 +852,13 @@ declare module '@tanstack/react-router' {
       path: '/logs'
       fullPath: '/w/$slug/logs'
       preLoaderRoute: typeof WSlugLogsRouteImport
+      parentRoute: typeof WSlugRoute
+    }
+    '/w/$slug/newsletters': {
+      id: '/w/$slug/newsletters'
+      path: '/newsletters'
+      fullPath: '/w/$slug/newsletters'
+      preLoaderRoute: typeof WSlugNewslettersRouteImport
       parentRoute: typeof WSlugRoute
     }
     '/w/$slug/preflight': {
@@ -1200,6 +1219,7 @@ interface WSlugRouteChildren {
   WSlugGroupsRoute: typeof WSlugGroupsRoute
   WSlugImportsRoute: typeof WSlugImportsRouteWithChildren
   WSlugLogsRoute: typeof WSlugLogsRoute
+  WSlugNewslettersRoute: typeof WSlugNewslettersRoute
   WSlugPreflightRoute: typeof WSlugPreflightRoute
   WSlugQuotasRoute: typeof WSlugQuotasRoute
   WSlugSettingsRoute: typeof WSlugSettingsRoute
@@ -1237,6 +1257,7 @@ const WSlugRouteChildren: WSlugRouteChildren = {
   WSlugGroupsRoute: WSlugGroupsRoute,
   WSlugImportsRoute: WSlugImportsRouteWithChildren,
   WSlugLogsRoute: WSlugLogsRoute,
+  WSlugNewslettersRoute: WSlugNewslettersRoute,
   WSlugPreflightRoute: WSlugPreflightRoute,
   WSlugQuotasRoute: WSlugQuotasRoute,
   WSlugSettingsRoute: WSlugSettingsRoute,
