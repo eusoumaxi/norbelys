@@ -19,6 +19,7 @@
 //! | `token_mint` | the session | 60 per minute | a dashboard tab mints a workspace token every few minutes; more is a script |
 //! | `device_start` | the client address | 10 per 15 minutes | starting a device login is anonymous and stores a code; a person logs in a few times a day |
 //! | `token_endpoint` | the OAuth client (`client_id`) | 30 per minute | `POST /oauth/token`: a client refreshes every ten minutes or so per grant; more is a loop or a guess at a secret, counted before the client authenticates |
+//! | `oauth_address` | the client address | 60 per minute | `GET /oauth/authorize`, `POST /oauth/token` and `POST /oauth/revoke`: the anonymous OAuth protocol endpoints, spent before any metadata fetch a `https://…` client id would trigger, so one address cannot exhaust the process-global fetch slots and deny onboarding of a new MCP server (`POST /oauth/device_authorization` is tighter, under `device_start`) |
 //!
 //! # Algorithm
 //!

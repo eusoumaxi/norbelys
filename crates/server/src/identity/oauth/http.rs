@@ -1015,7 +1015,18 @@ async fn exchange_device(
 /// client is refused with `400 invalid_grant` and its grant left as it is: the server checks that
 /// the token was issued to the client asking (RFC 7009 §2.1), so one application cannot end
 /// another's access.
-pub async fn revoke(State(app): State<AppState>, headers: HeaderMap, body: Bytes) -> Response {
+pub async fn revoke(
+    State(app): State<AppState>,
+    address: ClientAddress,
+    headers: HeaderMap,
+    body: Bytes,
+) -> Response {
+    if let Err(problem) = app
+        .limits
+        .check(Policy::OauthAddress, address.as_key().as_bytes())
+    {
+        return problem.into_response();
+    }
     let answered: Result<(), Refusal> = async {
         let params = Params::form(&headers, &body)?;
         let client = authenticated_client(&app, &headers, &params).await?;
