@@ -190,21 +190,59 @@ pub async fn mail_access(
     Ok(purpose)
 }
 
-/// Stop managed mail when its domain is removed or loses ownership. The domain row
-/// is locked first; connection locks serialize this revocation with delivery Starts.
-/// Existing identities, receive cursors and messages remain available for review.
+/// The managed connections of `name`: a mailbox at `name` (`hello@name`) or the domain itself
+/// (`name`), locked so a revocation or restore serializes with delivery Starts and a poll's claim.
+async fn connections(
+    tx: &mut Tx,
+    workspace: WorkspaceId,
+    name: &str,
+) -> Result<Vec<Id<crate::domain::ids::Connection>>, sqlx::Error> {
+    use sqlx::Row as _;
+    let rows = sqlx::query("SELECT id FROM connections WHERE workspace_id = $1 AND provider = 'norbelys' AND (account_email_key = $2 OR split_part(account_email_key, '@', 2) = $2) AND status <> 'archived' ORDER BY id FOR UPDATE")
+        .bind(workspace.uuid()).bind(name).fetch_all(&mut **tx).await?;
+    rows.into_iter()
+        .map(|row| Ok(Id::from_uuid(row.try_get("id")?)))
+        .collect()
+}
+
+/// Stop managed mail when its domain is removed or loses ownership. The domain row is locked
+/// first; connection locks serialize this revocation with delivery Starts. Existing identities,
+/// receive cursors and messages remain available for review. What this disables it marks
+/// `suspended_by_domain`, so a later [`restore_mail`] re-enables only that: an identity the
+/// person explicitly disabled, or a folder they stopped reading, keeps its flag off and stays off.
 pub(super) async fn suspend_mail(
     tx: &mut Tx,
     workspace: WorkspaceId,
     name: &str,
 ) -> Result<(), sqlx::Error> {
-    let connections = sqlx::query("SELECT id FROM connections WHERE workspace_id = $1 AND provider = 'norbelys' AND (account_email_key = $2 OR split_part(account_email_key, '@', 2) = $2) AND status <> 'archived' ORDER BY id FOR UPDATE")
-        .bind(workspace.uuid()).bind(name).fetch_all(&mut **tx).await?;
-    for row in connections {
-        let connection = Id::from_uuid(row.try_get("id")?);
-        sqlx::query("UPDATE sender_identities SET enabled = false WHERE workspace_id = $1 AND connection_id = $2")
+    for connection in connections(tx, workspace, name).await? {
+        sqlx::query("UPDATE sender_identities SET enabled = false, suspended_by_domain = true WHERE workspace_id = $1 AND connection_id = $2 AND enabled")
+            .bind(workspace.uuid()).bind(connection.uuid()).execute(&mut **tx).await?;
+        // Mark the bindings being disabled before `set` clears them, so `restore_mail` re-enables
+        // only these: a folder the person has already stopped reading stays disabled.
+        sqlx::query("UPDATE receive_bindings SET suspended_by_domain = true WHERE workspace_id = $1 AND connection_id = $2 AND enabled")
             .bind(workspace.uuid()).bind(connection.uuid()).execute(&mut **tx).await?;
         crate::senders::bindings::set(tx, workspace, connection, &[]).await?;
+    }
+    Ok(())
+}
+
+/// Restore managed mail when a suspended domain is verified again, the inverse of
+/// [`suspend_mail`]: an identity or binding the suspension disabled (`suspended_by_domain`) is
+/// enabled again, while one the person turned off deliberately keeps its flag off and stays
+/// disabled. The domain row is locked first, as the suspension is; cursors, history and messages
+/// are kept. A binding's lease is left to expire and be reaped, as a disabled binding's is, so a
+/// poll already running under the old lease cannot have written back its cursor.
+pub(super) async fn restore_mail(
+    tx: &mut Tx,
+    workspace: WorkspaceId,
+    name: &str,
+) -> Result<(), sqlx::Error> {
+    for connection in connections(tx, workspace, name).await? {
+        sqlx::query("UPDATE sender_identities SET enabled = true, suspended_by_domain = false WHERE workspace_id = $1 AND connection_id = $2 AND suspended_by_domain")
+            .bind(workspace.uuid()).bind(connection.uuid()).execute(&mut **tx).await?;
+        sqlx::query("UPDATE receive_bindings SET enabled = true, suspended_by_domain = false WHERE workspace_id = $1 AND connection_id = $2 AND suspended_by_domain")
+            .bind(workspace.uuid()).bind(connection.uuid()).execute(&mut **tx).await?;
     }
     Ok(())
 }
