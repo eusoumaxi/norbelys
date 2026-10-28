@@ -68,6 +68,7 @@ const workspaceNav: NavEntry[][] = [
     { icon: DashboardSquare01Icon, label: "Overview", path: "" },
     { icon: Analytics01Icon, label: "Analytics", path: "analytics" },
     { icon: Megaphone01Icon, label: "Campaigns", path: "campaigns" },
+    { icon: Mail01Icon, label: "Newsletters", path: "newsletters" },
     { icon: Mail01Icon, label: "Messages", path: "messages" },
     { icon: InboxIcon, label: "Inbox", path: "inbox" },
   ],

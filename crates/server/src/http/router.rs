@@ -58,7 +58,8 @@ const REQUEST_DEADLINE: Duration = Duration::from_secs(30);
     components(schemas(
         crate::problem::Body,
         crate::pagination::Order,
-        crate::pagination::Include
+        crate::pagination::Include,
+        crate::campaigns::engagement::Engagement
     )),
     modifiers(&Security)
 )]
@@ -93,6 +94,7 @@ pub fn v1() -> OpenApiRouter<AppState> {
         .merge(crate::analytics::http::routes())
         .merge(crate::analytics::metrics::routes())
         .merge(crate::campaigns::http::routes())
+        .merge(crate::campaigns::engagement::routes())
         .merge(crate::delivery::http::routes())
         .merge(crate::delivery::content::routes())
         .merge(crate::delivery::attachments::routes())
@@ -866,6 +868,7 @@ mod tests {
         "memberships.create",
         "recovery_codes.create",
         // The dashboard: the workspace.
+        "newsletter_recipients.list",
         "workspaces.list",
         "workspaces.create",
         "workspaces.update",

@@ -42,6 +42,7 @@
         "tab": "Docs",
         "pages": [
           "index",
+          "newsletters",
           "architecture",
           "development",
           "migrations",

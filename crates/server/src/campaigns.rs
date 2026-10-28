@@ -49,6 +49,7 @@
 
 pub mod advance;
 pub mod creator;
+pub mod engagement;
 pub mod enrollments;
 pub mod generate;
 pub mod http;

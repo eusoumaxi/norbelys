@@ -1,0 +1,42 @@
+---
+title: Newsletters
+description: Prepare independent broadcasts, review their audiences, and measure recorded engagement.
+keywords: [newsletter, broadcast, audience, opens, clicks]
+---
+
+The dashboard's **Newsletters** page saves an edition as a single-step campaign. It uses the existing sender, queue, unsubscribe, suppression and tracking behavior. It does not introduce a separate SMTP transport or a follow-up sequence.
+
+## Prepare and review
+
+1. Open **Newsletters** in the intended workspace and import an editorial JSON pack.
+2. Review each subject, preheader, intended audience, editorial source and HTML preview. The preview blocks scripts, navigation and remote tracking resources.
+3. Choose an active sender and **Save as drafts**. Each edition is saved independently. A proposed date does not activate a draft. Importing neither enrolls contacts nor sends messages.
+4. Open a saved edition to edit its content and select the actual group or segment in **Enrollments**. A pack's audience description is planning text, not an automatically applied filter. Use consent and profile fields, such as country, specialty, role and lifecycle stage, to define that audience.
+5. Use the existing sequence editor's **Send a test** action to send the saved variant to one review address. This is a real message; it does not start the campaign or enroll the review recipient.
+6. After review, explicitly start that one edition. Before a future start time it waits; at its start it queues individual messages for its audience. Saving ten editions never starts all ten.
+
+A pack contains `version: 1`, a stable `id`, `name`, IANA `timezone`, and 1–50 `editions`. Each edition has a stable `id`, `title`, `category` (`education`, `marketing`, `product`, `promotion`), `audience`, `subject`, `preheader`, `html`, an HTTPS `source`, and a nullable RFC 3339 `proposed_at`. The file must fit within 4 MiB. HTML uses the existing template language, including `{{ unsubscribe_url }}`.
+
+The studio identifies these campaigns by `[Newsletter] <pack-id>/<edition-id> · <title>`. Keep that prefix when editing a saved campaign. Re-importing a partial pack skips existing edition identifiers and preserves their edited content; change the saved draft to revise it. Stable idempotency keys allow an unchanged creation request to be retried after a timeout. Changing IDs deliberately creates new editions.
+
+Keep real customer packs, contact lists, installation addresses and credentials outside this public repository. Content and schedules belong to the workspace using the installation.
+
+## Broadcast size and pacing
+
+A broadcast is one launch of an audience, with one message per recipient. It is not one SMTP envelope containing 20,000 addresses and does not promise simultaneous delivery. Groups and segments are enrolled by the server's durable enrollment jobs; large audiences do not need to be submitted as a single giant request.
+
+The selected connection's daily limit, quota scope, warm-up, sending window and optional interval remain in force. The studio displays its daily limit and pacing. A Norbelys connection configured without an interval is rate-paced; a mailbox or paced connection is unsuitable for a fast broadcast of 20,000 recipients. The managed MTA and upstream service can impose additional limits. Verify those limits in private infrastructure before approving a large send. Never raise or bypass them just to make a demonstration appear instantaneous.
+
+Use a distinct, verified newsletter sender where operationally appropriate. The public application remains provider-neutral; upstream bridge configuration, host identities and credentials belong in private infrastructure. Domain authentication and a working public tracking/unsubscribe host must be configured by the installation.
+
+## Engagement audiences
+
+**Engagement audiences** reads recent sent recipients of a saved edition. The report is session-authenticated, scoped to the current workspace, and requires campaign, people and message read access. It uses a signed cursor and pages of at most 100 people.
+
+- **Open recorded** and **Click recorded** use observations classified as human.
+- **No open or click recorded** requires open tracking on every included sent message and excludes every observed open or click, including proxies. Untracked, queued and failed messages do not become a negative audience.
+- The report covers only the last 30 days of online message history. Campaign aggregates may cover a longer history and will not necessarily equal this report.
+
+Export reads every page, deduplicates people and produces a CSV for up to 20,000 people. It refuses a larger or incomplete traversal instead of silently exporting a partial audience. To reuse the result, import its email column into a dedicated group, review consent and profile criteria, and enroll that group in the intended draft. This is a snapshot workflow; no automatic re-send or behavioral automation is created. Observations can change while the pages are read.
+
+Opens are signals rather than proof of reading. Image blocking, privacy proxies, scanners and delayed tracking affect them. Delivery means the recipient server accepted a message, not that it appeared in a particular inbox tab. Editorial categories do not control Gmail's Primary or Promotions classification.
