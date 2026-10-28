@@ -437,6 +437,34 @@ impl Control {
             }),
         }
     }
+
+    /// Revokes a shared domain-service login's relay grant and catch-all on the managed MTA by
+    /// PATCHing `{"grant": false, "catch_all": false}`. The login stays enabled with its mail,
+    /// so a later owner's provision job can take the domain's unique catch-all. A login the MTA
+    /// does not know answers `404` and is treated as already revoked.
+    ///
+    /// # Errors
+    ///
+    /// No answer, or an answer outside the contract.
+    pub async fn revoke_login(&self, username: &str) -> Result<(), ControlError> {
+        let (status, body) = self
+            .call(
+                Method::PATCH,
+                &["v1", "accounts", username],
+                Some(&json!({"grant": false, "catch_all": false})),
+            )
+            .await?;
+        if status == StatusCode::NOT_FOUND {
+            return Ok(());
+        }
+        if !status.is_success() {
+            return Err(ControlError::Answer {
+                status: status.as_u16(),
+                detail: detail(status, &body),
+            });
+        }
+        Ok(())
+    }
 }
 
 /// The DKIM record among the `records` the MTA rendered for the domain `name`: the TXT record at
@@ -628,6 +656,111 @@ impl Job for NorbelysProvision {
         }
         cx.checkpoint(chunk, json!({ "provisioned": detail.is_none() }))
             .await?;
+        Ok(Outcome::Done)
+    }
+}
+
+/// `provider.norbelys.revoke`: revokes a shared domain-service login's relay grant and catch-all
+/// on the managed MTA when its domain is deleted or loses ownership. By the time the suspension
+/// path runs, the domain is gone or unverified, so the normal provision job cannot reconcile the
+/// MTA — its `sends` lookup fails against a deleted or suspended domain. If the domain was
+/// re-onboarded and proven again before this job runs, the connection's IMAP (cleared by
+/// `suspend_mail`) is restored from the domain's current purpose and the connection is re-verified
+/// so the provision job reconciles its MTA account for the current owner instead of revoking it.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NorbelysRevoke {
+    /// The connection whose shared service login should be revoked.
+    pub connection: Id<Connection>,
+}
+
+impl Job for NorbelysRevoke {
+    const KIND: &'static str = "provider.norbelys.revoke";
+    const QUEUE: Queue = Queue::Maintenance;
+    const EFFECT: Effect = Effect::ExternalRetryable;
+
+    fn unique_key(&self) -> Option<String> {
+        Some(self.connection.to_string())
+    }
+
+    async fn run(self, cx: &mut JobContext) -> Result<Outcome, JobError> {
+        if cx.progress().is_some() {
+            return Ok(Outcome::Done);
+        }
+        let workspace = cx.workspace();
+        let env = cx.env::<Env>()?.clone();
+        let mut tx = cx.db().begin_in(workspace).await?;
+        let row = sqlx::query!(
+            r#"SELECT c.account_email,
+                   EXISTS(SELECT 1 FROM sending_domains
+                           WHERE workspace_id = c.workspace_id
+                             AND hostname = c.account_email_key
+                             AND status IN ('verified', 'active', 'pending_certificate')) AS "domain_live!"
+              FROM connections c
+             WHERE c.workspace_id = $1 AND c.id = $2 AND c.provider = 'norbelys'"#,
+            workspace.uuid(),
+            self.connection.uuid(),
+        )
+        .fetch_optional(&mut *tx)
+        .await?;
+        let Some(row) = row else {
+            tx.commit().await?;
+            return Ok(Outcome::Done);
+        };
+        // Only shared domain-service logins (bare domain, no '@') carry a relay grant and
+        // catch-all on the managed MTA; per-mailbox logins have neither.
+        if row.account_email.contains('@') {
+            tx.commit().await?;
+            return Ok(Outcome::Done);
+        }
+        // If the domain was re-onboarded and proven again before this revocation ran, the
+        // provision job reconciles the MTA for the new owner; a revoke here would undo it.
+        // Restore the connection's IMAP (cleared by `suspend_mail`) from the domain's current
+        // purpose and re-verify the connection so the provision job reconciles its MTA account's
+        // grant and catch-all for the current owner. If the connection is archived or missing,
+        // verification is refused and the MTA state is left as-is.
+        if row.domain_live {
+            if super::connections::verify(&mut tx, workspace, self.connection)
+                .await
+                .is_ok()
+            {
+                let purpose: Option<String> = sqlx::query_scalar(
+                    "SELECT purpose FROM sending_domains \
+                     WHERE workspace_id = $1 AND hostname = $2 \
+                     AND status IN ('verified', 'active', 'pending_certificate') LIMIT 1",
+                )
+                .bind(workspace.uuid())
+                .bind(&row.account_email)
+                .fetch_optional(&mut *tx)
+                .await?;
+                let receives = matches!(purpose.as_deref(), Some("receive") | Some("send_receive"));
+                let imap = receives.then(|| super::connections::ImapSettings {
+                    host: env.settings.mta_submission_host.clone(),
+                    port: 993,
+                    security: super::connections::ImapSecurity::Tls,
+                });
+                let imap = imap
+                    .map(serde_json::to_value)
+                    .transpose()
+                    .map_err(|error| JobError::Failed(error.to_string()))?;
+                sqlx::query("UPDATE connections SET imap = $3 WHERE workspace_id = $1 AND id = $2")
+                    .bind(workspace.uuid())
+                    .bind(self.connection.uuid())
+                    .bind(imap)
+                    .execute(&mut *tx)
+                    .await?;
+            }
+            tx.commit().await?;
+            return Ok(Outcome::Done);
+        }
+        tx.commit().await?;
+        let Some(control) = &env.settings.control else {
+            return Ok(Outcome::Done);
+        };
+        let username = super::managed::username(workspace, &row.account_email);
+        control
+            .revoke_login(&username)
+            .await
+            .map_err(|error| JobError::Failed(error.to_string()))?;
         Ok(Outcome::Done)
     }
 }
@@ -997,6 +1130,50 @@ mod tests {
         assert!(matches!(
             control.login("boom@acme.example").await,
             Err(ControlError::Answer { status: 500, .. })
+        ));
+    }
+
+    /// Revoking a shared domain-service login PATCHes `{"grant": false, "catch_all": false}` to
+    /// its MTA account; a login the MTA does not know (`404`) is treated as already revoked, and
+    /// any other non-success answer is the control error.
+    #[tokio::test]
+    async fn revoking_a_login_clears_its_grant_and_catch_all() {
+        fn account(_: &str, _: &str) -> (u16, Value) {
+            (
+                200,
+                json!({ "username": "norbelys-acme@acme.example", "grant_domain": None::<&str>, "catch_all": false }),
+            )
+        }
+        let (control, seen) = fake(account).await;
+        control
+            .revoke_login("norbelys-acme@acme.example")
+            .await
+            .unwrap();
+        assert_eq!(
+            calls(&seen),
+            [(
+                "PATCH".to_owned(),
+                "/v1/accounts/norbelys-acme@acme.example".to_owned()
+            )]
+        );
+        assert_eq!(
+            seen.lock().unwrap()[0].2,
+            json!({"grant": false, "catch_all": false})
+        );
+
+        fn missing(_: &str, _: &str) -> (u16, Value) {
+            (404, json!({ "detail": "no account" }))
+        }
+        let (control, _) = fake(missing).await;
+        control.revoke_login("gone@acme.example").await.unwrap();
+
+        fn refused(_: &str, _: &str) -> (u16, Value) {
+            (409, json!({ "detail": "the account is disabled" }))
+        }
+        let (control, _) = fake(refused).await;
+        assert!(matches!(
+            control.revoke_login("off@acme.example").await,
+            Err(ControlError::Answer { status: 409, .. })
         ));
     }
 }

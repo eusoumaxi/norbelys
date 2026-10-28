@@ -51,6 +51,7 @@ fn registry() -> Result<Registry, jobs::kinds::RegistryError> {
         .register::<senders::domains::DomainCertificate>()?
         .register::<senders::domains::DomainVerifyDue>()?
         .register::<senders::provision::NorbelysProvision>()?
+        .register::<senders::provision::NorbelysRevoke>()?
         .register::<senders::health::HealthEmail>()?
         .register::<crate::people::imports::PeopleImport>()?
         .register::<crate::people::cleanup::PeopleCleanup>()?
