@@ -2229,3 +2229,256 @@ async fn a_step_is_sent_to_people_not_enrolled_and_previewed_elsewhere() {
     .await;
     assert_eq!(problem(&refused).2, "/to");
 }
+
+// ───────────────────────────── recipient validation ─────────────────────────────
+
+/// A harness with recipient validation enabled: its `senders::Env` carries a `Validation` with a
+/// control client at an unreachable loopback port. The offline resolver means no address is ever
+/// `routable`, so the control API is never asked — but `enabled()` returns true, so the
+/// materialise job runs the validation gate and the Done-exit readiness re-check.
+fn validation_harness(test: &TestDb) -> Harness {
+    use base64::Engine as _;
+    let mut registry = Registry::default();
+    registry
+        .register::<CampaignMaterialise>()
+        .unwrap()
+        .register::<EnrollmentAdd>()
+        .unwrap()
+        .register::<EnrollmentAdvance>()
+        .unwrap()
+        .register::<SendersRemoved>()
+        .unwrap()
+        .register::<MessageGenerate>()
+        .unwrap();
+    let mut env = http::Extensions::new();
+    env.insert(keys());
+    let secret = secrecy::SecretString::from(format!(
+        "whsec_{}",
+        base64::engine::general_purpose::STANDARD.encode([7_u8; 32])
+    ));
+    let control = crate::senders::provision::Control::new(
+        url::Url::parse("http://127.0.0.1:1").expect("a URL"),
+        &secret,
+        false,
+    )
+    .expect("the control client");
+    env.insert(
+        crate::senders::Env::assemble(
+            crate::senders::Settings {
+                recipient_validation: crate::delivery::validation::Validation::new(Some(control)),
+                ..crate::senders::Settings::for_tests()
+            },
+            crate::dns::Resolver::offline(),
+            norbelys_mail::net::AddressPolicy::Any,
+        )
+        .expect("the sending environment"),
+    );
+    Harness::new(
+        test.worker.clone(),
+        test.system.clone(),
+        registry,
+        env,
+        "validation-test",
+    )
+}
+
+/// Pre-validates the enrollment of `person` in `campaign` by writing a recipient-validation finding
+/// whose `email_key` matches the person's current `email_key`, so `ready()` counts it as checked.
+async fn prevalidate(f: &Fixture, campaign: Uuid, person: Uuid) {
+    sqlx::query(
+        "UPDATE enrollments SET recipient_validation = jsonb_build_object(
+            'email_key', p.email_key, 'status', 'unknown',
+            'checked_at', '2026-01-01T00:00:00Z', 'detail', 'DNS preflight: dns_unavailable')
+         FROM people p
+         WHERE enrollments.workspace_id = $1 AND enrollments.campaign_id = $2
+           AND enrollments.person_id = p.id AND p.id = $3",
+    )
+    .bind(f.ws.id.uuid())
+    .bind(campaign)
+    .bind(person)
+    .execute(f.test.system.pool())
+    .await
+    .unwrap();
+}
+
+/// An enrollment that lands while the campaign's materialise job is running (and recipient
+/// validation is enabled) is not lost: the enqueue coalesces with the running job (a no-op against
+/// a `running` twin), and `creator::pass` drops the campaign from its chunk because the new
+/// enrollment is unchecked. The Done-exit readiness re-check catches this, the job yields, the
+/// next run's `prepare` validates the new recipient, and both messages are created — rather than
+/// the enrollment waiting up to five minutes for the periodic advance pass.
+#[tokio::test]
+async fn an_enrollment_landing_during_a_materialise_run_gets_its_message() {
+    let f = fixture("cmp-mat-lost").await;
+    let created = campaign(&f, two_steps(&[f.a.identity], &[])).await;
+    let campaign_id = uuid(&created["id"]);
+    // Enroll Ada while the campaign is still draft (no materialise enqueued).
+    let ada = people(&f, &["ada"], "mat-lost.example").await;
+    assert_eq!(
+        enroll(&f, &created["id"], &ada).await.status,
+        StatusCode::CREATED
+    );
+    // Activate the campaign directly (skip the materialising transition).
+    exec(
+        &f,
+        "UPDATE campaigns SET status = 'active' WHERE id = $1",
+        campaign_id,
+    )
+    .await;
+    // Pre-validate Ada so the gate passes for her.
+    prevalidate(&f, campaign_id, uuid(&ada[0])).await;
+    // Enqueue a materialise job with a cursor in progress (skip the entry gate, as a resumed run).
+    let h = validation_harness(&f.test);
+    let mut tx = f.test.worker.begin_in(f.ws.id).await.unwrap();
+    let job = crate::jobs::enqueue(
+        &mut tx,
+        f.ws.id,
+        &CampaignMaterialise {
+            campaign: campaign_id,
+        },
+        None,
+    )
+    .await
+    .unwrap();
+    sqlx::query("UPDATE jobs SET progress = $2 WHERE id = $1")
+        .bind(job.uuid())
+        .bind(json!({"at": "2020-01-01T00:00:00Z", "id": "00000000-0000-0000-0000-000000000000"}))
+        .execute(&mut *tx)
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+    // Hold the campaign row with FOR SHARE so the creation pass's FOR UPDATE blocks mid-run,
+    // while a concurrent enrollment's foreign-key check (FOR KEY SHARE) can still proceed.
+    let mut blocker = f.test.system.pool().begin().await.unwrap();
+    sqlx::query("SELECT 1 FROM campaigns WHERE id = $1 FOR SHARE")
+        .bind(campaign_id)
+        .execute(&mut *blocker)
+        .await
+        .unwrap();
+    let blocker_pid: i32 = sqlx::query_scalar("SELECT pg_backend_pid()")
+        .fetch_one(&mut *blocker)
+        .await
+        .unwrap();
+    // Run the materialise job while enrolling Bea during the blocked creation pass.
+    let (outcomes, ()) = tokio::join!(h.run_once(Queue::Enrollment, 1), async {
+        crate::testing::wait_for_lock(&f.test, blocker_pid).await;
+        // Enroll Bea directly: the FK check takes FOR KEY SHARE, which does not conflict
+        // with the blocker's FOR SHARE, so the insert proceeds while the pass is stalled.
+        sqlx::query(
+            "WITH p AS (INSERT INTO people (workspace_id, email) VALUES ($1, $3) RETURNING id)
+                 INSERT INTO enrollments (workspace_id, campaign_id, person_id, next_run_at)
+                 SELECT $1, $2, id, now() FROM p",
+        )
+        .bind(f.ws.id.uuid())
+        .bind(campaign_id)
+        .bind("bea@mat-lost.example")
+        .execute(f.test.system.pool())
+        .await
+        .unwrap();
+        blocker.rollback().await.unwrap();
+    },);
+    // The job yields (not Done): the Done-exit readiness re-check found Bea unchecked.
+    assert_eq!(
+        outcomes.iter().map(|(_, o)| *o).collect::<Vec<_>>(),
+        ["yield"],
+        "the run should yield because Bea is unchecked"
+    );
+    // No messages were created: the pass dropped the campaign (Bea unchecked).
+    assert_eq!(
+        count(
+            &f,
+            "SELECT count(*) FROM messages WHERE campaign_id = $1",
+            campaign_id
+        )
+        .await,
+        0
+    );
+    // Bea's enrollment is unchecked and has no message.
+    assert_eq!(
+        count(
+            &f,
+            "SELECT count(*) FROM enrollments WHERE campaign_id = $1 AND recipient_validation IS NULL",
+            campaign_id
+        )
+        .await,
+        1,
+        "Bea is unchecked"
+    );
+    // Run again: prepare validates Bea, the gate passes, and both messages are created.
+    let outcomes = h.run_once(Queue::Enrollment, 1).await;
+    assert_eq!(
+        outcomes.iter().map(|(_, o)| *o).collect::<Vec<_>>(),
+        ["done"],
+        "the second run completes after prepare validates Bea"
+    );
+    assert_eq!(
+        live(&f, campaign_id).await.len(),
+        2,
+        "both Ada and Bea have messages"
+    );
+}
+
+/// Enrolling a person into an active campaign whose materialise job has already completed
+/// enqueues a fresh `available` job (the unique key is free): the contrasting case to a `running`
+/// twin, where the enqueue is absorbed. The job then validates and creates the first message.
+#[tokio::test]
+async fn an_enrollment_into_a_completed_campaign_enqueues_a_fresh_materialise_job() {
+    let f = fixture("cmp-mat-idle").await;
+    let created = campaign(&f, two_steps(&[f.a.identity], &[])).await;
+    let campaign_id = uuid(&created["id"]);
+    let ada = people(&f, &["ada"], "mat-idle.example").await;
+    assert_eq!(
+        enroll(&f, &created["id"], &ada).await.status,
+        StatusCode::CREATED
+    );
+    exec(
+        &f,
+        "UPDATE campaigns SET status = 'active' WHERE id = $1",
+        campaign_id,
+    )
+    .await;
+    prevalidate(&f, campaign_id, uuid(&ada[0])).await;
+    // Run materialise to completion for Ada.
+    let h = validation_harness(&f.test);
+    let mut tx = f.test.worker.begin_in(f.ws.id).await.unwrap();
+    crate::jobs::enqueue(
+        &mut tx,
+        f.ws.id,
+        &CampaignMaterialise {
+            campaign: campaign_id,
+        },
+        None,
+    )
+    .await
+    .unwrap();
+    tx.commit().await.unwrap();
+    let outcomes = h.run_once(Queue::Enrollment, 1).await;
+    assert_eq!(
+        outcomes.iter().map(|(_, o)| *o).collect::<Vec<_>>(),
+        ["done"]
+    );
+    assert_eq!(live(&f, campaign_id).await.len(), 1);
+    // Enroll Bea via the API: after_enrolling enqueues a new materialise job against the
+    // completed twin (coalescing creates a fresh `available` row, not a no-op).
+    let bea = people(&f, &["bea"], "mat-idle.example").await;
+    assert_eq!(
+        enroll(&f, &created["id"], &bea).await.status,
+        StatusCode::CREATED
+    );
+    assert_eq!(
+        total(
+            &f,
+            "SELECT count(*) FROM jobs WHERE kind = 'campaign.materialise' AND state = 'available'"
+        )
+        .await,
+        1,
+        "a fresh available job was enqueued against the completed twin"
+    );
+    // Run the new job: prepare validates Bea, and her message is created.
+    let outcomes = h.run_once(Queue::Enrollment, 1).await;
+    assert_eq!(
+        outcomes.iter().map(|(_, o)| *o).collect::<Vec<_>>(),
+        ["done"]
+    );
+    assert_eq!(live(&f, campaign_id).await.len(), 2);
+}
