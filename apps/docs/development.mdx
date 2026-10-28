@@ -46,6 +46,6 @@ bun run coverage:cli
 bunx turbo run coverage --filter=@norbelys/sdk --filter=norbelys --filter=@norbelys/cli-downloads --concurrency=1
 ```
 
-Workspace Rust coverage uses `TEST_DATABASE_URL` when supplied and acknowledged as disposable. Without it, the explicit coverage command creates and removes its own isolated Docker fixture. Ordinary checks never take that path. SDK coverage retains its existing thresholds. CI runs native tests under coverage once, separately from offline compilation and SQL metadata checking; it does not first repeat the same native suite without coverage.
+Workspace Rust coverage uses `TEST_DATABASE_URL` when supplied and acknowledged as disposable. Without it, the explicit coverage command creates and removes its own isolated Docker fixture. Ordinary checks never take that path. CI runs native tests under coverage once, separately from offline compilation and SQL metadata checking; it does not first repeat the same native suite without coverage.
 
 Image publication follows a successful main-push CI run for the exact source commit. It consumes that run's finite image selection and builds the affected images without repeating backend or frontend test suites. Manual image builds also require approved CI for their source. Publication and deployment remain separate operations.
