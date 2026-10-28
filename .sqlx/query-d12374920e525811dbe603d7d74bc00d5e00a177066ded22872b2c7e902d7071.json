@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id AS \"id: Id<Campaign>\", name, status, last_error, timezone, send_window,\n                  start_at AS \"start_at: Timestamp\", tracking_domain_id AS \"tracking_domain_id: Id<SendingDomain>\",\n                  track_opens, track_clicks, stop_on_reply, sender_tags, on_sender_removed, stop_company_on_reply,\n                  cooldown_hours, created_at AS \"created_at: Timestamp\", updated_at AS \"updated_at: Timestamp\"\n             FROM campaigns\n            WHERE workspace_id = $1\n              AND ($2::text IS NULL OR status = $2)\n              AND ($3::text IS NULL OR lower(name) LIKE $3)\n              AND ($4::uuid IS NULL OR CASE WHEN $5 THEN id > $4 ELSE id < $4 END)\n            ORDER BY CASE WHEN $5 THEN id END, id DESC\n            LIMIT $6",
+  "query": "SELECT id AS \"id: Id<Campaign>\", name, status, last_error, timezone, send_window,\n                  start_at AS \"start_at: Timestamp\", tracking_domain_id AS \"tracking_domain_id: Id<SendingDomain>\",\n                  track_opens, track_clicks, stop_on_reply, sender_tags, on_sender_removed, stop_company_on_reply,\n                  cooldown_hours, created_at AS \"created_at: Timestamp\", updated_at AS \"updated_at: Timestamp\"\n             FROM campaigns\n            WHERE workspace_id = $1\n              AND ($2::text IS NULL OR status = $2)\n              AND ($3::text IS NULL OR lower(name) LIKE lower($3))\n              AND ($4::uuid IS NULL OR CASE WHEN $5 THEN id > $4 ELSE id < $4 END)\n            ORDER BY CASE WHEN $5 THEN id END, id DESC\n            LIMIT $6",
   "describe": {
     "columns": [
       {
@@ -221,5 +221,5 @@
       false
     ]
   },
-  "hash": "7e56705d65d7c65e48268c022c906eb79c64f74fff2d170f7f1226d318444ffe"
+  "hash": "d12374920e525811dbe603d7d74bc00d5e00a177066ded22872b2c7e902d7071"
 }

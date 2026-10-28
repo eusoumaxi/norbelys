@@ -2229,3 +2229,25 @@ async fn a_step_is_sent_to_people_not_enrolled_and_previewed_elsewhere() {
     .await;
     assert_eq!(problem(&refused).2, "/to");
 }
+
+/// A campaign name search ignores case as PostgreSQL `lower()` folds it, so a query containing
+/// Turkish capital `İ` (U+0130), which Rust's `to_lowercase` turns into `i` plus a combining dot
+/// while the database's `lower()` folds to a single `i`, still matches a campaign whose name
+/// starts with it. `İ` is UTF-8 `\xC4\xB0`, URL-encoded as `%C4%B0`.
+#[tokio::test]
+async fn campaign_search_ignores_case_as_the_database_folds_it() {
+    let f = fixture("cmp-search").await;
+    campaign(&f, json!({"name": "İstanbul"})).await;
+    campaign(&f, json!({"name": "Spring sale"})).await;
+    for query in ["%C4%B0stanbul", "istanbul", "%C4%B0STANBUL"] {
+        let found = f
+            .app
+            .get(&format!("/v1/campaigns?q={query}"))
+            .bearer(&f.ws.key)
+            .send()
+            .await;
+        assert_eq!(found.status, StatusCode::OK, "{query}: {:?}", found.json);
+        assert_eq!(found.json["data"].as_array().unwrap().len(), 1, "{query}");
+        assert_eq!(found.json["data"][0]["name"], json!("İstanbul"), "{query}");
+    }
+}
